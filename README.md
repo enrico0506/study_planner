@@ -14,6 +14,7 @@ Lightweight study board with subjects/files, Pomodoro timer, today's focus list,
 ## Run
 - Open `index.html` directly in a browser (no build step; data in `localStorage`).
 - Or serve locally to avoid any file:// quirks: `python -m http.server 8000` then visit http://localhost:8000/.
+- Or run via Node/Express (same static files, plus health/db endpoints): `npm install` then `npm start` (defaults to port `10000`).
 
 ## Structure
 - `index.html` – app shell and modals.
