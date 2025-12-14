@@ -2,14 +2,20 @@
    Revert by removing the `<link href="./src/styles/phone-menu.css">` from HTML pages. */
 
 @media (max-width: 720px) {
-  .header-menu {
+  body.calendar-page .header-menu,
+  body.timetable-page .header-menu,
+  body.flashcards-page .header-menu,
+  body.account-page-body .header-menu {
     position: fixed;
     top: max(10px, env(safe-area-inset-top));
     right: max(10px, env(safe-area-inset-right));
     z-index: 90;
   }
 
-  .header-menu-panel {
+  body.calendar-page .header-menu-panel,
+  body.timetable-page .header-menu-panel,
+  body.flashcards-page .header-menu-panel,
+  body.account-page-body .header-menu-panel {
     left: auto;
     right: 0;
     max-height: calc(100vh - 92px);
@@ -23,4 +29,3 @@
     display: none;
   }
 }
-
