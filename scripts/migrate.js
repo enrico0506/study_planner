@@ -7,8 +7,13 @@ if (!connectionString) {
   process.exit(0);
 }
 
+let normalizedConnectionString = String(connectionString).trim();
+if (normalizedConnectionString.startsWith("DATABASE_URL=")) {
+  normalizedConnectionString = normalizedConnectionString.slice("DATABASE_URL=".length);
+}
+
 const client = new pg.Client({
-  connectionString,
+  connectionString: normalizedConnectionString,
   ssl: { rejectUnauthorized: false }
 });
 

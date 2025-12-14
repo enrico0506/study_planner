@@ -51,7 +51,10 @@ function requireEnv(name) {
 let pool;
 function getPool() {
   if (!pool) {
-    const connectionString = requireEnv("DATABASE_URL");
+    let connectionString = requireEnv("DATABASE_URL").trim();
+    if (connectionString.startsWith("DATABASE_URL=")) {
+      connectionString = connectionString.slice("DATABASE_URL=".length);
+    }
     pool = new pg.Pool({
       connectionString,
       ssl: { rejectUnauthorized: false }
