@@ -78,6 +78,10 @@
     display: inline-flex;
   }
 
+  body[data-mode="subjects"] #subjectBackBtn {
+    display: none;
+  }
+
   .subject-nav-btn,
   .subject-nav-label {
     display: none;
@@ -189,6 +193,10 @@
   /* In picker mode, behave like Subjects paging UI */
   body[data-mode="today"].today-picker-open .subject-nav-btn,
   body[data-mode="today"].today-picker-open .subject-nav-label {
+    display: inline-flex;
+  }
+
+  body[data-mode="today"].today-picker-open #subjectBackBtn {
     display: inline-flex;
   }
 

@@ -4987,6 +4987,7 @@ const DEFAULT_SUBJECT_COLORS = [
 
     const subjectPrevBtn = document.getElementById("subjectPrevBtn");
     const subjectNextBtn = document.getElementById("subjectNextBtn");
+    const subjectBackBtn = document.getElementById("subjectBackBtn");
     subjectPrevBtn?.addEventListener("click", () => {
       subjectCursorIndex = Math.max(0, subjectCursorIndex - 1);
       applySubjectPaging();
@@ -4994,6 +4995,19 @@ const DEFAULT_SUBJECT_COLORS = [
     subjectNextBtn?.addEventListener("click", () => {
       subjectCursorIndex = subjectCursorIndex + 1;
       applySubjectPaging();
+    });
+    subjectBackBtn?.addEventListener("click", () => {
+      if (
+        document.body.dataset.mode === "today" &&
+        document.body.classList.contains("today-picker-open")
+      ) {
+        document.body.classList.remove("today-picker-open");
+        const pickBtn = document.getElementById("todayPickToggleBtn");
+        if (pickBtn) pickBtn.textContent = "Add";
+        renderTable();
+        const sidebar = document.querySelector("#layoutRow .today-sidebar");
+        sidebar?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     });
 
     function getPageMode() {
