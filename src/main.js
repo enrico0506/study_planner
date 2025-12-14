@@ -288,6 +288,7 @@ const DEFAULT_SUBJECT_COLORS = [
     let activeView = "board"; // "board" | "schedule"
     let scheduleWeekStart = null;
     let scheduleCursorDay = null;
+    let subjectCursorIndex = 0;
     let scheduleModalState = null;
     let scheduleDrag = null;
 
@@ -303,6 +304,27 @@ const DEFAULT_SUBJECT_COLORS = [
       // Reduce timezone edge cases around midnight
       scheduleCursorDay.setHours(12, 0, 0, 0);
       return scheduleCursorDay;
+    }
+
+    function applySubjectPaging() {
+      if (!subjectTable) return;
+      if (!isPhoneLayout()) return;
+      if (document.body.dataset.mode !== "subjects") return;
+
+      const cols = subjectTable.querySelectorAll(".subject-column");
+      const total = cols.length;
+      if (!total) return;
+
+      subjectCursorIndex = Math.max(0, Math.min(subjectCursorIndex, total - 1));
+      subjectTable.style.setProperty("--subject-page", String(subjectCursorIndex));
+
+      const subjectPrevBtn = document.getElementById("subjectPrevBtn");
+      const subjectNextBtn = document.getElementById("subjectNextBtn");
+      const subjectNavLabel = document.getElementById("subjectNavLabel");
+
+      if (subjectNavLabel) subjectNavLabel.textContent = `${subjectCursorIndex + 1} / ${total}`;
+      if (subjectPrevBtn) subjectPrevBtn.disabled = subjectCursorIndex <= 0;
+      if (subjectNextBtn) subjectNextBtn.disabled = subjectCursorIndex >= total - 1;
     }
 
     function getSubjectColor(index) {
@@ -4230,6 +4252,8 @@ const DEFAULT_SUBJECT_COLORS = [
           showToast("Weekly target updated.", "success");
         });
       });
+
+      applySubjectPaging();
     }
 
     if (themeToggleBtn) {
@@ -4916,6 +4940,17 @@ const DEFAULT_SUBJECT_COLORS = [
       }
     });
 
+    const subjectPrevBtn = document.getElementById("subjectPrevBtn");
+    const subjectNextBtn = document.getElementById("subjectNextBtn");
+    subjectPrevBtn?.addEventListener("click", () => {
+      subjectCursorIndex = Math.max(0, subjectCursorIndex - 1);
+      applySubjectPaging();
+    });
+    subjectNextBtn?.addEventListener("click", () => {
+      subjectCursorIndex = subjectCursorIndex + 1;
+      applySubjectPaging();
+    });
+
     function getPageMode() {
       const mode = new URLSearchParams(window.location.search).get("mode");
       if (mode === "subjects" || mode === "today" || mode === "schedule") return mode;
@@ -4925,6 +4960,7 @@ const DEFAULT_SUBJECT_COLORS = [
     function applyPageMode() {
       const mode = getPageMode();
       document.body.dataset.mode = mode;
+      applySubjectPaging();
     }
 
     // Initial load

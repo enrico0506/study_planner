@@ -54,6 +54,78 @@
     display: none !important;
   }
 
+  /* Subject paging (single subject per screen) */
+  body[data-mode="subjects"] .subject-nav-btn,
+  body[data-mode="subjects"] .subject-nav-label {
+    display: inline-flex;
+  }
+
+  .subject-nav-btn,
+  .subject-nav-label {
+    display: none;
+  }
+
+  body[data-mode="subjects"] .table-wrapper {
+    overflow: hidden;
+  }
+
+  body[data-mode="subjects"] .subject-scroll {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  body[data-mode="subjects"] .subject-table {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 0;
+    background: transparent;
+    transform: translateX(calc(var(--subject-page, 0) * -100%));
+    transition: transform 0.22s ease;
+    will-change: transform;
+  }
+
+  body[data-mode="subjects"] .subject-column {
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .subject-nav-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid #dfe4f0;
+    background: #ffffff;
+    color: var(--accent-ink);
+    cursor: pointer;
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .subject-nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .subject-nav-label {
+    height: 34px;
+    min-width: 56px;
+    border-radius: 10px;
+    border: 1px solid #dfe4f0;
+    background: #ffffff;
+    color: var(--ink-muted);
+    font-weight: 800;
+    font-size: 12px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+  }
+
   body[data-mode="today"] .summary-card,
   body[data-mode="today"] #scheduleView,
   body[data-mode="today"] #layoutRow .main-area {
