@@ -4359,7 +4359,8 @@ const DEFAULT_SUBJECT_COLORS = [
       setActiveSettingsPanel("settingsThemePanel");
     });
     headerProfileBtn?.addEventListener("click", () => {
-      showNotice("Profile view is coming soon. For now, adjust themes and language below.", "info");
+      closeHeaderMenu();
+      window.location.href = "./account.html";
     });
     // Additional settings entry points removed in favor of a single Settings button
     settingsModalBackdrop?.addEventListener("click", closeSettingsModal);
