@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="./src/styles/main.css" />
   <link rel="stylesheet" href="./src/styles/mobile.css" />
   <link rel="stylesheet" href="./src/styles/phone-pages.css" />
+  <link rel="stylesheet" href="./src/styles/phone-menu.css" />
 </head>
 <body class="timetable-page">
   <div class="timetable-shell">
@@ -32,6 +33,26 @@
         <a class="btn btn-secondary header-calendar-btn" href="index.html">← Back to board</a>
         <a class="btn btn-secondary header-calendar-btn" href="karteikarten.html">Karteikarten</a>
         <a class="btn btn-secondary header-calendar-btn" href="account.html">Account</a>
+        <div class="header-menu" aria-label="Menu">
+          <button class="header-menu-toggle" type="button" aria-haspopup="true" aria-expanded="false">...</button>
+          <div class="header-menu-panel">
+            <div class="header-menu-group">
+              <div class="header-menu-subtitle">Pages</div>
+              <a class="header-menu-link" href="./index.html?mode=board">Board</a>
+              <a class="header-menu-link" href="./index.html?mode=subjects">Subjects</a>
+              <a class="header-menu-link" href="./index.html?mode=today">Today's focus</a>
+              <a class="header-menu-link" href="./index.html?mode=schedule">Daily schedule</a>
+            </div>
+            <div class="header-menu-divider"></div>
+            <div class="header-menu-group">
+              <div class="header-menu-subtitle">Study hubs</div>
+              <a class="header-menu-link" href="./calendar.html">Calendar</a>
+              <a class="header-menu-link" href="./stundenplan.html">Stundenplan</a>
+              <a class="header-menu-link" href="./karteikarten.html">Karteikarten</a>
+              <a class="header-menu-link" href="./account.html">Account</a>
+            </div>
+          </div>
+        </div>
         <div class="tt-day-nav phone-only" role="group" aria-label="Day navigation">
           <button class="tt-day-nav-btn" id="ttPrevDayBtn" type="button" aria-label="Previous day">‹</button>
           <span class="tt-day-nav-label" id="ttDayLabel" aria-hidden="true"></span>
@@ -135,6 +156,7 @@
     </div>
   </div>
   <script src="./src/sync.js" defer></script>
+  <script src="./src/page-menu.js" defer></script>
   <script src="./src/stundenplan.js" defer></script>
 </body>
 </html>

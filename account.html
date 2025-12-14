@@ -16,6 +16,7 @@
   </script>
   <link rel="stylesheet" href="./src/styles/main.css" />
   <link rel="stylesheet" href="./src/styles/mobile.css" />
+  <link rel="stylesheet" href="./src/styles/phone-menu.css" />
   <style>
     body { background: radial-gradient(1200px 600px at 20% 0%, rgba(79, 139, 255, 0.25), transparent 60%),
                     radial-gradient(1000px 500px at 80% 10%, rgba(34, 197, 94, 0.16), transparent 55%),
@@ -51,6 +52,26 @@
     <div class="account-top">
       <div class="pill" id="authPill"><span class="pill-dot" id="authDot"></span><span id="authPillText">Checking session…</span></div>
       <a class="btn btn-secondary" href="./index.html">Back to app</a>
+      <div class="header-menu" aria-label="Menu">
+        <button class="header-menu-toggle" type="button" aria-haspopup="true" aria-expanded="false">...</button>
+        <div class="header-menu-panel">
+          <div class="header-menu-group">
+            <div class="header-menu-subtitle">Pages</div>
+            <a class="header-menu-link" href="./index.html?mode=board">Board</a>
+            <a class="header-menu-link" href="./index.html?mode=subjects">Subjects</a>
+            <a class="header-menu-link" href="./index.html?mode=today">Today's focus</a>
+            <a class="header-menu-link" href="./index.html?mode=schedule">Daily schedule</a>
+          </div>
+          <div class="header-menu-divider"></div>
+          <div class="header-menu-group">
+            <div class="header-menu-subtitle">Study hubs</div>
+            <a class="header-menu-link" href="./calendar.html">Calendar</a>
+            <a class="header-menu-link" href="./stundenplan.html">Stundenplan</a>
+            <a class="header-menu-link" href="./karteikarten.html">Karteikarten</a>
+            <a class="header-menu-link" href="./account.html">Account</a>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="account-hero">
@@ -134,6 +155,7 @@
   </div>
 
   <script src="./src/sync.js" defer></script>
+  <script src="./src/page-menu.js" defer></script>
   <script src="./src/account.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,26 @@
+/* Phone-only global three-dots menu (<= 720px)
+   Revert by removing the `<link href="./src/styles/phone-menu.css">` from HTML pages. */
+
+@media (max-width: 720px) {
+  .header-menu {
+    position: fixed;
+    top: max(10px, env(safe-area-inset-top));
+    right: max(10px, env(safe-area-inset-right));
+    z-index: 90;
+  }
+
+  .header-menu-panel {
+    left: auto;
+    right: 0;
+    max-height: calc(100vh - 92px);
+    overflow: auto;
+  }
+
+  /* Move page navigation into the ... menu on phone for non-index pages */
+  body.calendar-page .header-actions a.header-calendar-btn,
+  body.timetable-page .header-actions a.header-calendar-btn,
+  body.flashcards-page .header-actions a.header-calendar-btn {
+    display: none;
+  }
+}
+
