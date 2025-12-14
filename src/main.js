@@ -128,6 +128,7 @@ const DEFAULT_SUBJECT_COLORS = [
     };
     let confidenceMode = "manual"; // "manual" | "perceived"
     let timerModePref = "countdown";
+    let expandState = false;
 
     // DOM refs
     const appRoot = document.getElementById("appRoot");
@@ -136,6 +137,7 @@ const DEFAULT_SUBJECT_COLORS = [
     const searchInput = null;
     const subjectTable = document.getElementById("subjectTable");
     const tableWrapper = document.querySelector(".table-wrapper");
+    const expandPageBtn = document.getElementById("expandPageBtn");
     const emptyHint = document.getElementById("emptyHint");
     const openStatsBtn = document.getElementById("openStatsBtn");
     const todayDropZone = document.getElementById("todayDropZone");
@@ -155,7 +157,7 @@ const DEFAULT_SUBJECT_COLORS = [
     const themeLabel = document.getElementById("themeLabel");
     const themeDot = document.getElementById("themeDot");
     const headerMenu = document.getElementById("headerMenu");
-    const headerMenuPanel = document.getElementById("headerMenuPanel");
+  const headerMenuPanel = document.getElementById("headerMenuPanel");
   const headerMenuToggle = document.getElementById("headerMenuToggle");
   const headerProfileBtn = document.getElementById("headerProfileBtn");
   const headerSettingsBtn = document.getElementById("headerSettingsBtn");
@@ -506,6 +508,20 @@ const DEFAULT_SUBJECT_COLORS = [
         meterGradStart: meterGradStart ? meterGradStart.value : stylePrefs.meterGradStart,
         meterGradEnd: meterGradEnd ? meterGradEnd.value : stylePrefs.meterGradEnd
       };
+    }
+
+    function toggleExpand() {
+      expandState = !expandState;
+      if (expandState) {
+        appRoot.classList.add("app-expanded");
+        expandPageBtn.textContent = "⤡";
+        document.body.style.overflow = "auto";
+      } else {
+        appRoot.classList.remove("app-expanded");
+        expandPageBtn.textContent = "⤢";
+        document.body.style.overflow = "hidden";
+      }
+      enforceTodayHeight();
     }
 
     function populateSettingsPreferences() {
@@ -1430,6 +1446,24 @@ const DEFAULT_SUBJECT_COLORS = [
       const perSubject = results.filter((r) => r.ms > 0);
       const totalMs = perSubject.reduce((sum, r) => sum + r.ms, 0);
       return { perSubject, totalMs };
+    }
+
+    function enforceTodayHeight() {
+      if (!tableWrapper || !todaySidebar) return;
+      const available = tableWrapper.offsetHeight || 0;
+      if (!available) return;
+      todaySidebar.style.maxHeight = available + "px";
+      const list = document.getElementById("todayList");
+      const header = todaySidebar.querySelector(".today-header");
+      const drop = document.getElementById("todayDropZone");
+      const headerH = header ? header.offsetHeight : 0;
+      const dropH = drop ? drop.offsetHeight : 0;
+      const padding = 60;
+      if (list) {
+        const listAvailable = available - headerH - dropH - padding;
+        list.style.maxHeight = Math.max(180, listAvailable) + "px";
+        list.style.overflowY = "auto";
+      }
     }
 
     function updateTodayStudyUI() {
@@ -3811,6 +3845,8 @@ const DEFAULT_SUBJECT_COLORS = [
           renderStatsModalContent();
         });
       });
+
+      requestAnimationFrame(() => enforceTodayHeight());
     }
 
     function openStatsModal() {
@@ -4189,6 +4225,10 @@ const DEFAULT_SUBJECT_COLORS = [
       }
       activeStudy.timerMode = "stopwatch";
       updateTimerModeButtons("stopwatch");
+    });
+    expandPageBtn?.addEventListener("click", toggleExpand);
+    window.addEventListener("resize", () => {
+      enforceTodayHeight();
     });
     const settingsPrefsSaveBtn = document.getElementById("settingsPrefsSaveBtn");
     settingsPrefsSaveBtn?.addEventListener("click", () => {

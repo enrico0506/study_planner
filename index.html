@@ -260,26 +260,26 @@
               <span style="font-size:0.75rem;color:#9ca3af;">No controls – start a session.</span>
             </div>
           </div>
-        <div class="focus-right">
-          <div class="focus-timer-box">
-            <div class="focus-timer-label-small" id="focusTimerLabel">Countdown</div>
-            <div class="focus-timer-display" id="focusTimerDisplay">00:00:00</div>
+          <div class="focus-right">
+            <div class="focus-timer-toggle" role="group" aria-label="Timer mode">
+              <button class="focus-timer-mode-btn focus-timer-active" id="timerModeCountdownBtn" type="button" data-mode="countdown">Countdown</button>
+              <button class="focus-timer-mode-btn" id="timerModeStopwatchBtn" type="button" data-mode="stopwatch">Stopwatch</button>
+            </div>
+            <div class="focus-timer-box">
+              <div class="focus-timer-label-small" id="focusTimerLabel">Countdown</div>
+              <div class="focus-timer-display" id="focusTimerDisplay">00:00:00</div>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="focus-bottom">
-        <div class="focus-timer-toggle" role="group" aria-label="Timer mode">
-          <button class="focus-timer-mode-btn focus-timer-active" id="timerModeCountdownBtn" type="button" data-mode="countdown">Countdown</button>
-          <button class="focus-timer-mode-btn" id="timerModeStopwatchBtn" type="button" data-mode="stopwatch">Stopwatch</button>
+        <div class="focus-bottom">
+          <button class="focus-break-btn" id="openTimerSettingsBtn" type="button">
+            Timer settings
+          </button>
+          <div class="focus-break-buttons">
+            <button class="focus-break-btn" id="startShortBreakBtn" type="button">Short break</button>
+            <button class="focus-break-btn" id="startLongBreakBtn" type="button">Long break</button>
+          </div>
         </div>
-        <button class="focus-break-btn" id="openTimerSettingsBtn" type="button">
-          Timer settings
-        </button>
-        <div class="focus-break-buttons">
-          <button class="focus-break-btn" id="startShortBreakBtn" type="button">Short break</button>
-          <button class="focus-break-btn" id="startLongBreakBtn" type="button">Long break</button>
-        </div>
-      </div>
       <div class="focus-inline-settings" id="timerInlinePanel" hidden>
         <div class="focus-inline-title">Adjust your timers</div>
         <div class="focus-inline-grid">
@@ -522,6 +522,7 @@
       </div>
     </div>
   </div>
+  <button class="expand-btn" id="expandPageBtn" type="button" aria-label="Toggle expand">⤢</button>
   <script src="./src/main.js"></script>
 </body>
 </html>
