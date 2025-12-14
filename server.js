@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import pg from "pg";
 import path from "path";
@@ -171,6 +172,12 @@ app.post("/api/auth/register", async (req, res) => {
     res.status(201).json({ email: user.email });
   } catch (err) {
     const message = String(err?.message || "");
+    if (message.startsWith("Missing required env var:")) {
+      return res.status(500).json({ error: message });
+    }
+    if (err?.code === "42P01") {
+      return res.status(500).json({ error: "Database not initialized. Run `npm run migrate`." });
+    }
     if (message.includes("users_email_key")) {
       return res.status(409).json({ error: "Email already registered" });
     }
@@ -201,6 +208,13 @@ app.post("/api/auth/login", async (req, res) => {
     setAuthCookie(res, token);
     res.json({ email: user.email });
   } catch (err) {
+    const message = String(err?.message || "");
+    if (message.startsWith("Missing required env var:")) {
+      return res.status(500).json({ error: message });
+    }
+    if (err?.code === "42P01") {
+      return res.status(500).json({ error: "Database not initialized. Run `npm run migrate`." });
+    }
     console.error(err);
     res.status(500).json({ error: "Login failed" });
   }
