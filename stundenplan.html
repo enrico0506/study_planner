@@ -32,9 +32,11 @@
         <a class="btn btn-secondary header-calendar-btn" href="index.html">← Back to board</a>
         <a class="btn btn-secondary header-calendar-btn" href="karteikarten.html">Karteikarten</a>
         <a class="btn btn-secondary header-calendar-btn" href="account.html">Account</a>
-        <button class="btn btn-secondary header-calendar-btn phone-only" id="ttPrevDayBtn" type="button" aria-label="Previous day">‹</button>
-        <span class="btn btn-secondary header-calendar-btn phone-only" id="ttDayLabel" aria-hidden="true"></span>
-        <button class="btn btn-secondary header-calendar-btn phone-only" id="ttNextDayBtn" type="button" aria-label="Next day">›</button>
+        <div class="tt-day-nav phone-only" role="group" aria-label="Day navigation">
+          <button class="tt-day-nav-btn" id="ttPrevDayBtn" type="button" aria-label="Previous day">‹</button>
+          <span class="tt-day-nav-label" id="ttDayLabel" aria-hidden="true"></span>
+          <button class="tt-day-nav-btn" id="ttNextDayBtn" type="button" aria-label="Next day">›</button>
+        </div>
       </div>
     </div>
 

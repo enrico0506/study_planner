@@ -18,6 +18,43 @@
     gap: 8px;
   }
 
+  body.timetable-page .tt-day-nav {
+    margin-left: auto;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(219, 224, 236, 1);
+    background: #ffffff;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  }
+
+  body.timetable-page .tt-day-nav-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 32px;
+    border-radius: 999px;
+    border: 1px solid rgba(219, 224, 236, 1);
+    background: #ffffff;
+    color: inherit;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  body.timetable-page .tt-day-nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  body.timetable-page .tt-day-nav-label {
+    min-width: 44px;
+    text-align: center;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+  }
+
   body.timetable-page .timeline-wrap,
   body.timetable-page .timetable-week-grid {
     overflow: hidden;
@@ -29,7 +66,7 @@
     display: flex;
     width: 100%;
     min-width: 0;
-    transform: translateX(calc(var(--tt-day, 0) * -100%));
+    transform: translate3d(calc(var(--tt-day, 0) * -100%), 0, 0);
     transition: transform 0.22s ease;
     will-change: transform;
   }
@@ -39,6 +76,15 @@
     flex: 0 0 100%;
     min-width: 0;
     max-width: 100%;
+  }
+
+  body.timetable-page .timeline-day-head,
+  body.timetable-page .timeline-day {
+    border-left: 0;
+  }
+
+  body.timetable-page .timeline-day {
+    overflow: hidden;
   }
 }
 
