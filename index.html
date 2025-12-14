@@ -311,11 +311,16 @@
       <div class="main-area">
         <!-- Table -->
         <div class="table-wrapper">
-          <div class="section-heading">
-            <h2 class="section-title">Subjects</h2>
-            <p class="section-subtitle">Manage all your subjects and files here.</p>
+          <div class="subject-scroll">
+            <div class="section-heading">
+              <h2 class="section-title">Subjects</h2>
+              <p class="section-subtitle">Manage all your subjects and files here.</p>
+              <div class="section-actions">
+                <button class="section-max-btn" id="maximizeSubjectsBtn" type="button" aria-pressed="false" aria-label="Maximize subjects">⤢</button>
+              </div>
+            </div>
+            <div id="subjectTable" class="subject-table"></div>
           </div>
-          <div id="subjectTable" class="subject-table"></div>
         </div>
         <div class="empty-hint" id="emptyHint">
           No subjects yet. Use “Add subject” on the right to create your first subject.
@@ -356,6 +361,36 @@
         </div>
       </div>
       <div class="schedule-grid" id="scheduleGrid"></div>
+    </div>
+
+    <!-- Add-to-Today Modal -->
+    <div class="modal-backdrop" id="addTodoModalBackdrop" hidden>
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title" id="addTodoModalTitle">Add to Today</div>
+            <div class="modal-subtitle" id="addTodoModalSubtitle">
+              Add optional subtasks before sending this item to Today.
+            </div>
+          </div>
+          <button class="modal-close-btn" id="addTodoModalClose" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-field">
+            <div class="modal-field-label">Subtasks (optional)</div>
+            <div class="subtask-input-row">
+              <input type="text" id="addTodoSubtaskInput" placeholder="Type a subtask and press Enter" />
+              <button class="chip-btn chip-btn-primary" id="addTodoSubtaskAdd" type="button">+</button>
+            </div>
+            <div class="subtask-list" id="addTodoSubtaskList"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="spacer"></div>
+          <button class="btn btn-secondary" id="addTodoModalCancel" type="button">Cancel</button>
+          <button class="btn" id="addTodoModalSave" type="button">Add to Today</button>
+        </div>
+      </div>
     </div>
 
     <!-- Schedule Task Modal -->

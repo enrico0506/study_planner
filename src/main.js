@@ -129,6 +129,7 @@ const DEFAULT_SUBJECT_COLORS = [
     let confidenceMode = "manual"; // "manual" | "perceived"
     let timerModePref = "countdown";
     let expandState = false;
+    let subjectsMaximized = false;
 
     // DOM refs
     const appRoot = document.getElementById("appRoot");
@@ -151,6 +152,15 @@ const DEFAULT_SUBJECT_COLORS = [
     const suggestionModalBackdrop = document.getElementById("suggestionModalBackdrop");
     const suggestionModalCloseBtn = document.getElementById("suggestionModalCloseBtn");
     const suggestionModalCloseBtn2 = document.getElementById("suggestionModalCloseBtn2");
+    const addTodoModalBackdrop = document.getElementById("addTodoModalBackdrop");
+    const addTodoModalTitle = document.getElementById("addTodoModalTitle");
+    const addTodoModalSubtitle = document.getElementById("addTodoModalSubtitle");
+    const addTodoSubtaskInput = document.getElementById("addTodoSubtaskInput");
+    const addTodoSubtaskAdd = document.getElementById("addTodoSubtaskAdd");
+    const addTodoSubtaskList = document.getElementById("addTodoSubtaskList");
+    const addTodoModalSave = document.getElementById("addTodoModalSave");
+    const addTodoModalCancel = document.getElementById("addTodoModalCancel");
+    const addTodoModalClose = document.getElementById("addTodoModalClose");
     const themeSwitcher = document.getElementById("themeSwitcher");
     const themeToggleBtn = document.getElementById("themeToggleBtn");
     const themeMenu = document.getElementById("themeMenu");
@@ -174,7 +184,8 @@ const DEFAULT_SUBJECT_COLORS = [
   const focusTimerLabel = document.getElementById("focusTimerLabel");
   const manualConfBtn = document.getElementById("manualConfBtn");
   const perceivedConfBtn = document.getElementById("perceivedConfBtn");
-  let headerMenuTimer = null;
+    let headerMenuTimer = null;
+    let addTodoModalState = null; // { subjectId, fileId, subjectName, fileName, subtasks: [] }
 
     // View / schedule refs
     const viewBoardBtn = document.getElementById("viewBoardBtn");
@@ -521,6 +532,33 @@ const DEFAULT_SUBJECT_COLORS = [
         expandPageBtn.textContent = "⤢";
         document.body.style.overflow = "hidden";
       }
+      enforceTodayHeight();
+    }
+
+    function toggleSubjectsMaximize(force) {
+      subjectsMaximized = typeof force === "boolean" ? force : !subjectsMaximized;
+      if (subjectsMaximized) {
+        // fill the viewport and hide Today so subjects take the whole row
+        appRoot.classList.add("app-expanded");
+        appRoot.classList.add("subjects-maximized");
+        layoutRow?.classList.add("today-full");
+        if (todaySidebar) todaySidebar.style.display = "none";
+        expandState = true;
+        if (expandPageBtn) expandPageBtn.textContent = "⤡";
+        document.body.style.overflow = "auto";
+      } else {
+        appRoot.classList.remove("subjects-maximized");
+        if (layoutRow) layoutRow.classList.remove("today-full");
+        if (todaySidebar) todaySidebar.style.display = "";
+        // If the user had not expanded the page manually, restore default body overflow
+        if (!todayExpanded && !expandState) {
+          document.body.style.overflow = "hidden";
+          if (expandPageBtn) expandPageBtn.textContent = "⤢";
+        }
+      }
+      applyTodayExpandedLayout();
+      renderTable();
+      renderTodayTodos();
       enforceTodayHeight();
     }
 
@@ -1872,7 +1910,7 @@ const DEFAULT_SUBJECT_COLORS = [
       suggestionModalBackdrop.style.display = "none";
     }
 
-    function addTodoForFile(subjectId, fileId) {
+    function addTodoForFile(subjectId, fileId, subtaskTexts) {
       const { subj, file } = resolveFileRef(subjectId, fileId);
       if (!subj || !file) return false;
 
@@ -1881,6 +1919,13 @@ const DEFAULT_SUBJECT_COLORS = [
       );
       if (already) return false;
 
+      const subtasks = Array.isArray(subtaskTexts)
+        ? subtaskTexts
+            .map((txt) => (txt || "").trim())
+            .filter(Boolean)
+            .map((txt) => ({ id: createId(), label: txt, done: false }))
+        : [];
+
       todayTodos.unshift({
         id: createId(),
         subjectId,
@@ -1888,11 +1933,90 @@ const DEFAULT_SUBJECT_COLORS = [
         label: file.name || "Untitled file",
         subjectName: subj.name || "Subject",
         done: false,
-        subtasks: []
+        subtasks
       });
       saveTodayTodos();
       renderTodayTodos();
       return true;
+    }
+
+    function renderAddTodoSubtasks() {
+      if (!addTodoSubtaskList || !addTodoModalState) return;
+      addTodoSubtaskList.innerHTML = "";
+      if (!addTodoModalState.subtasks.length) return;
+      addTodoModalState.subtasks.forEach((label, idx) => {
+        const chip = document.createElement("div");
+        chip.className = "subtask-chip";
+        const text = document.createElement("span");
+        text.textContent = label;
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "subtask-chip-remove";
+        remove.textContent = "✕";
+        remove.addEventListener("click", () => {
+          addTodoModalState.subtasks.splice(idx, 1);
+          renderAddTodoSubtasks();
+        });
+        chip.appendChild(text);
+        chip.appendChild(remove);
+        addTodoSubtaskList.appendChild(chip);
+      });
+    }
+
+    function addSubtaskFromInput() {
+      if (!addTodoModalState || !addTodoSubtaskInput) return;
+      const txt = addTodoSubtaskInput.value.trim();
+      if (!txt) return;
+      addTodoModalState.subtasks.push(txt);
+      addTodoSubtaskInput.value = "";
+      renderAddTodoSubtasks();
+    }
+
+    function openAddTodoModal(subjectId, file) {
+      const subj = subjects.find((s) => s.id === subjectId);
+      addTodoModalState = {
+        subjectId,
+        fileId: file.id,
+        subjectName: subj ? subj.name || "Subject" : "Subject",
+        fileName: file.name || "Untitled file",
+        subtasks: []
+      };
+      if (addTodoModalTitle) addTodoModalTitle.textContent = "Add to Today";
+      if (addTodoModalSubtitle) {
+        addTodoModalSubtitle.textContent = `${addTodoModalState.fileName} · ${addTodoModalState.subjectName}`;
+      }
+      if (addTodoSubtaskInput) addTodoSubtaskInput.value = "";
+      renderAddTodoSubtasks();
+      if (addTodoModalBackdrop) {
+        addTodoModalBackdrop.hidden = false;
+        addTodoModalBackdrop.style.display = "flex";
+      }
+      addTodoSubtaskInput?.focus();
+    }
+
+    function closeAddTodoModal() {
+      addTodoModalState = null;
+      if (addTodoModalBackdrop) {
+        addTodoModalBackdrop.hidden = true;
+        addTodoModalBackdrop.style.display = "none";
+      }
+    }
+
+    function submitAddTodoModal() {
+      if (!addTodoModalState) {
+        closeAddTodoModal();
+        return;
+      }
+      const subtasks = addTodoModalState.subtasks || [];
+      const added = addTodoForFile(addTodoModalState.subjectId, addTodoModalState.fileId, subtasks);
+      if (!added) {
+        showNotice("Already in Today’s Focus.", "info");
+      } else {
+        showNotice("Added to Today’s Focus.", "success");
+      }
+      closeAddTodoModal();
+      renderTable();
+      renderTodayTodos();
     }
 
     function cleanupTodosForSubject(subjectId) {
@@ -1930,6 +2054,18 @@ const DEFAULT_SUBJECT_COLORS = [
       }
       saveTodayTodos();
       renderTodayTodos();
+    }
+
+    function moveTodo(sourceId, targetId) {
+      if (!sourceId || !targetId || sourceId === targetId) return;
+      const sourceIndex = todayTodos.findIndex((t) => t.id === sourceId);
+      const targetIndex = todayTodos.findIndex((t) => t.id === targetId);
+      if (sourceIndex === -1 || targetIndex === -1) return;
+      const [moved] = todayTodos.splice(sourceIndex, 1);
+      todayTodos.splice(targetIndex, 0, moved);
+      saveTodayTodos();
+      renderTodayTodos();
+      renderTable();
     }
 
     function removeTodo(todoId) {
@@ -2029,10 +2165,13 @@ const DEFAULT_SUBJECT_COLORS = [
         return;
       }
 
-      const sortedTodos = [...todayTodos].sort((a, b) => {
-        if (a.done === b.done) return 0;
-        return a.done ? 1 : -1;
-      });
+      const isDragMode = todayExpanded && !subjectsMaximized;
+      const sortedTodos = isDragMode
+        ? [...todayTodos]
+        : [...todayTodos].sort((a, b) => {
+            if (a.done === b.done) return 0;
+            return a.done ? 1 : -1;
+          });
 
       const activeItems = [];
       const completedItems = [];
@@ -2049,6 +2188,35 @@ const DEFAULT_SUBJECT_COLORS = [
         if (borderTint) item.style.borderColor = borderTint;
         if (todo.done) item.classList.add("today-item-done");
         if (!file || !subj) item.classList.add("today-item-missing");
+        if (isDragMode) {
+          item.setAttribute("draggable", "true");
+          item.dataset.todoId = todo.id;
+          item.addEventListener("dragstart", (event) => {
+            event.dataTransfer?.setData("text/plain", todo.id);
+            item.classList.add("dragging");
+            todayDragId = todo.id;
+          });
+          item.addEventListener("dragend", () => {
+            item.classList.remove("dragging");
+            todayDragId = null;
+            const targets = todayList.querySelectorAll(".today-item.drop-target");
+            targets.forEach((el) => el.classList.remove("drop-target"));
+          });
+          item.addEventListener("dragover", (event) => {
+            if (!todayDragId || todayDragId === todo.id) return;
+            event.preventDefault();
+            item.classList.add("drop-target");
+          });
+          item.addEventListener("dragleave", () => {
+            item.classList.remove("drop-target");
+          });
+          item.addEventListener("drop", (event) => {
+            event.preventDefault();
+            item.classList.remove("drop-target");
+            if (!todayDragId || todayDragId === todo.id) return;
+            moveTodo(todayDragId, todo.id);
+          });
+        }
 
         const topRow = document.createElement("div");
         topRow.className = "today-item-top";
@@ -2074,13 +2242,7 @@ const DEFAULT_SUBJECT_COLORS = [
         title.className = "today-title";
         title.textContent = (file && file.name) || todo.label || "Untitled";
 
-        const meta = document.createElement("div");
-        meta.className = "today-meta";
-        const subjName = (subj && subj.name) || todo.subjectName || "Subject removed";
-        meta.textContent = subjName;
-
         textWrap.appendChild(title);
-        textWrap.appendChild(meta);
 
         left.appendChild(checkbox);
         left.appendChild(colorDot);
@@ -2377,13 +2539,12 @@ const DEFAULT_SUBJECT_COLORS = [
             chip.style.setProperty("--chip-bg", bg);
             chip.style.setProperty("--chip-border", border);
             chip.style.setProperty("--chip-ink", "#0f172a");
-            const subjName = (subj && subj.name) || todo.subjectName || "Subject";
-            const labelText = todo.label || subjName || "Untitled";
+            const labelText = todo.label || "Untitled";
 
             const label = document.createElement("div");
             label.className = "schedule-chip-label";
             label.textContent = labelText;
-            label.title = subjName;
+            label.title = labelText;
 
             const isToday = key === todayKey;
             const isDone = !!todo.done;
@@ -3107,9 +3268,15 @@ const DEFAULT_SUBJECT_COLORS = [
           renderTable();
         });
 
+        const headerRight = document.createElement("div");
+        headerRight.style.display = "flex";
+        headerRight.style.alignItems = "center";
+        headerRight.style.gap = "6px";
+        headerRight.appendChild(countSpan);
+        headerRight.appendChild(deleteSubjectBtn);
+
         header.appendChild(headerLeft);
-        header.appendChild(countSpan);
-        header.appendChild(deleteSubjectBtn);
+        header.appendChild(headerRight);
 
         const meter = document.createElement("div");
         meter.className = "subject-meter";
@@ -3216,6 +3383,13 @@ const DEFAULT_SUBJECT_COLORS = [
             const row = document.createElement("div");
             row.className = "file-row";
             row.setAttribute("draggable", "true");
+
+            const inToday = todayTodos.some(
+              (t) => t.subjectId === subj.id && t.fileId === file.id
+            );
+            if (subjectsMaximized && inToday) {
+              row.classList.add("in-today");
+            }
 
             if (isActiveStudy(subj.id, file.id)) {
               row.classList.add("studying");
@@ -3343,44 +3517,81 @@ const DEFAULT_SUBJECT_COLORS = [
             const isPaused =
               isThisActive && activeStudy && activeStudy.paused;
 
-            if (!isThisActive) {
-              const studyBtn = document.createElement("button");
-              studyBtn.className = "chip-btn chip-btn-primary";
-              studyBtn.textContent = "Study";
-              studyBtn.addEventListener("click", (event) => {
-                event.stopPropagation();
-            startStudy(subj.id, file);
-          });
-          rightMeta.appendChild(studyBtn);
-        } else {
-          const primaryBtn = document.createElement("button");
-          primaryBtn.className = "chip-btn chip-btn-primary";
-          primaryBtn.textContent = isPaused ? "Resume" : "Pause";
-          primaryBtn.addEventListener("click", (event) => {
-            event.stopPropagation();
-            if (activeStudy.paused) {
-              activeStudy.startTimeMs = Date.now();
-              activeStudy.paused = false;
-              renderFocusState();
-              renderTable();
-              renderTodayTodos();
-              renderScheduleView();
-              updateStudyTimerDisplay();
-            } else {
-              pauseStudy(subj.id, file.id);
+            if (!subjectsMaximized) {
+              if (!isThisActive) {
+                const studyBtn = document.createElement("button");
+                studyBtn.className = "chip-btn chip-btn-primary";
+                studyBtn.textContent = "Study";
+                studyBtn.addEventListener("click", (event) => {
+                  event.stopPropagation();
+                  startStudy(subj.id, file);
+                });
+                rightMeta.appendChild(studyBtn);
+              } else {
+                const primaryBtn = document.createElement("button");
+                primaryBtn.className = "chip-btn chip-btn-primary";
+                primaryBtn.textContent = isPaused ? "Resume" : "Pause";
+                primaryBtn.addEventListener("click", (event) => {
+                  event.stopPropagation();
+                  if (activeStudy.paused) {
+                    activeStudy.startTimeMs = Date.now();
+                    activeStudy.paused = false;
+                    renderFocusState();
+                    renderTable();
+                    renderTodayTodos();
+                    renderScheduleView();
+                    updateStudyTimerDisplay();
+                  } else {
+                    pauseStudy(subj.id, file.id);
+                  }
+                });
+
+                const stopBtn = document.createElement("button");
+                stopBtn.className = "chip-btn chip-btn-danger";
+                stopBtn.textContent = "Stop";
+                stopBtn.addEventListener("click", (event) => {
+                  event.stopPropagation();
+                  stopStudy(subj.id, file.id);
+                });
+
+                rightMeta.appendChild(primaryBtn);
+                rightMeta.appendChild(stopBtn);
+              }
             }
-          });
 
-              const stopBtn = document.createElement("button");
-              stopBtn.className = "chip-btn chip-btn-danger";
-              stopBtn.textContent = "Stop";
-              stopBtn.addEventListener("click", (event) => {
-                event.stopPropagation();
-                stopStudy(subj.id, file.id);
-              });
-
-              rightMeta.appendChild(primaryBtn);
-              rightMeta.appendChild(stopBtn);
+            // Only show add-to-today when maximized (per request)
+            if (subjectsMaximized) {
+              const addTodayBtn = document.createElement("button");
+              addTodayBtn.className = "chip-btn chip-btn-ghost";
+              addTodayBtn.textContent = inToday ? "In Today" : "To Today";
+              addTodayBtn.title = inToday
+                ? "Already in Today’s Focus"
+                : "Add this file to Today’s Focus";
+              if (inToday) {
+                addTodayBtn.disabled = true;
+                addTodayBtn.classList.add("chip-btn-success");
+                const removeBtn = document.createElement("button");
+                removeBtn.className = "chip-btn chip-btn-danger";
+                removeBtn.textContent = "Remove";
+                removeBtn.title = "Remove from Today’s Focus";
+                removeBtn.addEventListener("click", (event) => {
+                  event.stopPropagation();
+                  todayTodos = todayTodos.filter(
+                    (t) => !(t.subjectId === subj.id && t.fileId === file.id)
+                  );
+                  saveTodayTodos();
+                  renderTodayTodos();
+                  renderTable();
+                });
+                rightMeta.appendChild(addTodayBtn);
+                rightMeta.appendChild(removeBtn);
+              } else {
+                addTodayBtn.addEventListener("click", (event) => {
+                  event.stopPropagation();
+                  openAddTodoModal(subj.id, file);
+                });
+                rightMeta.appendChild(addTodayBtn);
+              }
             }
 
             metaDiv.appendChild(leftMeta);
@@ -3884,21 +4095,30 @@ const DEFAULT_SUBJECT_COLORS = [
 
     function applyTodayExpandedLayout() {
       if (!layoutRow) return;
-      layoutRow.classList.toggle("today-full", todayExpanded);
+      layoutRow.classList.toggle("today-full", todayExpanded || subjectsMaximized);
       if (todayList) {
-        todayList.classList.toggle("today-list-grid", todayExpanded);
+        todayList.classList.toggle("today-list-grid", todayExpanded && !subjectsMaximized);
+        todayList.classList.toggle(
+          "today-scroll-visible",
+          todayExpanded && !subjectsMaximized
+        );
       }
       if (todaySidebar) {
-        todaySidebar.classList.toggle("today-sidebar-full", todayExpanded);
+        todaySidebar.classList.toggle("today-sidebar-full", todayExpanded && !subjectsMaximized);
       }
       if (todayDropZone) {
-        todayDropZone.style.display = todayExpanded ? "none" : "";
+        todayDropZone.style.display = todayExpanded && !subjectsMaximized ? "none" : "";
       }
       if (todayHeaderActions && todayHeaderActions.firstChild) {
         const btn = todayHeaderActions.firstChild;
         btn.setAttribute("aria-pressed", todayExpanded ? "true" : "false");
         btn.dataset.state = todayExpanded ? "restore" : "maximize";
         btn.dataset.icon = todayExpanded ? "⤡" : "⤢";
+      }
+      const maxSubjectBtn = document.getElementById("maximizeSubjectsBtn");
+      if (maxSubjectBtn) {
+        maxSubjectBtn.setAttribute("aria-pressed", subjectsMaximized ? "true" : "false");
+        maxSubjectBtn.textContent = subjectsMaximized ? "⤡" : "⤢";
       }
       renderTodayTodos();
     }
@@ -4226,6 +4446,10 @@ const DEFAULT_SUBJECT_COLORS = [
       activeStudy.timerMode = "stopwatch";
       updateTimerModeButtons("stopwatch");
     });
+    const maximizeSubjectsBtn = document.getElementById("maximizeSubjectsBtn");
+    maximizeSubjectsBtn?.addEventListener("click", () => {
+      toggleSubjectsMaximize();
+    });
     expandPageBtn?.addEventListener("click", toggleExpand);
     window.addEventListener("resize", () => {
       enforceTodayHeight();
@@ -4323,6 +4547,26 @@ const DEFAULT_SUBJECT_COLORS = [
         closeNotice();
       });
     }
+
+    if (addTodoModalCancel) {
+      addTodoModalCancel.addEventListener("click", () => {
+        closeAddTodoModal();
+      });
+    }
+    addTodoSubtaskAdd?.addEventListener("click", addSubtaskFromInput);
+    addTodoSubtaskInput?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        addSubtaskFromInput();
+      }
+    });
+    addTodoModalClose?.addEventListener("click", () => closeAddTodoModal());
+    addTodoModalSave?.addEventListener("click", () => submitAddTodoModal());
+    addTodoModalBackdrop?.addEventListener("mousedown", (event) => {
+      if (event.target === addTodoModalBackdrop) {
+        closeAddTodoModal();
+      }
+    });
 
     if (noticeModalBackdrop) {
     noticeModalBackdrop.addEventListener("mousedown", (event) => {
