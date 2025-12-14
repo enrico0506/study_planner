@@ -12,8 +12,21 @@
   body.timetable-page {
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 0;
     -webkit-overflow-scrolling: touch;
+  }
+
+  body {
+    padding: 0;
+  }
+
+  body.calendar-page,
+  body.timetable-page,
+  body.flashcards-page {
+    padding: 12px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-top: 12px;
+    padding-bottom: 16px;
   }
 
   .app,
@@ -52,4 +65,3 @@
     -webkit-overflow-scrolling: touch;
   }
 }
-

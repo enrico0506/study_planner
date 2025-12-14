@@ -18,26 +18,34 @@
   body.calendar-page,
   body.timetable-page,
   body.flashcards-page {
-    padding-left: max(12px, env(safe-area-inset-left));
-    padding-right: max(12px, env(safe-area-inset-right));
-    padding-top: 12px;
-    padding-bottom: 16px;
+    overflow-x: hidden !important;
+    padding: 12px 0 16px !important;
   }
 
   .calendar-shell,
   .timetable-shell,
   .flashcards-shell {
-    width: 100%;
+    width: auto;
     max-width: 100%;
-    margin: 0 auto;
+    margin: 0;
+    margin-left: max(12px, env(safe-area-inset-left));
+    margin-right: max(12px, env(safe-area-inset-right));
     border-radius: 16px;
+    box-sizing: border-box;
   }
 
   /* Stundenplan: show one day, swipe/paged via JS variable */
+  .timeline-wrap,
+  .timetable-week-grid {
+    overflow: hidden;
+    max-width: 100%;
+  }
+
   .timeline-cols-head,
   .timeline-cols {
     display: flex;
     width: 100%;
+    min-width: 0;
     transform: translateX(calc(var(--tt-day, 0) * -100%));
     transition: transform 0.22s ease;
     will-change: transform;
@@ -45,11 +53,21 @@
 
   .timeline-day-head,
   .timeline-day {
-    min-width: 100%;
+    flex: 0 0 100%;
+    min-width: 0;
     max-width: 100%;
   }
 
   /* Calendar: renderWeekCalendar outputs 7 items; show as list */
+  .calendar-layout,
+  .calendar-month-card,
+  .calendar-side,
+  .calendar-card,
+  .calendar-scroll {
+    max-width: 100%;
+    min-width: 0;
+  }
+
   .calendar-weekdays {
     display: none;
   }
