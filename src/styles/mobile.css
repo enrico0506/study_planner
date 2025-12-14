@@ -1,0 +1,55 @@
+/* Mobile/iPad scroll overrides
+   Remove the `<link href="./src/styles/mobile.css">` from HTML pages to revert. */
+
+@media (max-width: 1024px) {
+  html,
+  body {
+    height: auto;
+  }
+
+  body,
+  body.calendar-page,
+  body.timetable-page {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app,
+  .calendar-shell,
+  .timetable-shell,
+  .flashcards-shell {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    border-radius: 0;
+    max-height: none;
+    height: auto;
+    overflow: visible;
+    box-shadow: none;
+  }
+
+  .calendar-scroll {
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .timetable-shell {
+    height: auto;
+  }
+
+  .timetable-board,
+  .timetable-week-grid {
+    height: auto;
+    overflow: visible;
+  }
+
+  .table-wrapper,
+  .timeline-wrap,
+  .calendar-scroll,
+  .timetable-tab-list {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
