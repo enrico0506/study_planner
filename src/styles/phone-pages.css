@@ -61,6 +61,31 @@
     max-width: 100%;
   }
 
+  /* Prevent the sliding day columns from showing through the time rail (its background uses transparent stripes). */
+  body.timetable-page .timeline-rail {
+    position: relative;
+    z-index: 6;
+    background-color: #f8fafc;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      #f8fafc 0,
+      #f8fafc 1px,
+      transparent 1px,
+      transparent var(--timeline-hour-height)
+    );
+  }
+
+  body.timetable-page .timeline-rail-head {
+    position: sticky;
+    z-index: 7;
+  }
+
+  body.timetable-page .timeline-cols-head,
+  body.timetable-page .timeline-cols {
+    position: relative;
+    z-index: 1;
+  }
+
   body.timetable-page .timeline-cols-head,
   body.timetable-page .timeline-cols {
     display: flex;
