@@ -1176,13 +1176,47 @@
       margin-bottom: 4px;
     }
 
-    .focus-timer-display {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 2.3rem;
-      font-weight: 650;
-      color: var(--accent-ink);
-      line-height: 1.1;
-    }
+.focus-timer-display {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 2.3rem;
+  font-weight: 650;
+  color: var(--accent-ink);
+  line-height: 1.1;
+}
+
+.focus-timer-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  background: #f1f4ff;
+  border: 1px solid #dfe4f0;
+  border-radius: 999px;
+  padding: 3px;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+}
+
+.focus-timer-mode-btn {
+  border: none;
+  background: transparent;
+  color: var(--accent-ink);
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.08s ease;
+}
+
+.focus-timer-mode-btn:hover {
+  background: var(--accent-soft);
+  transform: translateY(-0.5px);
+}
+
+.focus-timer-active {
+  background: #ffffff;
+  color: #234fce;
+  box-shadow: 0 6px 14px rgba(35, 79, 206, 0.12);
+}
 
 .focus-bottom {
   display: flex;

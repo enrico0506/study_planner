@@ -115,6 +115,7 @@ const DEFAULT_SUBJECT_COLORS = [
       high: "#22c55e"
     };
     let confidenceMode = "manual"; // "manual" | "perceived"
+    let timerModePref = "countdown";
 
     // DOM refs
     const appRoot = document.getElementById("appRoot");
@@ -154,6 +155,9 @@ const DEFAULT_SUBJECT_COLORS = [
   const settingsColorsPanel = document.getElementById("settingsColorsPanel");
   const settingsPrefsPanel = document.getElementById("settingsPrefsPanel");
   const settingsThemePickerBtn = document.getElementById("settingsThemePickerBtn");
+  const timerModeCountdownBtn = document.getElementById("timerModeCountdownBtn");
+  const timerModeStopwatchBtn = document.getElementById("timerModeStopwatchBtn");
+  const focusTimerLabel = document.getElementById("focusTimerLabel");
   const manualConfBtn = document.getElementById("manualConfBtn");
   const perceivedConfBtn = document.getElementById("perceivedConfBtn");
   let headerMenuTimer = null;
@@ -2337,26 +2341,22 @@ const DEFAULT_SUBJECT_COLORS = [
 
             const isToday = key === todayKey;
             const isDone = !!todo.done;
-            const studyBtn = document.createElement("button");
-            studyBtn.type = "button";
-            studyBtn.className = "schedule-chip-study";
-            studyBtn.textContent = "Study";
-            studyBtn.disabled = !isToday || isDone;
-            studyBtn.style.display = isDone ? "none" : "inline-flex";
-            studyBtn.title = isToday
-              ? isDone
-                ? "Task completed"
-                : "Start a study session"
-              : "Only today's tasks can start study";
-            studyBtn.addEventListener("click", (event) => {
-              event.stopPropagation();
-              if (!isToday || isDone) return;
-              if (subj && file) {
-                startStudy(todo.subjectId, file);
-              } else {
-                showNotice("This task is missing its subject or file.", "warn");
-              }
-            });
+            let studyBtn = null;
+            if (isToday && !isDone) {
+              studyBtn = document.createElement("button");
+              studyBtn.type = "button";
+              studyBtn.className = "schedule-chip-study";
+              studyBtn.textContent = "Study";
+              studyBtn.title = "Start a study session";
+              studyBtn.addEventListener("click", (event) => {
+                event.stopPropagation();
+                if (subj && file) {
+                  startStudy(todo.subjectId, file);
+                } else {
+                  showNotice("This task is missing its subject or file.", "warn");
+                }
+              });
+            }
 
             if (todo.done) chip.classList.add("schedule-chip-done");
 
@@ -2365,7 +2365,7 @@ const DEFAULT_SUBJECT_COLORS = [
               activeStudy.kind === "study" &&
               activeStudy.subjectId === todo.subjectId &&
               activeStudy.fileId === todo.fileId;
-            if (isActive) {
+            if (isActive && studyBtn) {
               chip.classList.add("schedule-chip-active");
               studyBtn.textContent = "Studying";
             }
@@ -2396,7 +2396,7 @@ const DEFAULT_SUBJECT_COLORS = [
             orderControls.appendChild(downBtn);
 
             chip.appendChild(label);
-            chip.appendChild(studyBtn);
+            if (studyBtn) chip.appendChild(studyBtn);
             chip.addEventListener("click", () => openScheduleTaskModal(todo, key));
 
             // Drag & drop (within same subject)
@@ -2649,7 +2649,8 @@ const DEFAULT_SUBJECT_COLORS = [
         startTimeMs: Date.now(),
         baseMs: 0,
         targetMs,
-        paused: false
+        paused: false,
+        timerMode: timerModePref || "countdown"
       };
 
       renderFocusState();
@@ -2750,23 +2751,32 @@ const DEFAULT_SUBJECT_COLORS = [
           ? activeStudy.targetMs
           : 0;
 
-      let remaining = targetMs - elapsed;
-      if (remaining <= 0) {
-        focusTimerDisplay.textContent = "00:00:00";
-        finalizeActiveSession(true, true);
-        return;
-      }
+      const useCountdown = activeStudy.timerMode !== "stopwatch";
 
-      const text = formatHMS(remaining);
-      focusTimerDisplay.textContent = text;
-
-      if (activeStudy.kind === "study" && activeStudy.fileId) {
-        const span = document.getElementById("timer-" + activeStudy.fileId);
-        if (span) span.textContent = text;
-        const spanToday = document.getElementById(
-          "today-timer-" + activeStudy.fileId
-        );
-        if (spanToday) spanToday.textContent = text;
+      if (useCountdown) {
+        let remaining = targetMs - elapsed;
+        if (remaining <= 0) {
+          focusTimerDisplay.textContent = "00:00:00";
+          finalizeActiveSession(true, true);
+          return;
+        }
+        const text = formatHMS(remaining);
+        focusTimerDisplay.textContent = text;
+        if (activeStudy.kind === "study" && activeStudy.fileId) {
+          const span = document.getElementById("timer-" + activeStudy.fileId);
+          if (span) span.textContent = text;
+          const spanToday = document.getElementById("today-timer-" + activeStudy.fileId);
+          if (spanToday) spanToday.textContent = text;
+        }
+      } else {
+        const text = formatHMS(elapsed);
+        focusTimerDisplay.textContent = text;
+        if (activeStudy.kind === "study" && activeStudy.fileId) {
+          const span = document.getElementById("timer-" + activeStudy.fileId);
+          if (span) span.textContent = text;
+          const spanToday = document.getElementById("today-timer-" + activeStudy.fileId);
+          if (spanToday) spanToday.textContent = text;
+        }
       }
     }
 
@@ -2790,6 +2800,7 @@ const DEFAULT_SUBJECT_COLORS = [
         focusSessionControls.innerHTML =
           '<span style="font-size:0.75rem;color:#9ca3af;">No controls – start a session.</span>';
         focusTimerDisplay.textContent = "00:00:00";
+        updateTimerModeButtons(timerModePref);
         return;
       }
 
@@ -2806,6 +2817,7 @@ const DEFAULT_SUBJECT_COLORS = [
         } else {
           focusCard.classList.add("focus-study-active");
         }
+        updateTimerModeButtons(activeStudy.timerMode || timerModePref);
       } else {
         const label =
           activeStudy.breakKind === "short"
@@ -2816,6 +2828,7 @@ const DEFAULT_SUBJECT_COLORS = [
         focusSessionTitle.textContent = label;
         focusSessionSubtitle.textContent = "Break";
         focusCard.classList.add("focus-break-active");
+        updateTimerModeButtons(timerModePref);
       }
 
       focusSessionControls.innerHTML = "";
@@ -3895,24 +3908,21 @@ const DEFAULT_SUBJECT_COLORS = [
 
     if (editGoalBtn) {
       editGoalBtn.addEventListener("click", () => {
-        openNoticePrompt(
-          "Set weekly target (minutes)",
-          String(weeklyTargetMinutes || DEFAULT_WEEKLY_TARGET_MINUTES),
-          (value) => {
-            const minutes = Number(value);
-            if (!Number.isFinite(minutes) || minutes <= 0) {
-              showNotice("Please enter minutes greater than zero.", "warn");
-              return;
-            }
-            weeklyTargetMinutes = Math.round(minutes);
-            saveFocusConfig();
-            updateGoalsAndStreaks();
-            renderStatsModalContent();
-            renderSmartSuggestions();
-            renderDueSoonLane();
-            showToast("Weekly target updated.", "success");
+        const hoursValue = Math.max(1, Math.round((weeklyTargetMinutes || DEFAULT_WEEKLY_TARGET_MINUTES) / 60));
+        openNoticePrompt("Set weekly target (hours)", String(hoursValue), (value) => {
+          const hours = Number(value);
+          if (!Number.isFinite(hours) || hours <= 0) {
+            showNotice("Please enter hours greater than zero.", "warn");
+            return;
           }
-        );
+          weeklyTargetMinutes = Math.round(hours * 60);
+          saveFocusConfig();
+          updateGoalsAndStreaks();
+          renderStatsModalContent();
+          renderSmartSuggestions();
+          renderDueSoonLane();
+          showToast("Weekly target updated.", "success");
+        });
       });
     }
 
@@ -4107,6 +4117,18 @@ const DEFAULT_SUBJECT_COLORS = [
         renderSettingsPreview();
       });
     });
+    timerModeCountdownBtn?.addEventListener("click", () => {
+      if (!activeStudy) return;
+      activeStudy.timerMode = "countdown";
+      timerModeCountdownBtn.classList.add("focus-timer-active");
+      timerModeStopwatchBtn?.classList.remove("focus-timer-active");
+    });
+    timerModeStopwatchBtn?.addEventListener("click", () => {
+      if (!activeStudy) return;
+      activeStudy.timerMode = "stopwatch";
+      timerModeStopwatchBtn.classList.add("focus-timer-active");
+      timerModeCountdownBtn?.classList.remove("focus-timer-active");
+    });
     manualConfBtn?.addEventListener("click", () => {
       confidenceMode = "manual";
       localStorage.setItem(CONF_MODE_KEY, confidenceMode);
@@ -4126,6 +4148,35 @@ const DEFAULT_SUBJECT_COLORS = [
       renderSmartSuggestions();
       updateSummary();
       renderTodayTodos();
+    });
+    function updateTimerModeButtons(mode) {
+      if (mode === "stopwatch") {
+        timerModeStopwatchBtn?.classList.add("focus-timer-active");
+        timerModeCountdownBtn?.classList.remove("focus-timer-active");
+        if (focusTimerLabel) focusTimerLabel.textContent = "Stopwatch";
+      } else {
+        timerModeCountdownBtn?.classList.add("focus-timer-active");
+        timerModeStopwatchBtn?.classList.remove("focus-timer-active");
+        if (focusTimerLabel) focusTimerLabel.textContent = "Countdown";
+      }
+    }
+    timerModeCountdownBtn?.addEventListener("click", () => {
+      timerModePref = "countdown";
+      if (!activeStudy) {
+        updateTimerModeButtons("countdown");
+        return;
+      }
+      activeStudy.timerMode = "countdown";
+      updateTimerModeButtons("countdown");
+    });
+    timerModeStopwatchBtn?.addEventListener("click", () => {
+      timerModePref = "stopwatch";
+      if (!activeStudy) {
+        updateTimerModeButtons("stopwatch");
+        return;
+      }
+      activeStudy.timerMode = "stopwatch";
+      updateTimerModeButtons("stopwatch");
     });
     const settingsPrefsSaveBtn = document.getElementById("settingsPrefsSaveBtn");
     settingsPrefsSaveBtn?.addEventListener("click", () => {

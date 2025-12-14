@@ -260,14 +260,18 @@
               <span style="font-size:0.75rem;color:#9ca3af;">No controls – start a session.</span>
             </div>
           </div>
-          <div class="focus-right">
-            <div class="focus-timer-box">
-              <div class="focus-timer-label-small">Countdown</div>
-              <div class="focus-timer-display" id="focusTimerDisplay">00:00:00</div>
-            </div>
+        <div class="focus-right">
+          <div class="focus-timer-box">
+            <div class="focus-timer-label-small" id="focusTimerLabel">Countdown</div>
+            <div class="focus-timer-display" id="focusTimerDisplay">00:00:00</div>
+          </div>
         </div>
       </div>
       <div class="focus-bottom">
+        <div class="focus-timer-toggle" role="group" aria-label="Timer mode">
+          <button class="focus-timer-mode-btn focus-timer-active" id="timerModeCountdownBtn" type="button" data-mode="countdown">Countdown</button>
+          <button class="focus-timer-mode-btn" id="timerModeStopwatchBtn" type="button" data-mode="stopwatch">Stopwatch</button>
+        </div>
         <button class="focus-break-btn" id="openTimerSettingsBtn" type="button">
           Timer settings
         </button>
