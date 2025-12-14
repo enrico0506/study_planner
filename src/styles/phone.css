@@ -241,6 +241,11 @@
     white-space: nowrap;
   }
 
+  body[data-mode="today"].today-picker-open .file-row.in-today {
+    background: #dcfce7;
+    border-color: #22c55e;
+  }
+
   body[data-mode="today"] #layoutRow .today-sidebar .today-section {
     width: 100%;
   }

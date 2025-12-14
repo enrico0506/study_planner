@@ -317,7 +317,9 @@ const DEFAULT_SUBJECT_COLORS = [
     function applySubjectPaging() {
       if (!subjectTable) return;
       if (!isPhoneLayout()) return;
-      if (document.body.dataset.mode !== "subjects") return;
+      const mode = document.body.dataset.mode;
+      const allowTodayPicker = mode === "today" && document.body.classList.contains("today-picker-open");
+      if (mode !== "subjects" && !allowTodayPicker) return;
 
       const cols = subjectTable.querySelectorAll(".subject-column");
       const total = cols.length;
@@ -3640,9 +3642,25 @@ const DEFAULT_SUBJECT_COLORS = [
                 : "Add this file to Today’s Focus";
 
               if (inToday) {
-                addTodayBtn.disabled = true;
-                addTodayBtn.classList.add("chip-btn-success");
-                rightMeta.appendChild(addTodayBtn);
+                if (picker) {
+                  addTodayBtn.disabled = true;
+                  addTodayBtn.classList.add("chip-btn-success");
+                  const removeBtn = document.createElement("button");
+                  removeBtn.className = "chip-btn chip-btn-danger";
+                  removeBtn.textContent = "Remove";
+                  removeBtn.title = "Remove from Today’s Focus";
+                  removeBtn.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    cleanupTodoForFile(subj.id, file.id);
+                    renderTable();
+                  });
+                  rightMeta.appendChild(addTodayBtn);
+                  rightMeta.appendChild(removeBtn);
+                } else {
+                  addTodayBtn.disabled = true;
+                  addTodayBtn.classList.add("chip-btn-success");
+                  rightMeta.appendChild(addTodayBtn);
+                }
               } else if (picker) {
                 addTodayBtn.addEventListener("click", (event) => {
                   event.stopPropagation();
