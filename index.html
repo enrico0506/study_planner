@@ -16,6 +16,7 @@
   </script>
   <link rel="stylesheet" href="./src/styles/main.css" />
   <link rel="stylesheet" href="./src/styles/mobile.css" />
+  <link rel="stylesheet" href="./src/styles/phone.css" />
 </head>
 <body>
   <div class="app" id="appRoot">
@@ -60,6 +61,20 @@
             ...
           </button>
           <div class="header-menu-panel" id="headerMenuPanel">
+            <div class="header-menu-group mobile-menu-only">
+              <button class="header-menu-link" id="mobileMenuBoardBtn" type="button">Board</button>
+              <button class="header-menu-link" id="mobileMenuScheduleBtn" type="button">Daily schedule</button>
+              <button class="header-menu-link" id="mobileMenuTodayBtn" type="button">Today's focus</button>
+            </div>
+            <div class="header-menu-divider mobile-menu-only"></div>
+            <div class="header-menu-group mobile-menu-only">
+              <div class="header-menu-subtitle">Study hubs</div>
+              <a class="header-menu-link" href="./calendar.html">Calendar</a>
+              <a class="header-menu-link" href="./stundenplan.html">Stundenplan</a>
+              <a class="header-menu-link" href="./karteikarten.html">Karteikarten</a>
+              <a class="header-menu-link" href="./account.html">Account</a>
+            </div>
+            <div class="header-menu-divider mobile-menu-only"></div>
             <div class="header-menu-group">
               <button class="header-menu-item" id="headerProfileBtn" type="button">Login</button>
               <button class="header-menu-item" id="headerSettingsBtn" type="button">Settings</button>

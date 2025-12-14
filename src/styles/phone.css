@@ -1,0 +1,52 @@
+/* Phone-only layout/navigation tweaks (<= 720px)
+   Remove the `<link href="./src/styles/phone.css">` from `index.html` to revert. */
+
+.mobile-menu-only {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .mobile-menu-only {
+    display: block;
+  }
+
+  /* Move primary navigation into the ... menu */
+  .header-actions .view-toggle,
+  .header-actions #quickJumpDropdown {
+    display: none;
+  }
+
+  /* Reorder top row: Focus first, stats second */
+  .top-row {
+    flex-direction: column;
+  }
+
+  .top-row .focus-card {
+    order: 0;
+  }
+
+  .top-row .summary-card {
+    order: 1;
+  }
+
+  /* Keep subjects after stats */
+  #layoutRow .main-area {
+    order: 2;
+  }
+
+  /* Hide Today's focus by default on phone */
+  #layoutRow {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  #layoutRow .today-sidebar {
+    display: none;
+  }
+
+  .app.mobile-show-today #layoutRow .today-sidebar {
+    display: block;
+  }
+}
+
