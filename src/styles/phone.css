@@ -72,4 +72,12 @@
   body[data-mode="schedule"] #layoutRow {
     display: none !important;
   }
+
+  body[data-mode="schedule"] .schedule-subtitle {
+    display: none;
+  }
+
+  body[data-mode="schedule"] .schedule-grid {
+    grid-template-columns: 1fr;
+  }
 }

@@ -287,10 +287,24 @@ const DEFAULT_SUBJECT_COLORS = [
     let statsRange = "week"; // "day" | "week" | "month" | "all"
     let activeView = "board"; // "board" | "schedule"
     let scheduleWeekStart = null;
+    let scheduleCursorDay = null;
     let scheduleModalState = null;
     let scheduleDrag = null;
 
     // Helpers
+    function isPhoneLayout() {
+      return window.matchMedia && window.matchMedia("(max-width: 720px)").matches;
+    }
+
+    function getScheduleCursorDay() {
+      if (!scheduleCursorDay) {
+        scheduleCursorDay = new Date();
+      }
+      // Reduce timezone edge cases around midnight
+      scheduleCursorDay.setHours(12, 0, 0, 0);
+      return scheduleCursorDay;
+    }
+
     function getSubjectColor(index) {
       if (!Array.isArray(subjectColors) || !subjectColors.length) {
         subjectColors = [...DEFAULT_SUBJECT_COLORS];
@@ -2466,19 +2480,40 @@ const DEFAULT_SUBJECT_COLORS = [
 
     function renderScheduleView() {
       if (!scheduleGrid) return;
-      if (!scheduleWeekStart) scheduleWeekStart = getWeekStart(new Date());
+      const phone = isPhoneLayout();
 
-      const start = new Date(scheduleWeekStart);
-      const end = new Date(start);
-      end.setDate(start.getDate() + 6);
-      if (scheduleRangeLabel) {
-        scheduleRangeLabel.textContent = formatWeekRangeLabel(start, end);
+      let start;
+      let end;
+      let daysToRender = 7;
+
+      if (phone) {
+        const cursor = new Date(getScheduleCursorDay());
+        start = cursor;
+        end = cursor;
+        daysToRender = 1;
+        if (scheduleRangeLabel) {
+          scheduleRangeLabel.textContent = cursor.toLocaleDateString(undefined, {
+            weekday: "short",
+            day: "2-digit",
+            month: "short"
+          });
+        }
+        if (scheduleTodayBtn) scheduleTodayBtn.textContent = "Today";
+      } else {
+        if (!scheduleWeekStart) scheduleWeekStart = getWeekStart(new Date());
+        start = new Date(scheduleWeekStart);
+        end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        if (scheduleRangeLabel) {
+          scheduleRangeLabel.textContent = formatWeekRangeLabel(start, end);
+        }
+        if (scheduleTodayBtn) scheduleTodayBtn.textContent = "This week";
       }
 
       scheduleGrid.innerHTML = "";
       const todayKey = getTodayKey();
 
-      for (let i = 0; i < 7; i++) {
+      for (let i = 0; i < daysToRender; i++) {
         const day = new Date(start);
         day.setDate(start.getDate() + i);
         const key = dateToKey(day);
@@ -4546,23 +4581,39 @@ const DEFAULT_SUBJECT_COLORS = [
 
     if (schedulePrevWeekBtn) {
       schedulePrevWeekBtn.addEventListener("click", () => {
-        if (!scheduleWeekStart) scheduleWeekStart = getWeekStart(new Date());
-        scheduleWeekStart.setDate(scheduleWeekStart.getDate() - 7);
+        if (isPhoneLayout()) {
+          const cursor = getScheduleCursorDay();
+          cursor.setDate(cursor.getDate() - 1);
+          scheduleCursorDay = cursor;
+        } else {
+          if (!scheduleWeekStart) scheduleWeekStart = getWeekStart(new Date());
+          scheduleWeekStart.setDate(scheduleWeekStart.getDate() - 7);
+        }
         renderScheduleView();
       });
     }
 
     if (scheduleNextWeekBtn) {
       scheduleNextWeekBtn.addEventListener("click", () => {
-        if (!scheduleWeekStart) scheduleWeekStart = getWeekStart(new Date());
-        scheduleWeekStart.setDate(scheduleWeekStart.getDate() + 7);
+        if (isPhoneLayout()) {
+          const cursor = getScheduleCursorDay();
+          cursor.setDate(cursor.getDate() + 1);
+          scheduleCursorDay = cursor;
+        } else {
+          if (!scheduleWeekStart) scheduleWeekStart = getWeekStart(new Date());
+          scheduleWeekStart.setDate(scheduleWeekStart.getDate() + 7);
+        }
         renderScheduleView();
       });
     }
 
     if (scheduleTodayBtn) {
       scheduleTodayBtn.addEventListener("click", () => {
-        scheduleWeekStart = getWeekStart(new Date());
+        if (isPhoneLayout()) {
+          scheduleCursorDay = new Date();
+        } else {
+          scheduleWeekStart = getWeekStart(new Date());
+        }
         renderScheduleView();
       });
     }
