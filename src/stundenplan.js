@@ -964,6 +964,7 @@
     renderSubjectList();
     renderTimetable();
     hookEvents();
+    applyPhoneDayView();
   }
 
   init();

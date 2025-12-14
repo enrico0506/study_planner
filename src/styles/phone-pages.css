@@ -11,6 +11,13 @@
     display: inline-flex;
   }
 
+  body.timetable-page .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
   body.timetable-page .timeline-wrap,
   body.timetable-page .timetable-week-grid {
     overflow: hidden;
