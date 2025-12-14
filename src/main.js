@@ -297,6 +297,14 @@ const DEFAULT_SUBJECT_COLORS = [
       return window.matchMedia && window.matchMedia("(max-width: 720px)").matches;
     }
 
+    function isPhoneTodayPicker() {
+      return (
+        isPhoneLayout() &&
+        document.body?.dataset?.mode === "today" &&
+        document.body.classList.contains("today-picker-open")
+      );
+    }
+
     function getScheduleCursorDay() {
       if (!scheduleCursorDay) {
         scheduleCursorDay = new Date();
@@ -3447,7 +3455,7 @@ const DEFAULT_SUBJECT_COLORS = [
             const inToday = todayTodos.some(
               (t) => t.subjectId === subj.id && t.fileId === file.id
             );
-            if (subjectsMaximized && inToday) {
+            if ((subjectsMaximized || isPhoneTodayPicker()) && inToday) {
               row.classList.add("in-today");
             }
 
@@ -3577,7 +3585,7 @@ const DEFAULT_SUBJECT_COLORS = [
             const isPaused =
               isThisActive && activeStudy && activeStudy.paused;
 
-            if (!subjectsMaximized) {
+            if (!subjectsMaximized && !isPhoneTodayPicker()) {
               if (!isThisActive) {
                 const studyBtn = document.createElement("button");
                 studyBtn.className = "chip-btn chip-btn-primary";
@@ -3619,32 +3627,32 @@ const DEFAULT_SUBJECT_COLORS = [
               }
             }
 
-            // Only show add-to-today when maximized (per request)
-            if (subjectsMaximized) {
+            // Add-to-today controls:
+            // - desktop: only show in Subjects maximized mode (existing behavior)
+            // - phone Today picker: show a simple "Add" action on every file (no Study button)
+            const picker = isPhoneTodayPicker();
+            if (subjectsMaximized || picker) {
               const addTodayBtn = document.createElement("button");
-              addTodayBtn.className = "chip-btn chip-btn-ghost";
-              addTodayBtn.textContent = inToday ? "In Today" : "To Today";
+              addTodayBtn.className = picker ? "chip-btn chip-btn-primary" : "chip-btn chip-btn-ghost";
+              addTodayBtn.textContent = inToday ? (picker ? "Added" : "In Today") : picker ? "Add" : "To Today";
               addTodayBtn.title = inToday
                 ? "Already in Today’s Focus"
                 : "Add this file to Today’s Focus";
+
               if (inToday) {
                 addTodayBtn.disabled = true;
                 addTodayBtn.classList.add("chip-btn-success");
-                const removeBtn = document.createElement("button");
-                removeBtn.className = "chip-btn chip-btn-danger";
-                removeBtn.textContent = "Remove";
-                removeBtn.title = "Remove from Today’s Focus";
-                removeBtn.addEventListener("click", (event) => {
+                rightMeta.appendChild(addTodayBtn);
+              } else if (picker) {
+                addTodayBtn.addEventListener("click", (event) => {
                   event.stopPropagation();
-                  todayTodos = todayTodos.filter(
-                    (t) => !(t.subjectId === subj.id && t.fileId === file.id)
-                  );
-                  saveTodayTodos();
-                  renderTodayTodos();
-                  renderTable();
+                  const added = addTodoForFile(subj.id, file.id);
+                  if (added) {
+                    showToast("Added to Today.", "success");
+                    renderTable();
+                  }
                 });
                 rightMeta.appendChild(addTodayBtn);
-                rightMeta.appendChild(removeBtn);
               } else {
                 addTodayBtn.addEventListener("click", (event) => {
                   event.stopPropagation();
@@ -4231,6 +4239,25 @@ const DEFAULT_SUBJECT_COLORS = [
         applyTodayExpandedLayout();
       });
       todayHeaderActions.appendChild(expandBtn);
+
+      const pickBtn = document.createElement("button");
+      pickBtn.type = "button";
+      pickBtn.className = "btn btn-secondary mobile-menu-only";
+      pickBtn.id = "todayPickToggleBtn";
+      pickBtn.textContent = "Add";
+      pickBtn.addEventListener("click", () => {
+        const open = !document.body.classList.contains("today-picker-open");
+        document.body.classList.toggle("today-picker-open", open);
+        pickBtn.textContent = open ? "Done" : "Add";
+        renderTable();
+
+        const target = open
+          ? document.querySelector("#layoutRow .main-area")
+          : document.querySelector("#layoutRow .today-sidebar");
+        target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      todayHeaderActions.appendChild(pickBtn);
+
       applyTodayExpandedLayout();
     }
 
