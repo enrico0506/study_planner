@@ -8,11 +8,20 @@
   }
 
   async function apiFetch(path, options = {}) {
-    const res = await fetch(path, {
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-      ...options
-    });
+    let res;
+    try {
+      res = await fetch(path, {
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+        ...options
+      });
+    } catch (err) {
+      const isFile = window.location && window.location.protocol === "file:";
+      const hint = isFile
+        ? "You opened this page via file://. Accounts require the Node server. Run `npm start` and open http://localhost:10000/account.html (or use your Render URL)."
+        : "Network error. Check that the server is running and reachable.";
+      throw new Error(hint);
+    }
     const isJson = (res.headers.get("content-type") || "").includes("application/json");
     const body = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null);
     if (!res.ok) {
@@ -189,6 +198,15 @@
   }
 
   async function init() {
+    if (window.location && window.location.protocol === "file:") {
+      setPill(false, "Offline (file://)");
+      setAuthedUi(false);
+      $("authMsg").textContent =
+        "Accounts/sync need the backend. Run `npm start` and open http://localhost:10000/account.html (or use your Render URL).";
+      $("accountStatusMsg").textContent = "Not connected to a server.";
+      return;
+    }
+
     const me = await getMe();
     if (!me) {
       setPill(false, "Signed out");
