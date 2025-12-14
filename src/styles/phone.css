@@ -11,6 +11,20 @@
     overflow-x: hidden;
   }
 
+  body {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-top: 12px;
+    padding-bottom: 16px;
+  }
+
+  .app {
+    width: calc(100vw - 24px);
+    margin: 0 auto;
+    border-radius: 16px;
+    max-height: none;
+  }
+
   *,
   *::before,
   *::after {

@@ -18,14 +18,17 @@
   body.calendar-page,
   body.timetable-page,
   body.flashcards-page {
-    padding: 12px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-top: 12px;
+    padding-bottom: 16px;
   }
 
   .calendar-shell,
   .timetable-shell,
   .flashcards-shell {
-    width: calc(100vw - 24px);
-    max-width: calc(100vw - 24px);
+    width: 100%;
+    max-width: 100%;
     margin: 0 auto;
     border-radius: 16px;
   }
@@ -77,4 +80,3 @@
     max-width: 100%;
   }
 }
-
