@@ -42,6 +42,20 @@
     display: none;
   }
 
+  /* Keep the ... menu inline with the confidence toggle (same row / same height). */
+  .header-actions {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .header-menu {
+    position: relative;
+    top: auto;
+    right: auto;
+    z-index: 2;
+  }
+
   /* Hide "maximize" controls on phone */
   .section-max-btn,
   .today-maximize-btn {
