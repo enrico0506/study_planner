@@ -115,6 +115,19 @@ function validatePassword(password) {
   return null;
 }
 
+function formatDbError(err) {
+  const code = err?.code;
+  if (code === "42P01") return "Database not initialized. Run `npm run migrate`.";
+  if (code === "28P01") return "Database authentication failed. Check the username/password in `DATABASE_URL`.";
+  if (code === "ENOTFOUND" || code === "EAI_AGAIN") {
+    const host = err?.hostname || err?.host || "unknown-host";
+    return `Cannot resolve database host (${host}). If running locally, use the external Render DB URL.`;
+  }
+  if (code === "ECONNREFUSED") return "Database connection refused. Check `DATABASE_URL` and network access.";
+  if (code === "ETIMEDOUT") return "Database connection timed out. Check `DATABASE_URL` and network access.";
+  return null;
+}
+
 app.get("/api/me", async (req, res) => {
   if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
@@ -178,9 +191,8 @@ app.post("/api/auth/register", async (req, res) => {
     if (message.startsWith("Missing required env var:")) {
       return res.status(500).json({ error: message });
     }
-    if (err?.code === "42P01") {
-      return res.status(500).json({ error: "Database not initialized. Run `npm run migrate`." });
-    }
+    const dbMessage = formatDbError(err);
+    if (dbMessage) return res.status(500).json({ error: dbMessage });
     if (message.includes("users_email_key")) {
       return res.status(409).json({ error: "Email already registered" });
     }
@@ -215,9 +227,8 @@ app.post("/api/auth/login", async (req, res) => {
     if (message.startsWith("Missing required env var:")) {
       return res.status(500).json({ error: message });
     }
-    if (err?.code === "42P01") {
-      return res.status(500).json({ error: "Database not initialized. Run `npm run migrate`." });
-    }
+    const dbMessage = formatDbError(err);
+    if (dbMessage) return res.status(500).json({ error: dbMessage });
     console.error(err);
     res.status(500).json({ error: "Login failed" });
   }

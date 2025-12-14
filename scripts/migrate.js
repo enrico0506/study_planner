@@ -82,6 +82,18 @@ async function main() {
 
 main()
   .catch((err) => {
+    if (err?.code === "28P01") {
+      console.error("Database authentication failed. Check the username/password in DATABASE_URL.");
+      process.exitCode = 1;
+      return;
+    }
+    if (err?.code === "ENOTFOUND" || err?.code === "EAI_AGAIN") {
+      console.error(
+        `Cannot resolve database host (${err?.hostname || err?.host || "unknown-host"}). If running locally, use the external Render DB URL.`
+      );
+      process.exitCode = 1;
+      return;
+    }
     console.error(err);
     process.exitCode = 1;
   })
