@@ -103,8 +103,8 @@
     }
 
     if (!cloudEmpty && localEmpty) {
-      // Pull is handled by sync.js on other pages; keep account page light.
-      return "Account has data in cloud; open the app to pull it into this browser.";
+      for (const [k, v] of Object.entries(cloudData)) localStorage.setItem(k, v ?? "");
+      return "Downloaded your cloud data into this browser.";
     }
 
     if (cloudStr === localStr) return "Already in sync.";
@@ -117,14 +117,7 @@
 
   async function syncNow() {
     if (!window.location.origin) return;
-    // Delegate to sync.js via button in widget: just call the endpoint sequence here.
-    const local = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key || !key.startsWith("study")) continue;
-      local[key] = localStorage.getItem(key);
-    }
-
+    const local = snapshotLocalState();
     const cloud = await apiFetch("/api/state");
     const cloudData = (cloud && cloud.data) || {};
 
@@ -133,7 +126,6 @@
 
     if (!cloudEmpty && localEmpty) {
       for (const [k, v] of Object.entries(cloudData)) localStorage.setItem(k, v ?? "");
-      window.location.reload();
       return;
     }
     if (cloudEmpty && !localEmpty) {
