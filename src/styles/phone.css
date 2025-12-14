@@ -42,12 +42,34 @@
     gap: 14px;
   }
 
-  #layoutRow .today-sidebar {
-    display: none;
-    order: 3;
+  /* Mode routing (index.html?mode=...) */
+  body[data-mode="board"] #layoutRow,
+  body[data-mode="board"] #scheduleView {
+    display: none !important;
   }
 
-  .app.mobile-show-today #layoutRow .today-sidebar {
-    display: block;
+  body[data-mode="subjects"] .summary-card,
+  body[data-mode="subjects"] #scheduleView,
+  body[data-mode="subjects"] #layoutRow .today-sidebar {
+    display: none !important;
+  }
+
+  body[data-mode="today"] .summary-card,
+  body[data-mode="today"] #scheduleView,
+  body[data-mode="today"] #layoutRow .main-area {
+    display: none !important;
+  }
+
+  body[data-mode="today"] #layoutRow .today-sidebar {
+    display: block !important;
+  }
+
+  body[data-mode="today"] #layoutRow .today-sidebar .today-section {
+    width: 100%;
+  }
+
+  body[data-mode="schedule"] .summary-card,
+  body[data-mode="schedule"] #layoutRow {
+    display: none !important;
   }
 }

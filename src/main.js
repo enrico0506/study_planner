@@ -4363,33 +4363,7 @@ const DEFAULT_SUBJECT_COLORS = [
       window.location.href = "./account.html";
     });
 
-    const mobileMenuBoardBtn = document.getElementById("mobileMenuBoardBtn");
-    const mobileMenuScheduleBtn = document.getElementById("mobileMenuScheduleBtn");
-    const mobileMenuTodayBtn = document.getElementById("mobileMenuTodayBtn");
-
-    mobileMenuBoardBtn?.addEventListener("click", () => {
-      closeHeaderMenu();
-      viewBoardBtn?.click();
-    });
-
-    mobileMenuScheduleBtn?.addEventListener("click", () => {
-      closeHeaderMenu();
-      viewScheduleBtn?.click();
-    });
-
-    mobileMenuTodayBtn?.addEventListener("click", () => {
-      closeHeaderMenu();
-      if (activeView !== "board") {
-        viewBoardBtn?.click();
-      }
-      if (appRoot) {
-        appRoot.classList.toggle("mobile-show-today");
-      }
-      const sidebar = document.querySelector("#layoutRow .today-sidebar");
-      if (sidebar && appRoot?.classList.contains("mobile-show-today")) {
-        sidebar.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    });
+    // Phone navigation is handled via index.html?mode=... links.
     // Additional settings entry points removed in favor of a single Settings button
     settingsModalBackdrop?.addEventListener("click", closeSettingsModal);
     settingsModalCloseBtn?.addEventListener("click", closeSettingsModal);
@@ -4891,6 +4865,17 @@ const DEFAULT_SUBJECT_COLORS = [
       }
     });
 
+    function getPageMode() {
+      const mode = new URLSearchParams(window.location.search).get("mode");
+      if (mode === "subjects" || mode === "today" || mode === "schedule") return mode;
+      return "board";
+    }
+
+    function applyPageMode() {
+      const mode = getPageMode();
+      document.body.dataset.mode = mode;
+    }
+
     // Initial load
     loadThemePreference();
     loadColorPalette();
@@ -4914,4 +4899,5 @@ const DEFAULT_SUBJECT_COLORS = [
     renderFocusState();
     renderTodayTodos();
     renderTable();
-    setActiveView("board");
+    applyPageMode();
+    setActiveView(getPageMode() === "schedule" ? "schedule" : "board");
