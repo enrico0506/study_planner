@@ -28,6 +28,12 @@
     display: none;
   }
 
+  /* Hide "maximize" controls on phone */
+  .section-max-btn,
+  .today-maximize-btn {
+    display: none !important;
+  }
+
   /* Reorder top row: Focus first, stats second */
   .top-row {
     display: flex;
