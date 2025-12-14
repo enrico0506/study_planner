@@ -16,6 +16,19 @@ Lightweight study board with subjects/files, Pomodoro timer, today's focus list,
 - Or serve locally to avoid any file:// quirks: `python -m http.server 8000` then visit http://localhost:8000/.
 - Or run via Node/Express (same static files, plus health/db endpoints): `npm install` then `npm start` (defaults to port `10000`).
 
+## Accounts (optional)
+This repo includes a tiny email+password login and a per-user cloud sync of all `localStorage` keys that start with `study*`.
+
+1) Set env vars:
+- `DATABASE_URL` (Postgres connection string)
+- `JWT_SECRET` (long random string)
+
+2) Run the DB migration:
+- `npm run migrate`
+
+3) Start the server:
+- `npm start`
+
 ## Structure
 - `index.html` – app shell and modals.
 - `src/main.js` – logic (state, timers, CRUD, schedule, today list).
