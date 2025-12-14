@@ -63,7 +63,7 @@
   let phoneDayIndex = null;
 
   function isPhoneLayout() {
-    return window.matchMedia && window.matchMedia("(max-width: 720px)").matches;
+    return window.matchMedia && window.matchMedia("(max-width: 1024px)").matches;
   }
 
   function getPhoneDayIndex() {

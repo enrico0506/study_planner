@@ -5,6 +5,36 @@
   display: none;
 }
 
+@media (max-width: 1024px) {
+  /* Timetable: enable day paging on iPad + phone */
+  body.timetable-page .phone-only {
+    display: inline-flex;
+  }
+
+  body.timetable-page .timeline-wrap,
+  body.timetable-page .timetable-week-grid {
+    overflow: hidden;
+    max-width: 100%;
+  }
+
+  body.timetable-page .timeline-cols-head,
+  body.timetable-page .timeline-cols {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    transform: translateX(calc(var(--tt-day, 0) * -100%));
+    transition: transform 0.22s ease;
+    will-change: transform;
+  }
+
+  body.timetable-page .timeline-day-head,
+  body.timetable-page .timeline-day {
+    flex: 0 0 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
 @media (max-width: 720px) {
   .phone-only {
     display: inline-flex;
@@ -32,30 +62,6 @@
     margin-right: max(12px, env(safe-area-inset-right));
     border-radius: 16px;
     box-sizing: border-box;
-  }
-
-  /* Stundenplan: show one day, swipe/paged via JS variable */
-  .timeline-wrap,
-  .timetable-week-grid {
-    overflow: hidden;
-    max-width: 100%;
-  }
-
-  .timeline-cols-head,
-  .timeline-cols {
-    display: flex;
-    width: 100%;
-    min-width: 0;
-    transform: translateX(calc(var(--tt-day, 0) * -100%));
-    transition: transform 0.22s ease;
-    will-change: transform;
-  }
-
-  .timeline-day-head,
-  .timeline-day {
-    flex: 0 0 100%;
-    min-width: 0;
-    max-width: 100%;
   }
 
   /* Calendar: renderWeekCalendar outputs 7 items; show as list */
