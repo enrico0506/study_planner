@@ -18,6 +18,7 @@
 
   /* Reorder top row: Focus first, stats second */
   .top-row {
+    display: flex;
     flex-direction: column;
   }
 
@@ -43,10 +44,10 @@
 
   #layoutRow .today-sidebar {
     display: none;
+    order: 3;
   }
 
   .app.mobile-show-today #layoutRow .today-sidebar {
     display: block;
   }
 }
-
