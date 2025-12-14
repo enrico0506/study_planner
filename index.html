@@ -34,10 +34,16 @@
             Daily schedule
           </button>
         </div>
-        <div class="header-quick-links">
-          <a class="header-quick-link" href="./calendar.html">Calendar</a>
-          <a class="header-quick-link" href="./stundenplan.html">Stundenplan</a>
-          <a class="header-quick-link" href="./karteikarten.html">Karteikarten</a>
+        <div class="header-quick-dropdown" id="quickJumpDropdown">
+          <button class="header-quick-trigger" id="quickJumpTrigger" type="button" aria-haspopup="true" aria-expanded="false">
+            <span class="header-quick-label">Study hubs</span>
+            <span class="header-quick-caret" aria-hidden="true">⌄</span>
+          </button>
+          <div class="header-quick-panel" id="quickJumpPanel">
+            <a class="header-quick-item" href="./calendar.html">Calendar</a>
+            <a class="header-quick-item" href="./stundenplan.html">Stundenplan</a>
+            <a class="header-quick-item" href="./karteikarten.html">Karteikarten</a>
+          </div>
         </div>
         <div class="confidence-toggle" role="group" aria-label="Confidence mode">
           <button class="confidence-toggle-btn confidence-toggle-active" id="manualConfBtn" type="button" data-mode="manual">

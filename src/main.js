@@ -167,15 +167,18 @@ const DEFAULT_SUBJECT_COLORS = [
     const themeLabel = document.getElementById("themeLabel");
     const themeDot = document.getElementById("themeDot");
     const headerMenu = document.getElementById("headerMenu");
-  const headerMenuPanel = document.getElementById("headerMenuPanel");
-  const headerMenuToggle = document.getElementById("headerMenuToggle");
-  const headerProfileBtn = document.getElementById("headerProfileBtn");
-  const headerSettingsBtn = document.getElementById("headerSettingsBtn");
-  const settingsModal = document.getElementById("settingsModal");
-  const settingsModalBackdrop = document.getElementById("settingsModalBackdrop");
-  const settingsModalCloseBtn = document.getElementById("settingsModalCloseBtn");
-  const settingsNav = document.getElementById("settingsNav");
-  const settingsThemePanel = document.getElementById("settingsThemePanel");
+    const headerMenuPanel = document.getElementById("headerMenuPanel");
+    const headerMenuToggle = document.getElementById("headerMenuToggle");
+    const headerProfileBtn = document.getElementById("headerProfileBtn");
+    const headerSettingsBtn = document.getElementById("headerSettingsBtn");
+    const quickJumpDropdown = document.getElementById("quickJumpDropdown");
+    const quickJumpTrigger = document.getElementById("quickJumpTrigger");
+    const quickJumpPanel = document.getElementById("quickJumpPanel");
+    const settingsModal = document.getElementById("settingsModal");
+    const settingsModalBackdrop = document.getElementById("settingsModalBackdrop");
+    const settingsModalCloseBtn = document.getElementById("settingsModalCloseBtn");
+    const settingsNav = document.getElementById("settingsNav");
+    const settingsThemePanel = document.getElementById("settingsThemePanel");
   const settingsColorsPanel = document.getElementById("settingsColorsPanel");
   const settingsPrefsPanel = document.getElementById("settingsPrefsPanel");
   const settingsThemePickerBtn = document.getElementById("settingsThemePickerBtn");
@@ -4204,6 +4207,44 @@ const DEFAULT_SUBJECT_COLORS = [
         }
       });
     }
+    let quickJumpTimer = null;
+    function openQuickJump() {
+      quickJumpDropdown?.classList.add("quick-open");
+      quickJumpTrigger?.setAttribute("aria-expanded", "true");
+    }
+    function closeQuickJump() {
+      quickJumpDropdown?.classList.remove("quick-open");
+      quickJumpTrigger?.setAttribute("aria-expanded", "false");
+    }
+    quickJumpTrigger?.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (quickJumpDropdown?.classList.contains("quick-open")) {
+        closeQuickJump();
+      } else {
+        openQuickJump();
+      }
+    });
+    quickJumpDropdown?.addEventListener("mouseenter", () => {
+      if (quickJumpTimer) clearTimeout(quickJumpTimer);
+      openQuickJump();
+    });
+    quickJumpDropdown?.addEventListener("mouseleave", () => {
+      quickJumpTimer = window.setTimeout(closeQuickJump, 80);
+    });
+    quickJumpPanel?.addEventListener("click", (event) => {
+      const link = event.target.closest("a");
+      if (!link) return;
+      closeQuickJump();
+    });
+    document.addEventListener("click", (event) => {
+      if (quickJumpDropdown && quickJumpDropdown.contains(event.target)) return;
+      closeQuickJump();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeQuickJump();
+      }
+    });
 
     if (openSuggestionsBtn) {
       openSuggestionsBtn.addEventListener("click", () => {
