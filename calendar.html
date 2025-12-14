@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="breeze">
+<head>
+  <meta charset="UTF-8" />
+  <title>Study Planner – Calendar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    (function() {
+      try {
+        const savedTheme = localStorage.getItem("studyTheme_v1");
+        if (savedTheme) {
+          document.documentElement.setAttribute("data-theme", savedTheme);
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="./src/styles/main.css" />
+</head>
+<body class="calendar-page">
+  <div class="calendar-shell">
+    <div class="header-row calendar-header">
+      <div class="header-main">
+        <p class="eyebrow">Planning</p>
+        <h1>Calendar & deadlines</h1>
+        <p class="subtitle">
+          Keep exam dates, study blocks, and reminders aligned in one focused calendar.
+        </p>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-secondary header-calendar-btn" href="index.html">← Back to board</a>
+        <a class="btn btn-secondary header-calendar-btn" href="stundenplan.html">Stundenplan</a>
+      </div>
+    </div>
+
+    <div class="calendar-scroll">
+      <div class="calendar-layout">
+        <section class="calendar-month-card">
+          <div class="calendar-month-header">
+            <div>
+              <div class="calendar-month-label" id="monthLabel">Month 2024</div>
+              <div class="calendar-month-subtitle">Click a date to add items in the pop-up form.</div>
+            </div>
+            <div class="calendar-month-actions">
+              <button class="icon-btn" id="prevMonthBtn" type="button" aria-label="Previous month">‹</button>
+              <button class="icon-btn" id="todayMonthBtn" type="button" aria-label="Jump to current month">•</button>
+              <button class="icon-btn" id="nextMonthBtn" type="button" aria-label="Next month">›</button>
+            </div>
+          </div>
+          <div class="calendar-weekdays">
+            <span>Mon</span>
+            <span>Tue</span>
+            <span>Wed</span>
+            <span>Thu</span>
+            <span>Fri</span>
+            <span>Sat</span>
+            <span>Sun</span>
+          </div>
+          <div class="calendar-day-grid" id="calendarGrid"></div>
+        </section>
+
+        <aside class="calendar-side">
+          <div class="calendar-card">
+            <div class="calendar-side-head">
+              <div class="side-date" id="selectedDateLabel">Today</div>
+              <div class="side-meta" id="selectedDateMeta">0 items scheduled</div>
+            </div>
+            <div class="side-actions">
+              <button class="chip-btn chip-btn-primary" id="openSelectedFormBtn" type="button">Add for this day</button>
+            </div>
+            <div class="calendar-day-events" id="selectedEventList"></div>
+          </div>
+
+          <div class="calendar-card">
+            <div class="side-subtitle">Upcoming focus</div>
+            <div class="calendar-upcoming" id="upcomingList"></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <div class="calendar-modal" id="calendarModal" aria-hidden="true">
+    <div class="calendar-modal-backdrop" id="calendarModalBackdrop"></div>
+    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="calendar-modal-head">
+        <div>
+          <div class="modal-label" id="modalDateLabel">Selected date</div>
+          <div class="modal-title" id="modalTitle">Add calendar item</div>
+          <div class="modal-subtitle">Fill the details and save to your planner.</div>
+        </div>
+        <div class="modal-actions">
+          <button class="chip-btn chip-btn-primary" id="newDeadlineTodayBtn" type="button">Today</button>
+          <button class="icon-btn icon-btn-ghost" id="closeModalBtn" type="button" aria-label="Close form">✕</button>
+        </div>
+      </div>
+      <form id="calendarForm" class="calendar-form">
+        <div class="form-row">
+          <label>
+            Title
+            <input type="text" id="eventTitleInput" name="title" placeholder="Deadline, study block, exam..." required />
+          </label>
+        </div>
+        <div class="form-grid">
+          <label>
+            Date
+            <input type="date" id="eventDateInput" name="date" required />
+          </label>
+          <label>
+            Time
+            <input type="time" id="eventTimeInput" name="time" />
+          </label>
+        </div>
+        <div class="form-grid">
+          <label>
+            Type
+            <select id="eventTypeSelect" name="type">
+              <option value="deadline">Deadline</option>
+              <option value="exam">Exam / quiz</option>
+              <option value="study">Study block</option>
+              <option value="reminder">Reminder</option>
+            </select>
+          </label>
+          <label>
+            Priority
+            <select id="eventPrioritySelect" name="priority">
+              <option value="normal">Normal</option>
+              <option value="important">Important</option>
+              <option value="critical">Critical</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Notes
+            <textarea id="eventNotesInput" name="notes" rows="3" placeholder="Context, links, or next steps"></textarea>
+          </label>
+        </div>
+        <div class="calendar-form-actions">
+          <div class="calendar-form-status" id="formStatus"></div>
+          <div class="calendar-form-buttons">
+            <button class="btn btn-secondary" id="cancelEditBtn" type="button">Cancel</button>
+            <button class="btn" id="formSubmitBtn" type="submit">Add to calendar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="./src/calendar.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="breeze">
+<head>
+  <meta charset="UTF-8" />
+  <title>Study Planner – Confidence Table</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    (function() {
+      try {
+        const savedTheme = localStorage.getItem("studyTheme_v1");
+        if (savedTheme) {
+          document.documentElement.setAttribute("data-theme", savedTheme);
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="./src/styles/main.css" />
+</head>
+<body>
+  <div class="app" id="appRoot">
+    <div class="header-row">
+      <div class="header-main">
+        <h1>Study Planner</h1>
+        <p class="subtitle">
+          Columns = subjects · Rows = files with confidence · Drag files to reorder · Track time per file.
+        </p>
+      </div>
+      <div class="header-actions">
+        <div class="view-toggle" role="tablist" aria-label="Choose view">
+          <button class="view-toggle-btn view-toggle-active" id="viewBoardBtn" type="button" aria-selected="true">
+            Board
+          </button>
+          <button class="view-toggle-btn" id="viewScheduleBtn" type="button" aria-selected="false">
+            Daily schedule
+          </button>
+        </div>
+        <div class="header-quick-links">
+          <a class="header-quick-link" href="./calendar.html">Calendar</a>
+          <a class="header-quick-link" href="./stundenplan.html">Stundenplan</a>
+        </div>
+        <div class="confidence-toggle" role="group" aria-label="Confidence mode">
+          <button class="confidence-toggle-btn confidence-toggle-active" id="manualConfBtn" type="button" data-mode="manual">
+            Your confidence
+          </button>
+          <button class="confidence-toggle-btn" id="perceivedConfBtn" type="button" data-mode="perceived">
+            Calculated
+          </button>
+        </div>
+        <div class="header-menu" id="headerMenu" aria-label="Menu">
+          <button class="header-menu-toggle" id="headerMenuToggle" type="button" aria-haspopup="true" aria-expanded="false">
+            ...
+          </button>
+          <div class="header-menu-panel" id="headerMenuPanel">
+            <div class="header-menu-group">
+              <button class="header-menu-item" id="headerProfileBtn" type="button">Profile</button>
+              <button class="header-menu-item" id="headerSettingsBtn" type="button">Settings</button>
+            </div>
+            <div class="header-menu-divider"></div>
+            <div class="header-menu-group">
+              <button class="header-menu-link" id="openSuggestionsBtn" type="button">Suggestions</button>
+              <button class="header-menu-link" id="openStatsBtn" type="button">Study stats</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-modal" id="settingsModal" aria-hidden="true">
+      <div class="settings-backdrop" id="settingsModalBackdrop"></div>
+      <div class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+        <div class="settings-head">
+          <div>
+            <div class="settings-label">Settings</div>
+            <div class="settings-title" id="settingsModalTitle">Customize your space</div>
+            <div class="settings-subtitle">Theme, colors, and preferences in one place.</div>
+          </div>
+          <button class="btn btn-secondary" id="settingsModalCloseBtn" type="button">Close</button>
+        </div>
+        <div class="settings-body">
+          <div class="settings-nav" id="settingsNav">
+            <button class="settings-nav-item settings-nav-active" data-panel="settingsThemePanel" type="button">Theme</button>
+            <button class="settings-nav-item" data-panel="settingsColorsPanel" type="button">Colors</button>
+            <button class="settings-nav-item" data-panel="settingsPrefsPanel" type="button">Preferences</button>
+          </div>
+          <div class="settings-panels">
+            <div class="settings-panel settings-panel-active" id="settingsThemePanel">
+              <div class="settings-panel-title">Theme</div>
+              <p class="settings-panel-text">Switch between available themes. Use the list below to apply instantly.</p>
+              <div class="settings-theme-list" id="settingsThemeList"></div>
+              <button class="btn" id="settingsThemePickerBtn" type="button">Open theme picker</button>
+            </div>
+            <div class="settings-panel" id="settingsColorsPanel">
+              <div class="settings-panel-title">Colors</div>
+              <p class="settings-panel-text">Adjust the palette used for subjects and the style of confidence/study bars.</p>
+              <div class="settings-colors-list" id="settingsColorsList"></div>
+              <div class="settings-pref-grid">
+                <label>
+                  Confidence bar style
+                  <select id="settingsMeterStyleSelect">
+                    <option value="classic">Classic gradient</option>
+                    <option value="flat">Flat colors</option>
+                    <option value="stripe">Striped</option>
+                    <option value="single">Single color</option>
+                    <option value="customGradient">Custom gradient</option>
+                  </select>
+                </label>
+                <label>
+                  Meter color (single)
+                  <input type="color" id="settingsMeterSingleInput" value="#f97373" />
+                </label>
+                <label>
+                  Gradient start
+                  <input type="color" id="settingsMeterGradStartInput" value="#f97373" />
+                </label>
+                <label>
+                  Gradient end
+                  <input type="color" id="settingsMeterGradEndInput" value="#22c55e" />
+                </label>
+                <label>
+                  Study bar style
+                  <select id="settingsStudyBarStyleSelect">
+                    <option value="rounded">Rounded</option>
+                    <option value="flat">Flat</option>
+                    <option value="stripe">Striped</option>
+                  </select>
+                </label>
+              </div>
+              <div class="settings-preview" id="settingsPreview">
+                <div class="settings-preview-title">Preview</div>
+                <div class="settings-preview-meter">
+                  <div class="settings-preview-label">Overall confidence</div>
+                  <div class="summary-progress-bar">
+                    <div class="summary-progress-fill meter-mid" id="settingsPreviewMeterFill" style="width:65%"></div>
+                  </div>
+                </div>
+                <div class="settings-preview-study">
+                  <div class="settings-preview-label">Today's study</div>
+                  <div class="summary-study-bar" id="settingsPreviewStudyBar"></div>
+                </div>
+              </div>
+              <div class="settings-colors-actions">
+                <button class="btn btn-secondary" id="settingsColorsResetBtn" type="button">Reset palette</button>
+                <button class="btn" id="settingsColorsSaveBtn" type="button">Save colors & styles</button>
+              </div>
+            </div>
+            <div class="settings-panel" id="settingsPrefsPanel">
+              <div class="settings-panel-title">Preferences</div>
+              <p class="settings-panel-text">Choose language and tweak study timers.</p>
+              <div class="settings-pref-row">
+                <label>
+                  Language
+                  <select id="settingsLanguageSelect">
+                    <option value="en">English</option>
+                    <option value="de">Deutsch</option>
+                  </select>
+                </label>
+              </div>
+              <div class="settings-pref-row settings-pref-grid">
+                <label>
+                  Study length (minutes)
+                  <input type="number" id="settingsStudyMinutes" min="1" />
+                </label>
+                <label>
+                  Short break (minutes)
+                  <input type="number" id="settingsShortMinutes" min="1" />
+                </label>
+                <label>
+                  Long break (minutes)
+                  <input type="number" id="settingsLongMinutes" min="1" />
+                </label>
+              </div>
+              <div class="settings-colors-actions">
+                <button class="btn" id="settingsPrefsSaveBtn" type="button">Save preferences</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top row: Summary + Focus -->
+    <div class="top-row">
+      <!-- Summary -->
+      <div class="summary-card">
+        <div class="summary-top">
+          <div class="summary-metrics">
+            <div class="summary-block">
+              <div class="summary-label">Subjects</div>
+              <div class="summary-value" id="summarySubjects">0</div>
+            </div>
+            <div class="summary-block">
+              <div class="summary-label">Files</div>
+              <div class="summary-value" id="summaryFiles">0</div>
+            </div>
+            <div class="summary-block">
+              <div class="summary-label">Low confidence (&lt; 40%)</div>
+              <div class="summary-value" id="summaryLow">0</div>
+            </div>
+          </div>
+        </div>
+      <div class="summary-progress">
+        <div class="summary-progress-header">
+          <span>Overall confidence</span>
+          <span id="summaryConfLabel">0%</span>
+        </div>
+        <div class="summary-progress-bar">
+          <div class="summary-progress-fill meter-low" id="summaryConfFill"></div>
+        </div>
+      </div>
+      <div class="summary-goal">
+        <div class="summary-goal-header">
+          <div>
+            <div class="summary-label">Weekly target</div>
+            <div class="summary-goal-line">
+              <span class="summary-goal-amount" id="weeklyGoalProgressLabel">0 h</span>
+              <span class="summary-goal-divider">/</span>
+              <span class="summary-goal-total" id="weeklyGoalTotalLabel">0 h</span>
+            </div>
+          </div>
+          <button class="chip-btn chip-btn-primary" id="editGoalBtn" type="button">Set goal</button>
+        </div>
+        <div class="summary-goal-track">
+          <div class="summary-goal-fill" id="weeklyGoalFill"></div>
+        </div>
+        <div class="summary-goal-footer">
+          <div class="summary-goal-hint" id="weeklyGoalHint">Set a target to get a weekly rhythm.</div>
+          <div class="summary-streak">
+            <div class="summary-streak-icon">🔥</div>
+            <div class="summary-streak-text">
+              <div class="summary-streak-label">Daily streak</div>
+              <div class="summary-streak-value">
+                <span id="streakCurrentLabel">0 days</span>
+                <span class="summary-streak-sep">·</span>
+                <span id="streakBestLabel">Best 0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="summary-study">
+        <div class="summary-study-header">
+          <span>Today's study time</span>
+          <span id="summaryStudyTodayLabel">0 min</span>
+        </div>
+          <div class="summary-study-bar" id="summaryStudyBar"></div>
+          <div class="summary-study-legend" id="summaryStudyLegend"></div>
+        </div>
+      </div>
+
+      <!-- Focus timer -->
+      <div class="focus-card" id="focusCard">
+        <div class="focus-main">
+          <div class="focus-left">
+            <div class="focus-label">Focus session</div>
+            <div class="focus-title" id="focusSessionTitle">No active session</div>
+            <div class="focus-subtitle" id="focusSessionSubtitle">
+              Click “Study” on a file or start a break below.
+            </div>
+            <div class="focus-session-controls" id="focusSessionControls">
+              <span style="font-size:0.75rem;color:#9ca3af;">No controls – start a session.</span>
+            </div>
+          </div>
+          <div class="focus-right">
+            <div class="focus-timer-box">
+              <div class="focus-timer-label-small">Countdown</div>
+              <div class="focus-timer-display" id="focusTimerDisplay">00:00:00</div>
+            </div>
+        </div>
+      </div>
+      <div class="focus-bottom">
+        <button class="focus-break-btn" id="openTimerSettingsBtn" type="button">
+          Timer settings
+        </button>
+        <div class="focus-break-buttons">
+          <button class="focus-break-btn" id="startShortBreakBtn" type="button">Short break</button>
+          <button class="focus-break-btn" id="startLongBreakBtn" type="button">Long break</button>
+        </div>
+      </div>
+      <div class="focus-inline-settings" id="timerInlinePanel" hidden>
+        <div class="focus-inline-title">Adjust your timers</div>
+        <div class="focus-inline-grid">
+          <label>
+            Study (minutes)
+            <input type="number" id="timerInlineStudy" min="1" />
+          </label>
+          <label>
+            Short break
+            <input type="number" id="timerInlineShort" min="1" />
+          </label>
+          <label>
+            Long break
+            <input type="number" id="timerInlineLong" min="1" />
+          </label>
+        </div>
+        <div class="focus-inline-actions">
+          <button class="btn btn-secondary" id="timerInlineCancel" type="button">Cancel</button>
+          <button class="btn" id="timerInlineSave" type="button">Save</button>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- Controls placeholder -->
+    <div class="controls"></div>
+
+    <div class="layout-row" id="layoutRow">
+      <div class="main-area">
+        <!-- Table -->
+        <div class="table-wrapper">
+          <div id="subjectTable" class="subject-table"></div>
+        </div>
+        <div class="empty-hint" id="emptyHint">
+          No subjects yet. Use “Add subject” on the right to create your first subject.
+        </div>
+      </div>
+
+      <aside class="today-sidebar">
+        <div class="today-section">
+          <div class="today-header">
+            <div class="today-header-text">
+              <h2>Today's focus</h2>
+            </div>
+            <div class="today-header-actions"></div>
+          </div>
+          <div class="today-dropzone" id="todayDropZone">
+            Drag a file card here to add it to today's todo list.
+          </div>
+          <div class="today-list" id="todayList"></div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="schedule-view" id="scheduleView" hidden>
+      <div class="schedule-bar">
+        <div>
+          <div class="schedule-title">Daily focus timeline</div>
+          <div class="schedule-subtitle">
+            Each column is a day. Today mirrors "Today's focus"; past days keep their history.
+          </div>
+        </div>
+        <div class="schedule-actions">
+          <button class="chip-btn chip-btn-primary" id="scheduleTodayBtn" type="button">This week</button>
+          <div class="schedule-nav">
+            <button class="schedule-nav-btn" id="schedulePrevWeekBtn" type="button" aria-label="Previous week">‹</button>
+            <div class="schedule-range" id="scheduleRangeLabel">This week</div>
+            <button class="schedule-nav-btn" id="scheduleNextWeekBtn" type="button" aria-label="Next week">›</button>
+          </div>
+        </div>
+      </div>
+      <div class="schedule-grid" id="scheduleGrid"></div>
+    </div>
+
+    <!-- Schedule Task Modal -->
+    <div class="modal-backdrop" id="scheduleTaskModalBackdrop" hidden>
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title" id="scheduleTaskModalTitle">Task</div>
+            <div class="modal-subtitle" id="scheduleTaskModalSubtitle">Subtasks for this focus item.</div>
+          </div>
+          <button class="modal-close-btn" id="scheduleTaskCloseBtn" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="schedule-task-subtasks" id="scheduleTaskModalSubtasks"></div>
+        </div>
+        <div class="modal-footer">
+          <div class="spacer"></div>
+          <button class="btn" id="scheduleTaskStudyBtn" type="button">Study</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- File Modal -->
+  <div class="modal-backdrop" id="fileModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="fileModalTitle">Add file</div>
+          <div class="modal-subtitle" id="fileModalSubtitle">Fill the details below and save.</div>
+        </div>
+        <button class="modal-close-btn" id="fileModalCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field-row">
+          <label for="modalFileName">File / Topic</label>
+          <input type="text" id="modalFileName" placeholder="e.g. Kapitel 3 Zusammenfassung.pdf" />
+        </div>
+        <div class="modal-field-row modal-row-inline">
+          <div>
+            <label for="modalSubjectSelect">Subject</label>
+            <select id="modalSubjectSelect">
+              <option value="">No subjects yet</option>
+            </select>
+          </div>
+          <div>
+            <label>Confidence</label>
+            <div class="range-row">
+              <input type="range" id="modalConfidenceRange" min="0" max="100" step="5" value="50" />
+              <div class="range-value" id="modalConfidenceValue">50%</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-field-row">
+          <label for="modalFileNotes">Notes (optional)</label>
+          <input type="text" id="modalFileNotes" placeholder="e.g. 'Important formulas on page 3'" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-delete-btn" id="fileModalDeleteBtn" hidden>Delete file</button>
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="fileModalCancelBtn" type="button">Cancel</button>
+        <button class="btn" id="fileModalSaveBtn" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timer Settings Modal -->
+  <div class="modal-backdrop" id="timerModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Timer settings</div>
+          <div class="modal-subtitle">
+            Set durations for study sessions and breaks (Pomodoro style).
+          </div>
+        </div>
+        <button class="modal-close-btn" id="timerModalCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field-row">
+          <label for="timerStudyInput">Study session length (minutes)</label>
+          <input type="number" id="timerStudyInput" min="1" />
+        </div>
+        <div class="modal-field-row">
+          <label for="timerShortInput">Short break (minutes)</label>
+          <input type="number" id="timerShortInput" min="1" />
+        </div>
+        <div class="modal-field-row">
+          <label for="timerLongInput">Long break (minutes)</label>
+          <input type="number" id="timerLongInput" min="1" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="timerModalCancelBtn" type="button">Cancel</button>
+        <button class="btn" id="timerModalSaveBtn" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Modal -->
+  <div class="modal-backdrop" id="statsModalBackdrop">
+    <div class="modal stats-modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Study stats</div>
+          <div class="modal-subtitle">
+            Totals, subjects, and top files based on tracked sessions.
+          </div>
+        </div>
+        <button class="modal-close-btn" id="statsModalCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="statsModalBody"></div>
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="statsModalCloseBtn2" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notice Modal -->
+  <div class="modal-backdrop" id="noticeModalBackdrop" hidden>
+    <div class="modal notice-modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div class="modal-title" id="noticeModalTitle">Notice</div>
+      </div>
+      <div class="modal-body" id="noticeModalMessage"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="noticeModalCancelBtn" type="button">Cancel</button>
+        <button class="btn" id="noticeModalConfirmBtn" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+  <!-- Suggestions Modal -->
+  <div class="modal-backdrop" id="suggestionModalBackdrop" hidden>
+    <div class="modal suggestion-modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Study suggestions</div>
+          <div class="modal-subtitle">Low confidence, deadlines, and spaced review.</div>
+        </div>
+        <button class="modal-close-btn" id="suggestionModalCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body suggestion-modal-body" id="suggestionModalBody">
+        <div class="suggestion-modal-section">
+          <div class="suggestion-modal-head">
+            <div class="modal-title-sm">Spaced review soon</div>
+            <div class="modal-subtle" id="dueSoonHint"></div>
+          </div>
+          <div class="due-soon-list" id="dueSoonList"></div>
+        </div>
+        <div class="suggestion-modal-section">
+          <div class="suggestion-modal-head">
+            <div class="modal-title-sm">Smart suggestions</div>
+            <div class="today-suggestions-cap" id="suggestionsCapNote"></div>
+          </div>
+          <div class="today-suggestions-list" id="suggestionsList"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="suggestionModalCloseBtn2" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+  <script src="./src/main.js"></script>
+</body>
+</html>

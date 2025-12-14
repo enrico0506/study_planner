@@ -1,0 +1,3039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Study Planner – Confidence Table</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f4f5;
+      color: #111827;
+    }
+
+    body {
+      margin: 0;
+      background: #f4f4f5;
+      color: #111827;
+    }
+
+    .app {
+      margin: 16px auto 24px;
+      padding: 16px 20px 20px;
+      width: calc(100% - 40px);
+      max-width: 1800px;
+      box-sizing: border-box;
+      background: #fdfdfc;
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.04);
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .header-main h1 {
+      font-size: 1.45rem;
+      margin: 0 0 4px;
+      color: #111827;
+      letter-spacing: 0.01em;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: #6b7280;
+      margin: 0;
+    }
+
+    .header-stats-btn {
+      padding-inline: 12px;
+    }
+
+    .btn {
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+      transition: background 0.12s ease, transform 0.08s ease, box-shadow 0.08s ease;
+      white-space: nowrap;
+    }
+
+    .btn[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn:not([disabled]):hover {
+      background: #1d4ed8;
+      transform: translateY(-0.5px);
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.12);
+    }
+
+    .btn:not([disabled]):active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      border-color: #d1d5db;
+      color: #374151;
+    }
+
+    .btn-secondary:hover {
+      background: #f9fafb;
+      box-shadow: none;
+    }
+
+    /* Top row: summary + focus */
+
+    .top-row {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+      margin-top: 10px;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .top-row {
+        flex-direction: column;
+      }
+    }
+
+    /* Summary card */
+
+    .summary-card {
+      flex: 1.3;
+      border-radius: 10px;
+      background: #f9fafb;
+      padding: 8px 12px 10px;
+      border: 1px solid #e5e7eb;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .summary-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      margin-bottom: 6px;
+    }
+
+    .summary-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .summary-block {
+      min-width: 90px;
+    }
+
+    .summary-label {
+      font-size: 0.7rem;
+      color: #9ca3af;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .summary-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .summary-progress {
+      margin-top: 4px;
+    }
+
+    .summary-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .summary-progress-bar {
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      overflow: hidden;
+    }
+
+    .summary-progress-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.2s ease;
+    }
+
+    /* Today's study bar */
+
+    .summary-study {
+      margin-top: 6px;
+    }
+
+    .summary-study-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .summary-study-bar {
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .summary-study-segment {
+      height: 100%;
+    }
+
+    .summary-study-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+      font-size: 0.7rem;
+      color: #6b7280;
+    }
+
+    .summary-study-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .summary-study-legend-swatch {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #9ca3af;
+    }
+
+    /* Focus timer card */
+
+    .focus-card {
+      flex: 1;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      padding: 10px 12px 10px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    /* Colors for study / pause / break */
+
+    #focusCard.focus-study-active {
+      background: #ecfdf5;
+      border-color: #22c55e;
+    }
+
+    #focusCard.focus-study-paused {
+      background: #fffbeb;
+      border-color: #fbbf24;
+    }
+
+    #focusCard.focus-break-active {
+      background: #ecfeff;
+      border-color: #38bdf8;
+    }
+
+    .focus-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: stretch;
+      gap: 16px;
+    }
+
+    .focus-left {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .focus-label {
+      font-size: 0.7rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 2px;
+    }
+
+    .focus-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 0;
+      word-break: break-word;
+    }
+
+    .focus-subtitle {
+      font-size: 0.78rem;
+      color: #6b7280;
+      word-break: break-word;
+    }
+
+    .focus-session-controls {
+      display: flex;
+      justify-content: flex-start;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-height: 28px;
+      margin-top: 6px;
+    }
+
+    .focus-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      min-width: 190px;
+    }
+
+    .focus-timer-box {
+      width: 190px;
+      height: 190px;
+      border-radius: 18px;
+      border: 1px solid #d1d5db;
+      background: radial-gradient(circle at 20% 20%, #eff6ff, #e5e7eb);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+      box-sizing: border-box;
+    }
+
+    .focus-timer-label-small {
+      font-size: 0.7rem;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 4px;
+    }
+
+    .focus-timer-display {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 2.6rem;
+      font-weight: 600;
+      color: #111827;
+      line-height: 1.1;
+    }
+
+    .focus-bottom {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 6px;
+    }
+
+    .focus-break-buttons {
+      margin-left: auto;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .focus-break-btn {
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      color: #374151;
+      font-size: 0.72rem;
+      padding: 4px 8px;
+      cursor: pointer;
+      transition: background 0.08s ease, border-color 0.08s ease, color 0.08s ease, transform 0.08s ease;
+    }
+
+    .focus-break-btn:hover {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: #1d4ed8;
+      transform: translateY(-0.5px);
+    }
+
+    /* Bigger Pause / Stop buttons in focus card */
+
+    .focus-main-btn {
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      color: #374151;
+      cursor: pointer;
+      transition: background 0.1s ease, border-color 0.1s ease, transform 0.08s ease, box-shadow 0.08s ease;
+    }
+
+    .focus-main-btn:hover {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      transform: translateY(-0.5px);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.16);
+    }
+
+    .focus-main-btn:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .focus-main-btn-primary {
+      background: #1d4ed8;
+      color: #ffffff;
+      border-color: #1d4ed8;
+    }
+
+    .focus-main-btn-primary:hover {
+      background: #1e40af;
+      border-color: #1e40af;
+    }
+
+    .focus-main-btn-danger {
+      background: #ef4444;
+      color: #ffffff;
+      border-color: #b91c1c;
+    }
+
+    .focus-main-btn-danger:hover {
+      background: #b91c1c;
+      border-color: #7f1d1d;
+    }
+
+    @media (max-width: 900px) {
+      .focus-main {
+        flex-direction: row;
+      }
+
+      .focus-right {
+        align-items: flex-end;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .focus-main {
+        flex-direction: column;
+      }
+      .focus-right {
+        align-items: flex-start;
+      }
+      .focus-timer-box {
+        width: 170px;
+        height: 170px;
+      }
+      .focus-timer-display {
+        font-size: 2.3rem;
+      }
+    }
+
+    /* Focus MAX mode (app-wide) */
+
+    .app.focus-maximized .summary-card {
+      display: none;
+    }
+
+    .app.focus-maximized .focus-card {
+      flex: 1 1 100%;
+    }
+
+    .app.focus-maximized .focus-timer-box {
+      width: 260px;
+      height: 260px;
+    }
+
+    .app.focus-maximized .focus-timer-display {
+      font-size: 3.1rem;
+    }
+
+    /* Controls row placeholder */
+
+    .controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    /* Filter row */
+
+    .filter-row {
+      margin-bottom: 10px;
+    }
+
+    .filter-row-inner {
+      max-width: 280px;
+    }
+
+    .filter-row-inner input[type="text"] {
+      width: 100%;
+    }
+
+    label {
+      font-size: 0.7rem;
+      color: #6b7280;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px 8px;
+      border-radius: 7px;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      color: #111827;
+      font-size: 0.82rem;
+      outline: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.15);
+    }
+
+    /* Table / columns */
+
+    .table-wrapper {
+      margin-top: 4px;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      overflow-x: auto;
+      box-sizing: border-box;
+    }
+
+    .subject-table {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(220px, 1fr);
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          #f9fafb 0,
+          #f9fafb 36px,
+          #f3f4f6 37px
+        );
+      min-height: 260px;
+    }
+
+    .subject-column {
+      border-left: 1px solid #e5e7eb;
+      padding: 8px 8px 10px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      background: transparent;
+    }
+
+    .subject-column:first-child {
+      border-left: none;
+    }
+
+    .subject-header {
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .subject-color-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+
+    .subject-header small {
+      font-size: 0.72rem;
+      color: #6b7280;
+      font-weight: 400;
+    }
+
+    .subject-delete-btn {
+      border: none;
+      background: transparent;
+      color: #9ca3af;
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 2px 6px;
+      border-radius: 999px;
+      transition: background 0.08s ease, color 0.08s ease;
+    }
+
+    .subject-delete-btn:hover {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .subject-meter {
+      width: 100%;
+      height: 4px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+
+    .subject-meter-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.2s ease;
+    }
+
+    /* Subject sort controls */
+
+    .subject-sort {
+      margin-bottom: 6px;
+    }
+
+    .subject-sort-select {
+      width: 100%;
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      color: #374151;
+      outline: none;
+    }
+
+    .subject-sort-select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.15);
+    }
+
+    .file-list {
+      flex: 1;
+      padding: 2px 0 4px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #d4d4d8 transparent;
+    }
+
+    .file-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .file-list::-webkit-scrollbar-thumb {
+      background: #d4d4d8;
+      border-radius: 999px;
+    }
+
+    .file-row {
+      padding: 6px 6px 5px;
+      margin-bottom: 4px;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px solid transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      cursor: move;
+      transition:
+        background 0.06s ease,
+        border-color 0.06s ease,
+        transform 0.06s ease,
+        opacity 0.06s ease;
+    }
+
+    .file-row:hover {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      transform: translateY(-0.5px);
+    }
+
+    .file-row.dragging {
+      opacity: 0.4;
+      border-style: dashed;
+      border-color: #9ca3af;
+      background: #e5e7eb;
+    }
+
+    .file-row.drag-over {
+      border-color: #60a5fa;
+      background: #dbeafe;
+    }
+
+    .file-row.studying {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+
+    .file-name {
+      font-size: 0.8rem;
+      color: #111827;
+      word-break: break-word;
+      font-weight: 500;
+    }
+
+    .file-notes {
+      font-size: 0.74rem;
+      color: #6b7280;
+      word-break: break-word;
+    }
+
+    .file-time {
+      font-size: 0.72rem;
+      color: #9ca3af;
+      word-break: break-word;
+    }
+
+    .file-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: #6b7280;
+      flex-wrap: wrap;
+      margin-top: 1px;
+    }
+
+    .confidence-badge {
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.7rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+
+    .conf-low {
+      background: #fee2e2;
+      color: #b91c1c;
+      border-color: #fecaca;
+    }
+
+    .conf-mid {
+      background: #fef3c7;
+      color: #92400e;
+      border-color: #fde68a;
+    }
+
+    .conf-high {
+      background: #dcfce7;
+      color: #166534;
+      border-color: #bbf7d0;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      font-size: 0.68rem;
+      color: #4b5563;
+    }
+
+    .pill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .chip-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 0.68rem;
+      cursor: pointer;
+      transition: background 0.08s ease, color 0.08s ease, transform 0.08s ease;
+      white-space: nowrap;
+    }
+
+    .chip-btn-danger {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .chip-btn-danger:hover {
+      background: #fecaca;
+      transform: translateY(-0.5px);
+    }
+
+    .chip-btn-primary {
+      background: #e0f2fe;
+      color: #1d4ed8;
+    }
+
+    .chip-btn-primary:hover {
+      background: #bfdbfe;
+      transform: translateY(-0.5px);
+    }
+
+    .study-timer-label {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.72rem;
+      color: #111827;
+      min-width: 70px;
+      text-align: right;
+    }
+
+    .add-file-slot {
+      margin-top: 6px;
+      width: 100%;
+      padding: 6px 4px;
+      border-radius: 6px;
+      border: 1px dashed #d1d5db;
+      background: #f9fafb;
+      color: #6b7280;
+      font-size: 0.76rem;
+      text-align: center;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+
+    .add-file-slot:hover {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: #1d4ed8;
+    }
+
+    .empty-hint {
+      font-size: 0.74rem;
+      color: #9ca3af;
+      margin: 8px 0 0;
+      text-align: center;
+    }
+
+    /* Slim Add Subject column */
+
+    .subject-add-column {
+      display: flex;
+      align-items: flex-start;
+      justify-content: stretch;
+    }
+
+    .subject-add-box {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px dashed #d1d5db;
+      background: #f9fafb;
+      padding: 4px 6px 6px;
+      box-sizing: border-box;
+    }
+
+    .subject-add-inline {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .subject-add-input {
+      margin: 0;
+      flex: 1;
+      font-size: 0.78rem;
+      padding: 5px 8px;
+    }
+
+    .subject-add-btn {
+      font-size: 0.78rem;
+      padding-inline: 8px;
+      padding-block: 5px;
+    }
+
+    /* Meter colors */
+
+    .meter-low {
+      background: linear-gradient(90deg, #f97373, #fb7185);
+    }
+
+    .meter-mid {
+      background: linear-gradient(90deg, #facc15, #fbbf24);
+    }
+
+    .meter-high {
+      background: linear-gradient(90deg, #22c55e, #14b8a6);
+    }
+
+    /* Modal base */
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+    }
+
+    .modal {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 25px 50px rgba(15, 23, 42, 0.25);
+      width: 100%;
+      max-width: 420px;
+      padding: 12px 14px 12px;
+      box-sizing: border-box;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .modal-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .modal-subtitle {
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+
+    .modal-close-btn {
+      border: none;
+      background: transparent;
+      color: #9ca3af;
+      cursor: pointer;
+      font-size: 0.95rem;
+      padding: 2px 6px;
+      border-radius: 999px;
+      transition: background 0.08s ease, color 0.08s ease;
+    }
+
+    .modal-close-btn:hover {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .modal-body {
+      padding: 4px 0 8px;
+    }
+
+    .modal-field-row {
+      margin-bottom: 8px;
+    }
+
+    .modal-row-inline {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+    }
+
+    select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px 8px;
+      border-radius: 7px;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      color: #111827;
+      font-size: 0.82rem;
+      outline: none;
+    }
+
+    select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.15);
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 52px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .range-value {
+      font-size: 0.76rem;
+      text-align: right;
+      color: #111827;
+    }
+
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 4px;
+    }
+
+    .modal-footer .spacer {
+      flex: 1;
+    }
+
+    .modal-delete-btn {
+      font-size: 0.78rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #fecaca;
+      background: #fee2e2;
+      color: #b91c1c;
+      cursor: pointer;
+      transition: background 0.08s ease, transform 0.08s ease;
+    }
+
+    .modal-delete-btn:hover {
+      background: #fecaca;
+      transform: translateY(-0.5px);
+    }
+
+    .modal-delete-btn[hidden] {
+      display: none;
+    }
+
+    /* Stats modal */
+
+    .stats-modal {
+      max-width: 720px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .stats-summary {
+      font-size: 0.8rem;
+      color: #4b5563;
+      margin-bottom: 6px;
+    }
+
+    .stats-list {
+      margin-top: 4px;
+    }
+
+    .stats-row {
+      margin-bottom: 8px;
+    }
+
+    .stats-row-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.8rem;
+    }
+
+    .stats-row-title {
+      font-weight: 500;
+      color: #111827;
+    }
+
+    .stats-row-subtitle {
+      font-size: 0.72rem;
+      color: #6b7280;
+    }
+
+    .stats-row-time {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #111827;
+      white-space: nowrap;
+    }
+
+    .stats-bar-track {
+      margin-top: 3px;
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      overflow: hidden;
+    }
+
+    .stats-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #60a5fa;
+    }
+
+    /* === Paper-like visual refresh ======================================= */
+
+    :root {
+      --page-bg: #f3f4f6;
+      --surface-bg: #fdfbf5;
+      --surface-subtle-bg: #fafaf9;
+      --border-subtle: #e5e7eb;
+      --accent: #2563eb;
+      --accent-soft: #e0edff;
+      --accent-soft-hover: #d4e4ff;
+      --text-muted: #6b7280;
+    }
+
+    body {
+      background: var(--page-bg);
+    }
+
+    .app {
+      margin: 24px auto 32px;
+      padding: 20px 24px 24px;
+      max-width: 1800px;
+      background: var(--surface-bg);
+      border-radius: 16px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+    }
+
+    .summary-card {
+      background: var(--surface-subtle-bg);
+    }
+
+    .table-wrapper {
+      background: #ffffff;
+      border-radius: 12px;
+    }
+
+    .subject-table {
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          #fafaf9 0,
+          #fafaf9 36px,
+          #f5f5f4 37px
+        );
+    }
+
+    .subject-column {
+      padding: 10px 10px 12px;
+    }
+
+    .file-list {
+      padding-top: 4px;
+    }
+
+    .file-row {
+      padding: 8px 8px 7px;
+      margin-bottom: 6px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid #f3f4f6;
+      box-shadow: 0 1px 1px rgba(15, 23, 42, 0.02);
+      gap: 3px;
+      transition:
+        background 0.08s ease,
+        border-color 0.08s ease,
+        box-shadow 0.08s ease,
+        transform 0.06s ease,
+        opacity 0.06s ease;
+    }
+
+    .file-row:hover {
+      background: #fafaf9;
+      border-color: #e5e7eb;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+      transform: translateY(-1px);
+    }
+
+    .file-row.studying {
+      background: #f5faf7;
+      border-color: #a7d7c5;
+    }
+
+    .file-row.dragging {
+      background: #f3f4f6;
+    }
+
+    .file-row.drag-over {
+      background: #eef2ff;
+    }
+
+    .confidence-badge {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      color: #4b5563;
+    }
+
+    .conf-low {
+      border-color: #fca5a5;
+      color: #b91c1c;
+    }
+
+    .conf-mid {
+      border-color: #fbbf24;
+      color: #92400e;
+    }
+
+    .conf-high {
+      border-color: #22c55e;
+      color: #166534;
+    }
+
+    .pill-dot {
+      background: #9ca3af;
+    }
+
+    .meter-low {
+      background: linear-gradient(90deg, #fce0df, #f7b4af);
+    }
+
+    .meter-mid {
+      background: linear-gradient(90deg, #f7e5bf, #f1d397);
+    }
+
+    .meter-high {
+      background: linear-gradient(90deg, #cfe9d9, #a7d7c5);
+    }
+
+    .focus-card {
+      background: var(--surface-subtle-bg);
+      border-radius: 12px;
+    }
+
+    #focusCard.focus-study-active {
+      background: #fafaf9;
+      border-color: #a7d7c5;
+      box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.08);
+    }
+
+    #focusCard.focus-study-paused {
+      background: #fdfbf5;
+      border-color: #e5e7eb;
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+    }
+
+    #focusCard.focus-break-active {
+      background: #fafaf9;
+      border-color: #c4ddf4;
+      box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.12);
+    }
+
+    .focus-timer-box {
+      background: radial-gradient(circle at 20% 20%, #f7f7f5, #e5e7eb);
+    }
+
+    .focus-break-btn {
+      background: #f3f4f6;
+      border-color: #d4d4d8;
+      color: #4b5563;
+    }
+
+    .focus-break-btn:hover {
+      background: #e5e7eb;
+      border-color: #c4c4cc;
+      color: #111827;
+      transform: translateY(-0.5px);
+    }
+
+    .focus-main-btn {
+      background: #f3f4f6;
+      border-color: #d1d5db;
+      color: #374151;
+    }
+
+    .focus-main-btn:hover {
+      background: #e5e7eb;
+      border-color: #c4c4cc;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.16);
+    }
+
+    .focus-main-btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .focus-main-btn-primary:hover {
+      background: #1d4ed8;
+      border-color: #1d4ed8;
+    }
+
+    .focus-main-btn-danger {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #b91c1c;
+    }
+
+    .focus-main-btn-danger:hover {
+      background: #fee2e2;
+      border-color: #fecaca;
+    }
+
+    .chip-btn-primary {
+      background: var(--accent-soft);
+      color: #1d4ed8;
+    }
+
+    .chip-btn-primary:hover {
+      background: var(--accent-soft-hover);
+      transform: translateY(-0.5px);
+    }
+
+    .add-file-slot:hover {
+      background: #f3f4f6;
+      border-color: #d4d4d8;
+      color: #111827;
+    }
+
+    .subject-add-box {
+      background: #fafaf9;
+    }
+
+    .stats-bar-fill {
+      background: #93c5fd;
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="appRoot">
+    <div class="header-row">
+      <div class="header-main">
+        <h1>Study Planner</h1>
+        <p class="subtitle">
+          Columns = subjects · Rows = files with confidence · Drag files to reorder · Track time per file.
+        </p>
+      </div>
+      <button class="btn btn-secondary header-stats-btn" id="openStatsBtn" type="button">
+        Study stats
+      </button>
+    </div>
+
+    <!-- Top row: Summary + Focus -->
+    <div class="top-row">
+      <!-- Summary -->
+      <div class="summary-card">
+        <div class="summary-top">
+          <div class="summary-metrics">
+            <div class="summary-block">
+              <div class="summary-label">Subjects</div>
+              <div class="summary-value" id="summarySubjects">0</div>
+            </div>
+            <div class="summary-block">
+              <div class="summary-label">Files</div>
+              <div class="summary-value" id="summaryFiles">0</div>
+            </div>
+            <div class="summary-block">
+              <div class="summary-label">Low confidence (&lt; 40%)</div>
+              <div class="summary-value" id="summaryLow">0</div>
+            </div>
+          </div>
+        </div>
+        <div class="summary-progress">
+          <div class="summary-progress-header">
+            <span>Overall confidence</span>
+            <span id="summaryConfLabel">0%</span>
+          </div>
+          <div class="summary-progress-bar">
+            <div class="summary-progress-fill meter-low" id="summaryConfFill"></div>
+          </div>
+        </div>
+        <div class="summary-study">
+          <div class="summary-study-header">
+            <span>Today's study time</span>
+            <span id="summaryStudyTodayLabel">0 min</span>
+          </div>
+          <div class="summary-study-bar" id="summaryStudyBar"></div>
+          <div class="summary-study-legend" id="summaryStudyLegend"></div>
+        </div>
+      </div>
+
+      <!-- Focus timer -->
+      <div class="focus-card" id="focusCard">
+        <div class="focus-main">
+          <div class="focus-left">
+            <div class="focus-label">Focus session</div>
+            <div class="focus-title" id="focusSessionTitle">No active session</div>
+            <div class="focus-subtitle" id="focusSessionSubtitle">
+              Click “Study” on a file or start a break below.
+            </div>
+            <div class="focus-session-controls" id="focusSessionControls">
+              <span style="font-size:0.75rem;color:#9ca3af;">No controls – start a session.</span>
+            </div>
+          </div>
+          <div class="focus-right">
+            <div class="focus-timer-box">
+              <div class="focus-timer-label-small">Countdown</div>
+              <div class="focus-timer-display" id="focusTimerDisplay">00:00:00</div>
+            </div>
+          </div>
+        </div>
+        <div class="focus-bottom">
+          <button class="focus-break-btn" id="toggleFocusMaxBtn" type="button">Maximize</button>
+          <button class="focus-break-btn" id="openTimerSettingsBtn" type="button">
+            Timer settings
+          </button>
+          <div class="focus-break-buttons">
+            <button class="focus-break-btn" id="startShortBreakBtn" type="button">Short break</button>
+            <button class="focus-break-btn" id="startLongBreakBtn" type="button">Long break</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls placeholder -->
+    <div class="controls"></div>
+
+    <!-- Filter -->
+    <div class="filter-row">
+      <div class="filter-row-inner">
+        <label for="searchInput">Filter files by name</label>
+        <input type="text" id="searchInput" placeholder="Type to filter..." />
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrapper">
+      <div id="subjectTable" class="subject-table"></div>
+    </div>
+    <div class="empty-hint" id="emptyHint">
+      No subjects yet. Use “Add subject” on the right to create your first subject.
+    </div>
+  </div>
+
+  <!-- File Modal -->
+  <div class="modal-backdrop" id="fileModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="fileModalTitle">Add file</div>
+          <div class="modal-subtitle" id="fileModalSubtitle">Fill the details below and save.</div>
+        </div>
+        <button class="modal-close-btn" id="fileModalCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field-row">
+          <label for="modalFileName">File / Topic</label>
+          <input type="text" id="modalFileName" placeholder="e.g. Kapitel 3 Zusammenfassung.pdf" />
+        </div>
+        <div class="modal-field-row modal-row-inline">
+          <div>
+            <label for="modalSubjectSelect">Subject</label>
+            <select id="modalSubjectSelect">
+              <option value="">No subjects yet</option>
+            </select>
+          </div>
+          <div>
+            <label>Confidence</label>
+            <div class="range-row">
+              <input type="range" id="modalConfidenceRange" min="0" max="100" step="5" value="50" />
+              <div class="range-value" id="modalConfidenceValue">50%</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-field-row">
+          <label for="modalFileNotes">Notes (optional)</label>
+          <input type="text" id="modalFileNotes" placeholder="e.g. 'Important formulas on page 3'" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-delete-btn" id="fileModalDeleteBtn" hidden>Delete file</button>
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="fileModalCancelBtn" type="button">Cancel</button>
+        <button class="btn" id="fileModalSaveBtn" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timer Settings Modal -->
+  <div class="modal-backdrop" id="timerModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Timer settings</div>
+          <div class="modal-subtitle">
+            Set durations for study sessions and breaks (Pomodoro style).
+          </div>
+        </div>
+        <button class="modal-close-btn" id="timerModalCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field-row">
+          <label for="timerStudyInput">Study session length (minutes)</label>
+          <input type="number" id="timerStudyInput" min="1" />
+        </div>
+        <div class="modal-field-row">
+          <label for="timerShortInput">Short break (minutes)</label>
+          <input type="number" id="timerShortInput" min="1" />
+        </div>
+        <div class="modal-field-row">
+          <label for="timerLongInput">Long break (minutes)</label>
+          <input type="number" id="timerLongInput" min="1" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="timerModalCancelBtn" type="button">Cancel</button>
+        <button class="btn" id="timerModalSaveBtn" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Modal -->
+  <div class="modal-backdrop" id="statsModalBackdrop">
+    <div class="modal stats-modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Study stats</div>
+          <div class="modal-subtitle">
+            Total study time per file, based on your tracked sessions.
+          </div>
+        </div>
+        <button class="modal-close-btn" id="statsModalCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="statsModalBody"></div>
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="statsModalCloseBtn2" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "studySubjects_v1";
+    const CONFIG_KEY = "studyFocusConfig_v1";
+
+    const SUBJECT_COLORS = [
+      "#9dbcf2", // soft blue
+      "#a8d5ba", // soft green
+      "#f5b6d9", // soft pink
+      "#f3c8a0", // soft orange
+      "#c5b7f5", // soft violet
+      "#8fd3c7", // soft teal
+      "#f0b4b4", // soft red
+      "#b7e2c7"  // soft emerald
+    ];
+
+    let subjects = [];
+    let currentSearch = "";
+    let dragState = null; // { subjectId, fileId }
+    let fileModalState = null; // { mode: "add"|"edit", subjectId, fileId? }
+
+    // activeStudy session:
+    // { kind: 'study'|'break', breakKind?, subjectId?, fileId?,
+    //   startTimeMs, baseMs, targetMs, paused }
+    let activeStudy = null;
+
+    let pomoConfig = { study: 25, short: 5, long: 15 };
+
+    // DOM refs
+    const appRoot = document.getElementById("appRoot");
+    const searchInput = document.getElementById("searchInput");
+    const subjectTable = document.getElementById("subjectTable");
+    const emptyHint = document.getElementById("emptyHint");
+    const openStatsBtn = document.getElementById("openStatsBtn");
+
+    // Summary refs
+    const summarySubjects = document.getElementById("summarySubjects");
+    const summaryFiles = document.getElementById("summaryFiles");
+    const summaryLow = document.getElementById("summaryLow");
+    const summaryConfLabel = document.getElementById("summaryConfLabel");
+    const summaryConfFill = document.getElementById("summaryConfFill");
+    const summaryStudyTodayLabel = document.getElementById("summaryStudyTodayLabel");
+    const summaryStudyBar = document.getElementById("summaryStudyBar");
+    const summaryStudyLegend = document.getElementById("summaryStudyLegend");
+
+    // Focus timer refs
+    const focusCard = document.getElementById("focusCard");
+    const focusSessionTitle = document.getElementById("focusSessionTitle");
+    const focusSessionSubtitle = document.getElementById("focusSessionSubtitle");
+    const focusTimerDisplay = document.getElementById("focusTimerDisplay");
+    const focusSessionControls = document.getElementById("focusSessionControls");
+    const openTimerSettingsBtn = document.getElementById("openTimerSettingsBtn");
+    const startShortBreakBtn = document.getElementById("startShortBreakBtn");
+    const startLongBreakBtn = document.getElementById("startLongBreakBtn");
+    const toggleFocusMaxBtn = document.getElementById("toggleFocusMaxBtn");
+
+    // File modal refs
+    const fileModalBackdrop = document.getElementById("fileModalBackdrop");
+    const fileModalTitle = document.getElementById("fileModalTitle");
+    const fileModalSubtitle = document.getElementById("fileModalSubtitle");
+    const fileModalCloseBtn = document.getElementById("fileModalCloseBtn");
+    const modalFileNameInput = document.getElementById("modalFileName");
+    const modalSubjectSelect = document.getElementById("modalSubjectSelect");
+    const modalConfidenceRange = document.getElementById("modalConfidenceRange");
+    const modalConfidenceValue = document.getElementById("modalConfidenceValue");
+    const modalFileNotesInput = document.getElementById("modalFileNotes");
+    const modalSaveBtn = document.getElementById("fileModalSaveBtn");
+    const modalCancelBtn = document.getElementById("fileModalCancelBtn");
+    const modalDeleteBtn = document.getElementById("fileModalDeleteBtn");
+
+    // Timer settings modal refs
+    const timerModalBackdrop = document.getElementById("timerModalBackdrop");
+    const timerStudyInput = document.getElementById("timerStudyInput");
+    const timerShortInput = document.getElementById("timerShortInput");
+    const timerLongInput = document.getElementById("timerLongInput");
+    const timerModalSaveBtn = document.getElementById("timerModalSaveBtn");
+    const timerModalCancelBtn = document.getElementById("timerModalCancelBtn");
+    const timerModalCloseBtn = document.getElementById("timerModalCloseBtn");
+
+    // Stats modal refs
+    const statsBackdrop = document.getElementById("statsModalBackdrop");
+    const statsBody = document.getElementById("statsModalBody");
+    const statsCloseBtn = document.getElementById("statsModalCloseBtn");
+    const statsCloseBtn2 = document.getElementById("statsModalCloseBtn2");
+
+    let focusMaximized = false;
+
+    // Helpers
+    function getSubjectColor(index) {
+      return SUBJECT_COLORS[index % SUBJECT_COLORS.length];
+    }
+
+    function saveToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(subjects));
+      } catch (e) {}
+    }
+
+    function loadFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (Array.isArray(data)) {
+          subjects = data;
+          subjects.forEach((subj) => {
+            if (!Array.isArray(subj.files)) subj.files = [];
+            if (!subj.sortMode) subj.sortMode = "manual";
+          });
+        }
+      } catch (e) {
+        subjects = [];
+      }
+    }
+
+    function saveFocusConfig() {
+      try {
+        localStorage.setItem(
+          CONFIG_KEY,
+          JSON.stringify({ pomoConfig })
+        );
+      } catch (e) {}
+    }
+
+    function loadFocusConfig() {
+      try {
+        const raw = localStorage.getItem(CONFIG_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (!data) return;
+        if (data.pomoConfig) {
+          if (typeof data.pomoConfig.study === "number")
+            pomoConfig.study = data.pomoConfig.study;
+          if (typeof data.pomoConfig.short === "number")
+            pomoConfig.short = data.pomoConfig.short;
+          if (typeof data.pomoConfig.long === "number")
+            pomoConfig.long = data.pomoConfig.long;
+        }
+      } catch (e) {}
+    }
+
+    function createId() {
+      return Math.random().toString(36).slice(2, 10);
+    }
+
+    function confidenceClass(value) {
+      if (value < 40) return "conf-low";
+      if (value < 75) return "conf-mid";
+      return "conf-high";
+    }
+
+    function confidenceLabel(value) {
+      if (value < 40) return "Low";
+      if (value < 75) return "Medium";
+      return "High";
+    }
+
+    function meterClass(value) {
+      if (value < 40) return "meter-low";
+      if (value < 75) return "meter-mid";
+      return "meter-high";
+    }
+
+    function getTodayKey() {
+      const d = new Date();
+      return d.toISOString().slice(0, 10); // YYYY-MM-DD
+    }
+
+    function addDailyStudyForFile(file, ms) {
+      if (!ms || ms <= 0) return;
+      if (!file.dailyMs || typeof file.dailyMs !== "object") {
+        file.dailyMs = {};
+      }
+      const key = getTodayKey();
+      file.dailyMs[key] = (file.dailyMs[key] || 0) + ms;
+    }
+
+    function formatTimeAgo(isoString) {
+      if (!isoString) return "Never revised";
+      const t = new Date(isoString).getTime();
+      if (Number.isNaN(t)) return "Never revised";
+
+      let diff = Date.now() - t;
+      if (diff < 0) diff = 0;
+
+      const minute = 60 * 1000;
+      const hour = 60 * minute;
+      const day = 24 * hour;
+      const week = 7 * day;
+      const month = 30 * day;
+      const year = 365 * day;
+
+      if (diff < minute) return "just now";
+      if (diff < hour) {
+        const m = Math.floor(diff / minute);
+        return m + " min ago";
+      }
+      if (diff < day) {
+        const h = Math.floor(diff / hour);
+        return h + " h ago";
+      }
+      if (diff < week) {
+        const d = Math.floor(diff / day);
+        return d + " d ago";
+      }
+      if (diff < month) {
+        const w = Math.floor(diff / week);
+        return w + " w ago";
+      }
+      if (diff < year) {
+        const mo = Math.floor(diff / month);
+        return mo + " mo ago";
+      }
+      const y = Math.floor(diff / year);
+      return y + " y ago";
+    }
+
+    function formatDuration(ms) {
+      if (!ms || ms <= 0) return "0 min";
+      const totalSec = Math.floor(ms / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const parts = [];
+      if (h > 0) parts.push(h + " h");
+      if (m > 0) parts.push(m + " min");
+      if (parts.length === 0) return "less than 1 min";
+      return parts.join(" ");
+    }
+
+    function formatHMS(ms) {
+      const totalSec = Math.max(0, Math.floor(ms / 1000));
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      const hh = String(h).padStart(2, "0");
+      const mm = String(m).padStart(2, "0");
+      const ss = String(s).padStart(2, "0");
+      return `${hh}:${mm}:${ss}`;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function computeElapsedMs(session) {
+      if (!session) return 0;
+      let elapsed = session.baseMs || 0;
+      if (!session.paused && session.startTimeMs) {
+        elapsed += Date.now() - session.startTimeMs;
+      }
+      if (elapsed < 0) elapsed = 0;
+      return elapsed;
+    }
+
+    function isActiveStudy(subjId, fileId) {
+      return (
+        activeStudy &&
+        activeStudy.kind === "study" &&
+        activeStudy.subjectId === subjId &&
+        activeStudy.fileId === fileId
+      );
+    }
+
+    function computeTodayStudyBySubject() {
+      const key = getTodayKey();
+      const results = [];
+
+      subjects.forEach((subj, subjIndex) => {
+        let ms = 0;
+        (subj.files || []).forEach((file) => {
+          if (file.dailyMs && file.dailyMs[key]) {
+            ms += file.dailyMs[key];
+          }
+        });
+        results.push({ subj, subjIndex, ms });
+      });
+
+      if (activeStudy && activeStudy.kind === "study" && activeStudy.subjectId) {
+        const idx = subjects.findIndex((s) => s.id === activeStudy.subjectId);
+        if (idx !== -1) {
+          results[idx].ms += computeElapsedMs(activeStudy);
+        }
+      }
+
+      const perSubject = results.filter((r) => r.ms > 0);
+      const totalMs = perSubject.reduce((sum, r) => sum + r.ms, 0);
+      return { perSubject, totalMs };
+    }
+
+    function updateTodayStudyUI() {
+      if (!summaryStudyTodayLabel || !summaryStudyBar || !summaryStudyLegend) return;
+
+      const { perSubject, totalMs } = computeTodayStudyBySubject();
+
+      summaryStudyTodayLabel.textContent = totalMs
+        ? formatDuration(totalMs)
+        : "0 min";
+
+      summaryStudyBar.innerHTML = "";
+      summaryStudyLegend.innerHTML = "";
+
+      if (!totalMs || !perSubject.length) {
+        const emptyBar = document.createElement("div");
+        emptyBar.style.width = "100%";
+        emptyBar.style.height = "100%";
+        emptyBar.style.background = "#e5e7eb";
+        summaryStudyBar.appendChild(emptyBar);
+        return;
+      }
+
+      perSubject.forEach(({ subj, subjIndex, ms }) => {
+        const width = (ms * 100) / totalMs;
+
+        const seg = document.createElement("div");
+        seg.className = "summary-study-segment";
+        seg.style.width = width + "%";
+        seg.style.backgroundColor = getSubjectColor(subjIndex);
+        summaryStudyBar.appendChild(seg);
+
+        const legendItem = document.createElement("div");
+        legendItem.className = "summary-study-legend-item";
+        const swatch = document.createElement("span");
+        swatch.className = "summary-study-legend-swatch";
+        swatch.style.backgroundColor = getSubjectColor(subjIndex);
+        const label = document.createElement("span");
+        label.textContent = subj.name;
+        legendItem.appendChild(swatch);
+        legendItem.appendChild(label);
+        summaryStudyLegend.appendChild(legendItem);
+      });
+    }
+
+    function updateSummary() {
+      const totalSubjects = subjects.length;
+      let totalFiles = 0;
+      let lowCount = 0;
+      let sumConf = 0;
+
+      for (const subj of subjects) {
+        for (const file of subj.files || []) {
+          totalFiles++;
+          const c = Number(file.confidence) || 0;
+          sumConf += c;
+          if (c < 40) lowCount++;
+        }
+      }
+
+      const avg = totalFiles ? Math.round(sumConf / totalFiles) : 0;
+
+      summarySubjects.textContent = totalSubjects;
+      summaryFiles.textContent = totalFiles;
+      summaryLow.textContent = lowCount;
+      summaryConfLabel.textContent = avg + "%";
+
+      summaryConfFill.classList.remove("meter-low", "meter-mid", "meter-high");
+      if (!totalFiles) {
+        summaryConfFill.classList.add("meter-low");
+        summaryConfFill.style.width = "0%";
+      } else {
+        summaryConfFill.classList.add(meterClass(avg));
+        summaryConfFill.style.width = avg + "%";
+      }
+
+      updateTodayStudyUI();
+    }
+
+    function finalizeActiveSession(autoFinished) {
+      if (!activeStudy) return;
+      const session = activeStudy;
+      const rawElapsed = computeElapsedMs(session);
+      const elapsed =
+        typeof session.targetMs === "number"
+          ? Math.min(rawElapsed, session.targetMs)
+          : rawElapsed;
+
+      if (
+        session.kind === "study" &&
+        session.subjectId &&
+        session.fileId
+      ) {
+        const subj = subjects.find((s) => s.id === session.subjectId);
+        if (subj) {
+          const file = subj.files.find((f) => f.id === session.fileId);
+          if (file) {
+            file.totalMs = (file.totalMs || 0) + elapsed;
+            file.sessions = (file.sessions || 0) + 1;
+            file.lastSessionMs = elapsed;
+            file.lastReviewed = new Date().toISOString();
+            addDailyStudyForFile(file, elapsed);
+          }
+        }
+      }
+
+      activeStudy = null;
+      saveToStorage();
+      renderFocusState();
+      renderTable();
+      updateStudyTimerDisplay();
+      if (autoFinished) {
+        alert("Session finished.");
+      }
+    }
+
+    function startStudy(subjectId, file) {
+      // Resume if same file paused
+      if (
+        activeStudy &&
+        activeStudy.kind === "study" &&
+        activeStudy.subjectId === subjectId &&
+        activeStudy.fileId === file.id
+      ) {
+        if (activeStudy.paused) {
+          activeStudy.startTimeMs = Date.now();
+          activeStudy.paused = false;
+          renderFocusState();
+          updateStudyTimerDisplay();
+        }
+        return;
+      }
+
+      if (activeStudy) {
+        // directly stop current session and start new study (no confirm)
+        finalizeActiveSession(false);
+      }
+
+      const minutes = pomoConfig.study || 25;
+      const targetMs = minutes * 60 * 1000;
+
+      activeStudy = {
+        kind: "study",
+        subjectId,
+        fileId: file.id,
+        startTimeMs: Date.now(),
+        baseMs: 0,
+        targetMs,
+        paused: false
+      };
+
+      renderFocusState();
+      renderTable();
+      updateStudyTimerDisplay();
+    }
+
+    function pauseStudy(subjectId, fileId) {
+      if (
+        !activeStudy ||
+        activeStudy.kind !== "study" ||
+        activeStudy.subjectId !== subjectId ||
+        activeStudy.fileId !== fileId ||
+        activeStudy.paused
+      ) {
+        return;
+      }
+      const now = Date.now();
+      activeStudy.baseMs += now - activeStudy.startTimeMs;
+      activeStudy.startTimeMs = null;
+      activeStudy.paused = true;
+      renderFocusState();
+      renderTable();
+      updateStudyTimerDisplay();
+    }
+
+    function stopStudy(subjectId, fileId) {
+      if (
+        !activeStudy ||
+        activeStudy.kind !== "study" ||
+        activeStudy.subjectId !== subjectId ||
+        activeStudy.fileId !== fileId
+      ) {
+        return;
+      }
+      finalizeActiveSession(false);
+    }
+
+    function startBreak(kind) {
+      // No confirmation: just stop current session and start break
+      if (activeStudy) {
+        finalizeActiveSession(false);
+      }
+
+      const minutes =
+        kind === "short" ? pomoConfig.short : pomoConfig.long;
+      const targetMs = minutes * 60 * 1000;
+
+      activeStudy = {
+        kind: "break",
+        breakKind: kind,
+        subjectId: null,
+        fileId: null,
+        startTimeMs: Date.now(),
+        baseMs: 0,
+        targetMs,
+        paused: false
+      };
+
+      renderFocusState();
+      updateStudyTimerDisplay();
+    }
+
+    function updateStudyTimerDisplay() {
+      if (!focusTimerDisplay) return;
+
+      if (!activeStudy) {
+        focusTimerDisplay.textContent = "00:00:00";
+        return;
+      }
+
+      const elapsed = computeElapsedMs(activeStudy);
+      const targetMs =
+        typeof activeStudy.targetMs === "number"
+          ? activeStudy.targetMs
+          : 0;
+
+      let remaining = targetMs - elapsed;
+      if (remaining <= 0) {
+        focusTimerDisplay.textContent = "00:00:00";
+        finalizeActiveSession(true);
+        return;
+      }
+
+      const text = formatHMS(remaining);
+      focusTimerDisplay.textContent = text;
+
+      if (activeStudy.kind === "study" && activeStudy.fileId) {
+        const span = document.getElementById("timer-" + activeStudy.fileId);
+        if (span) span.textContent = text;
+      }
+    }
+
+    setInterval(function () {
+      updateStudyTimerDisplay();
+      updateTodayStudyUI();
+    }, 1000);
+
+    function renderFocusState() {
+      focusCard.classList.remove(
+        "focus-study-active",
+        "focus-study-paused",
+        "focus-break-active"
+      );
+
+      if (!activeStudy) {
+        focusSessionTitle.textContent = "No active session";
+        focusSessionSubtitle.textContent =
+          "Click “Study” on a file or start a break below.";
+        focusSessionControls.innerHTML =
+          '<span style="font-size:0.75rem;color:#9ca3af;">No controls – start a session.</span>';
+        focusTimerDisplay.textContent = "00:00:00";
+        return;
+      }
+
+      if (activeStudy.kind === "study") {
+        const subj = subjects.find((s) => s.id === activeStudy.subjectId);
+        const file =
+          subj && subj.files.find((f) => f.id === activeStudy.fileId);
+        focusSessionTitle.textContent = file ? file.name : "Study session";
+        const subjName = subj ? subj.name : "Unknown subject";
+        focusSessionSubtitle.textContent = subjName + " · Study session";
+
+        if (activeStudy.paused) {
+          focusCard.classList.add("focus-study-paused");
+        } else {
+          focusCard.classList.add("focus-study-active");
+        }
+      } else {
+        const label =
+          activeStudy.breakKind === "short"
+            ? "Short break"
+            : activeStudy.breakKind === "long"
+            ? "Long break"
+            : "Break";
+        focusSessionTitle.textContent = label;
+        focusSessionSubtitle.textContent = "Break";
+        focusCard.classList.add("focus-break-active");
+      }
+
+      focusSessionControls.innerHTML = "";
+      const isPaused = !!activeStudy.paused;
+
+      const pauseBtn = document.createElement("button");
+      pauseBtn.className = "focus-main-btn focus-main-btn-primary";
+      pauseBtn.textContent = isPaused ? "Resume" : "Pause";
+      pauseBtn.addEventListener("click", () => {
+        if (!activeStudy) return;
+        if (activeStudy.paused) {
+          activeStudy.startTimeMs = Date.now();
+          activeStudy.paused = false;
+          renderFocusState();
+          updateStudyTimerDisplay();
+        } else {
+          const now = Date.now();
+          activeStudy.baseMs += now - activeStudy.startTimeMs;
+          activeStudy.startTimeMs = null;
+          activeStudy.paused = true;
+          renderFocusState();
+          renderTable();
+          updateStudyTimerDisplay();
+        }
+      });
+
+      const stopBtn = document.createElement("button");
+      stopBtn.className = "focus-main-btn focus-main-btn-danger";
+      stopBtn.textContent = "Stop";
+      stopBtn.addEventListener("click", () => {
+        finalizeActiveSession(false);
+      });
+
+      focusSessionControls.appendChild(pauseBtn);
+      focusSessionControls.appendChild(stopBtn);
+    }
+
+    function createAddSubjectColumn() {
+      const col = document.createElement("div");
+      col.className = "subject-column subject-add-column";
+
+      const box = document.createElement("div");
+      box.className = "subject-add-box";
+
+      const inline = document.createElement("div");
+      inline.className = "subject-add-inline";
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "subject-add-input";
+      input.placeholder = "Add subject...";
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn subject-add-btn";
+      btn.textContent = "+";
+
+      function handleAdd() {
+        const name = input.value.trim();
+        if (!name) {
+          alert("Please enter a subject name.");
+          return;
+        }
+        subjects.push({
+          id: createId(),
+          name,
+          files: [],
+          sortMode: "manual"
+        });
+        input.value = "";
+        saveToStorage();
+        renderSubjectOptions();
+        renderTable();
+        renderFocusState();
+      }
+
+      btn.addEventListener("click", handleAdd);
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          handleAdd();
+        }
+      });
+
+      inline.appendChild(input);
+      inline.appendChild(btn);
+      box.appendChild(inline);
+      col.appendChild(box);
+
+      return col;
+    }
+
+    function applySortToSubject(subj) {
+      const mode = subj.sortMode || "manual";
+      if (!Array.isArray(subj.files) || mode === "manual") return;
+
+      if (mode === "confidence") {
+        subj.files.sort((a, b) => {
+          const ac = Number(a.confidence) || 0;
+          const bc = Number(b.confidence) || 0;
+          if (ac === bc) return (a.name || "").localeCompare(b.name || "");
+          // low confidence first
+          return ac - bc;
+        });
+      } else if (mode === "staleness") {
+        // Longest time not studied: never reviewed first, then oldest lastReviewed
+        function stalenessValue(file) {
+          if (!file.lastReviewed) return 0; // "never" group
+          const t = new Date(file.lastReviewed).getTime();
+          if (Number.isNaN(t)) return 0;
+          return t;
+        }
+        subj.files.sort((a, b) => {
+          const av = stalenessValue(a);
+          const bv = stalenessValue(b);
+          const aNever = !a.lastReviewed;
+          const bNever = !b.lastReviewed;
+          if (aNever && !bNever) return -1;
+          if (!aNever && bNever) return 1;
+          if (av === bv) return (a.name || "").localeCompare(b.name || "");
+          // older date (smaller timestamp) is more stale
+          return av - bv;
+        });
+      } else if (mode === "total") {
+        // Total amount spent in total studying: most studied first
+        subj.files.sort((a, b) => {
+          const at = Number(a.totalMs) || 0;
+          const bt = Number(b.totalMs) || 0;
+          if (at === bt) return (a.name || "").localeCompare(b.name || "");
+          return bt - at;
+        });
+      }
+    }
+
+    function renderTable() {
+      subjectTable.innerHTML = "";
+
+      if (!subjects.length) {
+        emptyHint.textContent =
+          "No subjects yet. Use “Add subject” on the right to create your first subject.";
+        emptyHint.style.display = "block";
+      } else {
+        emptyHint.style.display = "none";
+      }
+
+      subjects.forEach((subj, subjIndex) => {
+        if (!subj.sortMode) subj.sortMode = "manual";
+        applySortToSubject(subj);
+
+        const col = document.createElement("div");
+        col.className = "subject-column";
+        const subjColor = getSubjectColor(subjIndex);
+        col.style.borderTop = "3px solid " + subjColor;
+
+        const header = document.createElement("div");
+        header.className = "subject-header";
+
+        const headerLeft = document.createElement("div");
+        headerLeft.style.display = "flex";
+        headerLeft.style.alignItems = "center";
+        headerLeft.style.gap = "6px";
+
+        const colorDot = document.createElement("span");
+        colorDot.className = "subject-color-dot";
+        colorDot.style.backgroundColor = subjColor;
+
+        const titleSpan = document.createElement("span");
+        titleSpan.textContent = subj.name;
+
+        headerLeft.appendChild(colorDot);
+        headerLeft.appendChild(titleSpan);
+
+        const countSpan = document.createElement("small");
+        const totalFiles = subj.files.length;
+        let avg = 0;
+        if (totalFiles) {
+          const sum = subj.files.reduce(
+            (acc, f) => acc + (Number(f.confidence) || 0),
+            0
+          );
+          avg = Math.round(sum / totalFiles);
+          countSpan.textContent =
+            totalFiles + " file" + (totalFiles === 1 ? "" : "s") + " · " + avg + "%";
+        } else {
+          countSpan.textContent = "no files";
+        }
+
+        const deleteSubjectBtn = document.createElement("button");
+        deleteSubjectBtn.className = "subject-delete-btn";
+        deleteSubjectBtn.title = "Delete subject";
+        deleteSubjectBtn.textContent = "✕";
+        deleteSubjectBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          if (
+            !confirm(
+              `Delete subject "${subj.name}" and all its files? This cannot be undone.`
+            )
+          ) {
+            return;
+          }
+          if (
+            activeStudy &&
+            activeStudy.kind === "study" &&
+            activeStudy.subjectId === subj.id
+          ) {
+            activeStudy = null;
+          }
+          subjects = subjects.filter((s) => s.id !== subj.id);
+          saveToStorage();
+          renderSubjectOptions();
+          renderFocusState();
+          renderTable();
+        });
+
+        header.appendChild(headerLeft);
+        header.appendChild(countSpan);
+        header.appendChild(deleteSubjectBtn);
+
+        const meter = document.createElement("div");
+        meter.className = "subject-meter";
+        const meterFill = document.createElement("div");
+        meterFill.className = "subject-meter-fill";
+        if (totalFiles) {
+          meterFill.style.width = avg + "%";
+          meterFill.classList.add(meterClass(avg));
+        } else {
+          meterFill.style.width = "0%";
+          meterFill.classList.add("meter-low");
+        }
+        meter.appendChild(meterFill);
+
+        // Sort controls
+        const sortWrapper = document.createElement("div");
+        sortWrapper.className = "subject-sort";
+        const sortSelect = document.createElement("select");
+        sortSelect.className = "subject-sort-select";
+
+        const sortOptions = [
+          { value: "manual", label: "Order: manual" },
+          { value: "confidence", label: "Confidence (low → high)" },
+          { value: "staleness", label: "Longest not studied" },
+          { value: "total", label: "Most studied" }
+        ];
+
+        sortOptions.forEach((opt) => {
+          const optionEl = document.createElement("option");
+          optionEl.value = opt.value;
+          optionEl.textContent = opt.label;
+          sortSelect.appendChild(optionEl);
+        });
+
+        sortSelect.value = subj.sortMode || "manual";
+        sortSelect.addEventListener("change", () => {
+          subj.sortMode = sortSelect.value;
+          applySortToSubject(subj);
+          saveToStorage();
+          renderTable();
+        });
+
+        sortWrapper.appendChild(sortSelect);
+
+        const fileList = document.createElement("div");
+        fileList.className = "file-list";
+
+        const filter = currentSearch;
+
+        const sourceFiles = subj.files;
+        const visibleFiles = filter
+          ? sourceFiles.filter((f) =>
+              (f.name || "")
+                .toLowerCase()
+                .includes(filter.toLowerCase())
+            )
+          : sourceFiles;
+
+        // Allow dropping at end of list (reorder only within same subject)
+        fileList.addEventListener("dragover", (event) => {
+          if (!dragState || dragState.subjectId !== subj.id) return;
+          event.preventDefault();
+        });
+
+        fileList.addEventListener("drop", (event) => {
+          event.preventDefault();
+          if (!dragState || dragState.subjectId !== subj.id) return;
+
+          const sourceSubject = subjects.find(
+            (s) => s.id === dragState.subjectId
+          );
+          if (!sourceSubject) return;
+
+          const sourceIndex = sourceSubject.files.findIndex(
+            (f) => f.id === dragState.fileId
+          );
+          if (sourceIndex === -1) return;
+
+          const [movedFile] = sourceSubject.files.splice(sourceIndex, 1);
+          if (sourceSubject.id !== subj.id) {
+            // Only reorder within same subject
+            sourceSubject.files.splice(sourceIndex, 0, movedFile);
+            dragState = null;
+            return;
+          }
+
+          subj.files.push(movedFile);
+          subj.sortMode = "manual"; // manual override after drag
+          saveToStorage();
+          renderTable();
+        });
+
+        if (!visibleFiles.length) {
+          const hint = document.createElement("div");
+          hint.className = "empty-hint";
+          hint.textContent = subj.files.length
+            ? "No files match filter in this subject."
+            : "Add a file to this subject.";
+          fileList.appendChild(hint);
+        } else {
+          for (const file of visibleFiles) {
+            const row = document.createElement("div");
+            row.className = "file-row";
+            row.setAttribute("draggable", "true");
+
+            if (isActiveStudy(subj.id, file.id)) {
+              row.classList.add("studying");
+            }
+
+            // Drag handlers
+            row.addEventListener("dragstart", (event) => {
+              dragState = { subjectId: subj.id, fileId: file.id };
+              row.classList.add("dragging");
+              event.dataTransfer.effectAllowed = "move";
+            });
+
+            row.addEventListener("dragend", () => {
+              row.classList.remove("dragging");
+              dragState = null;
+            });
+
+            row.addEventListener("dragenter", (event) => {
+              if (!dragState || dragState.subjectId !== subj.id) return;
+              event.preventDefault();
+              row.classList.add("drag-over");
+            });
+
+            row.addEventListener("dragover", (event) => {
+              if (!dragState || dragState.subjectId !== subj.id) return;
+              event.preventDefault();
+            });
+
+            row.addEventListener("dragleave", () => {
+              row.classList.remove("drag-over");
+            });
+
+            row.addEventListener("drop", (event) => {
+              event.preventDefault();
+              row.classList.remove("drag-over");
+              if (!dragState || dragState.subjectId !== subj.id) return;
+
+              const sourceSubject = subjects.find(
+                (s) => s.id === dragState.subjectId
+              );
+              if (!sourceSubject) return;
+
+              const sourceIndex = sourceSubject.files.findIndex(
+                (f) => f.id === dragState.fileId
+              );
+              if (sourceIndex === -1) return;
+
+              const targetIndex = subj.files.findIndex(
+                (f) => f.id === file.id
+              );
+              if (targetIndex === -1) return;
+
+              const [movedFile] = sourceSubject.files.splice(sourceIndex, 1);
+
+              if (sourceSubject.id !== subj.id) {
+                // no cross-subject moving
+                sourceSubject.files.splice(sourceIndex, 0, movedFile);
+                dragState = null;
+                return;
+              }
+
+              let insertIndex = targetIndex;
+              if (sourceIndex < targetIndex) {
+                insertIndex = targetIndex - 1;
+              }
+              subj.files.splice(insertIndex, 0, movedFile);
+              subj.sortMode = "manual"; // manual override after drag
+
+              dragState = null;
+              saveToStorage();
+              renderTable();
+            });
+
+            const nameDiv = document.createElement("div");
+            nameDiv.className = "file-name";
+            nameDiv.textContent = file.name;
+            row.appendChild(nameDiv);
+
+            if (file.notes) {
+              const notesDiv = document.createElement("div");
+              notesDiv.className = "file-notes";
+              notesDiv.textContent = file.notes;
+              row.appendChild(notesDiv);
+            }
+
+            const timeDiv = document.createElement("div");
+            timeDiv.className = "file-time";
+            timeDiv.textContent = file.lastReviewed
+              ? "Revised " + formatTimeAgo(file.lastReviewed)
+              : "Never revised";
+            row.appendChild(timeDiv);
+
+            const metaDiv = document.createElement("div");
+            metaDiv.className = "file-meta";
+
+            const leftMeta = document.createElement("div");
+            leftMeta.style.display = "flex";
+            leftMeta.style.alignItems = "center";
+            leftMeta.style.gap = "4px";
+
+            const badge = document.createElement("span");
+            badge.className =
+              "confidence-badge " + confidenceClass(file.confidence);
+            badge.textContent = file.confidence + "%";
+
+            // Click badge to change confidence
+            badge.addEventListener("click", (event) => {
+              event.stopPropagation();
+              const current = file.confidence;
+              const input = prompt(
+                `Set confidence for:\n"${file.name}"\n(0–100):`,
+                current
+              );
+              if (input === null) return;
+              const val = Number(input);
+              if (!Number.isFinite(val) || val < 0 || val > 100) {
+                alert("Please enter a number between 0 and 100.");
+                return;
+              }
+              file.confidence = Math.round(val);
+              saveToStorage();
+              renderTable();
+            });
+
+            const pill = document.createElement("span");
+            pill.className = "pill";
+            const dot = document.createElement("span");
+            dot.className = "pill-dot";
+            const label = document.createElement("span");
+            label.textContent = confidenceLabel(file.confidence);
+            pill.appendChild(dot);
+            pill.appendChild(label);
+
+            leftMeta.appendChild(badge);
+            leftMeta.appendChild(pill);
+
+            const rightMeta = document.createElement("div");
+            rightMeta.style.display = "flex";
+            rightMeta.style.gap = "4px";
+            rightMeta.style.alignItems = "center";
+
+            const timerSpan = document.createElement("span");
+            timerSpan.className = "study-timer-label";
+            timerSpan.id = "timer-" + file.id;
+            if (isActiveStudy(subj.id, file.id)) {
+              updateStudyTimerDisplay();
+            } else {
+              timerSpan.textContent = "";
+            }
+
+            const isThisActive = isActiveStudy(subj.id, file.id);
+            const isPaused =
+              isThisActive && activeStudy && activeStudy.paused;
+
+            if (!isThisActive) {
+              const studyBtn = document.createElement("button");
+              studyBtn.className = "chip-btn chip-btn-primary";
+              studyBtn.textContent = "Study";
+              studyBtn.addEventListener("click", (event) => {
+                event.stopPropagation();
+                startStudy(subj.id, file);
+              });
+              rightMeta.appendChild(timerSpan);
+              rightMeta.appendChild(studyBtn);
+            } else {
+              const primaryBtn = document.createElement("button");
+              primaryBtn.className = "chip-btn chip-btn-primary";
+              primaryBtn.textContent = isPaused ? "Resume" : "Pause";
+              primaryBtn.addEventListener("click", (event) => {
+                event.stopPropagation();
+                if (activeStudy.paused) {
+                  activeStudy.startTimeMs = Date.now();
+                  activeStudy.paused = false;
+                  renderFocusState();
+                  updateStudyTimerDisplay();
+                } else {
+                  pauseStudy(subj.id, file.id);
+                }
+              });
+
+              const stopBtn = document.createElement("button");
+              stopBtn.className = "chip-btn chip-btn-danger";
+              stopBtn.textContent = "Stop";
+              stopBtn.addEventListener("click", (event) => {
+                event.stopPropagation();
+                stopStudy(subj.id, file.id);
+              });
+
+              rightMeta.appendChild(timerSpan);
+              rightMeta.appendChild(primaryBtn);
+              rightMeta.appendChild(stopBtn);
+            }
+
+            metaDiv.appendChild(leftMeta);
+            metaDiv.appendChild(rightMeta);
+
+            row.appendChild(metaDiv);
+
+            // Click row to edit in modal
+            row.addEventListener("click", () => {
+              openFileModalEdit(subj.id, file);
+            });
+
+            fileList.appendChild(row);
+          }
+        }
+
+        // Add file slot at the bottom of each column
+        const addSlot = document.createElement("button");
+        addSlot.type = "button";
+        addSlot.className = "add-file-slot";
+        addSlot.textContent = "+ Add file";
+        addSlot.addEventListener("click", () => {
+          openFileModalAdd(subj.id);
+        });
+        fileList.appendChild(addSlot);
+
+        col.appendChild(header);
+        col.appendChild(meter);
+        col.appendChild(sortWrapper);
+        col.appendChild(fileList);
+        subjectTable.appendChild(col);
+      });
+
+      // Add subject column at the right
+      subjectTable.appendChild(createAddSubjectColumn());
+
+      updateSummary();
+      updateStudyTimerDisplay();
+    }
+
+    function renderSubjectOptions(selectedId) {
+      modalSubjectSelect.innerHTML = "";
+      if (!subjects.length) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "No subjects yet";
+        modalSubjectSelect.appendChild(opt);
+        return;
+      }
+
+      for (const subj of subjects) {
+        const opt = document.createElement("option");
+        opt.value = subj.id;
+        opt.textContent = subj.name;
+        modalSubjectSelect.appendChild(opt);
+      }
+
+      if (selectedId && subjects.some((s) => s.id === selectedId)) {
+        modalSubjectSelect.value = selectedId;
+      } else {
+        modalSubjectSelect.selectedIndex = 0;
+      }
+    }
+
+    function openFileModalAdd(subjectId) {
+      fileModalState = { mode: "add", subjectId };
+      fileModalTitle.textContent = "Add file";
+      fileModalSubtitle.textContent = "Add a new file to your study planner.";
+      modalDeleteBtn.hidden = true;
+
+      renderSubjectOptions(subjectId);
+      modalFileNameInput.value = "";
+      modalFileNotesInput.value = "";
+      modalConfidenceRange.value = "50";
+      modalConfidenceValue.textContent = "50%";
+
+      fileModalBackdrop.style.display = "flex";
+      modalFileNameInput.focus();
+    }
+
+    function openFileModalEdit(subjectId, file) {
+      fileModalState = { mode: "edit", subjectId, fileId: file.id };
+      fileModalTitle.textContent = "Edit file";
+      fileModalSubtitle.textContent = "Update file information or move it to another subject.";
+      modalDeleteBtn.hidden = false;
+
+      renderSubjectOptions(subjectId);
+      modalFileNameInput.value = file.name;
+      modalFileNotesInput.value = file.notes || "";
+      modalConfidenceRange.value = file.confidence;
+      modalConfidenceValue.textContent = file.confidence + "%";
+
+      fileModalBackdrop.style.display = "flex";
+      modalFileNameInput.focus();
+    }
+
+    function closeFileModal() {
+      fileModalState = null;
+      fileModalBackdrop.style.display = "none";
+    }
+
+    // Stats modal
+    function openStatsModal() {
+      const entries = [];
+      let totalMsOverall = 0;
+
+      for (const subj of subjects) {
+        for (const file of subj.files || []) {
+          const totalMs = file.totalMs || 0;
+          if (totalMs > 0) {
+            entries.push({
+              subjectName: subj.name,
+              fileName: file.name,
+              totalMs,
+              sessions: file.sessions || 0,
+              confidence: file.confidence || 0
+            });
+            totalMsOverall += totalMs;
+          }
+        }
+      }
+
+      if (!entries.length) {
+        statsBody.innerHTML =
+          '<p class="stats-summary">No study sessions tracked yet. Start a timer on a file to collect data.</p>';
+      } else {
+        entries.sort((a, b) => b.totalMs - a.totalMs);
+        const maxMs = entries.reduce(
+          (max, e) => (e.totalMs > max ? e.totalMs : max),
+          0
+        );
+
+        let html =
+          '<div class="stats-summary">Total study time: ' +
+          formatDuration(totalMsOverall) +
+          " · Files with time: " +
+          entries.length +
+          "</div>";
+        html += '<div class="stats-list">';
+
+        for (const e of entries) {
+          const width = maxMs > 0 ? (e.totalMs * 100) / maxMs : 0;
+          const sessionsLabel =
+            (e.sessions || 0) +
+            " session" +
+            ((e.sessions || 0) === 1 ? "" : "s");
+          html +=
+            '<div class="stats-row">' +
+            '<div class="stats-row-header">' +
+            '<div>' +
+            '<div class="stats-row-title">' +
+            escapeHtml(e.fileName) +
+            "</div>" +
+            '<div class="stats-row-subtitle">' +
+            escapeHtml(e.subjectName) +
+            " · " +
+            sessionsLabel +
+            " · " +
+            e.confidence +
+            "% conf</div>" +
+            "</div>" +
+            '<div class="stats-row-time">' +
+            formatDuration(e.totalMs) +
+            "</div>" +
+            "</div>" +
+            '<div class="stats-bar-track">' +
+            '<div class="stats-bar-fill" style="width:' +
+            width +
+            '%;"></div>' +
+            "</div>" +
+            "</div>";
+        }
+
+        html += "</div>";
+        statsBody.innerHTML = html;
+      }
+
+      statsBackdrop.style.display = "flex";
+    }
+
+    function closeStatsModal() {
+      statsBackdrop.style.display = "none";
+    }
+
+    // Timer settings modal helpers
+    function openTimerModal() {
+      timerStudyInput.value = pomoConfig.study;
+      timerShortInput.value = pomoConfig.short;
+      timerLongInput.value = pomoConfig.long;
+      timerModalBackdrop.style.display = "flex";
+      timerStudyInput.focus();
+    }
+
+    function closeTimerModal() {
+      timerModalBackdrop.style.display = "none";
+    }
+
+    function clampMinutes(value, fallback) {
+      const v = Number(value);
+      if (!Number.isFinite(v) || v <= 0) return fallback;
+      return Math.round(v);
+    }
+
+    // Events
+
+    searchInput.addEventListener("input", () => {
+      currentSearch = searchInput.value.trim().toLowerCase();
+      renderTable();
+    });
+
+    modalConfidenceRange.addEventListener("input", () => {
+      modalConfidenceValue.textContent = modalConfidenceRange.value + "%";
+    });
+
+    modalCancelBtn.addEventListener("click", () => {
+      closeFileModal();
+    });
+
+    fileModalCloseBtn.addEventListener("click", () => {
+      closeFileModal();
+    });
+
+    fileModalBackdrop.addEventListener("mousedown", (event) => {
+      if (event.target === fileModalBackdrop) {
+        closeFileModal();
+      }
+    });
+
+    modalSaveBtn.addEventListener("click", () => {
+      if (!fileModalState) return;
+
+      const fileName = modalFileNameInput.value.trim();
+      const notes = modalFileNotesInput.value.trim();
+      const conf = Number(modalConfidenceRange.value);
+      const selectedSubjectId = modalSubjectSelect.value;
+
+      if (!subjects.length) {
+        alert("Please create a subject first.");
+        return;
+      }
+
+      if (!fileName) {
+        alert("Please enter a file or topic name.");
+        return;
+      }
+
+      const targetSubject =
+        subjects.find((s) => s.id === selectedSubjectId) || subjects[0];
+
+      if (fileModalState.mode === "add") {
+        targetSubject.files.push({
+          id: createId(),
+          name: fileName,
+          notes,
+          confidence: conf,
+          lastReviewed: null,
+          totalMs: 0,
+          sessions: 0,
+          lastSessionMs: 0,
+          dailyMs: {}
+        });
+      } else {
+        const originalSubject = subjects.find(
+          (s) => s.id === fileModalState.subjectId
+        );
+        if (!originalSubject) {
+          closeFileModal();
+          renderTable();
+          return;
+        }
+        const file = originalSubject.files.find(
+          (f) => f.id === fileModalState.fileId
+        );
+        if (!file) {
+          closeFileModal();
+          renderTable();
+          return;
+        }
+
+        if (originalSubject.id === targetSubject.id) {
+          file.name = fileName;
+          file.notes = notes;
+          file.confidence = conf;
+        } else {
+          originalSubject.files = originalSubject.files.filter(
+            (f) => f.id !== fileModalState.fileId
+          );
+          targetSubject.files.push({
+            id: fileModalState.fileId,
+            name: fileName,
+            notes,
+            confidence: conf,
+            lastReviewed: file.lastReviewed || null,
+            totalMs: file.totalMs || 0,
+            sessions: file.sessions || 0,
+            lastSessionMs: file.lastSessionMs || 0,
+            dailyMs: file.dailyMs || {}
+          });
+        }
+      }
+
+      saveToStorage();
+      closeFileModal();
+      renderTable();
+    });
+
+    modalDeleteBtn.addEventListener("click", () => {
+      if (!fileModalState || fileModalState.mode !== "edit") {
+        closeFileModal();
+        return;
+      }
+      const subj = subjects.find((s) => s.id === fileModalState.subjectId);
+      if (!subj) {
+        closeFileModal();
+        return;
+      }
+      const file = subj.files.find((f) => f.id === fileModalState.fileId);
+      if (!file) {
+        closeFileModal();
+        return;
+      }
+      if (
+        !confirm(
+          `Delete file "${file.name}" from subject "${subj.name}"?`
+        )
+      ) {
+        return;
+      }
+
+      if (
+        activeStudy &&
+        activeStudy.kind === "study" &&
+        activeStudy.subjectId === subj.id &&
+        activeStudy.fileId === file.id
+      ) {
+        activeStudy = null;
+      }
+
+      subj.files = subj.files.filter((f) => f.id !== fileModalState.fileId);
+      saveToStorage();
+      closeFileModal();
+      renderTable();
+      renderFocusState();
+    });
+
+    // Timer settings modal
+    openTimerSettingsBtn.addEventListener("click", () => {
+      openTimerModal();
+    });
+
+    timerModalCancelBtn.addEventListener("click", () => {
+      closeTimerModal();
+    });
+
+    timerModalCloseBtn.addEventListener("click", () => {
+      closeTimerModal();
+    });
+
+    timerModalBackdrop.addEventListener("mousedown", (event) => {
+      if (event.target === timerModalBackdrop) {
+        closeTimerModal();
+      }
+    });
+
+    timerModalSaveBtn.addEventListener("click", () => {
+      const newStudy = clampMinutes(timerStudyInput.value, pomoConfig.study || 25);
+      const newShort = clampMinutes(timerShortInput.value, pomoConfig.short || 5);
+      const newLong = clampMinutes(timerLongInput.value, pomoConfig.long || 15);
+
+      pomoConfig.study = newStudy;
+      pomoConfig.short = newShort;
+      pomoConfig.long = newLong;
+      saveFocusConfig();
+      closeTimerModal();
+    });
+
+    // Break buttons
+    startShortBreakBtn.addEventListener("click", () => {
+      startBreak("short");
+    });
+
+    startLongBreakBtn.addEventListener("click", () => {
+      startBreak("long");
+    });
+
+    // Focus Maximize / Minimize
+    toggleFocusMaxBtn.addEventListener("click", () => {
+      focusMaximized = !focusMaximized;
+      if (focusMaximized) {
+        appRoot.classList.add("focus-maximized");
+        toggleFocusMaxBtn.textContent = "Minimize";
+      } else {
+        appRoot.classList.remove("focus-maximized");
+        toggleFocusMaxBtn.textContent = "Maximize";
+      }
+    });
+
+    // Stats modal
+    openStatsBtn.addEventListener("click", () => {
+      openStatsModal();
+    });
+
+    statsCloseBtn.addEventListener("click", () => {
+      closeStatsModal();
+    });
+
+    statsCloseBtn2.addEventListener("click", () => {
+      closeStatsModal();
+    });
+
+    statsBackdrop.addEventListener("mousedown", (event) => {
+      if (event.target === statsBackdrop) {
+        closeStatsModal();
+      }
+    });
+
+    // Initial load
+    loadFromStorage();
+    loadFocusConfig();
+    renderSubjectOptions();
+    renderFocusState();
+    renderTable();
+  </script>
+</body>
+</html>

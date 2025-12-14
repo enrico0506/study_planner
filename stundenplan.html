@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="breeze">
+<head>
+  <meta charset="UTF-8" />
+  <title>Study Planner – Stundenplan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    (function() {
+      try {
+        const savedTheme = localStorage.getItem("studyTheme_v1");
+        if (savedTheme) {
+          document.documentElement.setAttribute("data-theme", savedTheme);
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="./src/styles/main.css" />
+</head>
+<body class="timetable-page">
+  <div class="timetable-shell">
+    <div class="header-row timetable-header">
+      <div class="header-main">
+        <p class="eyebrow">Weekly rhythm</p>
+        <h1>Stundenplan</h1>
+        <p class="subtitle">
+          School-style table: times down the left, days across. Use the add button to place recurring lessons with custom names or linked subjects.
+        </p>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-secondary header-calendar-btn" href="index.html">← Back to board</a>
+      </div>
+    </div>
+
+    <div class="timetable-layout">
+      <section class="timetable-board">
+        <div class="timetable-board-head">
+          <div>
+            <div class="timetable-board-title">School timetable view</div>
+            <div class="timetable-board-subtitle">
+              Rows = time slots · Columns = days. Use “Add lesson” to create or edit entries.
+            </div>
+          </div>
+          <div class="timetable-board-actions">
+            <button class="chip-btn chip-btn-primary" id="openLessonModalBtn" type="button">Add lesson</button>
+          </div>
+        </div>
+        <div class="timetable-tabs">
+          <div class="timetable-tab-list" id="timetableTabs"></div>
+          <div class="timetable-tab-actions" id="tabMenu">
+            <button class="tab-icon-btn" id="tabMenuToggle" type="button" aria-haspopup="true" aria-expanded="false" title="More actions">...</button>
+            <div class="timetable-tab-menu" id="tabMenuPanel">
+              <button class="tab-menu-btn" id="copyTimetableBtn" type="button">Copy tab</button>
+              <button class="tab-menu-btn" id="newTimetableTabBtn" type="button">New tab</button>
+            </div>
+          </div>
+        </div>
+        <div class="timetable-week-grid" id="timetableGrid"></div>
+      </section>
+    </div>
+  </div>
+
+  <div class="calendar-modal" id="lessonModal" aria-hidden="true">
+    <div class="calendar-modal-backdrop" id="lessonModalBackdrop"></div>
+    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="lessonFormTitle">
+      <div class="calendar-modal-head">
+        <div>
+          <div class="modal-label">Stundenplan</div>
+          <div class="modal-title" id="lessonFormTitle">Add lesson</div>
+          <div class="modal-subtitle">Create or edit a lesson to place on the timetable.</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="lessonModalCloseBtn" type="button">Close</button>
+        </div>
+      </div>
+      <form id="lessonForm" class="calendar-form">
+        <div class="form-row">
+          <label>
+            Title / lesson name
+            <input type="text" id="lessonTitleInput" placeholder="e.g. Linear Algebra, Lab, Tutoring" required />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Linked subject (optional)
+            <select id="lessonSubjectSelect"></select>
+          </label>
+        </div>
+        <div class="form-grid timetable-form-grid">
+          <label>
+            Day
+            <select id="lessonDaySelect"></select>
+          </label>
+          <label>
+            Start
+            <input type="time" id="lessonStartInput" required />
+          </label>
+          <label>
+            End
+            <input type="time" id="lessonEndInput" required />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Location (optional)
+            <input type="text" id="lessonLocationInput" placeholder="Room, building, or online link" />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Notes (optional)
+            <textarea id="lessonNotesInput" rows="2" placeholder="Context, teacher, or prep needed"></textarea>
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Custom color (used when no subject is linked)
+            <input type="color" id="lessonColorInput" value="#4f8bff" />
+          </label>
+        </div>
+        <div class="calendar-form-actions timetable-form-actions">
+          <button class="btn btn-secondary" id="lessonResetBtn" type="button">Reset</button>
+          <button class="btn" id="lessonSubmitBtn" type="submit">Save lesson</button>
+        </div>
+        <div class="calendar-form-status" id="lessonStatus"></div>
+      </form>
+    </div>
+  </div>
+  <script src="./src/stundenplan.js" defer></script>
+</body>
+</html>
