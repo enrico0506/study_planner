@@ -1,15 +1,6 @@
 (() => {
   const STORAGE_PREFIX = "study";
-  const UI_ID = "accountWidgetRoot";
   const STATE_PUSH_DEBOUNCE_MS = 1500;
-
-  function $(selector) {
-    return document.querySelector(selector);
-  }
-
-  function normalizeEmail(email) {
-    return String(email || "").trim().toLowerCase();
-  }
 
   function stableStringifyObject(obj) {
     const keys = Object.keys(obj).sort();
@@ -82,117 +73,9 @@
     return apiFetch("/api/state", { method: "PUT", body: JSON.stringify({ data }) });
   }
 
-  function ensureWidget() {
-    if (document.getElementById(UI_ID)) return;
-
-    const root = document.createElement("div");
-    root.id = UI_ID;
-    root.className = "account-widget";
-    root.innerHTML = `
-      <div class="account-widget__row">
-        <div class="account-widget__title">Account</div>
-        <div class="account-widget__status" id="accountWidgetStatus">…</div>
-      </div>
-      <div class="account-widget__body" id="accountWidgetBody"></div>
-    `;
-    document.body.appendChild(root);
-  }
-
-  function renderLoggedOut(message = "") {
-    ensureWidget();
-    $("#accountWidgetStatus").textContent = "Signed out";
-
-    const body = $("#accountWidgetBody");
-    body.innerHTML = `
-      ${message ? `<div class="account-widget__msg">${message}</div>` : ""}
-      <div class="account-widget__form">
-        <input class="account-widget__input" id="accountEmail" type="email" placeholder="Email" autocomplete="email" />
-        <input class="account-widget__input" id="accountPassword" type="password" placeholder="Password (min 8 chars)" autocomplete="current-password" />
-        <div class="account-widget__actions">
-          <button class="account-widget__btn" id="accountLoginBtn" type="button">Login</button>
-          <button class="account-widget__btn account-widget__btn--secondary" id="accountRegisterBtn" type="button">Register</button>
-        </div>
-      </div>
-    `;
-
-    $("#accountLoginBtn").addEventListener("click", async () => {
-      const email = normalizeEmail($("#accountEmail").value);
-      const password = $("#accountPassword").value;
-      try {
-        await apiFetch("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
-        await afterAuth();
-      } catch (err) {
-        renderLoggedOut(String(err?.message || "Login failed"));
-      }
-    });
-
-    $("#accountRegisterBtn").addEventListener("click", async () => {
-      const email = normalizeEmail($("#accountEmail").value);
-      const password = $("#accountPassword").value;
-      try {
-        await apiFetch("/api/auth/register", {
-          method: "POST",
-          body: JSON.stringify({ email, password })
-        });
-        await afterAuth();
-      } catch (err) {
-        renderLoggedOut(String(err?.message || "Registration failed"));
-      }
-    });
-  }
-
-  function renderLoggedIn(email, emailVerified, message = "") {
-    ensureWidget();
-    $("#accountWidgetStatus").textContent = emailVerified ? email : `${email} (unverified)`;
-
-    const body = $("#accountWidgetBody");
-    body.innerHTML = `
-      ${message ? `<div class="account-widget__msg">${message}</div>` : ""}
-      <div class="account-widget__actions">
-        <button class="account-widget__btn" id="accountSyncBtn" type="button">Sync now</button>
-        <a class="account-widget__btn account-widget__btn--secondary account-widget__link" href="./account.html">Account</a>
-        <button class="account-widget__btn account-widget__btn--secondary" id="accountLogoutBtn" type="button">Logout</button>
-      </div>
-      <div class="account-widget__conflict" id="accountConflict" hidden></div>
-    `;
-
-    $("#accountLogoutBtn").addEventListener("click", async () => {
-      try {
-        await apiFetch("/api/auth/logout", { method: "POST" });
-      } catch {}
-      renderLoggedOut("Logged out.");
-    });
-
-    $("#accountSyncBtn").addEventListener("click", async () => {
-      try {
-        await syncNowInteractive();
-      } catch (err) {
-        renderLoggedIn(email, String(err?.message || "Sync failed"));
-      }
-    });
-  }
-
-  function showConflict(handlers) {
-    const container = $("#accountConflict");
-    container.hidden = false;
-    container.innerHTML = `
-      <div class="account-widget__msg">
-        Cloud and local data differ. Choose how to resolve:
-      </div>
-      <div class="account-widget__actions">
-        <button class="account-widget__btn" id="accountMergeBtn" type="button">Merge (local wins)</button>
-        <button class="account-widget__btn" id="accountUseCloudBtn" type="button">Use cloud</button>
-        <button class="account-widget__btn account-widget__btn--secondary" id="accountUseLocalBtn" type="button">Upload local</button>
-      </div>
-    `;
-    $("#accountMergeBtn").addEventListener("click", handlers.merge);
-    $("#accountUseCloudBtn").addEventListener("click", handlers.useCloud);
-    $("#accountUseLocalBtn").addEventListener("click", handlers.useLocal);
-  }
-
-  async function syncNowInteractive() {
+  async function syncNowAuto() {
     const me = await getMe();
-    if (!me) throw new Error("Not logged in");
+    if (!me) return;
 
     const local = snapshotLocalState();
     const localStr = stableStringifyObject(local);
@@ -217,22 +100,11 @@
 
     if (cloudStr === localStr) return;
 
-    showConflict({
-      merge: async () => {
-        const merged = { ...cloudData, ...local };
-        await pushCloudState(merged);
-        replaceLocalStateFromSnapshot(merged);
-        location.reload();
-      },
-      useCloud: async () => {
-        replaceLocalStateFromSnapshot(cloudData);
-        location.reload();
-      },
-      useLocal: async () => {
-        await pushCloudState(local);
-        $("#accountConflict").hidden = true;
-      }
-    });
+    // Default conflict policy: merge with local taking priority.
+    const merged = { ...cloudData, ...local };
+    await pushCloudState(merged);
+    replaceLocalStateFromSnapshot(merged);
+    location.reload();
   }
 
   let lastPushedSignature = null;
@@ -277,30 +149,16 @@
     };
   }
 
-  async function afterAuth() {
-    const me = await getMe();
-    if (!me) return renderLoggedOut("Signed out.");
-    renderLoggedIn(me.email, me.emailVerified, "Signed in. Syncing…");
-    try {
-      await syncNowInteractive();
-    } catch {}
-    renderLoggedIn(me.email, me.emailVerified);
-    schedulePush();
-  }
-
   async function init() {
-    ensureWidget();
     patchLocalStorage();
 
     const me = await getMe();
     if (!me) {
-      renderLoggedOut();
       return;
     }
 
-    renderLoggedIn(me.email, me.emailVerified);
     try {
-      await syncNowInteractive();
+      await syncNowAuto();
     } catch {}
     schedulePush();
   }

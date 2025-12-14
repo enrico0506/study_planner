@@ -16,36 +16,69 @@
   </script>
   <link rel="stylesheet" href="./src/styles/main.css" />
   <style>
-    .account-page { max-width: 980px; margin: 0 auto; padding: 18px; }
+    body { background: radial-gradient(1200px 600px at 20% 0%, rgba(79, 139, 255, 0.25), transparent 60%),
+                    radial-gradient(1000px 500px at 80% 10%, rgba(34, 197, 94, 0.16), transparent 55%),
+                    radial-gradient(900px 600px at 30% 90%, rgba(249, 115, 115, 0.10), transparent 60%); }
+    .account-page { max-width: 1040px; margin: 0 auto; padding: 18px; }
+    .account-top { display:flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
+    .account-top a { color: inherit; text-decoration: none; }
+    .account-hero { display:flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .account-hero h1 { margin:0; font-size: 20px; letter-spacing: 0.2px; }
+    .account-hero p { margin:0; opacity: 0.85; }
     .account-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
     @media (min-width: 900px) { .account-grid { grid-template-columns: 1fr 1fr; } }
-    .account-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px; }
-    .account-card h2 { margin: 0 0 10px; font-size: 16px; }
+    .account-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10); border-radius: 16px; padding: 16px; backdrop-filter: blur(10px); box-shadow: 0 18px 60px rgba(0,0,0,0.18); }
+    .account-card h2 { margin: 0 0 10px; font-size: 15px; letter-spacing: 0.2px; }
     .account-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
-    .account-input { flex: 1; min-width: 220px; padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06); color: inherit; }
-    .account-btn { padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.12); color: inherit; cursor: pointer; }
+    .account-input { flex: 1; min-width: 220px; padding: 11px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(10, 14, 20, 0.35); color: inherit; }
+    .account-btn { padding: 11px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.12); color: inherit; cursor: pointer; }
+    .account-btn.primary { background: linear-gradient(135deg, rgba(79, 139, 255, 0.55), rgba(79, 139, 255, 0.22)); border-color: rgba(79, 139, 255, 0.45); }
     .account-btn.secondary { background: rgba(255,255,255,0.06); }
-    .account-msg { font-size: 12px; opacity: 0.95; line-height: 1.35; white-space: pre-wrap; }
+    .account-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .account-msg { font-size: 12px; opacity: 0.95; line-height: 1.4; white-space: pre-wrap; }
     .account-list { margin: 8px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
-    .account-list li { display:flex; justify-content: space-between; gap: 10px; align-items:center; padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.04); }
+    .account-list li { display:flex; justify-content: space-between; gap: 10px; align-items:center; padding: 10px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.04); }
     .account-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; opacity: 0.95; }
-    .account-top { display:flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
-    .account-top a { color: inherit; opacity: 0.9; text-decoration: none; border: 1px solid rgba(255,255,255,0.12); padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.06); }
+    .pill { display:inline-flex; align-items:center; gap: 8px; padding: 8px 10px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); }
+    .pill-dot { width: 8px; height: 8px; border-radius: 999px; background: rgba(249, 115, 115, 0.9); }
+    .pill-dot.ok { background: rgba(34, 197, 94, 0.9); }
+    .account-full { grid-column: 1 / -1; }
   </style>
 </head>
 <body>
   <div class="account-page">
     <div class="account-top">
-      <h1 style="margin:0; font-size:18px;">Account</h1>
-      <a href="./index.html">Back to app</a>
+      <div class="pill" id="authPill"><span class="pill-dot" id="authDot"></span><span id="authPillText">Checking session…</span></div>
+      <a class="btn btn-secondary" href="./index.html">Back to app</a>
+    </div>
+
+    <div class="account-hero">
+      <h1>Account & sync</h1>
+      <p>Login/register, sync your study data between devices, and restore backups.</p>
     </div>
 
     <div class="account-grid">
+      <div class="account-card" id="authCard">
+        <h2>Login or register</h2>
+        <div class="account-row">
+          <input class="account-input" id="authEmail" type="email" placeholder="Email" autocomplete="email" />
+          <input class="account-input" id="authPassword" type="password" placeholder="Password (min 8 chars)" autocomplete="current-password" />
+        </div>
+        <div class="account-row">
+          <button class="account-btn primary" id="loginBtn" type="button">Login</button>
+          <button class="account-btn secondary" id="registerBtn" type="button">Register</button>
+        </div>
+        <div class="account-msg" id="authMsg"></div>
+        <div class="account-msg" style="opacity:0.8; margin-top:10px;">
+          Tip: If you already created subjects/lessons locally, registering will upload them to your new account automatically.
+        </div>
+      </div>
+
       <div class="account-card">
         <h2>Status</h2>
         <div class="account-msg" id="accountStatusMsg">Loading…</div>
         <div class="account-row">
-          <button class="account-btn" id="accountSyncNowBtn" type="button">Sync now</button>
+          <button class="account-btn primary" id="accountSyncNowBtn" type="button">Sync now</button>
           <button class="account-btn secondary" id="accountLogoutBtn" type="button">Logout</button>
         </div>
       </div>
@@ -57,7 +90,7 @@
           <input class="account-input" id="newPassword" type="password" placeholder="New password (min 8 chars)" autocomplete="new-password" />
         </div>
         <div class="account-row">
-          <button class="account-btn" id="changePasswordBtn" type="button">Change</button>
+          <button class="account-btn primary" id="changePasswordBtn" type="button">Change</button>
         </div>
         <div class="account-msg" id="changePasswordMsg"></div>
       </div>
@@ -65,11 +98,11 @@
       <div class="account-card">
         <h2>Email verification (optional)</h2>
         <div class="account-row">
-          <button class="account-btn" id="requestVerifyBtn" type="button">Request verification token</button>
+          <button class="account-btn primary" id="requestVerifyBtn" type="button">Request verification token</button>
         </div>
         <div class="account-row">
           <input class="account-input" id="verifyToken" type="text" placeholder="Paste verification token" />
-          <button class="account-btn" id="verifyEmailBtn" type="button">Verify</button>
+          <button class="account-btn primary" id="verifyEmailBtn" type="button">Verify</button>
         </div>
         <div class="account-msg" id="verifyMsg"></div>
       </div>
@@ -78,20 +111,20 @@
         <h2>Password reset (no email sender yet)</h2>
         <div class="account-row">
           <input class="account-input" id="resetEmail" type="email" placeholder="Email" autocomplete="email" />
-          <button class="account-btn" id="requestResetBtn" type="button">Request reset token</button>
+          <button class="account-btn primary" id="requestResetBtn" type="button">Request reset token</button>
         </div>
         <div class="account-row">
           <input class="account-input" id="resetToken" type="text" placeholder="Paste reset token" />
           <input class="account-input" id="resetNewPassword" type="password" placeholder="New password (min 8 chars)" autocomplete="new-password" />
-          <button class="account-btn" id="resetPasswordBtn" type="button">Reset</button>
+          <button class="account-btn primary" id="resetPasswordBtn" type="button">Reset</button>
         </div>
         <div class="account-msg" id="resetMsg"></div>
       </div>
 
-      <div class="account-card" style="grid-column: 1 / -1;">
+      <div class="account-card account-full">
         <h2>Backups (last 20)</h2>
         <div class="account-row">
-          <button class="account-btn" id="refreshVersionsBtn" type="button">Refresh list</button>
+          <button class="account-btn secondary" id="refreshVersionsBtn" type="button">Refresh list</button>
         </div>
         <ul class="account-list" id="versionsList"></ul>
         <div class="account-msg" id="versionsMsg"></div>
@@ -103,4 +136,3 @@
   <script src="./src/account.js" defer></script>
 </body>
 </html>
-

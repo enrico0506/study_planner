@@ -33,6 +33,79 @@
     }
   }
 
+  function snapshotLocalState() {
+    const out = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith("study")) continue;
+      out[key] = localStorage.getItem(key);
+    }
+    return out;
+  }
+
+  function stableStringifyObject(obj) {
+    const keys = Object.keys(obj).sort();
+    const entries = keys.map((key) => [key, obj[key]]);
+    return JSON.stringify(Object.fromEntries(entries));
+  }
+
+  function setPill(isAuthed, text) {
+    const dot = $("authDot");
+    const pillText = $("authPillText");
+    if (dot) dot.classList.toggle("ok", !!isAuthed);
+    if (pillText) pillText.textContent = text;
+  }
+
+  function setAuthedUi(isAuthed) {
+    const authCard = $("authCard");
+    if (authCard) authCard.style.display = isAuthed ? "none" : "";
+
+    const ids = [
+      "accountSyncNowBtn",
+      "accountLogoutBtn",
+      "changePasswordBtn",
+      "requestVerifyBtn",
+      "verifyEmailBtn",
+      "refreshVersionsBtn"
+    ];
+    for (const id of ids) {
+      const el = $(id);
+      if (el) el.disabled = !isAuthed;
+    }
+  }
+
+  async function loginOrRegister(path, email, password) {
+    await apiFetch(path, { method: "POST", body: JSON.stringify({ email, password }) });
+  }
+
+  async function initialSyncAfterAuth() {
+    const local = snapshotLocalState();
+    const localStr = stableStringifyObject(local);
+    const cloud = await apiFetch("/api/state");
+    const cloudData = (cloud && cloud.data) || {};
+    const cloudStr = stableStringifyObject(cloudData);
+
+    const localEmpty = Object.keys(local).length === 0;
+    const cloudEmpty = Object.keys(cloudData).length === 0;
+
+    if (cloudEmpty && !localEmpty) {
+      await apiFetch("/api/state", { method: "PUT", body: JSON.stringify({ data: local }) });
+      return "Uploaded your existing local data to the new account.";
+    }
+
+    if (!cloudEmpty && localEmpty) {
+      // Pull is handled by sync.js on other pages; keep account page light.
+      return "Account has data in cloud; open the app to pull it into this browser.";
+    }
+
+    if (cloudStr === localStr) return "Already in sync.";
+
+    // Default: merge local wins to avoid losing the user's current work.
+    const merged = { ...cloudData, ...local };
+    await apiFetch("/api/state", { method: "PUT", body: JSON.stringify({ data: merged }) });
+    return "Merged cloud + local (local wins) and synced.";
+  }
+
   async function syncNow() {
     if (!window.location.origin) return;
     // Delegate to sync.js via button in widget: just call the endpoint sequence here.
@@ -118,15 +191,12 @@
   async function init() {
     const me = await getMe();
     if (!me) {
-      $("accountStatusMsg").textContent =
-        "Not logged in. Use the Account widget on any page to login/register.";
-      $("accountSyncNowBtn").disabled = true;
-      $("accountLogoutBtn").disabled = true;
-      $("changePasswordBtn").disabled = true;
-      $("requestVerifyBtn").disabled = true;
-      $("verifyEmailBtn").disabled = true;
-      $("refreshVersionsBtn").disabled = true;
+      setPill(false, "Signed out");
+      setAuthedUi(false);
+      $("accountStatusMsg").textContent = "Login or register to enable cross-browser sync.";
     } else {
+      setPill(true, me.emailVerified ? "Signed in" : "Signed in (unverified)");
+      setAuthedUi(true);
       $("accountStatusMsg").textContent = `Logged in as ${me.email}${me.emailVerified ? " (verified)" : " (unverified)"}`;
       $("accountLogoutBtn").addEventListener("click", async () => {
         try {
@@ -192,6 +262,40 @@
       $("refreshVersionsBtn").addEventListener("click", refreshVersions);
       await refreshVersions();
     }
+
+    $("loginBtn").addEventListener("click", async () => {
+      $("authMsg").textContent = "";
+      try {
+        await loginOrRegister(
+          "/api/auth/login",
+          normalizeEmail($("authEmail").value),
+          $("authPassword").value
+        );
+        $("authPassword").value = "";
+        const msg = await initialSyncAfterAuth().catch(() => "Signed in.");
+        $("authMsg").textContent = msg;
+        window.location.reload();
+      } catch (err) {
+        $("authMsg").textContent = String(err?.message || "Login failed");
+      }
+    });
+
+    $("registerBtn").addEventListener("click", async () => {
+      $("authMsg").textContent = "";
+      try {
+        await loginOrRegister(
+          "/api/auth/register",
+          normalizeEmail($("authEmail").value),
+          $("authPassword").value
+        );
+        $("authPassword").value = "";
+        const msg = await initialSyncAfterAuth().catch(() => "Registered.");
+        $("authMsg").textContent = msg;
+        window.location.reload();
+      } catch (err) {
+        $("authMsg").textContent = String(err?.message || "Registration failed");
+      }
+    });
 
     $("requestResetBtn").addEventListener("click", async () => {
       $("resetMsg").textContent = "";
