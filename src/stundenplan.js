@@ -822,15 +822,6 @@
     return wrap;
   }
 
-  ttPrevDayBtn?.addEventListener("click", () => {
-    phoneDayIndex = getPhoneDayIndex() - 1;
-    applyPhoneDayView();
-  });
-  ttNextDayBtn?.addEventListener("click", () => {
-    phoneDayIndex = getPhoneDayIndex() + 1;
-    applyPhoneDayView();
-  });
-
   function handleSubmit(event) {
     event.preventDefault();
     clearStatus();
