@@ -74,9 +74,20 @@
     return Math.max(0, Math.min(6, phoneDayIndex));
   }
 
+  function setPhoneDayIndex(nextIndex) {
+    phoneDayIndex = Math.max(0, Math.min(6, Number(nextIndex) || 0));
+    applyPhoneDayView();
+  }
+
   function applyPhoneDayView() {
-    if (!isPhoneLayout()) return;
     if (!timetableGrid) return;
+    if (!isPhoneLayout()) {
+      timetableGrid.style.removeProperty("--tt-day");
+      if (ttDayLabel) ttDayLabel.textContent = "";
+      if (ttPrevDayBtn) ttPrevDayBtn.disabled = false;
+      if (ttNextDayBtn) ttNextDayBtn.disabled = false;
+      return;
+    }
     const idx = getPhoneDayIndex();
     timetableGrid.style.setProperty("--tt-day", String(idx));
     if (ttDayLabel) ttDayLabel.textContent = DAY_LABELS[idx]?.label?.slice(0, 3) || String(idx + 1);
@@ -928,6 +939,17 @@
       if (tabMenu && tabMenu.contains(event.target)) return;
       closeTabMenu();
     });
+
+    ttPrevDayBtn?.addEventListener("click", () => {
+      if (!isPhoneLayout()) return;
+      setPhoneDayIndex(getPhoneDayIndex() - 1);
+    });
+    ttNextDayBtn?.addEventListener("click", () => {
+      if (!isPhoneLayout()) return;
+      setPhoneDayIndex(getPhoneDayIndex() + 1);
+    });
+    window.addEventListener("resize", applyPhoneDayView);
+    window.addEventListener("orientationchange", applyPhoneDayView);
   }
 
   function init() {
