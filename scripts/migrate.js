@@ -1,12 +1,10 @@
 import pg from "pg";
 
-function requireEnv(name) {
-  const value = process.env[name];
-  if (!value) throw new Error(`Missing required env var: ${name}`);
-  return value;
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  console.log("DATABASE_URL not set; skipping migrations.");
+  process.exit(0);
 }
-
-const connectionString = requireEnv("DATABASE_URL");
 
 const client = new pg.Client({
   connectionString,
@@ -49,4 +47,3 @@ main()
   .finally(async () => {
     await client.end().catch(() => {});
   });
-
