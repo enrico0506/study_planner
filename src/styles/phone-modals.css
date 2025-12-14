@@ -1,0 +1,82 @@
+/* Phone-only modal sizing fixes (<= 720px)
+   Goal: ensure popups fit the viewport and scroll internally.
+   Revert by removing the `<link href="./src/styles/phone-modals.css">` from HTML pages. */
+
+@media (max-width: 720px) {
+  :root {
+    --phone-inset-left: max(12px, env(safe-area-inset-left));
+    --phone-inset-right: max(12px, env(safe-area-inset-right));
+    --phone-inset-top: max(12px, env(safe-area-inset-top));
+    --phone-inset-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  /* Index-style modals (.modal inside .modal-backdrop) */
+  .modal-backdrop {
+    align-items: flex-start;
+    justify-content: center;
+    padding-left: var(--phone-inset-left);
+    padding-right: var(--phone-inset-right);
+    padding-top: var(--phone-inset-top);
+    padding-bottom: var(--phone-inset-bottom);
+    box-sizing: border-box;
+    overflow: auto;
+  }
+
+  .modal {
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - var(--phone-inset-top) - var(--phone-inset-bottom));
+    overflow: auto;
+    border-radius: 16px;
+  }
+
+  /* Settings modal */
+  .settings-modal {
+    align-items: flex-start;
+    justify-content: center;
+    padding-left: var(--phone-inset-left);
+    padding-right: var(--phone-inset-right);
+    padding-top: var(--phone-inset-top);
+    padding-bottom: var(--phone-inset-bottom);
+    box-sizing: border-box;
+  }
+
+  .settings-dialog {
+    width: 100%;
+    max-width: 720px;
+    max-height: calc(100vh - var(--phone-inset-top) - var(--phone-inset-bottom));
+    overflow: auto;
+    padding: 14px 14px 16px;
+    border-radius: 16px;
+  }
+
+  .settings-body {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .settings-nav {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  /* Calendar-style modals (calendar/stundenplan/karteikarten) */
+  .calendar-modal {
+    place-items: start center;
+    padding-left: var(--phone-inset-left);
+    padding-right: var(--phone-inset-right);
+    padding-top: var(--phone-inset-top);
+    padding-bottom: var(--phone-inset-bottom);
+    box-sizing: border-box;
+  }
+
+  .calendar-modal-dialog {
+    width: 100%;
+    max-width: 720px;
+    max-height: calc(100vh - var(--phone-inset-top) - var(--phone-inset-bottom));
+    overflow: auto;
+    padding: 14px 14px 16px;
+    border-radius: 16px;
+  }
+}
+
