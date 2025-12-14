@@ -8,6 +8,7 @@ import helmet from "helmet";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import rateLimit from "express-rate-limit";
 
 const app = express();
 const port = process.env.PORT || 10000;
@@ -19,6 +20,26 @@ app.set("trust proxy", 1);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: "2mb" }));
 app.use(cookieParser());
+
+function rateLimitJsonHandler(_req, res) {
+  res.status(429).json({ error: "Too many requests, please try again later." });
+}
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: rateLimitJsonHandler
+});
+
+const strictAuthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: rateLimitJsonHandler
+});
 
 // Static assets
 app.use(express.static(path.join(__dirname, "public")));
@@ -160,7 +181,7 @@ function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
-app.post("/api/auth/register", async (req, res) => {
+app.post("/api/auth/register", authLimiter, async (req, res) => {
   const email = normalizeEmail(req.body?.email);
   const password = req.body?.password;
 
@@ -201,7 +222,7 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
-app.post("/api/auth/login", async (req, res) => {
+app.post("/api/auth/login", authLimiter, async (req, res) => {
   const email = normalizeEmail(req.body?.email);
   const password = String(req.body?.password || "");
   if (!email || !password) return res.status(400).json({ error: "Email and password required" });
@@ -239,7 +260,7 @@ app.post("/api/auth/logout", (req, res) => {
   res.json({ ok: true });
 });
 
-app.post("/api/auth/change-password", requireAuth, async (req, res) => {
+app.post("/api/auth/change-password", requireAuth, strictAuthLimiter, async (req, res) => {
   const currentPassword = String(req.body?.currentPassword || "");
   const newPassword = req.body?.newPassword;
   if (!currentPassword) return res.status(400).json({ error: "Current password required" });
@@ -264,7 +285,7 @@ app.post("/api/auth/change-password", requireAuth, async (req, res) => {
   }
 });
 
-app.post("/api/auth/request-reset", async (req, res) => {
+app.post("/api/auth/request-reset", strictAuthLimiter, async (req, res) => {
   const email = normalizeEmail(req.body?.email);
   if (!email) return res.status(400).json({ error: "Email required" });
 
@@ -293,7 +314,7 @@ app.post("/api/auth/request-reset", async (req, res) => {
   }
 });
 
-app.post("/api/auth/reset-password", async (req, res) => {
+app.post("/api/auth/reset-password", strictAuthLimiter, async (req, res) => {
   const email = normalizeEmail(req.body?.email);
   const token = String(req.body?.token || "");
   const newPassword = req.body?.newPassword;
@@ -339,7 +360,7 @@ app.post("/api/auth/reset-password", async (req, res) => {
   }
 });
 
-app.post("/api/auth/request-verify", requireAuth, async (req, res) => {
+app.post("/api/auth/request-verify", requireAuth, strictAuthLimiter, async (req, res) => {
   try {
     const pool = getPool();
     const found = await pool.query("select id, email_verified from users where id = $1", [req.user.id]);
@@ -364,7 +385,7 @@ app.post("/api/auth/request-verify", requireAuth, async (req, res) => {
   }
 });
 
-app.post("/api/auth/verify-email", requireAuth, async (req, res) => {
+app.post("/api/auth/verify-email", requireAuth, strictAuthLimiter, async (req, res) => {
   const token = String(req.body?.token || "");
   if (!token) return res.status(400).json({ error: "Token required" });
 
