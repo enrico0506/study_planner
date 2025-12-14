@@ -214,7 +214,7 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
     }
     const dbMessage = formatDbError(err);
     if (dbMessage) return res.status(500).json({ error: dbMessage });
-    if (message.includes("users_email_key")) {
+    if (err?.code === "23505" || message.includes("users_email_key")) {
       return res.status(409).json({ error: "Email already registered" });
     }
     console.error(err);
