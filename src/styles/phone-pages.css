@@ -1,0 +1,80 @@
+/* Phone-only tweaks for non-index pages (<= 720px)
+   Remove the `<link href="./src/styles/phone-pages.css">` from HTML pages to revert. */
+
+.phone-only {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .phone-only {
+    display: inline-flex;
+  }
+
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  body.calendar-page,
+  body.timetable-page,
+  body.flashcards-page {
+    padding: 12px;
+  }
+
+  .calendar-shell,
+  .timetable-shell,
+  .flashcards-shell {
+    width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
+    margin: 0 auto;
+    border-radius: 16px;
+  }
+
+  /* Stundenplan: show one day, swipe/paged via JS variable */
+  .timeline-cols-head,
+  .timeline-cols {
+    display: flex;
+    width: 100%;
+    transform: translateX(calc(var(--tt-day, 0) * -100%));
+    transition: transform 0.22s ease;
+    will-change: transform;
+  }
+
+  .timeline-day-head,
+  .timeline-day {
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  /* Calendar: renderWeekCalendar outputs 7 items; show as list */
+  .calendar-weekdays {
+    display: none;
+  }
+
+  .calendar-day-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .calendar-day {
+    min-height: 0;
+    align-items: center;
+    justify-content: space-between;
+    grid-template-rows: auto;
+    padding: 12px;
+  }
+
+  .calendar-day-top {
+    font-weight: 800;
+    font-size: 1rem;
+  }
+
+  /* Flashcards: ensure no overflow */
+  .flashcards-layout,
+  .deck-column,
+  .flashcards-main {
+    max-width: 100%;
+  }
+}
+

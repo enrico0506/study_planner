@@ -52,11 +52,37 @@
   const tabMenu = document.getElementById("tabMenu");
   const tabMenuToggle = document.getElementById("tabMenuToggle");
   const tabMenuPanel = document.getElementById("tabMenuPanel");
+  const ttPrevDayBtn = document.getElementById("ttPrevDayBtn");
+  const ttNextDayBtn = document.getElementById("ttNextDayBtn");
+  const ttDayLabel = document.getElementById("ttDayLabel");
   let subjects = [];
   let tables = [];
   let activeTableId = "";
   let editingId = null;
   let tabMenuTimer = null;
+  let phoneDayIndex = null;
+
+  function isPhoneLayout() {
+    return window.matchMedia && window.matchMedia("(max-width: 720px)").matches;
+  }
+
+  function getPhoneDayIndex() {
+    if (phoneDayIndex === null) {
+      const today = new Date().getDay(); // 0=Sun..6=Sat
+      phoneDayIndex = today === 0 ? 6 : today - 1; // Monday-based
+    }
+    return Math.max(0, Math.min(6, phoneDayIndex));
+  }
+
+  function applyPhoneDayView() {
+    if (!isPhoneLayout()) return;
+    if (!timetableGrid) return;
+    const idx = getPhoneDayIndex();
+    timetableGrid.style.setProperty("--tt-day", String(idx));
+    if (ttDayLabel) ttDayLabel.textContent = DAY_LABELS[idx]?.label?.slice(0, 3) || String(idx + 1);
+    if (ttPrevDayBtn) ttPrevDayBtn.disabled = idx <= 0;
+    if (ttNextDayBtn) ttNextDayBtn.disabled = idx >= 6;
+  }
 
   function createId(prefix = "ls_") {
     return prefix + Math.random().toString(36).slice(2, 9);
@@ -680,6 +706,7 @@
     wrap.appendChild(rail);
     wrap.appendChild(cols);
     timetableGrid.appendChild(wrap);
+    applyPhoneDayView();
   }
   function buildLessonBlock(lesson, heightPx, mode = "timeline") {
     const color = mode === "timeline" ? getLessonColor(lesson) : "#4b5563";
@@ -783,6 +810,15 @@
     wrap.appendChild(actions);
     return wrap;
   }
+
+  ttPrevDayBtn?.addEventListener("click", () => {
+    phoneDayIndex = getPhoneDayIndex() - 1;
+    applyPhoneDayView();
+  });
+  ttNextDayBtn?.addEventListener("click", () => {
+    phoneDayIndex = getPhoneDayIndex() + 1;
+    applyPhoneDayView();
+  });
 
   function handleSubmit(event) {
     event.preventDefault();

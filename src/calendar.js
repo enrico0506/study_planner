@@ -31,14 +31,34 @@
   const today = new Date();
   let selectedDate = formatDate(today);
   let currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  let currentWeekStart = weekStart(today);
   let events = loadEvents();
   let editingId = null;
+
+  function isPhoneLayout() {
+    return window.matchMedia && window.matchMedia("(max-width: 720px)").matches;
+  }
 
   function formatDate(date) {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
     const d = String(date.getDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
+  }
+
+  function weekStart(date) {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const weekday = (d.getDay() + 6) % 7; // Monday=0
+    d.setDate(d.getDate() - weekday);
+    d.setHours(12, 0, 0, 0);
+    return d;
+  }
+
+  function formatWeekRange(start) {
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    const fmt = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
+    return `${fmt.format(start)} – ${fmt.format(end)}`;
   }
 
   function parseDateString(dateString) {
@@ -133,8 +153,56 @@
   }
 
   function renderCalendar() {
-    monthLabel.textContent = formatDisplayMonth(currentMonth);
     calendarGrid.innerHTML = "";
+    if (isPhoneLayout()) {
+      monthLabel.textContent = `Week · ${formatWeekRange(currentWeekStart)}`;
+      const start = new Date(currentWeekStart);
+      for (let i = 0; i < 7; i++) {
+        const day = new Date(start);
+        day.setDate(start.getDate() + i);
+        const dayKey = formatDate(day);
+        const dayEvents = eventsForDate(dayKey);
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "calendar-day";
+        if (dayKey === selectedDate) btn.classList.add("calendar-day-selected");
+        if (dayKey === formatDate(today)) btn.classList.add("calendar-day-today");
+        if (dayEvents.length) btn.classList.add("calendar-day-has");
+
+        const top = document.createElement("div");
+        top.className = "calendar-day-top";
+        top.textContent = day.toLocaleString("en", { weekday: "short" }) + " · " + day.getDate();
+
+        const badges = document.createElement("div");
+        badges.className = "calendar-day-badges";
+        if (dayEvents.length) {
+          const countChip = document.createElement("span");
+          countChip.className = "calendar-chip calendar-chip-more";
+          countChip.textContent = `${dayEvents.length} item${dayEvents.length === 1 ? "" : "s"}`;
+          badges.appendChild(countChip);
+          dayEvents.slice(0, 2).forEach((evt) => {
+            const chip = document.createElement("span");
+            chip.className = `calendar-chip calendar-chip-${badgeTone(evt.type)}`;
+            chip.textContent = labelForType(evt.type);
+            badges.appendChild(chip);
+          });
+        } else {
+          const emptyChip = document.createElement("span");
+          emptyChip.className = "calendar-chip calendar-chip-more";
+          emptyChip.textContent = "No items";
+          badges.appendChild(emptyChip);
+        }
+
+        btn.appendChild(top);
+        btn.appendChild(badges);
+        btn.setAttribute("aria-label", `${formatDisplayDate(day)}`);
+        btn.addEventListener("click", () => selectDate(dayKey, false));
+        calendarGrid.appendChild(btn);
+      }
+      return;
+    }
+
+    monthLabel.textContent = formatDisplayMonth(currentMonth);
     const start = calendarStart(currentMonth);
     for (let i = 0; i < 42; i++) {
       const day = new Date(start);
@@ -312,6 +380,7 @@
     selectedDate = dateString;
     const target = parseDateString(dateString);
     currentMonth = new Date(target.getFullYear(), target.getMonth(), 1);
+    currentWeekStart = weekStart(target);
     formDateInput.value = dateString;
     if (modalDateLabel) modalDateLabel.textContent = formatDisplayDate(target);
     renderCalendar();
@@ -326,6 +395,13 @@
     const next = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + delta, 1);
     currentMonth = next;
     renderCalendar();
+  }
+
+  function shiftWeek(deltaWeeks) {
+    const next = new Date(currentWeekStart);
+    next.setDate(currentWeekStart.getDate() + deltaWeeks * 7);
+    currentWeekStart = weekStart(next);
+    selectDate(formatDate(currentWeekStart));
   }
 
   function openModal() {
@@ -433,11 +509,12 @@
   }
 
   // Event bindings
-  prevMonthBtn?.addEventListener("click", () => shiftMonth(-1));
-  nextMonthBtn?.addEventListener("click", () => shiftMonth(1));
+  prevMonthBtn?.addEventListener("click", () => (isPhoneLayout() ? shiftWeek(-1) : shiftMonth(-1)));
+  nextMonthBtn?.addEventListener("click", () => (isPhoneLayout() ? shiftWeek(1) : shiftMonth(1)));
   todayMonthBtn?.addEventListener("click", () => {
     const now = new Date();
     currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    currentWeekStart = weekStart(now);
     selectDate(formatDate(now));
   });
   newDeadlineTodayBtn?.addEventListener("click", () => {

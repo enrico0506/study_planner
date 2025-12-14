@@ -16,6 +16,7 @@
   </script>
   <link rel="stylesheet" href="./src/styles/main.css" />
   <link rel="stylesheet" href="./src/styles/mobile.css" />
+  <link rel="stylesheet" href="./src/styles/phone-pages.css" />
 </head>
 <body class="timetable-page">
   <div class="timetable-shell">
@@ -31,6 +32,9 @@
         <a class="btn btn-secondary header-calendar-btn" href="index.html">← Back to board</a>
         <a class="btn btn-secondary header-calendar-btn" href="karteikarten.html">Karteikarten</a>
         <a class="btn btn-secondary header-calendar-btn" href="account.html">Account</a>
+        <button class="btn btn-secondary header-calendar-btn phone-only" id="ttPrevDayBtn" type="button" aria-label="Previous day">‹</button>
+        <span class="btn btn-secondary header-calendar-btn phone-only" id="ttDayLabel" aria-hidden="true"></span>
+        <button class="btn btn-secondary header-calendar-btn phone-only" id="ttNextDayBtn" type="button" aria-label="Next day">›</button>
       </div>
     </div>
 
