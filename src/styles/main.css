@@ -2481,7 +2481,7 @@
       cursor: grabbing;
     }
 
-    .subject-table {
+.subject-table {
       display: grid;
       grid-auto-flow: column;
       grid-auto-columns: minmax(260px, 280px);
@@ -2496,6 +2496,25 @@
         );
       min-height: 260px;
     }
+
+.section-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 4px 8px;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--accent-ink);
+}
+
+.section-subtitle {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+}
 
     .subject-column {
       border: 1px solid #e5e7eb;
@@ -3884,29 +3903,81 @@
 }
 
 :root[data-theme="midnight"] {
-  --page-bg: radial-gradient(120% 130% at 15% 10%, #0f172a 0%, #0b1222 45%, #0a0f1c 80%);
-  --surface-bg: #0f172a;
-  --surface-subtle-bg: #0e1626;
-  --surface-soft: #111827;
-  --surface-strong: #0f172a;
-  --surface-strong-hover: #131f34;
-  --app-surface: linear-gradient(180deg, rgba(18, 24, 38, 0.95), #0f172a);
-  --card-surface: linear-gradient(140deg, #111827, #0f172a);
-  --card-surface-2: linear-gradient(145deg, #0d1724, #0b1220);
-  --border-subtle: #1f2937;
-  --border-strong: #243447;
-  --accent: #60a5fa;
-  --accent-ink: #e2f2ff;
-  --accent-soft: rgba(96, 165, 250, 0.16);
-  --accent-soft-hover: rgba(96, 165, 250, 0.24);
-  --ink: #e5e7eb;
-  --ink-muted: #94a3b8;
+  --page-bg: radial-gradient(120% 130% at 15% 10%, #1e1e1e 0%, #191a20 45%, #13141a 80%);
+  --surface-bg: #1e1e1e;
+  --surface-subtle-bg: #1a1b20;
+  --surface-soft: #252730;
+  --surface-strong: #1c1e26;
+  --surface-strong-hover: #252a36;
+  --app-surface: linear-gradient(180deg, rgba(30, 30, 30, 0.95), #1c1e26);
+  --card-surface: linear-gradient(140deg, #232733, #1c1e26);
+  --card-surface-2: linear-gradient(145deg, #1f2330, #181a22);
+  --border-subtle: #2c313d;
+  --border-strong: #3a4050;
+  --accent: #569cd6;
+  --accent-ink: #0b1b2d;
+  --accent-soft: rgba(86, 156, 214, 0.16);
+  --accent-soft-hover: rgba(86, 156, 214, 0.24);
+  --ink: #f2f4f8;
+  --ink-muted: #cdd4df;
   --text-muted: var(--ink-muted);
-  --chip-bg: #1b2435;
-  --chip-border: #243447;
-  --chip-ink: #e5e7eb;
+  --chip-bg: #232733;
+  --chip-border: #3a4050;
+  --chip-ink: #f2f4f8;
   --shadow-card: 0 20px 50px rgba(0, 0, 0, 0.55);
   --shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme="nocturne"] {
+  --page-bg: radial-gradient(120% 120% at 15% 10%, #17130f 0%, #14100c 45%, #0f0c0a 85%);
+  --surface-bg: #191410;
+  --surface-subtle-bg: #16100d;
+  --surface-soft: #1f1813;
+  --surface-strong: #1b1510;
+  --surface-strong-hover: #241d16;
+  --app-surface: linear-gradient(180deg, rgba(25, 20, 16, 0.95), #1b1510);
+  --card-surface: linear-gradient(140deg, #201a15, #1b1510);
+  --card-surface-2: linear-gradient(145deg, #241e18, #16100c);
+  --border-subtle: #2d241d;
+  --border-strong: #3a2e24;
+  --accent: #d7ba7d;
+  --accent-ink: #2d1f0b;
+  --accent-soft: rgba(215, 186, 125, 0.18);
+  --accent-soft-hover: rgba(215, 186, 125, 0.26);
+  --ink: #f6f0e6;
+  --ink-muted: #d2c4b0;
+  --text-muted: var(--ink-muted);
+  --chip-bg: #221b16;
+  --chip-border: #3a2e24;
+  --chip-ink: #f6f0e6;
+  --shadow-card: 0 20px 50px rgba(0, 0, 0, 0.55);
+  --shadow-soft: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme="amber"] {
+  --page-bg: radial-gradient(120% 120% at 15% 10%, #f8eddc 0%, #f6e3c2 45%, #f2d8a8 80%);
+  --surface-bg: #f7f0e4;
+  --surface-subtle-bg: #f8f3e9;
+  --surface-soft: #f6ecdb;
+  --surface-strong: #f2e3ce;
+  --surface-strong-hover: #ead9c2;
+  --app-surface: linear-gradient(180deg, rgba(247, 240, 228, 0.92), #f6ebdb);
+  --card-surface: linear-gradient(145deg, #fff8ec, #f4e4cc);
+  --card-surface-2: linear-gradient(145deg, #f8efde, #f0dec0);
+  --border-subtle: #e5d5c0;
+  --border-strong: #d9c5ad;
+  --accent: #d97706;
+  --accent-ink: #291504;
+  --accent-soft: rgba(217, 119, 6, 0.18);
+  --accent-soft-hover: rgba(217, 119, 6, 0.26);
+  --ink: #1f150a;
+  --ink-muted: #6b543c;
+  --text-muted: var(--ink-muted);
+  --chip-bg: #fff1dc;
+  --chip-border: #e9cfac;
+  --chip-ink: #1f150a;
+  --shadow-card: 0 18px 46px rgba(88, 60, 21, 0.22);
+  --shadow-soft: 0 12px 30px rgba(88, 60, 21, 0.16);
 }
 
 [data-theme] body {

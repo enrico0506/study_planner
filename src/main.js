@@ -43,8 +43,20 @@ const DEFAULT_SUBJECT_COLORS = [
       {
         id: "midnight",
         name: "Midnight",
-        subtitle: "Low-light blues for night owls",
-        swatch: "linear-gradient(135deg, #60a5fa, #7dd3fc)"
+        subtitle: "High-contrast dark inspired by VS Code Dark+",
+        swatch: "linear-gradient(135deg, #1e1e1e, #2a2d3e)"
+      },
+      {
+        id: "nocturne",
+        name: "Nocturne",
+        subtitle: "Warm, low-blue dark to rest your eyes",
+        swatch: "linear-gradient(135deg, #1a1410, #2a2018)"
+      },
+      {
+        id: "amber",
+        name: "Amber Calm",
+        subtitle: "Warm, low-blue light for late sessions",
+        swatch: "linear-gradient(135deg, #f6d6a8, #f1b87a)"
       }
     ];
 
