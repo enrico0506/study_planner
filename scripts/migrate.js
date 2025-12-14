@@ -19,9 +19,12 @@ async function main() {
       id bigserial primary key,
       email text not null unique,
       password_hash text not null,
+      email_verified boolean not null default false,
       created_at timestamptz not null default now()
     );
   `);
+
+  await client.query(`alter table users add column if not exists email_verified boolean not null default false;`);
 
   await client.query(`
     create table if not exists user_states (
@@ -34,6 +37,38 @@ async function main() {
   await client.query(`
     create index if not exists user_states_updated_at_idx
       on user_states(updated_at desc);
+  `);
+
+  await client.query(`
+    create table if not exists user_state_versions (
+      id bigserial primary key,
+      user_id bigint not null references users(id) on delete cascade,
+      data jsonb not null,
+      created_at timestamptz not null default now()
+    );
+  `);
+
+  await client.query(`
+    create index if not exists user_state_versions_user_created_idx
+      on user_state_versions(user_id, created_at desc);
+  `);
+
+  await client.query(`
+    create table if not exists auth_tokens (
+      id bigserial primary key,
+      user_id bigint not null references users(id) on delete cascade,
+      kind text not null check (kind in ('password_reset', 'email_verify')),
+      token_hash text not null,
+      expires_at timestamptz not null,
+      created_at timestamptz not null default now(),
+      used_at timestamptz null
+    );
+  `);
+
+  await client.query(`
+    create index if not exists auth_tokens_lookup_idx
+      on auth_tokens(user_id, kind, expires_at desc)
+      where used_at is null;
   `);
 
   console.log("Migration complete.");

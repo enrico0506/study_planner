@@ -207,6 +207,13 @@ body::-webkit-scrollbar,
   background: rgba(255, 255, 255, 0.06);
 }
 
+.account-widget__link {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .account-widget__btn:hover {
   background: rgba(255, 255, 255, 0.16);
 }

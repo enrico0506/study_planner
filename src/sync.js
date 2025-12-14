@@ -141,15 +141,16 @@
     });
   }
 
-  function renderLoggedIn(email, message = "") {
+  function renderLoggedIn(email, emailVerified, message = "") {
     ensureWidget();
-    $("#accountWidgetStatus").textContent = email;
+    $("#accountWidgetStatus").textContent = emailVerified ? email : `${email} (unverified)`;
 
     const body = $("#accountWidgetBody");
     body.innerHTML = `
       ${message ? `<div class="account-widget__msg">${message}</div>` : ""}
       <div class="account-widget__actions">
         <button class="account-widget__btn" id="accountSyncBtn" type="button">Sync now</button>
+        <a class="account-widget__btn account-widget__btn--secondary account-widget__link" href="./account.html">Account</a>
         <button class="account-widget__btn account-widget__btn--secondary" id="accountLogoutBtn" type="button">Logout</button>
       </div>
       <div class="account-widget__conflict" id="accountConflict" hidden></div>
@@ -176,13 +177,15 @@
     container.hidden = false;
     container.innerHTML = `
       <div class="account-widget__msg">
-        Cloud and local data differ. Choose which to keep:
+        Cloud and local data differ. Choose how to resolve:
       </div>
       <div class="account-widget__actions">
+        <button class="account-widget__btn" id="accountMergeBtn" type="button">Merge (local wins)</button>
         <button class="account-widget__btn" id="accountUseCloudBtn" type="button">Use cloud</button>
         <button class="account-widget__btn account-widget__btn--secondary" id="accountUseLocalBtn" type="button">Upload local</button>
       </div>
     `;
+    $("#accountMergeBtn").addEventListener("click", handlers.merge);
     $("#accountUseCloudBtn").addEventListener("click", handlers.useCloud);
     $("#accountUseLocalBtn").addEventListener("click", handlers.useLocal);
   }
@@ -215,6 +218,12 @@
     if (cloudStr === localStr) return;
 
     showConflict({
+      merge: async () => {
+        const merged = { ...cloudData, ...local };
+        await pushCloudState(merged);
+        replaceLocalStateFromSnapshot(merged);
+        location.reload();
+      },
       useCloud: async () => {
         replaceLocalStateFromSnapshot(cloudData);
         location.reload();
@@ -271,11 +280,11 @@
   async function afterAuth() {
     const me = await getMe();
     if (!me) return renderLoggedOut("Signed out.");
-    renderLoggedIn(me.email, "Signed in. Syncing…");
+    renderLoggedIn(me.email, me.emailVerified, "Signed in. Syncing…");
     try {
       await syncNowInteractive();
     } catch {}
-    renderLoggedIn(me.email);
+    renderLoggedIn(me.email, me.emailVerified);
     schedulePush();
   }
 
@@ -289,7 +298,7 @@
       return;
     }
 
-    renderLoggedIn(me.email);
+    renderLoggedIn(me.email, me.emailVerified);
     try {
       await syncNowInteractive();
     } catch {}
@@ -302,4 +311,3 @@
     init();
   }
 })();
-

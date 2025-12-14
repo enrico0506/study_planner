@@ -18,6 +18,7 @@ Lightweight study board with subjects/files, Pomodoro timer, today's focus list,
 
 ## Accounts (optional)
 This repo includes a tiny email+password login and a per-user cloud sync of all `localStorage` keys that start with `study*`.
+It also stores the last 20 synced snapshots as backups and includes an `account.html` page to restore them.
 
 1) Set env vars:
 - `DATABASE_URL` (Postgres connection string)

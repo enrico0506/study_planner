@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 const app = express();
 const port = process.env.PORT || 10000;
@@ -32,6 +33,7 @@ app.get("/index.html", (_req, res) => sendHtml(res, "index.html"));
 app.get("/calendar.html", (_req, res) => sendHtml(res, "calendar.html"));
 app.get("/stundenplan.html", (_req, res) => sendHtml(res, "stundenplan.html"));
 app.get("/karteikarten.html", (_req, res) => sendHtml(res, "karteikarten.html"));
+app.get("/account.html", (_req, res) => sendHtml(res, "account.html"));
 app.get("/study-confidence-table.html", (_req, res) =>
   sendHtml(res, "study-confidence-table.html")
 );
@@ -109,10 +111,37 @@ function validatePassword(password) {
   return null;
 }
 
-app.get("/api/me", (req, res) => {
+app.get("/api/me", async (req, res) => {
   if (!req.user) return res.status(401).json({ error: "Unauthorized" });
-  res.json({ email: req.user.email });
+
+  try {
+    const pool = getPool();
+    const found = await pool.query("select email, email_verified from users where id = $1", [
+      req.user.id
+    ]);
+    const row = found.rows[0];
+    if (!row) {
+      clearAuthCookie(res);
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    res.json({ email: row.email, emailVerified: row.email_verified });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load user" });
+  }
 });
+
+function shouldRevealTokens() {
+  return process.env.ALLOW_TOKEN_DEBUG === "true" || process.env.NODE_ENV !== "production";
+}
+
+function generateToken() {
+  return crypto.randomBytes(24).toString("base64url");
+}
+
+function hashToken(token) {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
 
 app.post("/api/auth/register", async (req, res) => {
   const email = normalizeEmail(req.body?.email);
@@ -182,6 +211,168 @@ app.post("/api/auth/logout", (req, res) => {
   res.json({ ok: true });
 });
 
+app.post("/api/auth/change-password", requireAuth, async (req, res) => {
+  const currentPassword = String(req.body?.currentPassword || "");
+  const newPassword = req.body?.newPassword;
+  if (!currentPassword) return res.status(400).json({ error: "Current password required" });
+  const pwError = validatePassword(newPassword);
+  if (pwError) return res.status(400).json({ error: pwError });
+
+  try {
+    const pool = getPool();
+    const found = await pool.query("select id, password_hash from users where id = $1", [req.user.id]);
+    const user = found.rows[0];
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+    const ok = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!ok) return res.status(401).json({ error: "Invalid credentials" });
+
+    const passwordHash = await bcrypt.hash(String(newPassword), 12);
+    await pool.query("update users set password_hash = $1 where id = $2", [passwordHash, req.user.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Change password failed" });
+  }
+});
+
+app.post("/api/auth/request-reset", async (req, res) => {
+  const email = normalizeEmail(req.body?.email);
+  if (!email) return res.status(400).json({ error: "Email required" });
+
+  try {
+    const pool = getPool();
+    const found = await pool.query("select id, email from users where email = $1", [email]);
+    const user = found.rows[0];
+
+    // Always return ok to avoid user enumeration.
+    if (!user) return res.json({ ok: true });
+
+    const token = generateToken();
+    const tokenHash = hashToken(token);
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+    await pool.query(
+      "insert into auth_tokens (user_id, kind, token_hash, expires_at) values ($1, 'password_reset', $2, $3)",
+      [user.id, tokenHash, expiresAt]
+    );
+
+    if (shouldRevealTokens()) return res.json({ ok: true, token });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Request reset failed" });
+  }
+});
+
+app.post("/api/auth/reset-password", async (req, res) => {
+  const email = normalizeEmail(req.body?.email);
+  const token = String(req.body?.token || "");
+  const newPassword = req.body?.newPassword;
+  if (!email || !token) return res.status(400).json({ error: "Email and token required" });
+  const pwError = validatePassword(newPassword);
+  if (pwError) return res.status(400).json({ error: pwError });
+
+  try {
+    const pool = getPool();
+    const found = await pool.query("select id from users where email = $1", [email]);
+    const user = found.rows[0];
+    if (!user) return res.status(400).json({ error: "Invalid token" });
+
+    const tokenHash = hashToken(token);
+    const tokenRow = await pool.query(
+      `
+        select id
+        from auth_tokens
+        where user_id = $1
+          and kind = 'password_reset'
+          and token_hash = $2
+          and used_at is null
+          and expires_at > now()
+        order by created_at desc
+        limit 1
+      `,
+      [user.id, tokenHash]
+    );
+    if (!tokenRow.rows[0]) return res.status(400).json({ error: "Invalid token" });
+
+    const passwordHash = await bcrypt.hash(String(newPassword), 12);
+    await pool.query("begin");
+    await pool.query("update users set password_hash = $1 where id = $2", [passwordHash, user.id]);
+    await pool.query("update auth_tokens set used_at = now() where id = $1", [tokenRow.rows[0].id]);
+    await pool.query("commit");
+    res.json({ ok: true });
+  } catch (err) {
+    try {
+      await getPool().query("rollback");
+    } catch {}
+    console.error(err);
+    res.status(500).json({ error: "Reset password failed" });
+  }
+});
+
+app.post("/api/auth/request-verify", requireAuth, async (req, res) => {
+  try {
+    const pool = getPool();
+    const found = await pool.query("select id, email_verified from users where id = $1", [req.user.id]);
+    const user = found.rows[0];
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    if (user.email_verified) return res.json({ ok: true, alreadyVerified: true });
+
+    const token = generateToken();
+    const tokenHash = hashToken(token);
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    await pool.query(
+      "insert into auth_tokens (user_id, kind, token_hash, expires_at) values ($1, 'email_verify', $2, $3)",
+      [user.id, tokenHash, expiresAt]
+    );
+
+    if (shouldRevealTokens()) return res.json({ ok: true, token });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Request verify failed" });
+  }
+});
+
+app.post("/api/auth/verify-email", requireAuth, async (req, res) => {
+  const token = String(req.body?.token || "");
+  if (!token) return res.status(400).json({ error: "Token required" });
+
+  try {
+    const pool = getPool();
+    const tokenHash = hashToken(token);
+    const tokenRow = await pool.query(
+      `
+        select id
+        from auth_tokens
+        where user_id = $1
+          and kind = 'email_verify'
+          and token_hash = $2
+          and used_at is null
+          and expires_at > now()
+        order by created_at desc
+        limit 1
+      `,
+      [req.user.id, tokenHash]
+    );
+    if (!tokenRow.rows[0]) return res.status(400).json({ error: "Invalid token" });
+
+    await pool.query("begin");
+    await pool.query("update users set email_verified = true where id = $1", [req.user.id]);
+    await pool.query("update auth_tokens set used_at = now() where id = $1", [tokenRow.rows[0].id]);
+    await pool.query("commit");
+    res.json({ ok: true });
+  } catch (err) {
+    try {
+      await getPool().query("rollback");
+    } catch {}
+    console.error(err);
+    res.status(500).json({ error: "Verify email failed" });
+  }
+});
+
 app.get("/api/state", requireAuth, async (req, res) => {
   try {
     const pool = getPool();
@@ -205,6 +396,8 @@ app.put("/api/state", requireAuth, async (req, res) => {
 
   try {
     const pool = getPool();
+    await pool.query("begin");
+
     await pool.query(
       `
         insert into user_states (user_id, data, updated_at)
@@ -214,10 +407,95 @@ app.put("/api/state", requireAuth, async (req, res) => {
       `,
       [req.user.id, JSON.stringify(data)]
     );
+
+    await pool.query("insert into user_state_versions (user_id, data) values ($1, $2::jsonb)", [
+      req.user.id,
+      JSON.stringify(data)
+    ]);
+
+    await pool.query(
+      `
+        delete from user_state_versions
+        where user_id = $1
+          and id not in (
+            select id from user_state_versions
+            where user_id = $1
+            order by created_at desc
+            limit 20
+          )
+      `,
+      [req.user.id]
+    );
+
+    await pool.query("commit");
     res.json({ ok: true });
   } catch (err) {
+    try {
+      await getPool().query("rollback");
+    } catch {}
     console.error(err);
     res.status(500).json({ error: "Failed to save state" });
+  }
+});
+
+app.get("/api/state/versions", requireAuth, async (req, res) => {
+  try {
+    const pool = getPool();
+    const result = await pool.query(
+      `
+        select id, created_at
+        from user_state_versions
+        where user_id = $1
+        order by created_at desc
+        limit 20
+      `,
+      [req.user.id]
+    );
+    res.json({ versions: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to list versions" });
+  }
+});
+
+app.post("/api/state/restore", requireAuth, async (req, res) => {
+  const versionId = Number(req.body?.versionId);
+  if (!Number.isFinite(versionId) || versionId <= 0) {
+    return res.status(400).json({ error: "Invalid versionId" });
+  }
+
+  try {
+    const pool = getPool();
+    const found = await pool.query(
+      "select data from user_state_versions where id = $1 and user_id = $2",
+      [versionId, req.user.id]
+    );
+    const row = found.rows[0];
+    if (!row) return res.status(404).json({ error: "Version not found" });
+
+    await pool.query("begin");
+    await pool.query(
+      `
+        insert into user_states (user_id, data, updated_at)
+        values ($1, $2::jsonb, now())
+        on conflict (user_id)
+        do update set data = excluded.data, updated_at = now()
+      `,
+      [req.user.id, JSON.stringify(row.data)]
+    );
+    await pool.query("insert into user_state_versions (user_id, data) values ($1, $2::jsonb)", [
+      req.user.id,
+      JSON.stringify(row.data)
+    ]);
+    await pool.query("commit");
+
+    res.json({ ok: true, data: row.data });
+  } catch (err) {
+    try {
+      await getPool().query("rollback");
+    } catch {}
+    console.error(err);
+    res.status(500).json({ error: "Failed to restore version" });
   }
 });
 
