@@ -2255,6 +2255,8 @@ body::-webkit-scrollbar,
       grid-auto-rows: clamp(260px, 34vh, 340px);
       gap: 16px;
       align-items: stretch;
+      padding: 2px 2px 18px;
+      box-sizing: border-box;
     }
 
 .expand-btn {
@@ -2286,7 +2288,7 @@ body::-webkit-scrollbar,
       writing-mode: horizontal-tb;
       word-wrap: break-word;
       white-space: normal;
-      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
     }
 
     .today-list.today-list-grid .today-item-top {
