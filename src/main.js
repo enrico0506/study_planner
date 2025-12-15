@@ -153,6 +153,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
     const searchInput = null;
     const subjectTable = document.getElementById("subjectTable");
     const tableWrapper = document.querySelector(".table-wrapper");
+    const mainArea = document.querySelector("#layoutRow .main-area");
     const expandPageBtn = document.getElementById("expandPageBtn");
     const emptyHint = document.getElementById("emptyHint");
     const openStatsBtn = document.getElementById("openStatsBtn");
@@ -2010,10 +2011,11 @@ const CVD_SAFE_SUBJECT_COLORS = [
         }
         return;
       }
+      const tableH = tableWrapper ? (tableWrapper.clientHeight || tableWrapper.offsetHeight || 0) : 0;
+      const mainH = mainArea ? (mainArea.clientHeight || mainArea.offsetHeight || 0) : 0;
+      const layoutH = layoutRow ? (layoutRow.clientHeight || layoutRow.offsetHeight || 0) : 0;
       const available =
-        (layoutRow && (layoutRow.clientHeight || layoutRow.offsetHeight)) ||
-        (tableWrapper && (tableWrapper.clientHeight || tableWrapper.offsetHeight)) ||
-        0;
+        (tableH && mainH ? Math.min(tableH, mainH) : tableH || mainH) || layoutH || 0;
       if (!available) return;
       todaySidebar.style.maxHeight = available + "px";
       todaySidebar.style.height = available + "px";
