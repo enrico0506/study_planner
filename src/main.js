@@ -1151,19 +1151,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
           if (!parsed.timerMode) parsed.timerMode = timerModePref || "countdown";
         }
 
-        // Never trust a persisted running timer from another page/session.
-        // If startTimeMs exists, convert it to paused at the last saved timestamp (not "now"),
-        // so time doesn't advance while the page is closed/reloading.
-        if (!parsed.paused && parsed.startTimeMs) {
-          const safeNow = Number.isFinite(parsed.savedAtMs) ? Number(parsed.savedAtMs) : Date.now();
-          const delta = safeNow - Number(parsed.startTimeMs || 0);
-          if (Number.isFinite(delta) && delta > 0) {
-            parsed.baseMs = (Number(parsed.baseMs) || 0) + delta;
-          }
-          parsed.startTimeMs = null;
-          parsed.paused = true;
-          parsed.pausedReason = parsed.pausedReason || "nav";
-        }
+        // Keep persisted running timers running across reloads.
 
         if (parsed.pausedReason === "nav" && typeof parsed.autoResume !== "boolean") {
           parsed.autoResume = true;
@@ -5757,21 +5745,12 @@ const CVD_SAFE_SUBJECT_COLORS = [
     }
 
     function maybeAutoResumeNavPausedSession() {
-      let isReload = false;
-      try {
-        const nav =
-          performance && typeof performance.getEntriesByType === "function"
-            ? performance.getEntriesByType("navigation")[0]
-            : null;
-        isReload = nav?.type === "reload";
-      } catch {}
       if (
         activeStudy &&
         activeStudy.paused &&
         activeStudy.pausedReason === "nav" &&
         activeStudy.autoResume === true
       ) {
-        if (isReload) return;
         resumeActiveSession({ clearNavFlags: true });
       }
     }
