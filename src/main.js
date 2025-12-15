@@ -4024,7 +4024,21 @@ const CVD_SAFE_SUBJECT_COLORS = [
                 } else {
                   addTodayBtn.disabled = true;
                   addTodayBtn.classList.add("chip-btn-success");
+                  const removeBtn = document.createElement("button");
+                  removeBtn.className = "chip-btn chip-btn-danger";
+                  removeBtn.textContent = "Remove";
+                  removeBtn.title = "Remove from Today’s Focus";
+                  removeBtn.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    showNotice("Remove this file from Today's focus?", "warn", () => {
+                      cleanupTodoForFile(subj.id, file.id);
+                      renderTodayTodos();
+                      renderScheduleView();
+                      renderTable();
+                    });
+                  });
                   rightMeta.appendChild(addTodayBtn);
+                  rightMeta.appendChild(removeBtn);
                 }
               } else if (picker) {
                 addTodayBtn.addEventListener("click", (event) => {
