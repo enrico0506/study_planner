@@ -141,6 +141,37 @@
     }
   }
 
+  function dotClassForType(type) {
+    switch (type) {
+      case "study":
+        return "study";
+      case "reminder":
+        return "reminder";
+      case "exam":
+        return "deadline";
+      default:
+        return "deadline";
+    }
+  }
+
+  function buildDotsForEvents(dayEvents) {
+    const types = new Set();
+    (dayEvents || []).forEach((evt) => {
+      if (!evt) return;
+      types.add(dotClassForType(evt.type));
+    });
+    if (!types.size) return null;
+    const wrap = document.createElement("div");
+    wrap.className = "calendar-dots";
+    wrap.setAttribute("aria-hidden", "true");
+    Array.from(types).slice(0, 3).forEach((t) => {
+      const dot = document.createElement("span");
+      dot.className = `calendar-dot ${t}`;
+      wrap.appendChild(dot);
+    });
+    return wrap;
+  }
+
   function sortEvents(list) {
     return list.slice().sort((a, b) => {
       const timeA = a.time || "24:00";
@@ -197,6 +228,8 @@
 
         btn.appendChild(top);
         btn.appendChild(badges);
+        const dots = buildDotsForEvents(dayEvents);
+        if (dots) btn.appendChild(dots);
         btn.setAttribute("aria-label", `${formatDisplayDate(day)}`);
         btn.addEventListener("click", () => selectDate(dayKey, false));
         calendarGrid.appendChild(btn);
@@ -240,6 +273,8 @@
 
       btn.appendChild(top);
       btn.appendChild(badges);
+      const dots = buildDotsForEvents(dayEvents);
+      if (dots) btn.appendChild(dots);
       const eventLabel = dayEvents.length ? `${dayEvents.length} item${dayEvents.length === 1 ? "" : "s"}` : "No items";
       btn.setAttribute("aria-label", `${formatDisplayDate(day)} · ${eventLabel}`);
       btn.addEventListener("click", () => selectDate(dayKey, true));

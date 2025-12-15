@@ -2,6 +2,27 @@
   const menus = Array.from(document.querySelectorAll(".header-menu"));
   if (!menus.length) return;
 
+  function normalizePath(pathname) {
+    const p = String(pathname || "").toLowerCase();
+    const file = p.split("/").pop() || "";
+    return file || "index.html";
+  }
+
+  function markActiveLinks() {
+    const current = normalizePath(window.location && window.location.pathname);
+    const allLinks = document.querySelectorAll("a.header-menu-link");
+    allLinks.forEach((a) => {
+      const href = a.getAttribute("href") || "";
+      const hrefFile = normalizePath(href.split("?")[0]);
+      const isActive =
+        (current === "index.html" && (hrefFile === "index.html" || hrefFile === "")) ||
+        (current !== "index.html" && hrefFile === current);
+      a.classList.toggle("header-menu-link-active", isActive);
+      if (isActive) a.setAttribute("aria-current", "page");
+      else a.removeAttribute("aria-current");
+    });
+  }
+
   function closeAll(except = null) {
     menus.forEach((menu) => {
       if (except && menu === except) return;
@@ -38,5 +59,6 @@
     if (clickedInside) return;
     closeAll();
   });
-})();
 
+  markActiveLinks();
+})();

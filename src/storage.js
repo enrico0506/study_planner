@@ -3,6 +3,7 @@
   const StudyPlanner = (window.StudyPlanner = existing);
 
   const APP_SCHEMA_VERSION = 1;
+  const SCHEMA_KEY = "study_schema_version";
   const SNAPSHOT_KEY = "studyLocalSnapshots_v1";
   const SNAPSHOT_LIMIT = 12;
 
@@ -171,6 +172,30 @@
     migrations.set(Number(fromVersion) || 0, fn);
   }
 
+  function migrateLocal() {
+    let current = 0;
+    try {
+      current = Number(getRaw(SCHEMA_KEY, "0")) || 0;
+    } catch {
+      current = 0;
+    }
+    if (!current) {
+      // First run: mark existing data as schema v1 without changing it.
+      setRaw(SCHEMA_KEY, String(APP_SCHEMA_VERSION), { debounceMs: 0 });
+      return;
+    }
+    let v = current;
+    while (v < APP_SCHEMA_VERSION) {
+      const fn = migrations.get(v);
+      if (!fn) break;
+      try {
+        fn();
+      } catch {}
+      v += 1;
+      setRaw(SCHEMA_KEY, String(v), { debounceMs: 0 });
+    }
+  }
+
   function migrateBackup(backup) {
     let b = backup;
     let v = Number(b.schemaVersion || 1) || 1;
@@ -207,6 +232,7 @@
 
   StudyPlanner.Storage = Object.assign(StudyPlanner.Storage || {}, {
     APP_SCHEMA_VERSION,
+    SCHEMA_KEY,
     SNAPSHOT_KEY,
     listStudyKeys,
     getRaw,
@@ -214,6 +240,7 @@
     getJSON,
     setJSON,
     registerMigration,
+    migrateLocal,
     exportAll,
     validateBackup,
     applyBackup,
@@ -222,5 +249,6 @@
     restoreSnapshot,
     downloadJson
   });
-})();
 
+  migrateLocal();
+})();

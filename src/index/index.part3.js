@@ -1,14 +1,43 @@
-    function renderTodayTodos() {
-      if (!todayList) return;
-      todayList.innerHTML = "";
+	    let todayCollapsedMap = {};
+	    let todayCollapsedMapLoaded = false;
+	    const TODAY_COLLAPSED_KEY = "studyTodayCollapsed_v1";
 
-      if (!todayTodos.length) {
-        const empty = document.createElement("div");
-        empty.className = "today-empty";
-        empty.textContent = "Drag files from subjects to build today's todo list.";
-        todayList.appendChild(empty);
-        return;
-      }
+	    function loadTodayCollapsedMap() {
+	      try {
+	        const raw = SP_STORAGE ? SP_STORAGE.getRaw(TODAY_COLLAPSED_KEY, null) : localStorage.getItem(TODAY_COLLAPSED_KEY);
+	        if (!raw) return {};
+	        const parsed = JSON.parse(raw);
+	        return parsed && typeof parsed === "object" ? parsed : {};
+	      } catch {
+	        return {};
+	      }
+	    }
+
+	    function saveTodayCollapsedMap(map) {
+	      try {
+	        const clean = map && typeof map === "object" ? map : {};
+	        if (SP_STORAGE) SP_STORAGE.setJSON(TODAY_COLLAPSED_KEY, clean, { debounceMs: 150 });
+	        else localStorage.setItem(TODAY_COLLAPSED_KEY, JSON.stringify(clean));
+	      } catch {}
+	    }
+
+	    function renderTodayTodos() {
+	      if (!todayList) return;
+	      todayList.innerHTML = "";
+
+	      // Per-item collapsed state (defaults to expanded to preserve existing look).
+		      if (!todayCollapsedMapLoaded) {
+		        todayCollapsedMapLoaded = true;
+		        todayCollapsedMap = loadTodayCollapsedMap();
+		      }
+
+	      if (!todayTodos.length) {
+	        const empty = document.createElement("div");
+	        empty.className = "today-empty";
+	        empty.textContent = "Drag files from subjects to build today's todo list.";
+	        todayList.appendChild(empty);
+	        return;
+	      }
 
       const isDragMode = todayExpanded && !subjectsMaximized;
       const sortedTodos = isDragMode
@@ -21,19 +50,21 @@
       const activeItems = [];
       const completedItems = [];
 
-      sortedTodos.forEach((todo) => {
-        const { subj, file } = resolveFileRef(todo.subjectId, todo.fileId);
-        const subjColor = getSubjectColorById(todo.subjectId);
-        const tintAlpha = getSubjectTintAlphaById(todo.subjectId);
-        const item = document.createElement("div");
-        item.className = "today-item";
+	      sortedTodos.forEach((todo) => {
+	        const { subj, file } = resolveFileRef(todo.subjectId, todo.fileId);
+	        const subjColor = getSubjectColorById(todo.subjectId);
+	        const tintAlpha = getSubjectTintAlphaById(todo.subjectId);
+	        const item = document.createElement("div");
+	        item.className = "today-item";
         const tinted = hexToRgba(subjColor, tintAlpha);
         const borderTint = hexToRgba(subjColor, Math.max(0.2, Math.min(0.7, tintAlpha * 2.25)));
         item.style.setProperty("--todo-accent", subjColor);
-        if (tinted) item.style.backgroundColor = tinted;
-        if (borderTint) item.style.borderColor = borderTint;
-        if (todo.done) item.classList.add("today-item-done");
-        if (!file || !subj) item.classList.add("today-item-missing");
+	        if (tinted) item.style.backgroundColor = tinted;
+	        if (borderTint) item.style.borderColor = borderTint;
+	        if (todo.done) item.classList.add("today-item-done");
+	        if (!file || !subj) item.classList.add("today-item-missing");
+	        const isCollapsed = !!(todayCollapsedMap && todayCollapsedMap[todo.id]);
+	        if (isCollapsed) item.classList.add("today-item-collapsed");
         if (isDragMode) {
           item.setAttribute("draggable", "true");
           item.dataset.todoId = todo.id;
@@ -84,18 +115,39 @@
         const textWrap = document.createElement("div");
         textWrap.className = "today-text";
 
-        const title = document.createElement("div");
-        title.className = "today-title";
-        title.textContent = (file && file.name) || todo.label || "Untitled";
+	        const title = document.createElement("div");
+	        title.className = "today-title";
+	        title.textContent = (file && file.name) || todo.label || "Untitled";
 
-        textWrap.appendChild(title);
+	        const subs = Array.isArray(todo.subtasks) ? todo.subtasks : [];
+	        const collapsedHint = document.createElement("span");
+	        collapsedHint.className = "today-collapsed-hint";
+	        collapsedHint.textContent = `(${subs.length} subtask${subs.length === 1 ? "" : "s"})`;
+	        title.appendChild(collapsedHint);
+
+	        textWrap.appendChild(title);
 
         left.appendChild(checkbox);
         left.appendChild(colorDot);
         left.appendChild(textWrap);
 
-        const actions = document.createElement("div");
-        actions.className = "today-actions";
+	        const actions = document.createElement("div");
+	        actions.className = "today-actions";
+
+	        const collapseBtn = document.createElement("button");
+	        collapseBtn.type = "button";
+	        collapseBtn.className = "today-collapse-btn icon-btn icon-btn-ghost";
+	        collapseBtn.setAttribute("aria-label", isCollapsed ? "Expand subtasks" : "Collapse subtasks");
+	        collapseBtn.textContent = isCollapsed ? "▸" : "▾";
+	        collapseBtn.addEventListener("click", (e) => {
+	          e.stopPropagation();
+	          todayCollapsedMap = todayCollapsedMap && typeof todayCollapsedMap === "object" ? todayCollapsedMap : {};
+	          const next = !todayCollapsedMap[todo.id];
+	          todayCollapsedMap[todo.id] = next;
+	          saveTodayCollapsedMap(todayCollapsedMap);
+	          renderTodayTodos();
+	        });
+	        item.appendChild(collapseBtn);
 
         const timerSpan = document.createElement("span");
         timerSpan.className = "today-timer";
@@ -174,13 +226,12 @@
         const subtasksList = document.createElement("div");
         subtasksList.className = "today-subtasks-list";
 
-        const subs = Array.isArray(todo.subtasks) ? todo.subtasks : [];
-        if (!subs.length) {
-          const hint = document.createElement("div");
-          hint.className = "today-subtasks-empty";
-          hint.textContent = "No subtasks yet. Add what you want to cover for this file.";
-          subtasksList.appendChild(hint);
-        } else {
+	        if (!subs.length) {
+	          const hint = document.createElement("div");
+	          hint.className = "today-subtasks-empty";
+	          hint.textContent = "No subtasks yet. Add what you want to cover for this file.";
+	          subtasksList.appendChild(hint);
+	        } else {
           subs.forEach((sub) => {
             const row = document.createElement("div");
             row.className = "today-subtask-row";
@@ -1593,4 +1644,3 @@
       renderSmartSuggestions();
       updateStudyTimerDisplay();
     }
-

@@ -811,6 +811,7 @@
     menuToggle.type = "button";
     menuToggle.className = "timetable-slot-menu-toggle";
     menuToggle.textContent = "...";
+    menuToggle.setAttribute("aria-label", "Open lesson menu");
     const menu = document.createElement("div");
     menu.className = "timetable-slot-menu";
     const editBtn = document.createElement("button");
