@@ -606,5 +606,11 @@
     });
   }
 
+  window.addEventListener("study:state-replaced", () => {
+    loadState();
+    buildQueue(true);
+    render();
+  });
+
   init();
 })();

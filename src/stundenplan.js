@@ -1006,5 +1006,23 @@
     applyPhoneDayView();
   }
 
+  function reloadSyncedStateFromStorage() {
+    subjects = loadSubjects();
+    const state = loadTimetableState();
+    tables = state.tables;
+    activeTableId = state.activeTableId;
+    ensureActiveTable();
+    renderTimetableTabs();
+    populateDayOptions();
+    populateSubjectOptions();
+    renderSubjectList();
+    renderTimetable();
+    applyPhoneDayView();
+  }
+
+  window.addEventListener("study:state-replaced", () => {
+    reloadSyncedStateFromStorage();
+  });
+
   init();
 })();

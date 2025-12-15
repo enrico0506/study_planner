@@ -3,6 +3,7 @@
   const STATE_PUSH_DEBOUNCE_MS = 1500;
   const SYNC_META_KEY = "sync_cloud_updated_ms_v1";
   const CLOUD_POLL_MS = 15000;
+  const SYNC_APPLIED_EVENT = "study:state-replaced";
 
   const DATA_KEYS = new Set([
     "studySubjects_v1",
@@ -11,15 +12,6 @@
     "studyDailyFocus_v1",
     "studyCalendarEvents_v1",
     "studyFlashcards_v1"
-  ]);
-
-  const PREF_KEYS = new Set([
-    "studyTheme_v1",
-    "studyLanguage_v1",
-    "studyStylePrefs_v1",
-    "studyConfidenceMode_v1",
-    "studyFocusConfig_v1",
-    "studyColorPalette_v1"
   ]);
 
   function stableStringifyObject(obj) {
@@ -50,12 +42,12 @@
     return false;
   }
 
-  function mergeCloudWithLocalPrefs(cloudData, localSnapshot) {
-    const merged = { ...(cloudData || {}) };
-    for (const key of PREF_KEYS) {
-      if (key in localSnapshot) merged[key] = localSnapshot[key];
+  function hasAnySyncedState(snapshot) {
+    if (!snapshot || typeof snapshot !== "object") return false;
+    for (const value of Object.values(snapshot)) {
+      if (!isEmptyJsonString(value)) return true;
     }
-    return merged;
+    return false;
   }
 
   function snapshotLocalState() {
@@ -123,6 +115,27 @@
     return apiFetch("/api/state", { method: "PUT", body: JSON.stringify({ data }) });
   }
 
+  let suppressPush = false;
+  function applyCloudSnapshot(snapshot, cloudUpdatedMs) {
+    const signature = stableStringifyObject(snapshot || {});
+    suppressPush = true;
+    try {
+      replaceLocalStateFromSnapshot(snapshot || {});
+    } finally {
+      suppressPush = false;
+    }
+    lastPushedSignature = signature;
+    localStorage.setItem(SYNC_META_KEY, String(Number(cloudUpdatedMs) || Date.now()));
+
+    try {
+      window.dispatchEvent(
+        new CustomEvent(SYNC_APPLIED_EVENT, {
+          detail: { source: "cloud", updatedAtMs: cloudUpdatedMs || Date.now() }
+        })
+      );
+    } catch {}
+  }
+
   async function syncNowAuto() {
     const me = await getMe();
     if (!me) return;
@@ -130,35 +143,35 @@
     const local = snapshotLocalState();
     const cloud = await pullCloudState();
     const cloudData = (cloud && cloud.data) || {};
-    const localHasData = hasPlannerData(local);
-    const cloudHasData = hasPlannerData(cloudData);
+    const localHasData = hasAnySyncedState(local) || hasPlannerData(local);
+    const cloudHasData = hasAnySyncedState(cloudData) || hasPlannerData(cloudData);
 
     const cloudUpdatedMs = cloud?.updatedAt ? Date.parse(cloud.updatedAt) : 0;
     const lastSeenCloudMs = Number(localStorage.getItem(SYNC_META_KEY) || 0) || 0;
 
-    // First time on this device:
-    // - If cloud has data, always pull it (keep local prefs) to avoid overwriting the account.
-    // - If cloud is empty, do not upload local data automatically (only register or explicit sync).
+    // First time on this device: choose the non-empty side (last-writer-wins for later conflicts).
     if (!lastSeenCloudMs) {
       if (cloudHasData) {
-        const applied = mergeCloudWithLocalPrefs(cloudData, local);
-        replaceLocalStateFromSnapshot(applied);
-        localStorage.setItem(SYNC_META_KEY, String(cloudUpdatedMs || Date.now()));
-        location.reload();
+        applyCloudSnapshot(cloudData, cloudUpdatedMs || Date.now());
+        return;
+      }
+      if (localHasData) {
+        await pushCloudState(local);
+        lastPushedSignature = stableStringifyObject(local);
+        localStorage.setItem(SYNC_META_KEY, String(Date.now()));
+        return;
       }
       return;
     }
 
     if (cloudHasData && !localHasData) {
-      const applied = mergeCloudWithLocalPrefs(cloudData, local);
-      replaceLocalStateFromSnapshot(applied);
-      if (cloudUpdatedMs) localStorage.setItem(SYNC_META_KEY, String(cloudUpdatedMs));
-      location.reload();
+      applyCloudSnapshot(cloudData, cloudUpdatedMs);
       return;
     }
 
     if (!cloudHasData && localHasData) {
       await pushCloudState(local);
+      lastPushedSignature = stableStringifyObject(local);
       localStorage.setItem(SYNC_META_KEY, String(Date.now()));
       return;
     }
@@ -172,15 +185,13 @@
 
     // If cloud changed since we last saw it, prefer cloud for data (keep local prefs).
     if (cloudUpdatedMs && cloudUpdatedMs > lastSeenCloudMs) {
-      const applied = mergeCloudWithLocalPrefs(cloudData, local);
-      replaceLocalStateFromSnapshot(applied);
-      localStorage.setItem(SYNC_META_KEY, String(cloudUpdatedMs));
-      location.reload();
+      applyCloudSnapshot(cloudData, cloudUpdatedMs);
       return;
     }
 
     // Otherwise, push local snapshot (last-writer-wins). This avoids wiping cloud when local only has prefs.
     await pushCloudState(local);
+    lastPushedSignature = localStr;
     localStorage.setItem(SYNC_META_KEY, String(Date.now()));
   }
 
@@ -206,12 +217,7 @@
     if (!cloudUpdatedMs || cloudUpdatedMs <= lastSeenCloudMs) return;
 
     const cloudData = (cloud && cloud.data) || {};
-    const local = snapshotLocalState();
-
-    const applied = mergeCloudWithLocalPrefs(cloudData, local);
-    replaceLocalStateFromSnapshot(applied);
-    localStorage.setItem(SYNC_META_KEY, String(cloudUpdatedMs));
-    location.reload();
+    applyCloudSnapshot(cloudData, cloudUpdatedMs);
   }
 
   function startPolling() {
@@ -251,17 +257,17 @@
 
     localStorage.setItem = (key, value) => {
       originalSetItem(key, value);
-      if (String(key).startsWith(STORAGE_PREFIX)) schedulePush();
+      if (!suppressPush && String(key).startsWith(STORAGE_PREFIX)) schedulePush();
     };
 
     localStorage.removeItem = (key) => {
       originalRemoveItem(key);
-      if (String(key).startsWith(STORAGE_PREFIX)) schedulePush();
+      if (!suppressPush && String(key).startsWith(STORAGE_PREFIX)) schedulePush();
     };
 
     localStorage.clear = () => {
       originalClear();
-      schedulePush();
+      if (!suppressPush) schedulePush();
     };
   }
 
@@ -276,7 +282,7 @@
     try {
       await syncNowAuto();
     } catch {}
-    schedulePush();
+    lastPushedSignature = stableStringifyObject(snapshotLocalState());
     startPolling();
   }
 

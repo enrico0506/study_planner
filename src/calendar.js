@@ -537,6 +537,13 @@
     if (e.key === "Escape") closeModal();
   });
 
+  window.addEventListener("study:state-replaced", () => {
+    events = loadEvents();
+    renderCalendar();
+    renderSelectedDay();
+    renderUpcoming();
+  });
+
   renderCalendar();
   renderSelectedDay();
   renderUpcoming();

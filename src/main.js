@@ -2043,23 +2043,24 @@ const CVD_SAFE_SUBJECT_COLORS = [
         return;
       }
 
-      perSubject.forEach(({ subj, subjIndex, ms }) => {
-        const width = (ms * 100) / totalMs;
+	      perSubject.forEach(({ subj, subjIndex, ms }) => {
+	        const width = (ms * 100) / totalMs;
+	        const subjectColor = getSubjectColorById(subj?.id) || getSubjectColor(subjIndex);
 
-        const seg = document.createElement("div");
-        seg.className = "summary-study-segment";
-        seg.style.width = width + "%";
-        seg.style.background = getSubjectColor(subjIndex);
-        summaryStudyBar.appendChild(seg);
+	        const seg = document.createElement("div");
+	        seg.className = "summary-study-segment";
+	        seg.style.width = width + "%";
+	        seg.style.background = subjectColor;
+	        summaryStudyBar.appendChild(seg);
 
         const legendItem = document.createElement("div");
-        legendItem.className = "summary-study-legend-item";
-        const swatch = document.createElement("span");
-        swatch.className = "summary-study-legend-swatch";
-        swatch.style.backgroundColor = getSubjectColor(subjIndex);
-        const label = document.createElement("span");
-        label.textContent = subj.name;
-        legendItem.appendChild(swatch);
+	        legendItem.className = "summary-study-legend-item";
+	        const swatch = document.createElement("span");
+	        swatch.className = "summary-study-legend-swatch";
+	        swatch.style.backgroundColor = subjectColor;
+	        const label = document.createElement("span");
+	        label.textContent = subj.name;
+	        legendItem.appendChild(swatch);
         legendItem.appendChild(label);
         summaryStudyLegend.appendChild(legendItem);
       });
@@ -5738,16 +5739,64 @@ const CVD_SAFE_SUBJECT_COLORS = [
       return "board";
     }
 
-    function applyPageMode() {
-      const mode = getPageMode();
-      document.body.dataset.mode = mode;
-      applySubjectPaging();
-    }
+	    function applyPageMode() {
+	      const mode = getPageMode();
+	      document.body.dataset.mode = mode;
+	      applySubjectPaging();
+	    }
 
-    function maybeAutoResumeNavPausedSession() {
-      if (
-        activeStudy &&
-        activeStudy.paused &&
+	    function applySyncedStateFromStorage() {
+	      loadThemePreference();
+	      loadColorPalette();
+	      loadStylePrefs();
+	      applyStylePrefs();
+
+	      const savedConfMode = localStorage.getItem(CONF_MODE_KEY);
+	      confidenceMode = savedConfMode === "perceived" ? "perceived" : "manual";
+	      if (confidenceMode === "perceived") {
+	        perceivedConfBtn?.classList.add("confidence-toggle-active");
+	        manualConfBtn?.classList.remove("confidence-toggle-active");
+	      } else {
+	        manualConfBtn?.classList.add("confidence-toggle-active");
+	        perceivedConfBtn?.classList.remove("confidence-toggle-active");
+	      }
+
+	      saveLanguagePreference(loadLanguagePreference());
+	      loadFromStorage();
+	      loadDailyFocusMap();
+	      loadTodayTodos();
+	      loadFocusConfig();
+	      loadCalendarEvents();
+
+	      if (activeStudy && activeStudy.kind === "study") {
+	        const { subj, file } = resolveFileRef(activeStudy.subjectId, activeStudy.fileId);
+	        if (!subj || !file) {
+	          activeStudy = null;
+	          clearActiveSession();
+	        }
+	      }
+
+	      renderSubjectOptions();
+	      renderFocusState();
+	      renderTodayTodos();
+	      applyPageMode();
+	      renderTable();
+	      if (activeView === "schedule") {
+	        renderScheduleView();
+	      } else {
+	        applyTodayExpandedLayout();
+	      }
+	      updateHeaderProfileLabel();
+	    }
+
+	    window.addEventListener("study:state-replaced", () => {
+	      applySyncedStateFromStorage();
+	    });
+
+	    function maybeAutoResumeNavPausedSession() {
+	      if (
+	        activeStudy &&
+	        activeStudy.paused &&
         activeStudy.pausedReason === "nav" &&
         activeStudy.autoResume === true
       ) {
