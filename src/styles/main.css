@@ -2252,7 +2252,7 @@ body::-webkit-scrollbar,
 .today-list.today-list-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      grid-auto-rows: clamp(260px, 34vh, 340px);
+      grid-auto-rows: clamp(260px, 34vh, 360px);
       gap: 22px;
       align-items: stretch;
       padding: 2px 2px 18px;
@@ -2303,6 +2303,12 @@ body::-webkit-scrollbar,
       overflow: hidden;
       display: flex;
       flex-direction: column;
+    }
+
+    /* In the fixed-height grid, don't cap the subtasks wrapper itself; let the list inside scroll. */
+    .today-list.today-list-grid .today-subtasks.today-subtasks-scroll {
+      max-height: none;
+      overflow: hidden;
     }
 
     .today-list.today-list-grid .today-subtasks-list {
