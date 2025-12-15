@@ -1,4 +1,22 @@
 (() => {
+  const SYNC_META_KEY = "sync_cloud_updated_ms_v1";
+  const DATA_KEYS = new Set([
+    "studySubjects_v1",
+    "studyTimetable_v1",
+    "studyTodayTodos_v1",
+    "studyDailyFocus_v1",
+    "studyCalendarEvents_v1",
+    "studyFlashcards_v1"
+  ]);
+  const PREF_KEYS = new Set([
+    "studyTheme_v1",
+    "studyLanguage_v1",
+    "studyStylePrefs_v1",
+    "studyConfidenceMode_v1",
+    "studyFocusConfig_v1",
+    "studyColorPalette_v1"
+  ]);
+
   function $(id) {
     return document.getElementById(id);
   }
@@ -58,6 +76,36 @@
     return JSON.stringify(Object.fromEntries(entries));
   }
 
+  function isEmptyJsonString(value) {
+    const trimmed = String(value ?? "").trim();
+    if (!trimmed) return true;
+    if (trimmed === "[]" || trimmed === "{}") return true;
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return parsed.length === 0;
+      if (parsed && typeof parsed === "object") return Object.keys(parsed).length === 0;
+    } catch {
+      return false;
+    }
+    return false;
+  }
+
+  function hasPlannerData(snapshot) {
+    for (const key of DATA_KEYS) {
+      if (!(key in snapshot)) continue;
+      if (!isEmptyJsonString(snapshot[key])) return true;
+    }
+    return false;
+  }
+
+  function mergeCloudWithLocalPrefs(cloudData, localSnapshot) {
+    const merged = { ...(cloudData || {}) };
+    for (const key of PREF_KEYS) {
+      if (key in localSnapshot) merged[key] = localSnapshot[key];
+    }
+    return merged;
+  }
+
   function setPill(isAuthed, text) {
     const dot = $("authDot");
     const pillText = $("authPillText");
@@ -89,29 +137,35 @@
 
   async function initialSyncAfterAuth() {
     const local = snapshotLocalState();
-    const localStr = stableStringifyObject(local);
     const cloud = await apiFetch("/api/state");
     const cloudData = (cloud && cloud.data) || {};
-    const cloudStr = stableStringifyObject(cloudData);
+    const localHasData = hasPlannerData(local);
+    const cloudHasData = hasPlannerData(cloudData);
 
-    const localEmpty = Object.keys(local).length === 0;
-    const cloudEmpty = Object.keys(cloudData).length === 0;
-
-    if (cloudEmpty && !localEmpty) {
+    if (!cloudHasData && localHasData) {
       await apiFetch("/api/state", { method: "PUT", body: JSON.stringify({ data: local }) });
+      localStorage.setItem(SYNC_META_KEY, String(Date.now()));
       return "Uploaded your existing local data to the new account.";
     }
 
-    if (!cloudEmpty && localEmpty) {
-      for (const [k, v] of Object.entries(cloudData)) localStorage.setItem(k, v ?? "");
+    if (cloudHasData && !localHasData) {
+      const applied = mergeCloudWithLocalPrefs(cloudData, local);
+      for (const [k, v] of Object.entries(applied)) localStorage.setItem(k, v ?? "");
+      if (cloud?.updatedAt) {
+        const ms = Date.parse(cloud.updatedAt);
+        if (ms) localStorage.setItem(SYNC_META_KEY, String(ms));
+      }
       return "Downloaded your cloud data into this browser.";
     }
 
+    const localStr = stableStringifyObject(local);
+    const cloudStr = stableStringifyObject(cloudData);
     if (cloudStr === localStr) return "Already in sync.";
 
     // Default: merge local wins to avoid losing the user's current work.
     const merged = { ...cloudData, ...local };
     await apiFetch("/api/state", { method: "PUT", body: JSON.stringify({ data: merged }) });
+    localStorage.setItem(SYNC_META_KEY, String(Date.now()));
     return "Merged cloud + local (local wins) and synced.";
   }
 
@@ -121,20 +175,35 @@
     const cloud = await apiFetch("/api/state");
     const cloudData = (cloud && cloud.data) || {};
 
-    const localEmpty = Object.keys(local).length === 0;
-    const cloudEmpty = Object.keys(cloudData).length === 0;
+    const localHasData = hasPlannerData(local);
+    const cloudHasData = hasPlannerData(cloudData);
 
-    if (!cloudEmpty && localEmpty) {
-      for (const [k, v] of Object.entries(cloudData)) localStorage.setItem(k, v ?? "");
+    const cloudUpdatedMs = cloud?.updatedAt ? Date.parse(cloud.updatedAt) : 0;
+    const lastSeenCloudMs = Number(localStorage.getItem(SYNC_META_KEY) || 0) || 0;
+
+    if (cloudHasData && !localHasData) {
+      const applied = mergeCloudWithLocalPrefs(cloudData, local);
+      for (const [k, v] of Object.entries(applied)) localStorage.setItem(k, v ?? "");
+      if (cloudUpdatedMs) localStorage.setItem(SYNC_META_KEY, String(cloudUpdatedMs));
       return;
     }
-    if (cloudEmpty && !localEmpty) {
+    if (!cloudHasData && localHasData) {
       await apiFetch("/api/state", { method: "PUT", body: JSON.stringify({ data: local }) });
+      localStorage.setItem(SYNC_META_KEY, String(Date.now()));
+      return;
+    }
+
+    // If cloud is newer than what this browser last saw, download it (keep local prefs).
+    if (cloudUpdatedMs && cloudUpdatedMs > lastSeenCloudMs) {
+      const applied = mergeCloudWithLocalPrefs(cloudData, local);
+      for (const [k, v] of Object.entries(applied)) localStorage.setItem(k, v ?? "");
+      localStorage.setItem(SYNC_META_KEY, String(cloudUpdatedMs));
       return;
     }
 
     const merged = { ...cloudData, ...local };
     await apiFetch("/api/state", { method: "PUT", body: JSON.stringify({ data: merged }) });
+    localStorage.setItem(SYNC_META_KEY, String(Date.now()));
   }
 
   async function refreshVersions() {

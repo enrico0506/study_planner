@@ -1,11 +1,60 @@
 (() => {
   const STORAGE_PREFIX = "study";
   const STATE_PUSH_DEBOUNCE_MS = 1500;
+  const SYNC_META_KEY = "sync_cloud_updated_ms_v1";
+
+  const DATA_KEYS = new Set([
+    "studySubjects_v1",
+    "studyTimetable_v1",
+    "studyTodayTodos_v1",
+    "studyDailyFocus_v1",
+    "studyCalendarEvents_v1",
+    "studyFlashcards_v1"
+  ]);
+
+  const PREF_KEYS = new Set([
+    "studyTheme_v1",
+    "studyLanguage_v1",
+    "studyStylePrefs_v1",
+    "studyConfidenceMode_v1",
+    "studyFocusConfig_v1",
+    "studyColorPalette_v1"
+  ]);
 
   function stableStringifyObject(obj) {
     const keys = Object.keys(obj).sort();
     const entries = keys.map((key) => [key, obj[key]]);
     return JSON.stringify(Object.fromEntries(entries));
+  }
+
+  function isEmptyJsonString(value) {
+    const trimmed = String(value ?? "").trim();
+    if (!trimmed) return true;
+    if (trimmed === "[]" || trimmed === "{}") return true;
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return parsed.length === 0;
+      if (parsed && typeof parsed === "object") return Object.keys(parsed).length === 0;
+    } catch {
+      return false;
+    }
+    return false;
+  }
+
+  function hasPlannerData(snapshot) {
+    for (const key of DATA_KEYS) {
+      if (!(key in snapshot)) continue;
+      if (!isEmptyJsonString(snapshot[key])) return true;
+    }
+    return false;
+  }
+
+  function mergeCloudWithLocalPrefs(cloudData, localSnapshot) {
+    const merged = { ...(cloudData || {}) };
+    for (const key of PREF_KEYS) {
+      if (key in localSnapshot) merged[key] = localSnapshot[key];
+    }
+    return merged;
   }
 
   function snapshotLocalState() {
@@ -78,33 +127,47 @@
     if (!me) return;
 
     const local = snapshotLocalState();
-    const localStr = stableStringifyObject(local);
-
     const cloud = await pullCloudState();
     const cloudData = (cloud && cloud.data) || {};
-    const cloudStr = stableStringifyObject(cloudData);
+    const localHasData = hasPlannerData(local);
+    const cloudHasData = hasPlannerData(cloudData);
 
-    const localEmpty = Object.keys(local).length === 0;
-    const cloudEmpty = Object.keys(cloudData).length === 0;
+    const cloudUpdatedMs = cloud?.updatedAt ? Date.parse(cloud.updatedAt) : 0;
+    const lastSeenCloudMs = Number(localStorage.getItem(SYNC_META_KEY) || 0) || 0;
 
-    if (!cloudEmpty && localEmpty) {
-      replaceLocalStateFromSnapshot(cloudData);
+    if (cloudHasData && !localHasData) {
+      const applied = mergeCloudWithLocalPrefs(cloudData, local);
+      replaceLocalStateFromSnapshot(applied);
+      if (cloudUpdatedMs) localStorage.setItem(SYNC_META_KEY, String(cloudUpdatedMs));
       location.reload();
       return;
     }
 
-    if (cloudEmpty && !localEmpty) {
+    if (!cloudHasData && localHasData) {
       await pushCloudState(local);
+      localStorage.setItem(SYNC_META_KEY, String(Date.now()));
       return;
     }
 
-    if (cloudStr === localStr) return;
+    const localStr = stableStringifyObject(local);
+    const cloudStr = stableStringifyObject(cloudData);
+    if (cloudStr === localStr) {
+      if (cloudUpdatedMs) localStorage.setItem(SYNC_META_KEY, String(cloudUpdatedMs));
+      return;
+    }
 
-    // Default conflict policy: merge with local taking priority.
-    const merged = { ...cloudData, ...local };
-    await pushCloudState(merged);
-    replaceLocalStateFromSnapshot(merged);
-    location.reload();
+    // If cloud changed since we last saw it, prefer cloud for data (keep local prefs).
+    if (cloudUpdatedMs && cloudUpdatedMs > lastSeenCloudMs) {
+      const applied = mergeCloudWithLocalPrefs(cloudData, local);
+      replaceLocalStateFromSnapshot(applied);
+      localStorage.setItem(SYNC_META_KEY, String(cloudUpdatedMs));
+      location.reload();
+      return;
+    }
+
+    // Otherwise, push local snapshot (last-writer-wins). This avoids wiping cloud when local only has prefs.
+    await pushCloudState(local);
+    localStorage.setItem(SYNC_META_KEY, String(Date.now()));
   }
 
   let lastPushedSignature = null;
@@ -119,6 +182,7 @@
 
     await pushCloudState(snapshot);
     lastPushedSignature = signature;
+    localStorage.setItem(SYNC_META_KEY, String(Date.now()));
   }
 
   function schedulePush() {
