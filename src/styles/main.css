@@ -2324,13 +2324,21 @@ body::-webkit-scrollbar,
 
     /* Maximized Today view: use full height and split into equal rows (no overlap). */
     .layout-row.today-full .today-list.today-list-grid {
-      grid-auto-rows: 1fr;
+      grid-auto-rows: minmax(0, 1fr);
       height: 100%;
       align-content: stretch;
+      gap: 16px;
+      padding: 6px 2px 20px;
+      box-sizing: border-box;
     }
 
     .layout-row.today-full .today-list.today-list-grid .today-item {
       min-height: 0;
+    }
+
+    /* Reduce shadow bleed in the tight grid (prevents “overlap” look and bottom clipping). */
+    .layout-row.today-full .today-list.today-list-grid .today-item {
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
     }
 
     .today-done-section {
