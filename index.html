@@ -80,15 +80,16 @@
               <button class="header-menu-item" id="headerProfileBtn" type="button">Login</button>
               <button class="header-menu-item" id="headerSettingsBtn" type="button">Settings</button>
             </div>
-            <div class="header-menu-divider"></div>
-            <div class="header-menu-group">
-              <button class="header-menu-link" id="openSuggestionsBtn" type="button">Suggestions</button>
-              <button class="header-menu-link" id="openStatsBtn" type="button">Study stats</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+	            <div class="header-menu-divider"></div>
+	            <div class="header-menu-group">
+	              <button class="header-menu-link" id="openSuggestionsBtn" type="button">Suggestions</button>
+	              <button class="header-menu-link" id="openStatsBtn" type="button">Study stats</button>
+	              <button class="header-menu-link" id="openReelsBreakBtn" type="button">Reels break (5m)</button>
+	            </div>
+	          </div>
+	        </div>
+	      </div>
+	    </div>
 
     <div class="settings-modal" id="settingsModal" aria-hidden="true">
       <div class="settings-backdrop" id="settingsModalBackdrop"></div>
@@ -615,9 +616,9 @@
       </div>
     </div>
   </div>
-  <!-- Suggestions Modal -->
-  <div class="modal-backdrop" id="suggestionModalBackdrop" hidden>
-    <div class="modal suggestion-modal" role="dialog" aria-modal="true">
+	  <!-- Suggestions Modal -->
+	  <div class="modal-backdrop" id="suggestionModalBackdrop" hidden>
+	    <div class="modal suggestion-modal" role="dialog" aria-modal="true">
       <div class="modal-header">
         <div>
           <div class="modal-title">Study suggestions</div>
@@ -646,9 +647,48 @@
         <button class="btn btn-secondary" id="suggestionModalCloseBtn2" type="button">Close</button>
       </div>
     </div>
-  </div>
-  <button class="expand-btn" id="expandPageBtn" type="button" aria-label="Toggle expand">⤢</button>
-  <script src="./src/sync.js"></script>
-  <script src="./src/main.js"></script>
-</body>
+	  </div>
+	  <!-- Reels Break Modal -->
+	  <div class="modal-backdrop" id="reelsBreakModalBackdrop" hidden>
+	    <div class="modal reels-modal" role="dialog" aria-modal="true" aria-labelledby="reelsBreakTitle">
+	      <div class="modal-header">
+	        <div>
+	          <div class="modal-title" id="reelsBreakTitle">Instagram Reels break</div>
+	          <div class="modal-subtitle">You have 5 minutes. After that, this closes automatically.</div>
+	        </div>
+	        <div class="reels-timer" id="reelsBreakCountdown" aria-label="Time left">05:00</div>
+	        <button class="modal-close-btn" id="reelsBreakCloseBtn" aria-label="Close">✕</button>
+	      </div>
+	      <div class="modal-body reels-modal-body">
+	        <label class="reels-url-row">
+	          <span class="reels-url-label">Reel URL</span>
+	          <input class="reels-url-input" id="reelsBreakUrlInput" type="url" inputmode="url" placeholder="https://www.instagram.com/reel/SHORTCODE/" />
+	        </label>
+	        <div class="reels-actions">
+	          <button class="btn" id="reelsBreakLoadBtn" type="button">Load</button>
+	          <button class="btn btn-secondary" id="reelsBreakEndBtn" type="button">End now</button>
+	        </div>
+	        <div class="reels-frame" id="reelsBreakFrame">
+	          <div class="reels-frame-placeholder" id="reelsBreakPlaceholder">
+	            Paste a Reel link and click “Load”.
+	          </div>
+	          <iframe
+	            class="reels-iframe"
+	            id="reelsBreakIframe"
+	            title="Instagram Reel"
+	            loading="lazy"
+	            allow="autoplay; fullscreen; picture-in-picture"
+	            referrerpolicy="no-referrer-when-downgrade"
+	          ></iframe>
+	        </div>
+	        <div class="reels-note">
+	          If the embed doesn’t play (some browsers block it), open the Reel in a new tab from Instagram.
+	        </div>
+	      </div>
+	    </div>
+	  </div>
+	  <button class="expand-btn" id="expandPageBtn" type="button" aria-label="Toggle expand">⤢</button>
+	  <script src="./src/sync.js"></script>
+	  <script src="./src/main.js"></script>
+	</body>
 </html>

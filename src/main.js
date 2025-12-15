@@ -162,17 +162,26 @@ const CVD_SAFE_SUBJECT_COLORS = [
     const todayHeaderActions = document.querySelector(".today-header-actions");
     const suggestionsList = document.getElementById("suggestionsList");
     const suggestionsCapNote = document.getElementById("suggestionsCapNote");
-    const dueSoonList = document.getElementById("dueSoonList");
-    const dueSoonHint = document.getElementById("dueSoonHint");
-    const openSuggestionsBtn = document.getElementById("openSuggestionsBtn");
-    const suggestionModalBackdrop = document.getElementById("suggestionModalBackdrop");
-    const suggestionModalCloseBtn = document.getElementById("suggestionModalCloseBtn");
-    const suggestionModalCloseBtn2 = document.getElementById("suggestionModalCloseBtn2");
-    const subjectSettingsBackdrop = document.getElementById("subjectSettingsBackdrop");
-    const subjectSettingsCloseBtn = document.getElementById("subjectSettingsCloseBtn");
-    const subjectSettingsCancelBtn = document.getElementById("subjectSettingsCancelBtn");
-    const subjectSettingsSaveBtn = document.getElementById("subjectSettingsSaveBtn");
-    const subjectSettingsNameInput = document.getElementById("subjectSettingsNameInput");
+	    const dueSoonList = document.getElementById("dueSoonList");
+	    const dueSoonHint = document.getElementById("dueSoonHint");
+	    const openSuggestionsBtn = document.getElementById("openSuggestionsBtn");
+	    const openReelsBreakBtn = document.getElementById("openReelsBreakBtn");
+	    const suggestionModalBackdrop = document.getElementById("suggestionModalBackdrop");
+	    const suggestionModalCloseBtn = document.getElementById("suggestionModalCloseBtn");
+	    const suggestionModalCloseBtn2 = document.getElementById("suggestionModalCloseBtn2");
+	    const reelsBreakModalBackdrop = document.getElementById("reelsBreakModalBackdrop");
+	    const reelsBreakCloseBtn = document.getElementById("reelsBreakCloseBtn");
+	    const reelsBreakEndBtn = document.getElementById("reelsBreakEndBtn");
+	    const reelsBreakLoadBtn = document.getElementById("reelsBreakLoadBtn");
+	    const reelsBreakUrlInput = document.getElementById("reelsBreakUrlInput");
+	    const reelsBreakIframe = document.getElementById("reelsBreakIframe");
+	    const reelsBreakCountdown = document.getElementById("reelsBreakCountdown");
+	    const reelsBreakFrame = document.getElementById("reelsBreakFrame");
+	    const subjectSettingsBackdrop = document.getElementById("subjectSettingsBackdrop");
+	    const subjectSettingsCloseBtn = document.getElementById("subjectSettingsCloseBtn");
+	    const subjectSettingsCancelBtn = document.getElementById("subjectSettingsCancelBtn");
+	    const subjectSettingsSaveBtn = document.getElementById("subjectSettingsSaveBtn");
+	    const subjectSettingsNameInput = document.getElementById("subjectSettingsNameInput");
     const subjectSettingsStrength = document.getElementById("subjectSettingsStrength");
     const subjectSettingsSwatches = document.getElementById("subjectSettingsSwatches");
     const subjectSettingsDot = document.getElementById("subjectSettingsDot");
@@ -213,11 +222,14 @@ const CVD_SAFE_SUBJECT_COLORS = [
   const focusTimerLabel = document.getElementById("focusTimerLabel");
   const manualConfBtn = document.getElementById("manualConfBtn");
   const perceivedConfBtn = document.getElementById("perceivedConfBtn");
-    let headerMenuTimer = null;
-    let addTodoModalState = null; // { subjectId, fileId, subjectName, fileName, subtasks: [] }
+	    let headerMenuTimer = null;
+	    let addTodoModalState = null; // { subjectId, fileId, subjectName, fileName, subtasks: [] }
+	    let reelsBreakTimer = null;
+	    let reelsBreakEndsAt = 0;
+	    const REELS_BREAK_DURATION_MS = 5 * 60 * 1000;
 
-    async function updateHeaderProfileLabel() {
-      if (!headerProfileBtn) return;
+	    async function updateHeaderProfileLabel() {
+	      if (!headerProfileBtn) return;
       try {
         const res = await fetch("/api/me", { credentials: "same-origin" });
         if (res.ok) {
@@ -2590,15 +2602,124 @@ const CVD_SAFE_SUBJECT_COLORS = [
       suggestionModalBackdrop.style.display = "flex";
     }
 
-    function closeSuggestionModal() {
-      if (!suggestionModalBackdrop) return;
-      suggestionModalBackdrop.hidden = true;
-      suggestionModalBackdrop.style.display = "none";
-    }
+	    function closeSuggestionModal() {
+	      if (!suggestionModalBackdrop) return;
+	      suggestionModalBackdrop.hidden = true;
+	      suggestionModalBackdrop.style.display = "none";
+	    }
 
-    function addTodoForFile(subjectId, fileId, subtaskTexts) {
-      const { subj, file } = resolveFileRef(subjectId, fileId);
-      if (!subj || !file) return false;
+	    function isReelsBreakOpen() {
+	      return Boolean(reelsBreakModalBackdrop && reelsBreakModalBackdrop.hidden === false);
+	    }
+
+	    function formatClockMMSS(totalSeconds) {
+	      const safe = Number.isFinite(totalSeconds) ? Math.max(0, Math.floor(totalSeconds)) : 0;
+	      const minutes = Math.floor(safe / 60);
+	      const seconds = safe % 60;
+	      return String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
+	    }
+
+	    function clearReelsEmbed() {
+	      if (reelsBreakIframe) reelsBreakIframe.src = "";
+	      reelsBreakFrame?.classList.remove("reels-loaded");
+	    }
+
+	    function extractInstagramShortcode(rawInput) {
+	      const input = (rawInput || "").trim();
+	      if (!input) return null;
+
+	      const looksLikeShortcode = /^[A-Za-z0-9_-]{5,40}$/.test(input);
+	      if (looksLikeShortcode) return input;
+
+	      let url;
+	      try {
+	        url = new URL(input.startsWith("http://") || input.startsWith("https://") ? input : "https://" + input);
+	      } catch {
+	        return null;
+	      }
+
+	      if (!/instagram\.com$/i.test(url.hostname) && !/\.instagram\.com$/i.test(url.hostname)) {
+	        return null;
+	      }
+
+	      const parts = url.pathname.split("/").filter(Boolean);
+	      if (parts.length < 2) return null;
+	      const type = parts[0];
+	      const shortcode = parts[1];
+	      if (!["reel", "reels", "p", "tv"].includes(type)) return null;
+	      if (!/^[A-Za-z0-9_-]{5,40}$/.test(shortcode)) return null;
+	      return shortcode;
+	    }
+
+	    function loadReelsEmbedFromInput() {
+	      if (!reelsBreakUrlInput) return;
+	      const raw = (reelsBreakUrlInput.value || "").trim();
+	      const shortcode = extractInstagramShortcode(raw);
+	      if (!shortcode) {
+	        showToast("Paste a valid Instagram Reel link.", "warn");
+	        return;
+	      }
+	      const embedUrl = "https://www.instagram.com/reel/" + shortcode + "/embed";
+	      if (reelsBreakIframe) reelsBreakIframe.src = embedUrl;
+	      reelsBreakFrame?.classList.add("reels-loaded");
+	      localStorage.setItem("reelsBreakLastUrl", raw);
+	    }
+
+	    function updateReelsBreakCountdown() {
+	      if (!reelsBreakCountdown) return;
+	      const remainingMs = Math.max(0, reelsBreakEndsAt - Date.now());
+	      const remainingSeconds = Math.ceil(remainingMs / 1000);
+	      reelsBreakCountdown.textContent = formatClockMMSS(remainingSeconds);
+	      if (remainingMs <= 0) {
+	        closeReelsBreakModal({ expired: true });
+	      }
+	    }
+
+	    function openReelsBreakModal() {
+	      if (!reelsBreakModalBackdrop) return;
+	      closeHeaderMenu();
+
+	      reelsBreakEndsAt = Date.now() + REELS_BREAK_DURATION_MS;
+	      if (reelsBreakTimer) {
+	        clearInterval(reelsBreakTimer);
+	        reelsBreakTimer = null;
+	      }
+	      reelsBreakTimer = window.setInterval(updateReelsBreakCountdown, 250);
+
+	      reelsBreakModalBackdrop.hidden = false;
+	      reelsBreakModalBackdrop.style.display = "flex";
+
+	      const last = localStorage.getItem("reelsBreakLastUrl");
+	      if (reelsBreakUrlInput && !reelsBreakUrlInput.value && last) {
+	        reelsBreakUrlInput.value = last;
+	      }
+	      if (reelsBreakUrlInput?.value) {
+	        loadReelsEmbedFromInput();
+	      } else {
+	        clearReelsEmbed();
+	      }
+	      updateReelsBreakCountdown();
+
+	      reelsBreakUrlInput?.focus();
+	      reelsBreakUrlInput?.select?.();
+	    }
+
+	    function closeReelsBreakModal({ expired = false } = {}) {
+	      if (!reelsBreakModalBackdrop) return;
+	      reelsBreakModalBackdrop.hidden = true;
+	      reelsBreakModalBackdrop.style.display = "none";
+	      reelsBreakEndsAt = 0;
+	      if (reelsBreakTimer) {
+	        clearInterval(reelsBreakTimer);
+	        reelsBreakTimer = null;
+	      }
+	      clearReelsEmbed();
+	      if (expired) showToast("Reels break finished.", "info");
+	    }
+
+	    function addTodoForFile(subjectId, fileId, subtaskTexts) {
+	      const { subj, file } = resolveFileRef(subjectId, fileId);
+	      if (!subj || !file) return false;
 
       const already = todayTodos.some(
         (t) => t.subjectId === subjectId && t.fileId === fileId
@@ -5132,17 +5253,23 @@ const CVD_SAFE_SUBJECT_COLORS = [
       }
     });
 
-    if (openSuggestionsBtn) {
-      openSuggestionsBtn.addEventListener("click", () => {
-        openSuggestionModal();
-      });
-    }
+	    if (openSuggestionsBtn) {
+	      openSuggestionsBtn.addEventListener("click", () => {
+	        openSuggestionModal();
+	      });
+	    }
 
-    if (suggestionModalCloseBtn) {
-      suggestionModalCloseBtn.addEventListener("click", () => {
-        closeSuggestionModal();
-      });
-    }
+	    if (openReelsBreakBtn) {
+	      openReelsBreakBtn.addEventListener("click", () => {
+	        openReelsBreakModal();
+	      });
+	    }
+
+	    if (suggestionModalCloseBtn) {
+	      suggestionModalCloseBtn.addEventListener("click", () => {
+	        closeSuggestionModal();
+	      });
+	    }
 
     if (suggestionModalCloseBtn2) {
       suggestionModalCloseBtn2.addEventListener("click", () => {
@@ -5150,17 +5277,47 @@ const CVD_SAFE_SUBJECT_COLORS = [
       });
     }
 
-    if (suggestionModalBackdrop) {
-      suggestionModalBackdrop.addEventListener("mousedown", (event) => {
-        if (event.target === suggestionModalBackdrop) {
-          closeSuggestionModal();
-        }
-      });
-    }
+	    if (suggestionModalBackdrop) {
+	      suggestionModalBackdrop.addEventListener("mousedown", (event) => {
+	        if (event.target === suggestionModalBackdrop) {
+	          closeSuggestionModal();
+	        }
+	      });
+	    }
 
-    if (tableWrapper) {
-      const blockDragSelector =
-        "button, input, select, textarea, option, .chip-btn, .file-row, .add-file-slot, .subject-add-box";
+	    reelsBreakCloseBtn?.addEventListener("click", () => {
+	      closeReelsBreakModal();
+	    });
+
+	    reelsBreakEndBtn?.addEventListener("click", () => {
+	      closeReelsBreakModal();
+	    });
+
+	    reelsBreakLoadBtn?.addEventListener("click", () => {
+	      loadReelsEmbedFromInput();
+	    });
+
+	    reelsBreakUrlInput?.addEventListener("keydown", (event) => {
+	      if (event.key !== "Enter") return;
+	      event.preventDefault();
+	      loadReelsEmbedFromInput();
+	    });
+
+	    reelsBreakModalBackdrop?.addEventListener("mousedown", (event) => {
+	      if (event.target === reelsBreakModalBackdrop) {
+	        closeReelsBreakModal();
+	      }
+	    });
+
+	    document.addEventListener("keydown", (event) => {
+	      if (event.key === "Escape" && isReelsBreakOpen()) {
+	        closeReelsBreakModal();
+	      }
+	    });
+
+	    if (tableWrapper) {
+	      const blockDragSelector =
+	        "button, input, select, textarea, option, .chip-btn, .file-row, .add-file-slot, .subject-add-box";
       let isPanning = false;
       let startX = 0;
       let startScroll = 0;
