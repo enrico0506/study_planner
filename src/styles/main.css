@@ -2247,8 +2247,8 @@ body::-webkit-scrollbar,
 
 .today-list.today-list-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      grid-auto-rows: clamp(260px, 34vh, 360px);
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-auto-rows: clamp(220px, 30vh, 300px);
       gap: 12px;
       align-items: stretch;
     }
@@ -2275,17 +2275,32 @@ body::-webkit-scrollbar,
 .today-list.today-list-grid .today-item {
       display: flex;
       flex-direction: column;
-      min-height: 260px;
+      min-height: 220px;
       height: 100%;
       max-height: none;
       overflow: hidden;
       writing-mode: horizontal-tb;
       word-wrap: break-word;
       white-space: normal;
+      padding: 10px;
+      gap: 8px;
     }
 
     .today-list.today-list-grid .today-item-top {
       flex-shrink: 0;
+    }
+
+    .today-list.today-list-grid .today-actions {
+      gap: 8px;
+      min-width: 100px;
+      max-width: 140px;
+    }
+
+    .today-list.today-list-grid .today-actions .chip-btn,
+    .today-list.today-list-grid .today-actions .today-remove-btn {
+      padding: 9px 10px;
+      font-size: 0.88rem;
+      border-radius: 10px;
     }
 
     .today-list.today-list-grid .today-subtasks {

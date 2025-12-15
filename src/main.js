@@ -1875,6 +1875,15 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
     function enforceTodayHeight() {
       if (!tableWrapper || !todaySidebar) return;
+      if (layoutRow && layoutRow.classList.contains("today-full")) {
+        todaySidebar.style.maxHeight = "";
+        const list = document.getElementById("todayList");
+        if (list) {
+          list.style.maxHeight = "";
+          list.style.overflowY = "";
+        }
+        return;
+      }
       const available = tableWrapper.offsetHeight || 0;
       if (!available) return;
       todaySidebar.style.maxHeight = available + "px";
