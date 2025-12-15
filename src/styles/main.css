@@ -2252,8 +2252,8 @@ body::-webkit-scrollbar,
 .today-list.today-list-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      grid-auto-rows: clamp(320px, 42vh, 440px);
-      gap: 12px;
+      grid-auto-rows: clamp(260px, 34vh, 340px);
+      gap: 16px;
       align-items: stretch;
     }
 
@@ -2279,13 +2279,14 @@ body::-webkit-scrollbar,
 .today-list.today-list-grid .today-item {
       display: flex;
       flex-direction: column;
-      min-height: 320px;
+      min-height: 260px;
       height: 100%;
       max-height: none;
       overflow: hidden;
       writing-mode: horizontal-tb;
       word-wrap: break-word;
       white-space: normal;
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
     }
 
     .today-list.today-list-grid .today-item-top {
@@ -2306,6 +2307,23 @@ body::-webkit-scrollbar,
       min-height: 0;
       overflow: auto;
       scrollbar-gutter: stable;
+    }
+
+    /* Make grid cards more compact; subtasks will scroll when they hit the height cap. */
+    .today-list.today-list-grid .today-subtasks {
+      padding: 8px;
+      gap: 8px;
+    }
+
+    .today-list.today-list-grid .today-subtask-row {
+      padding: 7px 9px;
+    }
+
+    .today-list.today-list-grid .today-actions .chip-btn,
+    .today-list.today-list-grid .today-actions .today-remove-btn {
+      padding: 9px 10px;
+      font-size: 0.88rem;
+      border-radius: 10px;
     }
 
     /* (intentionally no special-case layout for maximized Today grid) */
