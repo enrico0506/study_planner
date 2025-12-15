@@ -2,6 +2,7 @@
   const STORAGE_PREFIX = "study";
   const STATE_PUSH_DEBOUNCE_MS = 1500;
   const SYNC_META_KEY = "sync_cloud_updated_ms_v1";
+  const CLOUD_POLL_MS = 15000;
 
   const DATA_KEYS = new Set([
     "studySubjects_v1",
@@ -172,6 +173,41 @@
 
   let lastPushedSignature = null;
   let pushTimer = null;
+  let lastLocalMutationMs = 0;
+  let pollTimer = null;
+
+  async function pollCloudAndApplyIfNewer() {
+    const me = await getMe();
+    if (!me) return;
+    if (Date.now() - lastLocalMutationMs < 5000) return;
+
+    const lastSeenCloudMs = Number(localStorage.getItem(SYNC_META_KEY) || 0) || 0;
+    let cloud;
+    try {
+      cloud = await pullCloudState();
+    } catch {
+      return;
+    }
+
+    const cloudUpdatedMs = cloud?.updatedAt ? Date.parse(cloud.updatedAt) : 0;
+    if (!cloudUpdatedMs || cloudUpdatedMs <= lastSeenCloudMs) return;
+
+    const cloudData = (cloud && cloud.data) || {};
+    const local = snapshotLocalState();
+
+    const applied = mergeCloudWithLocalPrefs(cloudData, local);
+    replaceLocalStateFromSnapshot(applied);
+    localStorage.setItem(SYNC_META_KEY, String(cloudUpdatedMs));
+    location.reload();
+  }
+
+  function startPolling() {
+    if (pollTimer) return;
+    pollTimer = setInterval(() => {
+      pollCloudAndApplyIfNewer().catch(() => {});
+    }, CLOUD_POLL_MS);
+  }
+
   async function pushIfChanged() {
     const me = await getMe();
     if (!me) return;
@@ -187,6 +223,7 @@
 
   function schedulePush() {
     if (pushTimer) clearTimeout(pushTimer);
+    lastLocalMutationMs = Date.now();
     pushTimer = setTimeout(() => {
       pushIfChanged().catch(() => {});
     }, STATE_PUSH_DEBOUNCE_MS);
@@ -225,6 +262,7 @@
       await syncNowAuto();
     } catch {}
     schedulePush();
+    startPolling();
   }
 
   if (document.readyState === "loading") {

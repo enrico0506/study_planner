@@ -70,6 +70,16 @@
     return out;
   }
 
+  function clearLocalStudyData() {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("study")) keys.push(key);
+    }
+    for (const key of keys) localStorage.removeItem(key);
+    localStorage.removeItem(SYNC_META_KEY);
+  }
+
   function stableStringifyObject(obj) {
     const keys = Object.keys(obj).sort();
     const entries = keys.map((key) => [key, obj[key]]);
@@ -281,6 +291,13 @@
         try {
           await apiFetch("/api/auth/logout", { method: "POST" });
         } catch {}
+        const shouldClear = confirm(
+          "Logout successful.\n\nDo you also want to clear this device's local study data (subjects, timetable, calendar, flashcards)?" +
+            "\n\nChoose OK = clear local data, Cancel = keep local data."
+        );
+        if (shouldClear) {
+          clearLocalStudyData();
+        }
         window.location.href = "./index.html";
       });
       $("accountSyncNowBtn").addEventListener("click", async () => {
