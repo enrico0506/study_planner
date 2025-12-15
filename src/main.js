@@ -172,11 +172,17 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	    const reelsBreakModalBackdrop = document.getElementById("reelsBreakModalBackdrop");
 	    const reelsBreakCloseBtn = document.getElementById("reelsBreakCloseBtn");
 	    const reelsBreakEndBtn = document.getElementById("reelsBreakEndBtn");
+	    const reelsBreakOpenInstagramBtn = document.getElementById("reelsBreakOpenInstagramBtn");
+	    const reelsBreakOpenInstagramBtn2 = document.getElementById("reelsBreakOpenInstagramBtn2");
 	    const reelsBreakLoadBtn = document.getElementById("reelsBreakLoadBtn");
 	    const reelsBreakUrlInput = document.getElementById("reelsBreakUrlInput");
 	    const reelsBreakIframe = document.getElementById("reelsBreakIframe");
 	    const reelsBreakCountdown = document.getElementById("reelsBreakCountdown");
 	    const reelsBreakFrame = document.getElementById("reelsBreakFrame");
+	    const reelsBreakStatus = document.getElementById("reelsBreakStatus");
+	    const reelsBreakHint = document.getElementById("reelsBreakHint");
+	    const reelsBreakEmbedError = document.getElementById("reelsBreakEmbedError");
+	    const reelsBreakAdvancedDetails = document.getElementById("reelsBreakAdvancedDetails");
 	    const subjectSettingsBackdrop = document.getElementById("subjectSettingsBackdrop");
 	    const subjectSettingsCloseBtn = document.getElementById("subjectSettingsCloseBtn");
 	    const subjectSettingsCancelBtn = document.getElementById("subjectSettingsCancelBtn");
@@ -223,12 +229,21 @@ const CVD_SAFE_SUBJECT_COLORS = [
   const manualConfBtn = document.getElementById("manualConfBtn");
   const perceivedConfBtn = document.getElementById("perceivedConfBtn");
 	    let headerMenuTimer = null;
-	    let addTodoModalState = null; // { subjectId, fileId, subjectName, fileName, subtasks: [] }
-	    let reelsBreakTimer = null;
-	    let reelsBreakEndsAt = 0;
-	    const REELS_BREAK_DURATION_MS = 5 * 60 * 1000;
+		    let addTodoModalState = null; // { subjectId, fileId, subjectName, fileName, subtasks: [] }
+		    let reelsBreakTimer = null;
+		    let reelsBreakEndsAt = 0;
+		    let reelsBreakWindow = null;
+		    let reelsBreakEmbedLoadTimer = null;
+		    let reelsBreakEmbedLoaded = false;
+		    let reelsBreakEndHandled = false;
+		    const REELS_BREAK_DURATION_MS = 5 * 60 * 1000;
+		    const DEFAULT_REEL_URLS = [
+		      "https://www.instagram.com/reel/C4fGJc7s7lB/",
+		      "https://www.instagram.com/reel/C2yqXf1MZr1/",
+		      "https://www.instagram.com/reel/C1a9kMZrH9p/"
+		    ];
 
-	    async function updateHeaderProfileLabel() {
+		    async function updateHeaderProfileLabel() {
 	      if (!headerProfileBtn) return;
       try {
         const res = await fetch("/api/me", { credentials: "same-origin" });
@@ -2608,114 +2623,238 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	      suggestionModalBackdrop.style.display = "none";
 	    }
 
-	    function isReelsBreakOpen() {
-	      return Boolean(reelsBreakModalBackdrop && reelsBreakModalBackdrop.hidden === false);
-	    }
+		    function isReelsBreakOpen() {
+		      return Boolean(reelsBreakModalBackdrop && reelsBreakModalBackdrop.hidden === false);
+		    }
 
-	    function formatClockMMSS(totalSeconds) {
-	      const safe = Number.isFinite(totalSeconds) ? Math.max(0, Math.floor(totalSeconds)) : 0;
-	      const minutes = Math.floor(safe / 60);
-	      const seconds = safe % 60;
-	      return String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
-	    }
+		    function setReelsBreakStatus(message) {
+		      if (!reelsBreakStatus) return;
+		      reelsBreakStatus.textContent = message;
+		    }
 
-	    function clearReelsEmbed() {
-	      if (reelsBreakIframe) reelsBreakIframe.src = "";
-	      reelsBreakFrame?.classList.remove("reels-loaded");
-	    }
+		    function setReelsBreakHint(message) {
+		      if (!reelsBreakHint) return;
+		      reelsBreakHint.textContent = message || "";
+		      reelsBreakHint.hidden = !message;
+		    }
 
-	    function extractInstagramShortcode(rawInput) {
-	      const input = (rawInput || "").trim();
-	      if (!input) return null;
+		    function formatClockMMSS(totalSeconds) {
+		      const safe = Number.isFinite(totalSeconds) ? Math.max(0, Math.floor(totalSeconds)) : 0;
+		      const minutes = Math.floor(safe / 60);
+		      const seconds = safe % 60;
+		      return String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
+		    }
 
-	      const looksLikeShortcode = /^[A-Za-z0-9_-]{5,40}$/.test(input);
-	      if (looksLikeShortcode) return input;
+		    function stopReelsBreakTimer() {
+		      if (!reelsBreakTimer) return;
+		      clearInterval(reelsBreakTimer);
+		      reelsBreakTimer = null;
+		    }
 
-	      let url;
-	      try {
-	        url = new URL(input.startsWith("http://") || input.startsWith("https://") ? input : "https://" + input);
-	      } catch {
-	        return null;
-	      }
+		    function clearReelsEmbed() {
+		      reelsBreakEmbedLoaded = false;
+		      if (reelsBreakEmbedLoadTimer) {
+		        clearTimeout(reelsBreakEmbedLoadTimer);
+		        reelsBreakEmbedLoadTimer = null;
+		      }
+		      if (reelsBreakIframe) reelsBreakIframe.src = "";
+		      reelsBreakFrame?.classList.remove("reels-loaded");
+		      if (reelsBreakFrame) reelsBreakFrame.hidden = true;
+		      if (reelsBreakEmbedError) reelsBreakEmbedError.hidden = true;
+		    }
 
-	      if (!/instagram\.com$/i.test(url.hostname) && !/\.instagram\.com$/i.test(url.hostname)) {
-	        return null;
-	      }
+		    function extractInstagramShortcode(rawInput) {
+		      const input = (rawInput || "").trim();
+		      if (!input) return null;
 
-	      const parts = url.pathname.split("/").filter(Boolean);
-	      if (parts.length < 2) return null;
-	      const type = parts[0];
-	      const shortcode = parts[1];
-	      if (!["reel", "reels", "p", "tv"].includes(type)) return null;
-	      if (!/^[A-Za-z0-9_-]{5,40}$/.test(shortcode)) return null;
-	      return shortcode;
-	    }
+		      const looksLikeShortcode = /^[A-Za-z0-9_-]{5,40}$/.test(input);
+		      if (looksLikeShortcode) return input;
 
-	    function loadReelsEmbedFromInput() {
-	      if (!reelsBreakUrlInput) return;
-	      const raw = (reelsBreakUrlInput.value || "").trim();
-	      const shortcode = extractInstagramShortcode(raw);
-	      if (!shortcode) {
-	        showToast("Paste a valid Instagram Reel link.", "warn");
-	        return;
-	      }
-	      const embedUrl = "https://www.instagram.com/reel/" + shortcode + "/embed";
-	      if (reelsBreakIframe) reelsBreakIframe.src = embedUrl;
-	      reelsBreakFrame?.classList.add("reels-loaded");
-	      localStorage.setItem("reelsBreakLastUrl", raw);
-	    }
+		      let url;
+		      try {
+		        url = new URL(
+		          input.startsWith("http://") || input.startsWith("https://") ? input : "https://" + input
+		        );
+		      } catch {
+		        return null;
+		      }
 
-	    function updateReelsBreakCountdown() {
-	      if (!reelsBreakCountdown) return;
-	      const remainingMs = Math.max(0, reelsBreakEndsAt - Date.now());
-	      const remainingSeconds = Math.ceil(remainingMs / 1000);
-	      reelsBreakCountdown.textContent = formatClockMMSS(remainingSeconds);
-	      if (remainingMs <= 0) {
-	        closeReelsBreakModal({ expired: true });
-	      }
-	    }
+		      if (!/instagram\.com$/i.test(url.hostname) && !/\\.instagram\\.com$/i.test(url.hostname)) {
+		        return null;
+		      }
 
-	    function openReelsBreakModal() {
-	      if (!reelsBreakModalBackdrop) return;
-	      closeHeaderMenu();
+		      const parts = url.pathname.split("/").filter(Boolean);
+		      if (parts.length < 2) return null;
+		      const type = parts[0];
+		      const shortcode = parts[1];
+		      if (!["reel", "reels", "p", "tv"].includes(type)) return null;
+		      if (!/^[A-Za-z0-9_-]{5,40}$/.test(shortcode)) return null;
+		      return shortcode;
+		    }
 
-	      reelsBreakEndsAt = Date.now() + REELS_BREAK_DURATION_MS;
-	      if (reelsBreakTimer) {
-	        clearInterval(reelsBreakTimer);
-	        reelsBreakTimer = null;
-	      }
-	      reelsBreakTimer = window.setInterval(updateReelsBreakCountdown, 250);
+		    function scheduleEmbedFailureIfNoLoad() {
+		      if (reelsBreakEmbedLoadTimer) clearTimeout(reelsBreakEmbedLoadTimer);
+		      reelsBreakEmbedLoadTimer = window.setTimeout(() => {
+		        if (reelsBreakEmbedLoaded) return;
+		        if (reelsBreakEmbedError) reelsBreakEmbedError.hidden = false;
+		        setReelsBreakStatus("Reel embed might be blocked. Use Instagram Reels instead.");
+		      }, 10_000);
+		    }
 
-	      reelsBreakModalBackdrop.hidden = false;
-	      reelsBreakModalBackdrop.style.display = "flex";
+		    function loadReelsEmbedFromUrl(rawUrl, { remember = true } = {}) {
+		      const shortcode = extractInstagramShortcode(rawUrl);
+		      if (!shortcode) {
+		        showToast("Paste a valid Instagram Reel link.", "warn");
+		        return false;
+		      }
 
-	      const last = localStorage.getItem("reelsBreakLastUrl");
-	      if (reelsBreakUrlInput && !reelsBreakUrlInput.value && last) {
-	        reelsBreakUrlInput.value = last;
-	      }
-	      if (reelsBreakUrlInput?.value) {
-	        loadReelsEmbedFromInput();
-	      } else {
-	        clearReelsEmbed();
-	      }
-	      updateReelsBreakCountdown();
+		      const embedUrl = "https://www.instagram.com/reel/" + shortcode + "/embed";
+		      reelsBreakEmbedLoaded = false;
+		      if (reelsBreakEmbedError) reelsBreakEmbedError.hidden = true;
+		      if (reelsBreakFrame) reelsBreakFrame.hidden = false;
+		      reelsBreakFrame?.classList.remove("reels-loaded");
+		      if (reelsBreakIframe) reelsBreakIframe.src = embedUrl;
+		      scheduleEmbedFailureIfNoLoad();
+		      setReelsBreakStatus("Showing embedded reel.");
 
-	      reelsBreakUrlInput?.focus();
-	      reelsBreakUrlInput?.select?.();
-	    }
+		      if (remember) localStorage.setItem("reelsBreakLastUrl", rawUrl);
+		      return true;
+		    }
 
-	    function closeReelsBreakModal({ expired = false } = {}) {
-	      if (!reelsBreakModalBackdrop) return;
-	      reelsBreakModalBackdrop.hidden = true;
-	      reelsBreakModalBackdrop.style.display = "none";
-	      reelsBreakEndsAt = 0;
-	      if (reelsBreakTimer) {
-	        clearInterval(reelsBreakTimer);
-	        reelsBreakTimer = null;
-	      }
-	      clearReelsEmbed();
-	      if (expired) showToast("Reels break finished.", "info");
-	    }
+		    function loadReelsEmbedFromInput() {
+		      if (!reelsBreakUrlInput) return;
+		      const raw = (reelsBreakUrlInput.value || "").trim();
+		      loadReelsEmbedFromUrl(raw, { remember: true });
+		    }
+
+		    // Browser limitations:
+		    // - window.open can be blocked by popup blockers if not called directly from a user click.
+		    // - Closing tabs/windows is only allowed for windows opened by script (and may still fail).
+		    function openInstagramReelsWindow() {
+		      const url = "https://www.instagram.com/reels/";
+		      if (reelsBreakWindow && !reelsBreakWindow.closed) {
+		        reelsBreakWindow.focus?.();
+		        return true;
+		      }
+		      const opened = window.open(url, "_blank");
+		      if (!opened) return false;
+		      reelsBreakWindow = opened;
+		      try {
+		        reelsBreakWindow.opener = null;
+		      } catch {
+		        // Best-effort only.
+		      }
+		      return true;
+		    }
+
+		    function tryCloseInstagramReelsWindow() {
+		      if (!reelsBreakWindow) return true;
+		      try {
+		        reelsBreakWindow.close();
+		      } catch {
+		        // Best-effort only.
+		      }
+		      const closed = Boolean(reelsBreakWindow.closed);
+		      if (closed) reelsBreakWindow = null;
+		      return closed;
+		    }
+
+		    function pickDefaultReelUrl() {
+		      if (!Array.isArray(DEFAULT_REEL_URLS) || DEFAULT_REEL_URLS.length === 0) return "";
+		      const idx = Math.floor(Math.random() * DEFAULT_REEL_URLS.length);
+		      return DEFAULT_REEL_URLS[idx] || DEFAULT_REEL_URLS[0];
+		    }
+
+		    function startDefaultEmbedMode() {
+		      const chosen = pickDefaultReelUrl();
+		      if (reelsBreakUrlInput) reelsBreakUrlInput.value = chosen;
+		      setReelsBreakHint("Popup blocked. Allow popups to use your Instagram session.");
+		      clearReelsEmbed();
+		      loadReelsEmbedFromUrl(chosen, { remember: false });
+		    }
+
+		    function updateReelsBreakCountdown() {
+		      if (!reelsBreakCountdown) return;
+		      const remainingMs = Math.max(0, reelsBreakEndsAt - Date.now());
+		      const remainingSeconds = Math.ceil(remainingMs / 1000);
+		      reelsBreakCountdown.textContent = formatClockMMSS(remainingSeconds);
+
+		      if (remainingSeconds <= 10 && reelsBreakWindow && !reelsBreakWindow.closed) {
+		        setReelsBreakHint("If the Instagram tab doesn’t close automatically, please close it manually.");
+		      }
+
+		      if (remainingMs <= 0) {
+		        handleReelsBreakTimeout();
+		      }
+		    }
+
+		    function handleReelsBreakTimeout() {
+		      if (reelsBreakEndHandled) return;
+		      reelsBreakEndHandled = true;
+		      stopReelsBreakTimer();
+		      reelsBreakEndsAt = 0;
+		      if (reelsBreakCountdown) reelsBreakCountdown.textContent = "00:00";
+
+		      const closedOk = tryCloseInstagramReelsWindow();
+		      if (!closedOk && reelsBreakWindow) {
+		        setReelsBreakStatus("Break finished. Please close the Instagram tab/window to end the break.");
+		        setReelsBreakHint("Browsers may block closing tabs, even if they were opened by this site.");
+		        return;
+		      }
+
+		      closeReelsBreakModal();
+		      showToast("Reels break finished.", "info");
+		    }
+
+		    function openReelsBreakModal() {
+		      if (!reelsBreakModalBackdrop) return;
+		      closeHeaderMenu();
+
+		      reelsBreakEndHandled = false;
+		      setReelsBreakHint("");
+		      if (reelsBreakEmbedError) reelsBreakEmbedError.hidden = true;
+		      if (reelsBreakAdvancedDetails) reelsBreakAdvancedDetails.open = false;
+
+		      reelsBreakEndsAt = Date.now() + REELS_BREAK_DURATION_MS;
+		      stopReelsBreakTimer();
+		      reelsBreakTimer = window.setInterval(updateReelsBreakCountdown, 250);
+
+		      reelsBreakModalBackdrop.hidden = false;
+		      reelsBreakModalBackdrop.style.display = "flex";
+
+		      const opened = openInstagramReelsWindow();
+		      if (opened) {
+		        clearReelsEmbed();
+		        setReelsBreakStatus("Reels break running in Instagram.");
+		      } else {
+		        setReelsBreakStatus("Popup blocked — showing an embedded reel instead.");
+		        startDefaultEmbedMode();
+		      }
+
+		      updateReelsBreakCountdown();
+		    }
+
+		    function endReelsBreakNow() {
+		      stopReelsBreakTimer();
+		      reelsBreakEndsAt = 0;
+		      const closedOk = tryCloseInstagramReelsWindow();
+		      closeReelsBreakModal();
+		      if (!closedOk && reelsBreakWindow) {
+		        showToast("Please close the Instagram tab/window to end the break.", "warn");
+		      }
+		    }
+
+		    function closeReelsBreakModal() {
+		      if (!reelsBreakModalBackdrop) return;
+		      reelsBreakModalBackdrop.hidden = true;
+		      reelsBreakModalBackdrop.style.display = "none";
+		      reelsBreakEndsAt = 0;
+		      reelsBreakEndHandled = false;
+		      stopReelsBreakTimer();
+		      clearReelsEmbed();
+		      setReelsBreakHint("");
+		      setReelsBreakStatus("Reels break ready.");
+		    }
 
 	    function addTodoForFile(subjectId, fileId, subtaskTexts) {
 	      const { subj, file } = resolveFileRef(subjectId, fileId);
@@ -5285,35 +5424,62 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	      });
 	    }
 
-	    reelsBreakCloseBtn?.addEventListener("click", () => {
-	      closeReelsBreakModal();
-	    });
+		    reelsBreakCloseBtn?.addEventListener("click", () => {
+		      endReelsBreakNow();
+		    });
 
-	    reelsBreakEndBtn?.addEventListener("click", () => {
-	      closeReelsBreakModal();
-	    });
+		    reelsBreakEndBtn?.addEventListener("click", () => {
+		      endReelsBreakNow();
+		    });
 
-	    reelsBreakLoadBtn?.addEventListener("click", () => {
-	      loadReelsEmbedFromInput();
-	    });
+		    function handleReelsOpenInstagramClick() {
+		      const opened = openInstagramReelsWindow();
+		      if (!opened) {
+		        showToast("Popup blocked. Please allow popups for this site.", "warn");
+		        setReelsBreakHint("If popups are blocked, use the embedded reel below.");
+		        if (reelsBreakFrame && reelsBreakFrame.hidden) startDefaultEmbedMode();
+		        return;
+		      }
+		      clearReelsEmbed();
+		      setReelsBreakHint("");
+		      setReelsBreakStatus("Reels break running in Instagram.");
+		    }
 
-	    reelsBreakUrlInput?.addEventListener("keydown", (event) => {
-	      if (event.key !== "Enter") return;
-	      event.preventDefault();
-	      loadReelsEmbedFromInput();
-	    });
+		    reelsBreakOpenInstagramBtn?.addEventListener("click", handleReelsOpenInstagramClick);
+		    reelsBreakOpenInstagramBtn2?.addEventListener("click", handleReelsOpenInstagramClick);
 
-	    reelsBreakModalBackdrop?.addEventListener("mousedown", (event) => {
-	      if (event.target === reelsBreakModalBackdrop) {
-	        closeReelsBreakModal();
-	      }
-	    });
+		    reelsBreakLoadBtn?.addEventListener("click", () => {
+		      loadReelsEmbedFromInput();
+		    });
 
-	    document.addEventListener("keydown", (event) => {
-	      if (event.key === "Escape" && isReelsBreakOpen()) {
-	        closeReelsBreakModal();
-	      }
-	    });
+		    reelsBreakUrlInput?.addEventListener("keydown", (event) => {
+		      if (event.key !== "Enter") return;
+		      event.preventDefault();
+		      loadReelsEmbedFromInput();
+		    });
+
+		    reelsBreakModalBackdrop?.addEventListener("mousedown", (event) => {
+		      if (event.target === reelsBreakModalBackdrop) {
+		        endReelsBreakNow();
+		      }
+		    });
+
+		    document.addEventListener("keydown", (event) => {
+		      if (event.key === "Escape" && isReelsBreakOpen()) {
+		        endReelsBreakNow();
+		      }
+		    });
+
+		    reelsBreakIframe?.addEventListener("load", () => {
+		      if (!reelsBreakIframe?.src || !reelsBreakIframe.src.includes("instagram.com")) return;
+		      reelsBreakEmbedLoaded = true;
+		      if (reelsBreakEmbedLoadTimer) {
+		        clearTimeout(reelsBreakEmbedLoadTimer);
+		        reelsBreakEmbedLoadTimer = null;
+		      }
+		      reelsBreakFrame?.classList.add("reels-loaded");
+		      if (reelsBreakEmbedError) reelsBreakEmbedError.hidden = true;
+		    });
 
 	    if (tableWrapper) {
 	      const blockDragSelector =
