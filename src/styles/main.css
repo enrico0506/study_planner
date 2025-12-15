@@ -30,6 +30,10 @@ body,
   -ms-overflow-style: none;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 html::-webkit-scrollbar,
 body::-webkit-scrollbar,
 .app::-webkit-scrollbar,
@@ -125,6 +129,9 @@ body::-webkit-scrollbar,
       margin: 0;
       padding: 12px 0 24px;
       background: var(--page-bg);
+      background-attachment: fixed;
+      background-repeat: no-repeat;
+      background-size: cover;
       color: var(--ink);
       overflow: hidden;
       box-sizing: border-box;
