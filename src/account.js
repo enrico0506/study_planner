@@ -315,6 +315,15 @@
       return;
     }
 
+    const verifyParam = new URLSearchParams(window.location.search || "").get("verify");
+    if (verifyParam === "ok") {
+      $("verifyMsg").textContent = "Email verified.";
+      window.history.replaceState(null, "", window.location.pathname);
+    } else if (verifyParam === "error") {
+      $("verifyMsg").textContent = "Verification link invalid or expired. Request a new one.";
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+
     const me = await getMe();
     if (!me) {
       setPill(false, "Signed out");
@@ -370,10 +379,12 @@
           const result = await apiFetch("/api/auth/request-verify", { method: "POST" });
           if (result.alreadyVerified) {
             $("verifyMsg").textContent = "Email already verified.";
+          } else if (result.emailSent) {
+            $("verifyMsg").textContent = "Verification email sent. Check your inbox.";
           } else if (result.token) {
             $("verifyMsg").textContent = `Verification token (dev): ${result.token}`;
           } else {
-            $("verifyMsg").textContent = "Verification requested (email sender not implemented).";
+            $("verifyMsg").textContent = "Verification requested, but email sender is not configured.";
           }
         } catch (err) {
           $("verifyMsg").textContent = String(err?.message || "Request verify failed");

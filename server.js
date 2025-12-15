@@ -9,6 +9,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
+import nodemailer from "nodemailer";
 
 const app = express();
 const port = process.env.PORT || 10000;
@@ -47,6 +48,70 @@ const strictAuthLimiter = rateLimit({
   legacyHeaders: false,
   handler: rateLimitJsonHandler
 });
+
+function getAppBaseUrl(req) {
+  const configured = process.env.APP_BASE_URL;
+  if (configured) return String(configured).replace(/\/+$/, "");
+  const proto = isRequestSecure(req) ? "https" : "http";
+  return `${proto}://${req.get("host")}`;
+}
+
+let mailTransport = null;
+function getMailTransport() {
+  if (mailTransport) return mailTransport;
+
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpPort = process.env.SMTP_PORT;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+
+  if (gmailUser && gmailAppPassword) {
+    mailTransport = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: { user: gmailUser, pass: gmailAppPassword }
+    });
+    return mailTransport;
+  }
+
+  if (smtpHost && smtpUser && smtpPass) {
+    const port = smtpPort ? Number(smtpPort) : 587;
+    mailTransport = nodemailer.createTransport({
+      host: smtpHost,
+      port: Number.isFinite(port) ? port : 587,
+      secure: String(process.env.SMTP_SECURE || "").toLowerCase() === "true" || port === 465,
+      auth: { user: smtpUser, pass: smtpPass }
+    });
+    return mailTransport;
+  }
+
+  return null;
+}
+
+function getFromAddress() {
+  return (
+    process.env.MAIL_FROM ||
+    process.env.GMAIL_USER ||
+    process.env.SMTP_USER ||
+    "no-reply@localhost"
+  );
+}
+
+async function sendEmail({ to, subject, html, text }) {
+  const transport = getMailTransport();
+  if (!transport) return { ok: false, reason: "not_configured" };
+  await transport.sendMail({
+    from: getFromAddress(),
+    to,
+    subject,
+    text,
+    html
+  });
+  return { ok: true };
+}
 
 // Static assets
 app.use(express.static(path.join(__dirname, "public")));
@@ -392,49 +457,89 @@ app.post("/api/auth/request-verify", requireAuth, strictAuthLimiter, async (req,
       [user.id, tokenHash, expiresAt]
     );
 
-    if (shouldRevealTokens()) return res.json({ ok: true, token });
-    res.json({ ok: true });
+    const emailRow = await pool.query("select email from users where id = $1", [user.id]);
+    const email = emailRow.rows[0]?.email;
+    if (!email) return res.json({ ok: true });
+
+    const baseUrl = getAppBaseUrl(req);
+    const verifyLink = `${baseUrl}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
+    const mailResult = await sendEmail({
+      to: email,
+      subject: "Verify your email",
+      text:
+        `Verify your email for Study Planner:\n\n${verifyLink}\n\n` +
+        `This link expires in 1 hour.`,
+      html:
+        `<p>Verify your email for <strong>Study Planner</strong>:</p>` +
+        `<p><a href="${verifyLink}">Verify email</a></p>` +
+        `<p style="color:#6b7280;font-size:12px">This link expires in 1 hour.</p>`
+    }).catch((err) => ({ ok: false, reason: "send_failed", error: err }));
+
+    if (shouldRevealTokens()) {
+      return res.json({ ok: true, token, emailSent: mailResult.ok });
+    }
+    res.json({ ok: true, emailSent: mailResult.ok });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Request verify failed" });
   }
 });
 
-app.post("/api/auth/verify-email", requireAuth, strictAuthLimiter, async (req, res) => {
-  const token = String(req.body?.token || "");
-  if (!token) return res.status(400).json({ error: "Token required" });
+async function verifyEmailToken(token) {
+  const value = String(token || "");
+  if (!value) return { ok: false, error: "Token required" };
 
   try {
     const pool = getPool();
-    const tokenHash = hashToken(token);
+    const tokenHash = hashToken(value);
     const tokenRow = await pool.query(
       `
-        select id
+        select id, user_id
         from auth_tokens
-        where user_id = $1
-          and kind = 'email_verify'
-          and token_hash = $2
+        where kind = 'email_verify'
+          and token_hash = $1
           and used_at is null
           and expires_at > now()
         order by created_at desc
         limit 1
       `,
-      [req.user.id, tokenHash]
+      [tokenHash]
     );
-    if (!tokenRow.rows[0]) return res.status(400).json({ error: "Invalid token" });
+    const row = tokenRow.rows[0];
+    if (!row) return { ok: false, error: "Invalid token" };
 
     await pool.query("begin");
-    await pool.query("update users set email_verified = true where id = $1", [req.user.id]);
-    await pool.query("update auth_tokens set used_at = now() where id = $1", [tokenRow.rows[0].id]);
+    await pool.query("update users set email_verified = true where id = $1", [row.user_id]);
+    await pool.query("update auth_tokens set used_at = now() where id = $1", [row.id]);
     await pool.query("commit");
-    res.json({ ok: true });
+    return { ok: true };
   } catch (err) {
     try {
       await getPool().query("rollback");
     } catch {}
     console.error(err);
-    res.status(500).json({ error: "Verify email failed" });
+    return { ok: false, error: "Verify email failed" };
   }
+}
+
+app.post("/api/auth/verify-email", strictAuthLimiter, async (req, res) => {
+  const token = String(req.body?.token || "");
+  const result = await verifyEmailToken(token);
+  if (!result.ok) {
+    const status = result.error === "Verify email failed" ? 500 : 400;
+    return res.status(status).json({ error: result.error });
+  }
+  res.json({ ok: true });
+});
+
+app.get("/api/auth/verify-email", strictAuthLimiter, async (req, res) => {
+  const token = String(req.query?.token || "");
+  const result = await verifyEmailToken(token);
+  const baseUrl = getAppBaseUrl(req);
+  if (!result.ok) {
+    return res.redirect(`${baseUrl}/account.html?verify=error`);
+  }
+  res.redirect(`${baseUrl}/account.html?verify=ok`);
 });
 
 app.get("/api/state", requireAuth, async (req, res) => {
