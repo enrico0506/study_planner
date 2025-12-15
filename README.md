@@ -23,6 +23,7 @@ It also stores the last 20 synced snapshots as backups and includes an `account.
 1) Set env vars:
 - `DATABASE_URL` (Postgres connection string)
 - `JWT_SECRET` (long random string)
+- Optional: `AUTH_SESSION_DAYS` (how long the login cookie lasts; default `90`)
 
 2) Run the DB migration:
 - `npm run migrate`

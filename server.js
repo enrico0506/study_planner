@@ -21,6 +21,13 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: "2mb" }));
 app.use(cookieParser());
 
+const AUTH_SESSION_DAYS = (() => {
+  const raw = Number(process.env.AUTH_SESSION_DAYS || 90);
+  if (!Number.isFinite(raw) || raw <= 0) return 90;
+  return Math.max(1, Math.min(365, Math.round(raw)));
+})();
+const AUTH_SESSION_MS = AUTH_SESSION_DAYS * 24 * 60 * 60 * 1000;
+
 function rateLimitJsonHandler(_req, res) {
   res.status(429).json({ error: "Too many requests, please try again later." });
 }
@@ -88,21 +95,28 @@ function getJwtSecret() {
   return requireEnv("JWT_SECRET");
 }
 
-function setAuthCookie(res, token) {
+function isRequestSecure(req) {
+  if (req.secure) return true;
+  const forwarded = req.headers["x-forwarded-proto"];
+  if (typeof forwarded === "string") return forwarded.split(",")[0].trim() === "https";
+  return false;
+}
+
+function setAuthCookie(req, res, token) {
   res.cookie("token", token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: isRequestSecure(req),
     path: "/",
-    maxAge: 7 * 24 * 60 * 60 * 1000
+    maxAge: AUTH_SESSION_MS
   });
 }
 
-function clearAuthCookie(res) {
-  res.clearCookie("token", { path: "/" });
+function clearAuthCookie(req, res) {
+  res.clearCookie("token", { path: "/", secure: isRequestSecure(req), sameSite: "lax" });
 }
 
-function authMiddleware(req, _res, next) {
+function authMiddleware(req, res, next) {
   const token = req.cookies?.token;
   if (!token) {
     req.user = null;
@@ -113,6 +127,7 @@ function authMiddleware(req, _res, next) {
     const payload = jwt.verify(token, getJwtSecret());
     req.user = { id: payload.sub, email: payload.email };
   } catch {
+    clearAuthCookie(req, res);
     req.user = null;
   }
 
@@ -159,7 +174,7 @@ app.get("/api/me", async (req, res) => {
     ]);
     const row = found.rows[0];
     if (!row) {
-      clearAuthCookie(res);
+      clearAuthCookie(req, res);
       return res.status(401).json({ error: "Unauthorized" });
     }
     res.json({ email: row.email, emailVerified: row.email_verified });
@@ -203,9 +218,9 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
     );
 
     const token = jwt.sign({ sub: String(user.id), email: user.email }, getJwtSecret(), {
-      expiresIn: "7d"
+      expiresIn: `${AUTH_SESSION_DAYS}d`
     });
-    setAuthCookie(res, token);
+    setAuthCookie(req, res, token);
     res.status(201).json({ email: user.email });
   } catch (err) {
     const message = String(err?.message || "");
@@ -239,9 +254,9 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
     if (!ok) return res.status(401).json({ error: "Invalid credentials" });
 
     const token = jwt.sign({ sub: String(user.id), email: user.email }, getJwtSecret(), {
-      expiresIn: "7d"
+      expiresIn: `${AUTH_SESSION_DAYS}d`
     });
-    setAuthCookie(res, token);
+    setAuthCookie(req, res, token);
     res.json({ email: user.email });
   } catch (err) {
     const message = String(err?.message || "");
@@ -256,7 +271,7 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
 });
 
 app.post("/api/auth/logout", (req, res) => {
-  clearAuthCookie(res);
+  clearAuthCookie(req, res);
   res.json({ ok: true });
 });
 

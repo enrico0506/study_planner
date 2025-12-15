@@ -1058,6 +1058,151 @@ const CVD_SAFE_SUBJECT_COLORS = [
       return Number.isNaN(t) ? null : t;
     }
 
+    // Daily history compaction:
+    // Instead of storing large `{ 'YYYY-MM-DD': value }` objects for every file,
+    // store a packed string to reduce JS heap overhead (no history is deleted).
+    //
+    // Format: "dayId:value,dayId:value" where both numbers are base36.
+    // dayId is UTC day number for the YYYY-MM-DD date string.
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
+    function dateKeyToDayId(key) {
+      const raw = String(key || "");
+      const parts = raw.split("-");
+      if (parts.length !== 3) return null;
+      const year = Number(parts[0]);
+      const month = Number(parts[1]);
+      const day = Number(parts[2]);
+      if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+      if (year < 1970 || month < 1 || month > 12 || day < 1 || day > 31) return null;
+      const ms = Date.UTC(year, month - 1, day);
+      const dayId = Math.floor(ms / DAY_MS);
+      return Number.isFinite(dayId) ? dayId : null;
+    }
+
+    function dayIdToDateKey(dayId) {
+      const ms = Number(dayId) * DAY_MS;
+      if (!Number.isFinite(ms)) return null;
+      const d = new Date(ms);
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const dd = String(d.getUTCDate()).padStart(2, "0");
+      return `${y}-${m}-${dd}`;
+    }
+
+    function getTodayDayId() {
+      return dateKeyToDayId(getTodayKey());
+    }
+
+    function parsePackedPairs(packed) {
+      const out = new Map();
+      const raw = String(packed || "").trim();
+      if (!raw) return out;
+      const parts = raw.split(",");
+      for (const part of parts) {
+        if (!part) continue;
+        const idx = part.indexOf(":");
+        if (idx === -1) continue;
+        const k = part.slice(0, idx);
+        const v = part.slice(idx + 1);
+        const dayId = parseInt(k, 36);
+        const val = parseInt(v, 36);
+        if (!Number.isFinite(dayId) || !Number.isFinite(val)) continue;
+        if (val <= 0) continue;
+        out.set(dayId, val);
+      }
+      return out;
+    }
+
+    function packPairs(map) {
+      if (!(map instanceof Map) || map.size === 0) return "";
+      const entries = [...map.entries()].filter(([, v]) => (Number(v) || 0) > 0);
+      entries.sort((a, b) => a[0] - b[0]);
+      return entries.map(([k, v]) => `${k.toString(36)}:${Math.round(v).toString(36)}`).join(",");
+    }
+
+    function packLegacyDayObject(obj) {
+      if (!obj || typeof obj !== "object") return "";
+      const map = new Map();
+      for (const [key, val] of Object.entries(obj)) {
+        const dayId = dateKeyToDayId(key);
+        if (dayId === null) continue;
+        const num = Math.round(Number(val) || 0);
+        if (num <= 0) continue;
+        map.set(dayId, num);
+      }
+      return packPairs(map);
+    }
+
+    function packedGet(packed, dayId) {
+      if (!packed) return 0;
+      const target = Number(dayId);
+      if (!Number.isFinite(target)) return 0;
+      const raw = String(packed || "").trim();
+      if (!raw) return 0;
+      const parts = raw.split(",");
+      for (const part of parts) {
+        if (!part) continue;
+        const idx = part.indexOf(":");
+        if (idx === -1) continue;
+        const k = part.slice(0, idx);
+        if (parseInt(k, 36) !== target) continue;
+        const v = part.slice(idx + 1);
+        return Math.round(Number.parseInt(v, 36) || 0);
+      }
+      return 0;
+    }
+
+    function packedAdd(packed, dayId, delta) {
+      const d = Math.round(Number(delta) || 0);
+      if (!d) return String(packed || "");
+      const target = Number(dayId);
+      if (!Number.isFinite(target)) return String(packed || "");
+      const map = parsePackedPairs(packed);
+      map.set(target, (map.get(target) || 0) + d);
+      return packPairs(map);
+    }
+
+    function ensureDailyPacked(file) {
+      if (!file || typeof file !== "object") return;
+      if (file.dailyMs && typeof file.dailyMs === "object") {
+        if (!file.dailyMsPacked) file.dailyMsPacked = packLegacyDayObject(file.dailyMs);
+        delete file.dailyMs;
+      }
+      if (file.dailySessions && typeof file.dailySessions === "object") {
+        if (!file.dailySessionsPacked) file.dailySessionsPacked = packLegacyDayObject(file.dailySessions);
+        delete file.dailySessions;
+      }
+    }
+
+    function sumPackedInRange(packed, range) {
+      if (!packed) return 0;
+      if (range === "all") return 0;
+      const todayId = getTodayDayId();
+      if (todayId === null) return 0;
+      let windowDays = 7;
+      if (range === "day") windowDays = 1;
+      else if (range === "month") windowDays = 30;
+      const startId = todayId - (windowDays - 1);
+      const endId = todayId;
+      let sum = 0;
+      const raw = String(packed || "").trim();
+      if (!raw) return 0;
+      const parts = raw.split(",");
+      for (const part of parts) {
+        if (!part) continue;
+        const idx = part.indexOf(":");
+        if (idx === -1) continue;
+        const dayId = parseInt(part.slice(0, idx), 36);
+        if (!Number.isFinite(dayId)) continue;
+        if (dayId < startId || dayId > endId) continue;
+        const val = parseInt(part.slice(idx + 1), 36);
+        if (!Number.isFinite(val)) continue;
+        sum += val;
+      }
+      return sum;
+    }
+
     function msInRange(ms, range) {
       if (range === "all") return true;
       const dayMs = 24 * 60 * 60 * 1000;
@@ -1080,7 +1225,9 @@ const CVD_SAFE_SUBJECT_COLORS = [
         return file.totalMs || 0;
       }
       let sum = 0;
-      if (file.dailyMs && typeof file.dailyMs === "object") {
+      if (file.dailyMsPacked) {
+        sum += sumPackedInRange(file.dailyMsPacked, range);
+      } else if (file.dailyMs && typeof file.dailyMs === "object") {
         for (const [key, val] of Object.entries(file.dailyMs)) {
           const t = dateKeyToMs(key);
           if (t === null) continue;
@@ -1098,7 +1245,9 @@ const CVD_SAFE_SUBJECT_COLORS = [
         return file.sessions || 0;
       }
       let sum = 0;
-      if (file.dailySessions && typeof file.dailySessions === "object") {
+      if (file.dailySessionsPacked) {
+        sum += sumPackedInRange(file.dailySessionsPacked, range);
+      } else if (file.dailySessions && typeof file.dailySessions === "object") {
         for (const [key, val] of Object.entries(file.dailySessions)) {
           const t = dateKeyToMs(key);
           if (t === null) continue;
@@ -1228,12 +1377,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
           subj.manualOrder = subj.files.map((f) => f.id);
         }
         subj.files.forEach((file) => {
-          if (!file.dailyMs || typeof file.dailyMs !== "object") {
-            file.dailyMs = {};
-          }
-          if (!file.dailySessions || typeof file.dailySessions !== "object") {
-            file.dailySessions = {};
-          }
+          ensureDailyPacked(file);
           if (typeof file.totalMs !== "number") file.totalMs = 0;
           if (typeof file.sessions !== "number") file.sessions = 0;
           if (typeof file.lastSessionMs !== "number") file.lastSessionMs = 0;
@@ -1733,20 +1877,33 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
     function addDailyStudyForFile(file, ms) {
       if (!ms || ms <= 0) return;
-      if (!file.dailyMs || typeof file.dailyMs !== "object") {
-        file.dailyMs = {};
+      ensureDailyPacked(file);
+      const dayId = getTodayDayId();
+      if (dayId === null) return;
+      if (file.dailyMsPacked) {
+        file.dailyMsPacked = packedAdd(file.dailyMsPacked, dayId, ms);
+      } else if (file.dailyMs && typeof file.dailyMs === "object") {
+        const key = getTodayKey();
+        file.dailyMs[key] = (file.dailyMs[key] || 0) + ms;
+      } else {
+        // In case history was never initialized and we don't want an object.
+        file.dailyMsPacked = packedAdd("", dayId, ms);
       }
-      const key = getTodayKey();
-      file.dailyMs[key] = (file.dailyMs[key] || 0) + ms;
     }
 
     function addDailySessionForFile(file) {
       if (!file) return;
-      if (!file.dailySessions || typeof file.dailySessions !== "object") {
-        file.dailySessions = {};
+      ensureDailyPacked(file);
+      const dayId = getTodayDayId();
+      if (dayId === null) return;
+      if (file.dailySessionsPacked) {
+        file.dailySessionsPacked = packedAdd(file.dailySessionsPacked, dayId, 1);
+      } else if (file.dailySessions && typeof file.dailySessions === "object") {
+        const key = getTodayKey();
+        file.dailySessions[key] = (file.dailySessions[key] || 0) + 1;
+      } else {
+        file.dailySessionsPacked = packedAdd("", dayId, 1);
       }
-      const key = getTodayKey();
-      file.dailySessions[key] = (file.dailySessions[key] || 0) + 1;
     }
 
     function formatTimeAgo(isoString) {
@@ -1825,13 +1982,20 @@ const CVD_SAFE_SUBJECT_COLORS = [
       const totals = {};
       subjects.forEach((subj) => {
         (subj.files || []).forEach((file) => {
-          if (file.dailyMs && typeof file.dailyMs === "object") {
+          if (file.dailyMsPacked) {
+            const map = parsePackedPairs(file.dailyMsPacked);
+            map.forEach((val, dayId) => {
+              const key = dayIdToDateKey(dayId);
+              if (!key) return;
+              totals[key] = (totals[key] || 0) + (Number(val) || 0);
+            });
+          } else if (file.dailyMs && typeof file.dailyMs === "object") {
             for (const [key, val] of Object.entries(file.dailyMs)) {
               const v = Number(val) || 0;
               if (v <= 0) continue;
               totals[key] = (totals[key] || 0) + v;
             }
-          }
+          } 
         });
       });
 
@@ -1965,14 +2129,17 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
     function computeTodayStudyBySubject() {
       const key = getTodayKey();
+      const dayId = dateKeyToDayId(key);
       const results = [];
 
       subjects.forEach((subj, subjIndex) => {
         let ms = 0;
         (subj.files || []).forEach((file) => {
-          if (file.dailyMs && file.dailyMs[key]) {
+          if (dayId !== null && file.dailyMsPacked) {
+            ms += packedGet(file.dailyMsPacked, dayId);
+          } else if (file.dailyMs && file.dailyMs[key]) {
             ms += file.dailyMs[key];
-          }
+          } 
         });
         results.push({ subj, subjIndex, ms });
       });
@@ -5531,9 +5698,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
           lastReviewed: null,
           totalMs: 0,
           sessions: 0,
-          lastSessionMs: 0,
-          dailyMs: {},
-          dailySessions: {}
+          lastSessionMs: 0
         };
         targetSubject.files.push(newFile);
         updateManualOrder(targetSubject);
@@ -5581,8 +5746,8 @@ const CVD_SAFE_SUBJECT_COLORS = [
               totalMs: file.totalMs || 0,
               sessions: file.sessions || 0,
               lastSessionMs: file.lastSessionMs || 0,
-              dailyMs: file.dailyMs || {},
-              dailySessions: file.dailySessions || {}
+              dailyMsPacked: file.dailyMsPacked || packLegacyDayObject(file.dailyMs),
+              dailySessionsPacked: file.dailySessionsPacked || packLegacyDayObject(file.dailySessions)
             };
             targetSubject.files.push(movedFile);
             updateManualOrder(targetSubject);
