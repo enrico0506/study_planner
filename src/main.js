@@ -2,6 +2,7 @@ const STORAGE_KEY = "studySubjects_v1";
     const CONFIG_KEY = "studyFocusConfig_v1";
     const TODO_KEY = "studyTodayTodos_v1";
     const DAILY_FOCUS_KEY = "studyDailyFocus_v1";
+    const ACTIVE_SESSION_KEY = "studyActiveSession_v1";
     const THEME_KEY = "studyTheme_v1";
     const COLOR_PALETTE_KEY = "studyColorPalette_v1";
     const LANGUAGE_KEY = "studyLanguage_v1";
@@ -987,6 +988,92 @@ const CVD_SAFE_SUBJECT_COLORS = [
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(subjects));
       } catch (e) {}
+    }
+
+    function saveActiveSession() {
+      try {
+        if (!activeStudy) {
+          localStorage.removeItem(ACTIVE_SESSION_KEY);
+          return;
+        }
+        localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(activeStudy));
+      } catch (e) {}
+    }
+
+    function clearActiveSession() {
+      try {
+        localStorage.removeItem(ACTIVE_SESSION_KEY);
+      } catch (e) {}
+    }
+
+    function loadActiveSession() {
+      try {
+        const raw = localStorage.getItem(ACTIVE_SESSION_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return null;
+        if (parsed.kind !== "study" && parsed.kind !== "break") return null;
+        if (typeof parsed.baseMs !== "number" || typeof parsed.paused !== "boolean") return null;
+        if (typeof parsed.targetMs !== "number") return null;
+
+        // Validate study references.
+        if (parsed.kind === "study") {
+          if (!parsed.subjectId || !parsed.fileId) return null;
+          const { subj, file } = resolveFileRef(parsed.subjectId, parsed.fileId);
+          if (!subj || !file) return null;
+          if (!parsed.timerMode) parsed.timerMode = timerModePref || "countdown";
+        }
+
+        // Never trust a persisted running timer from another page/session.
+        // If startTimeMs exists, convert it to paused by adding elapsed to baseMs and clearing startTimeMs.
+        if (!parsed.paused && parsed.startTimeMs) {
+          const now = Date.now();
+          const delta = now - Number(parsed.startTimeMs || 0);
+          if (Number.isFinite(delta) && delta > 0) {
+            parsed.baseMs = (Number(parsed.baseMs) || 0) + delta;
+          }
+          parsed.startTimeMs = null;
+          parsed.paused = true;
+          parsed.pausedReason = parsed.pausedReason || "nav";
+        }
+
+        if (parsed.pausedReason === "nav" && typeof parsed.autoResume !== "boolean") {
+          parsed.autoResume = true;
+        }
+
+        return parsed;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function pauseActiveSession(reason = "manual", { autoResume = false } = {}) {
+      if (!activeStudy || activeStudy.paused) return false;
+      const now = Date.now();
+      const delta = now - Number(activeStudy.startTimeMs || 0);
+      if (Number.isFinite(delta) && delta > 0) {
+        activeStudy.baseMs = (Number(activeStudy.baseMs) || 0) + delta;
+      }
+      activeStudy.startTimeMs = null;
+      activeStudy.paused = true;
+      activeStudy.pausedReason = reason;
+      activeStudy.autoResume = !!autoResume;
+      activeStudy.pausedAtMs = now;
+      saveActiveSession();
+      return true;
+    }
+
+    function resumeActiveSession({ clearNavFlags = true } = {}) {
+      if (!activeStudy || !activeStudy.paused) return false;
+      activeStudy.startTimeMs = Date.now();
+      activeStudy.paused = false;
+      if (clearNavFlags) {
+        activeStudy.pausedReason = null;
+        activeStudy.autoResume = false;
+        activeStudy.pausedAtMs = null;
+      }
+      saveActiveSession();
+      return true;
     }
 
     function saveDailyFocusMap() {
@@ -3111,6 +3198,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
         const minMs = 3 * 60 * 1000;
         if (elapsed < minMs) {
           activeStudy = null;
+          clearActiveSession();
           renderFocusState();
           renderTable();
           renderTodayTodos();
@@ -3137,6 +3225,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
       }
 
       activeStudy = null;
+      clearActiveSession();
       saveToStorage();
       renderFocusState();
       renderTable();
@@ -3157,8 +3246,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
         activeStudy.fileId === file.id
       ) {
         if (activeStudy.paused) {
-          activeStudy.startTimeMs = Date.now();
-          activeStudy.paused = false;
+          resumeActiveSession({ clearNavFlags: true });
           renderFocusState();
           updateStudyTimerDisplay();
         }
@@ -3181,8 +3269,12 @@ const CVD_SAFE_SUBJECT_COLORS = [
         baseMs: 0,
         targetMs,
         paused: false,
-        timerMode: timerModePref || "countdown"
+        timerMode: timerModePref || "countdown",
+        pausedReason: null,
+        autoResume: false,
+        pausedAtMs: null
       };
+      saveActiveSession();
 
       renderFocusState();
       renderTable();
@@ -3201,10 +3293,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
       ) {
         return;
       }
-      const now = Date.now();
-      activeStudy.baseMs += now - activeStudy.startTimeMs;
-      activeStudy.startTimeMs = null;
-      activeStudy.paused = true;
+      pauseActiveSession("manual", { autoResume: false });
       renderFocusState();
       renderTable();
       renderTodayTodos();
@@ -3241,8 +3330,12 @@ const CVD_SAFE_SUBJECT_COLORS = [
         startTimeMs: Date.now(),
         baseMs: 0,
         targetMs,
-        paused: false
+        paused: false,
+        pausedReason: null,
+        autoResume: false,
+        pausedAtMs: null
       };
+      saveActiveSession();
 
       renderFocusState();
       renderTable();
@@ -3371,15 +3464,11 @@ const CVD_SAFE_SUBJECT_COLORS = [
       pauseBtn.addEventListener("click", () => {
         if (!activeStudy) return;
         if (activeStudy.paused) {
-          activeStudy.startTimeMs = Date.now();
-          activeStudy.paused = false;
+          resumeActiveSession({ clearNavFlags: true });
           renderFocusState();
           updateStudyTimerDisplay();
         } else {
-          const now = Date.now();
-          activeStudy.baseMs += now - activeStudy.startTimeMs;
-          activeStudy.startTimeMs = null;
-          activeStudy.paused = true;
+          pauseActiveSession("manual", { autoResume: false });
           renderFocusState();
           renderTable();
           updateStudyTimerDisplay();
@@ -3595,6 +3684,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
             activeStudy.subjectId === subj.id
           ) {
             activeStudy = null;
+            clearActiveSession();
           }
           subjects = subjects.filter((s) => s.id !== subj.id);
           cleanupTodosForSubject(subj.id);
@@ -4813,12 +4903,14 @@ const CVD_SAFE_SUBJECT_COLORS = [
     timerModeCountdownBtn?.addEventListener("click", () => {
       if (!activeStudy) return;
       activeStudy.timerMode = "countdown";
+      saveActiveSession();
       timerModeCountdownBtn.classList.add("focus-timer-active");
       timerModeStopwatchBtn?.classList.remove("focus-timer-active");
     });
     timerModeStopwatchBtn?.addEventListener("click", () => {
       if (!activeStudy) return;
       activeStudy.timerMode = "stopwatch";
+      saveActiveSession();
       timerModeStopwatchBtn.classList.add("focus-timer-active");
       timerModeCountdownBtn?.classList.remove("focus-timer-active");
     });
@@ -4860,6 +4952,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
         return;
       }
       activeStudy.timerMode = "countdown";
+      saveActiveSession();
       updateTimerModeButtons("countdown");
     });
     timerModeStopwatchBtn?.addEventListener("click", () => {
@@ -4869,6 +4962,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
         return;
       }
       activeStudy.timerMode = "stopwatch";
+      saveActiveSession();
       updateTimerModeButtons("stopwatch");
     });
     const maximizeSubjectsBtn = document.getElementById("maximizeSubjectsBtn");
@@ -5235,6 +5329,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
         activeStudy.fileId === file.id
       ) {
         activeStudy = null;
+        clearActiveSession();
       }
 
       subj.files = subj.files.filter((f) => f.id !== fileModalState.fileId);
@@ -5348,6 +5443,17 @@ const CVD_SAFE_SUBJECT_COLORS = [
       applySubjectPaging();
     }
 
+    function maybeAutoResumeNavPausedSession() {
+      if (
+        activeStudy &&
+        activeStudy.paused &&
+        activeStudy.pausedReason === "nav" &&
+        activeStudy.autoResume === true
+      ) {
+        resumeActiveSession({ clearNavFlags: true });
+      }
+    }
+
     // Initial load
     loadThemePreference();
     loadColorPalette();
@@ -5361,6 +5467,8 @@ const CVD_SAFE_SUBJECT_COLORS = [
     }
     saveLanguagePreference(loadLanguagePreference());
     loadFromStorage();
+    activeStudy = loadActiveSession();
+    maybeAutoResumeNavPausedSession();
     loadDailyFocusMap();
     loadTodayTodos();
     loadFocusConfig();
@@ -5374,3 +5482,17 @@ const CVD_SAFE_SUBJECT_COLORS = [
     applyPageMode();
     setActiveView(getPageMode() === "schedule" ? "schedule" : "board");
     updateHeaderProfileLabel();
+
+    // If the user navigates away (calendar, schedule, etc.), pause the timer and
+    // auto-resume when coming back to the main page.
+    window.addEventListener("pagehide", () => {
+      pauseActiveSession("nav", { autoResume: true });
+    });
+
+    // BFCache restore: auto-resume again when returning to this page.
+    window.addEventListener("pageshow", (event) => {
+      if (!event.persisted) return;
+      maybeAutoResumeNavPausedSession();
+      renderFocusState();
+      updateStudyTimerDisplay();
+    });
