@@ -3,7 +3,6 @@
   const TIMETABLE_KEY = "studyTimetable_v1";
   const TIMETABLE_WEEKEND_KEY = "studyTimetableIncludeWeekend_v1";
   const COLOR_PALETTE_KEY = "studyColorPalette_v1";
-  const Storage = window.StudyPlanner && window.StudyPlanner.Storage ? window.StudyPlanner.Storage : null;
   const DEFAULT_SUBJECT_COLORS = [
     "#4f8bff",
     "#4ec58a",
@@ -68,7 +67,7 @@
 
   function loadIncludeWeekend() {
     try {
-      const raw = Storage ? Storage.getRaw(TIMETABLE_WEEKEND_KEY, null) : localStorage.getItem(TIMETABLE_WEEKEND_KEY);
+      const raw = localStorage.getItem(TIMETABLE_WEEKEND_KEY);
       if (raw === null || raw === undefined || raw === "") return true;
       return raw === "1" || raw === "true";
     } catch {
@@ -78,8 +77,7 @@
 
   function saveIncludeWeekend() {
     try {
-      if (Storage) Storage.setRaw(TIMETABLE_WEEKEND_KEY, includeWeekend ? "1" : "0", { debounceMs: 0 });
-      else localStorage.setItem(TIMETABLE_WEEKEND_KEY, includeWeekend ? "1" : "0");
+      localStorage.setItem(TIMETABLE_WEEKEND_KEY, includeWeekend ? "1" : "0");
     } catch {}
   }
 
@@ -135,7 +133,7 @@
 
   function loadColorPalette() {
     try {
-      const raw = Storage ? Storage.getRaw(COLOR_PALETTE_KEY, null) : localStorage.getItem(COLOR_PALETTE_KEY);
+      const raw = localStorage.getItem(COLOR_PALETTE_KEY);
       if (!raw) {
         subjectColors = [...DEFAULT_SUBJECT_COLORS];
         return;
@@ -155,7 +153,7 @@
 
   function loadSubjects() {
     try {
-      const raw = Storage ? Storage.getRaw(SUBJECT_STORAGE_KEY, null) : localStorage.getItem(SUBJECT_STORAGE_KEY);
+      const raw = localStorage.getItem(SUBJECT_STORAGE_KEY);
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       return Array.isArray(parsed) ? parsed : [];
@@ -176,7 +174,7 @@
       activeTableId: ""
     };
     try {
-      const raw = Storage ? Storage.getRaw(TIMETABLE_KEY, null) : localStorage.getItem(TIMETABLE_KEY);
+      const raw = localStorage.getItem(TIMETABLE_KEY);
       if (!raw) return fallback;
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
@@ -216,8 +214,7 @@
 
   function saveTimetableState() {
     try {
-      if (Storage) Storage.setJSON(TIMETABLE_KEY, { tables, activeTableId }, { debounceMs: 0 });
-      else localStorage.setItem(TIMETABLE_KEY, JSON.stringify({ tables, activeTableId }));
+      localStorage.setItem(TIMETABLE_KEY, JSON.stringify({ tables, activeTableId }));
     } catch (e) {}
   }
 
@@ -582,10 +579,7 @@
       const chip = document.createElement("div");
       chip.className = "timetable-subject-chip";
       chip.style.setProperty("--chip-color", getSubjectColorById(subj.id) || "#4f46e5");
-      const dot = document.createElement("span");
-      dot.className = "timetable-chip-dot";
-      chip.appendChild(dot);
-      chip.appendChild(document.createTextNode(subj.name || "Subject"));
+      chip.innerHTML = `<span class="timetable-chip-dot"></span>${subj.name || "Subject"}`;
       subjectListEl.appendChild(chip);
     });
   }

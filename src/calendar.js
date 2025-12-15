@@ -1,6 +1,5 @@
 (() => {
   const STORAGE_KEY = "studyCalendarEvents_v1";
-  const Storage = window.StudyPlanner && window.StudyPlanner.Storage ? window.StudyPlanner.Storage : null;
 
   const monthLabel = document.getElementById("monthLabel");
   const calendarGrid = document.getElementById("calendarGrid");
@@ -70,7 +69,7 @@
 
   function loadEvents() {
     try {
-      const raw = Storage ? Storage.getRaw(STORAGE_KEY, null) : localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       return Array.isArray(parsed) ? parsed : [];
@@ -82,8 +81,7 @@
 
   function saveEvents() {
     try {
-      if (Storage) Storage.setJSON(STORAGE_KEY, events, { debounceMs: 0 });
-      else localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
     } catch (err) {
       console.warn("Could not save calendar events", err);
     }

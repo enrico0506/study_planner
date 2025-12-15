@@ -1,6 +1,5 @@
 (() => {
   const storageKey = "studyFlashcards_v1";
-  const Storage = window.StudyPlanner && window.StudyPlanner.Storage ? window.StudyPlanner.Storage : null;
 
   const elements = {
     deckList: document.getElementById("deckList"),
@@ -71,7 +70,7 @@
 
   function loadState() {
     try {
-      const saved = Storage ? Storage.getRaw(storageKey, null) : localStorage.getItem(storageKey);
+      const saved = localStorage.getItem(storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
         state.decks = parsed.decks || [];
@@ -95,8 +94,7 @@
       activeDeckId: state.activeDeckId,
       mode: state.mode,
     };
-    if (Storage) Storage.setJSON(storageKey, payload, { debounceMs: 150 });
-    else localStorage.setItem(storageKey, JSON.stringify(payload));
+    localStorage.setItem(storageKey, JSON.stringify(payload));
   }
 
   function getActiveDeck() {
@@ -131,21 +129,11 @@
       const btn = document.createElement("button");
       btn.className = `deck-list-item ${deck && deck.id === d.id ? "deck-list-item-active" : ""}`;
       btn.type = "button";
-      const title = document.createElement("div");
-      title.className = "deck-list-title";
-      title.textContent = d.name || "Deck";
-
-      const subtitle = document.createElement("div");
-      subtitle.className = "deck-list-subtitle";
-      subtitle.textContent = d.description || "Ohne Notiz";
-
-      const meta = document.createElement("div");
-      meta.className = "deck-list-meta";
-      meta.textContent = `${stats.total} Karten • ${stats.due} fällig • ${stats.newCards} neu`;
-
-      btn.appendChild(title);
-      btn.appendChild(subtitle);
-      btn.appendChild(meta);
+      btn.innerHTML = `
+        <div class="deck-list-title">${d.name}</div>
+        <div class="deck-list-subtitle">${d.description || "Ohne Notiz"}</div>
+        <div class="deck-list-meta">${stats.total} Karten • ${stats.due} fällig • ${stats.newCards} neu</div>
+      `;
       btn.addEventListener("click", () => setActiveDeck(d.id));
       elements.deckList.appendChild(btn);
     });
@@ -199,30 +187,13 @@
         const item = document.createElement("div");
         item.className = "card-list-item";
         const nextReview = card.due ? `Fällig: ${formatDateTime(card.due)}` : "Noch kein Intervall";
-        const front = document.createElement("div");
-        front.className = "card-list-front";
-        front.textContent = card.front || "";
-
-        const back = document.createElement("div");
-        back.className = "card-list-back";
-        back.textContent = card.back || "";
-
-        const meta = document.createElement("div");
-        meta.className = "card-list-meta";
-        meta.textContent = nextReview;
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.className = "icon-btn icon-btn-ghost card-delete-btn";
-        deleteBtn.type = "button";
-        deleteBtn.title = "Karte löschen";
-        deleteBtn.setAttribute("aria-label", "Karte löschen");
-        deleteBtn.textContent = "✕";
-
-        item.appendChild(front);
-        item.appendChild(back);
-        item.appendChild(meta);
-        item.appendChild(deleteBtn);
-
+        item.innerHTML = `
+          <div class="card-list-front">${card.front}</div>
+          <div class="card-list-back">${card.back}</div>
+          <div class="card-list-meta">${nextReview}</div>
+          <button class="icon-btn icon-btn-ghost card-delete-btn" title="Karte löschen">✕</button>
+        `;
+        const deleteBtn = item.querySelector(".card-delete-btn");
         deleteBtn.addEventListener("click", () => {
           deck.cards = deck.cards.filter((c) => c.id !== card.id);
           buildQueue();
