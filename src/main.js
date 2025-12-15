@@ -3337,38 +3337,21 @@ const DEFAULT_SUBJECT_COLORS = [
         colorDot.className = "subject-color-dot";
         colorDot.style.backgroundColor = subjColor;
         colorDot.title = "Change subject color";
-        colorDot.setAttribute("role", "button");
-        colorDot.setAttribute("tabindex", "0");
-        const openColorPicker = (event) => {
-          event?.stopPropagation?.();
-          const input = document.createElement("input");
-          input.type = "color";
-          input.value = isHexColor(subj.color) ? subj.color : subjColor;
-          input.style.position = "fixed";
-          input.style.left = "-1000px";
-          input.style.top = "-1000px";
-          input.addEventListener(
-            "change",
-            () => {
-              subj.color = input.value;
-              saveToStorage();
-              renderTable();
-              renderTodayTodos();
-              renderScheduleView();
-              renderFocusState();
-            },
-            { once: true }
-          );
-          document.body.appendChild(input);
-          input.click();
-          setTimeout(() => input.remove(), 0);
-        };
-        colorDot.addEventListener("click", openColorPicker);
-        colorDot.addEventListener("keydown", (event) => {
-          if (event.key !== "Enter" && event.key !== " ") return;
-          event.preventDefault();
-          openColorPicker(event);
+
+        const colorInput = document.createElement("input");
+        colorInput.type = "color";
+        colorInput.className = "subject-color-input";
+        colorInput.value = isHexColor(subj.color) ? subj.color : subjColor;
+        colorInput.addEventListener("change", () => {
+          subj.color = colorInput.value;
+          saveToStorage();
+          renderTable();
+          renderTodayTodos();
+          renderScheduleView();
+          renderFocusState();
         });
+        colorInput.addEventListener("click", (event) => event.stopPropagation());
+        colorDot.appendChild(colorInput);
 
         const titleSpan = document.createElement("span");
         titleSpan.textContent = subj.name;
