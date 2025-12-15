@@ -4574,6 +4574,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
         maxSubjectBtn.textContent = subjectsMaximized ? "⤡" : "⤢";
       }
       renderTodayTodos();
+      requestAnimationFrame(() => enforceTodayHeight());
     }
 
     function setActiveView(view) {
