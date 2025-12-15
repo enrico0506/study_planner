@@ -2248,7 +2248,7 @@ body::-webkit-scrollbar,
 .today-list.today-list-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      grid-auto-rows: clamp(220px, 30vh, 300px);
+      grid-auto-rows: clamp(190px, 26vh, 260px);
       gap: 12px;
       align-items: stretch;
     }
@@ -2275,7 +2275,7 @@ body::-webkit-scrollbar,
 .today-list.today-list-grid .today-item {
       display: flex;
       flex-direction: column;
-      min-height: 220px;
+      min-height: 190px;
       height: 100%;
       max-height: none;
       overflow: hidden;
@@ -2316,7 +2316,11 @@ body::-webkit-scrollbar,
       flex: 1;
       min-height: 0;
       overflow: auto;
-      scrollbar-gutter: stable;
+    }
+
+    /* Maximized Today view should not force a visible scrollbar if content fits. */
+    .layout-row.today-full .today-list {
+      overflow: visible;
     }
 
     .today-done-section {

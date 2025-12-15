@@ -4551,10 +4551,8 @@ const CVD_SAFE_SUBJECT_COLORS = [
       layoutRow.classList.toggle("today-full", todayExpanded || subjectsMaximized);
       if (todayList) {
         todayList.classList.toggle("today-list-grid", todayExpanded && !subjectsMaximized);
-        todayList.classList.toggle(
-          "today-scroll-visible",
-          todayExpanded && !subjectsMaximized
-        );
+        // Only show a visible scrollbar in the compact (non-maximized) sidebar layout.
+        todayList.classList.toggle("today-scroll-visible", !todayExpanded && !subjectsMaximized);
       }
       if (todaySidebar) {
         todaySidebar.classList.toggle("today-sidebar-full", todayExpanded && !subjectsMaximized);
