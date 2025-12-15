@@ -152,8 +152,6 @@
       "accountSyncNowBtn",
       "accountLogoutBtn",
       "changePasswordBtn",
-      "requestVerifyBtn",
-      "verifyEmailBtn",
       "refreshVersionsBtn"
     ];
     for (const id of ids) {
@@ -373,39 +371,68 @@
           $("changePasswordMsg").textContent = String(err?.message || "Change password failed");
         }
       });
-      $("requestVerifyBtn").addEventListener("click", async () => {
-        $("verifyMsg").textContent = "";
-        try {
-          const result = await apiFetch("/api/auth/request-verify", { method: "POST" });
-          if (result.alreadyVerified) {
-            $("verifyMsg").textContent = "Email already verified.";
-          } else if (result.emailSent) {
-            $("verifyMsg").textContent = "Verification email sent. Check your inbox.";
-          } else if (result.token) {
-            $("verifyMsg").textContent = `Verification token (dev): ${result.token}`;
-          } else {
-            $("verifyMsg").textContent = "Verification requested, but email sender is not configured.";
-          }
-        } catch (err) {
-          $("verifyMsg").textContent = String(err?.message || "Request verify failed");
-        }
-      });
-      $("verifyEmailBtn").addEventListener("click", async () => {
-        $("verifyMsg").textContent = "";
-        try {
-          await apiFetch("/api/auth/verify-email", {
-            method: "POST",
-            body: JSON.stringify({ token: $("verifyToken").value })
-          });
-          $("verifyToken").value = "";
-          $("verifyMsg").textContent = "Email verified.";
-        } catch (err) {
-          $("verifyMsg").textContent = String(err?.message || "Verify failed");
-        }
-      });
       $("refreshVersionsBtn").addEventListener("click", refreshVersions);
       await refreshVersions();
     }
+
+    // Email verification handlers (attach regardless of auth state so the UI gives feedback).
+    // NOTE: Requesting a verification email requires login; verifying a token does not.
+    $("requestVerifyBtn").addEventListener("click", async () => {
+      const btn = $("requestVerifyBtn");
+      const prevLabel = btn?.textContent || "Send verification email";
+      $("verifyMsg").textContent = "";
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Sending…";
+      }
+      try {
+        const result = await apiFetch("/api/auth/request-verify", { method: "POST" });
+        if (result.alreadyVerified) {
+          $("verifyMsg").textContent = "Email already verified.";
+        } else if (result.emailSent) {
+          $("verifyMsg").textContent = "Verification email sent. Check your inbox (and spam).";
+        } else if (result.token) {
+          $("verifyMsg").textContent = `Verification token (dev): ${result.token}`;
+        } else {
+          $("verifyMsg").textContent =
+            "Verification requested, but email sender is not configured (or sending failed).";
+        }
+      } catch (err) {
+        const msg = String(err?.message || "Request verify failed");
+        $("verifyMsg").textContent = msg === "Unauthorized" ? "Please login first to send a verification email." : msg;
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = prevLabel;
+        }
+      }
+    });
+
+    $("verifyEmailBtn").addEventListener("click", async () => {
+      const btn = $("verifyEmailBtn");
+      const prevLabel = btn?.textContent || "Verify";
+      $("verifyMsg").textContent = "";
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Verifying…";
+      }
+      try {
+        await apiFetch("/api/auth/verify-email", {
+          method: "POST",
+          body: JSON.stringify({ token: $("verifyToken").value })
+        });
+        $("verifyToken").value = "";
+        $("verifyMsg").textContent = "Email verified.";
+        setTimeout(() => window.location.reload(), 350);
+      } catch (err) {
+        $("verifyMsg").textContent = String(err?.message || "Verify failed");
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = prevLabel;
+        }
+      }
+    });
 
     $("loginBtn").addEventListener("click", async () => {
       $("authMsg").textContent = "";
