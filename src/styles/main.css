@@ -2421,7 +2421,7 @@ body::-webkit-scrollbar,
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(110px, 160px);
       gap: 10px;
-      align-items: flex-start;
+      align-items: center;
     }
 
     .layout-row:not(.today-wide) .today-item-top {
@@ -2464,11 +2464,14 @@ body::-webkit-scrollbar,
 
 .today-title {
       font-size: 0.92rem;
-      font-weight: 600;
+      font-weight: 750;
       color: var(--accent-ink);
+      line-height: 1.25;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      display: block;
+      max-width: 100%;
     }
 
     .layout-row:not(.today-wide) .today-title {
@@ -2490,6 +2493,10 @@ body::-webkit-scrollbar,
       width: auto;
       min-width: 110px;
       max-width: 160px;
+    }
+
+    .today-actions .today-timer {
+      text-align: right;
     }
 
     .layout-row:not(.today-wide) .today-actions {

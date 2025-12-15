@@ -3004,8 +3004,12 @@ const CVD_SAFE_SUBJECT_COLORS = [
         function updateToggleLabel() {
           const isCollapsed = subtasksWrap.classList.contains("collapsed");
           const count = subs.length;
-          const base = count ? "Subtasks (" + count + ")" : "Subtasks";
-          toggleSubsBtn.textContent = (isCollapsed ? "Show " : "Hide ") + base;
+          if (isCollapsed) {
+            if (!count) toggleSubsBtn.textContent = "0 subtasks";
+            else toggleSubsBtn.textContent = count === 1 ? "1 subtask" : `${count} subtasks`;
+          } else {
+            toggleSubsBtn.textContent = "Hide";
+          }
           toggleSubsBtn.setAttribute("aria-expanded", String(!isCollapsed));
         }
 
