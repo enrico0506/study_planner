@@ -1874,9 +1874,10 @@ const CVD_SAFE_SUBJECT_COLORS = [
     }
 
     function enforceTodayHeight() {
-      if (!tableWrapper || !todaySidebar) return;
+      if (!todaySidebar) return;
       if (layoutRow && layoutRow.classList.contains("today-full")) {
         todaySidebar.style.maxHeight = "";
+        todaySidebar.style.height = "";
         const list = document.getElementById("todayList");
         if (list) {
           list.style.maxHeight = "";
@@ -1884,9 +1885,13 @@ const CVD_SAFE_SUBJECT_COLORS = [
         }
         return;
       }
-      const available = tableWrapper.offsetHeight || 0;
+      const available =
+        (layoutRow && (layoutRow.clientHeight || layoutRow.offsetHeight)) ||
+        (tableWrapper && (tableWrapper.clientHeight || tableWrapper.offsetHeight)) ||
+        0;
       if (!available) return;
       todaySidebar.style.maxHeight = available + "px";
+      todaySidebar.style.height = available + "px";
       const list = document.getElementById("todayList");
       const header = todaySidebar.querySelector(".today-header");
       const drop = document.getElementById("todayDropZone");
