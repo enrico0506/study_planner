@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Study Planner – Confidence Table</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#2f62f4" />
   <script>
     (function() {
       try {
@@ -14,6 +15,8 @@
       } catch (e) {}
     })();
   </script>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./public/icons/app-icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="./src/styles/main.css" />
   <link rel="stylesheet" href="./src/styles/mobile.css" />
   <link rel="stylesheet" href="./src/styles/phone.css" />
@@ -58,7 +61,7 @@
           </button>
         </div>
         <div class="header-menu" id="headerMenu" aria-label="Menu">
-          <button class="header-menu-toggle" id="headerMenuToggle" type="button" aria-haspopup="true" aria-expanded="false">
+          <button class="header-menu-toggle" id="headerMenuToggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Open menu">
             ...
           </button>
           <div class="header-menu-panel" id="headerMenuPanel">
@@ -350,6 +353,7 @@
     <div class="controls"></div>
 
     <div class="layout-row" id="layoutRow">
+      <a id="spMain" tabindex="-1"></a>
       <div class="main-area">
         <!-- Table -->
         <div class="table-wrapper">
@@ -648,7 +652,18 @@
     </div>
 	  </div>
 	  <button class="expand-btn" id="expandPageBtn" type="button" aria-label="Toggle expand">⤢</button>
-	  <script src="./src/sync.js"></script>
-	  <script src="./src/main.js"></script>
+	  <script src="./src/sp/namespace.js" defer></script>
+	  <script src="./src/sp/dom.js" defer></script>
+	  <script src="./src/sp/a11y.js" defer></script>
+	  <script src="./src/sp/storage.js" defer></script>
+	  <script src="./src/sp/modals.js" defer></script>
+	  <script src="./src/sp/topbar.js" defer></script>
+	  <script src="./src/sp/pwa.js" defer></script>
+	  <script src="./src/sp/init.js" defer></script>
+	  <script src="./src/sync.js" defer></script>
+	  <script src="./src/index/index.part1.js" defer></script>
+	  <script src="./src/index/index.part2.js" defer></script>
+	  <script src="./src/index/index.part3.js" defer></script>
+	  <script src="./src/index/index.part4.js" defer></script>
 	</body>
 </html>

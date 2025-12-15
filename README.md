@@ -33,6 +33,7 @@ It also stores the last 20 synced snapshots as backups and includes an `account.
 
 ## Structure
 - `index.html` – app shell and modals.
-- `src/main.js` – logic (state, timers, CRUD, schedule, today list).
+- `src/index/index.part*.js` – dashboard logic split into smaller files (state, timers, CRUD, schedule, today list).
+- `src/sp/*` – shared UI modules (topbar, search, import/export, storage).
 - `src/styles/main.css` – layout/theme.
 - `study-confidence-table.html` – legacy reference snapshot.
