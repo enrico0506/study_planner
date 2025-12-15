@@ -72,7 +72,10 @@ function getMailTransport() {
       host: "smtp.gmail.com",
       port: 465,
       secure: true,
-      auth: { user: gmailUser, pass: gmailAppPassword }
+      auth: { user: gmailUser, pass: gmailAppPassword },
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 20_000
     });
     return mailTransport;
   }
@@ -83,7 +86,10 @@ function getMailTransport() {
       host: smtpHost,
       port: Number.isFinite(port) ? port : 587,
       secure: String(process.env.SMTP_SECURE || "").toLowerCase() === "true" || port === 465,
-      auth: { user: smtpUser, pass: smtpPass }
+      auth: { user: smtpUser, pass: smtpPass },
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 20_000
     });
     return mailTransport;
   }
@@ -103,14 +109,19 @@ function getFromAddress() {
 async function sendEmail({ to, subject, html, text }) {
   const transport = getMailTransport();
   if (!transport) return { ok: false, reason: "not_configured" };
-  await transport.sendMail({
-    from: getFromAddress(),
-    to,
-    subject,
-    text,
-    html
-  });
-  return { ok: true };
+  try {
+    await transport.sendMail({
+      from: getFromAddress(),
+      to,
+      subject,
+      text,
+      html
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("Email send failed:", err);
+    return { ok: false, reason: "send_failed" };
+  }
 }
 
 // Static assets
@@ -463,6 +474,7 @@ app.post("/api/auth/request-verify", requireAuth, strictAuthLimiter, async (req,
 
     const baseUrl = getAppBaseUrl(req);
     const verifyLink = `${baseUrl}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
+    console.log("Sending verification email to:", email);
     const mailResult = await sendEmail({
       to: email,
       subject: "Verify your email",
@@ -473,7 +485,8 @@ app.post("/api/auth/request-verify", requireAuth, strictAuthLimiter, async (req,
         `<p>Verify your email for <strong>Study Planner</strong>:</p>` +
         `<p><a href="${verifyLink}">Verify email</a></p>` +
         `<p style="color:#6b7280;font-size:12px">This link expires in 1 hour.</p>`
-    }).catch((err) => ({ ok: false, reason: "send_failed", error: err }));
+    });
+    console.log("Verification email result:", mailResult.ok ? "sent" : "not sent");
 
     if (shouldRevealTokens()) {
       return res.json({ ok: true, token, emailSent: mailResult.ok });

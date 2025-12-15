@@ -34,6 +34,9 @@
         ...options
       });
     } catch (err) {
+      if (err && err.name === "AbortError") {
+        throw new Error("Request timed out. Please try again.");
+      }
       const isFile = window.location && window.location.protocol === "file:";
       const hint = isFile
         ? "You opened this page via file://. Accounts require the Node server. Run `npm start` and open http://localhost:10000/account.html (or use your Render URL)."
@@ -386,7 +389,12 @@
         btn.textContent = "Sending…";
       }
       try {
-        const result = await apiFetch("/api/auth/request-verify", { method: "POST" });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20_000);
+        const result = await apiFetch("/api/auth/request-verify", {
+          method: "POST",
+          signal: controller.signal
+        }).finally(() => clearTimeout(timeoutId));
         if (result.alreadyVerified) {
           $("verifyMsg").textContent = "Email already verified.";
         } else if (result.emailSent) {
