@@ -1122,6 +1122,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
           localStorage.removeItem(ACTIVE_SESSION_KEY);
           return;
         }
+        activeStudy.savedAtMs = Date.now();
         localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(activeStudy));
       } catch (e) {}
     }
@@ -1151,10 +1152,11 @@ const CVD_SAFE_SUBJECT_COLORS = [
         }
 
         // Never trust a persisted running timer from another page/session.
-        // If startTimeMs exists, convert it to paused by adding elapsed to baseMs and clearing startTimeMs.
+        // If startTimeMs exists, convert it to paused at the last saved timestamp (not "now"),
+        // so time doesn't advance while the page is closed/reloading.
         if (!parsed.paused && parsed.startTimeMs) {
-          const now = Date.now();
-          const delta = now - Number(parsed.startTimeMs || 0);
+          const safeNow = Number.isFinite(parsed.savedAtMs) ? Number(parsed.savedAtMs) : Date.now();
+          const delta = safeNow - Number(parsed.startTimeMs || 0);
           if (Number.isFinite(delta) && delta > 0) {
             parsed.baseMs = (Number(parsed.baseMs) || 0) + delta;
           }
@@ -3619,6 +3621,18 @@ const CVD_SAFE_SUBJECT_COLORS = [
     }
 
     setInterval(function () {
+      if (activeStudy && !activeStudy.paused && activeStudy.startTimeMs) {
+        const now = Date.now();
+        const lastSaved = Number(activeStudy.savedAtMs) || 0;
+        if (now - lastSaved >= 5000) {
+          const delta = now - Number(activeStudy.startTimeMs || 0);
+          if (Number.isFinite(delta) && delta > 0) {
+            activeStudy.baseMs = (Number(activeStudy.baseMs) || 0) + delta;
+          }
+          activeStudy.startTimeMs = now;
+          saveActiveSession();
+        }
+      }
       updateStudyTimerDisplay();
       updateTodayStudyUI();
       updateGoalsAndStreaks();
@@ -5743,12 +5757,21 @@ const CVD_SAFE_SUBJECT_COLORS = [
     }
 
     function maybeAutoResumeNavPausedSession() {
+      let isReload = false;
+      try {
+        const nav =
+          performance && typeof performance.getEntriesByType === "function"
+            ? performance.getEntriesByType("navigation")[0]
+            : null;
+        isReload = nav?.type === "reload";
+      } catch {}
       if (
         activeStudy &&
         activeStudy.paused &&
         activeStudy.pausedReason === "nav" &&
         activeStudy.autoResume === true
       ) {
+        if (isReload) return;
         resumeActiveSession({ clearNavFlags: true });
       }
     }
