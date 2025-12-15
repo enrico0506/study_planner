@@ -381,7 +381,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
       const visibleSubjects = count >= 4 ? 4 : Math.max(1, count);
       const base =
         (viewportWidth - gap * Math.max(0, visibleSubjects - 1)) / Math.max(1, visibleSubjects);
-      const subjectWidth = Math.round(Math.max(220, Math.min(360, base)));
+      const subjectWidth = Math.round(Math.max(190, Math.min(360, base)));
 
       const template = `repeat(${count}, ${subjectWidth}px) ${addColWidth}px`;
       subjectTable.classList.add("subject-table-dynamic");
