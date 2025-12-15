@@ -2873,6 +2873,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
       renderScheduleView();
       renderSmartSuggestions();
       renderDueSoonLane();
+      requestAnimationFrame(() => enforceTodayHeight());
     }
 
     function formatWeekRangeLabel(start, end) {
