@@ -393,54 +393,44 @@ const CVD_SAFE_SUBJECT_COLORS = [
       const wrapper = subjectTable.closest(".table-wrapper");
       if (!wrapper) return;
 
-      let nav = wrapper.querySelector(".subject-scroll-nav");
-      if (!nav) {
-        nav = document.createElement("div");
-        nav.className = "subject-scroll-nav";
+      // Remove previous overlay arrows (older versions).
+      wrapper.querySelector(".subject-scroll-nav")?.remove();
 
-        const leftBtn = document.createElement("button");
-        leftBtn.type = "button";
-        leftBtn.className = "subject-scroll-btn subject-scroll-btn-left";
-        leftBtn.textContent = "‹";
-        leftBtn.title = "Scroll left";
+      const leftBtn = document.getElementById("subjectScrollLeftBtn");
+      const rightBtn = document.getElementById("subjectScrollRightBtn");
+      if (!leftBtn || !rightBtn) return;
 
-        const rightBtn = document.createElement("button");
-        rightBtn.type = "button";
-        rightBtn.className = "subject-scroll-btn subject-scroll-btn-right";
-        rightBtn.textContent = "›";
-        rightBtn.title = "Scroll right";
-
+      if (!leftBtn.dataset.bound) {
+        leftBtn.dataset.bound = "1";
         leftBtn.addEventListener("click", (event) => {
           event.preventDefault();
           const step = Math.max(240, Math.round(wrapper.clientWidth * 0.8));
           wrapper.scrollBy({ left: -step, behavior: "smooth" });
         });
+      }
+      if (!rightBtn.dataset.bound) {
+        rightBtn.dataset.bound = "1";
         rightBtn.addEventListener("click", (event) => {
           event.preventDefault();
           const step = Math.max(240, Math.round(wrapper.clientWidth * 0.8));
           wrapper.scrollBy({ left: step, behavior: "smooth" });
         });
-
-        nav.appendChild(leftBtn);
-        nav.appendChild(rightBtn);
-        wrapper.appendChild(nav);
-
-        const update = () => {
-          const max = Math.max(0, wrapper.scrollWidth - wrapper.clientWidth);
-          const atStart = wrapper.scrollLeft <= 2;
-          const atEnd = wrapper.scrollLeft >= max - 2;
-          const hasOverflow = max > 4;
-          nav.classList.toggle("is-hidden", !hasOverflow);
-          leftBtn.disabled = atStart;
-          rightBtn.disabled = atEnd;
-        };
-
-        wrapper.addEventListener("scroll", () => requestAnimationFrame(update), { passive: true });
-        window.addEventListener("resize", () => requestAnimationFrame(update));
-        nav._update = update;
       }
 
-      nav._update?.();
+      const update = () => {
+        const max = Math.max(0, wrapper.scrollWidth - wrapper.clientWidth);
+        const atStart = wrapper.scrollLeft <= 2;
+        const atEnd = wrapper.scrollLeft >= max - 2;
+        const hasOverflow = max > 4;
+        leftBtn.classList.toggle("is-hidden", !hasOverflow);
+        rightBtn.classList.toggle("is-hidden", !hasOverflow);
+        leftBtn.disabled = atStart;
+        rightBtn.disabled = atEnd;
+      };
+
+      wrapper.addEventListener("scroll", () => requestAnimationFrame(update), { passive: true });
+      window.addEventListener("resize", () => requestAnimationFrame(update));
+      requestAnimationFrame(update);
     }
 
     function getScheduleCursorDay() {
@@ -2737,9 +2727,23 @@ const CVD_SAFE_SUBJECT_COLORS = [
           changed = true;
         }
       });
+      Object.values(dailyFocusMap || {}).forEach((list) => {
+        if (!Array.isArray(list)) return;
+        list.forEach((t) => {
+          if (!t) return;
+          if (t.fileId === fileId && t.subjectId === oldSubjectId) {
+            t.subjectId = newSubjectId;
+            t.label = newLabel;
+            t.subjectName = newSubjectName;
+            changed = true;
+          }
+        });
+      });
       if (changed) {
         saveTodayTodos();
+        saveDailyFocusMap();
         renderTodayTodos();
+        renderScheduleView();
       }
     }
 

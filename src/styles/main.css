@@ -3034,6 +3034,37 @@ body::-webkit-scrollbar,
   z-index: 5;
 }
 
+.subject-scroll-head-btn {
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.92);
+  color: #0f172a;
+  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.10);
+  transition: background 0.12s ease, transform 0.12s ease, opacity 0.12s ease;
+}
+
+.subject-scroll-head-btn:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
+}
+
+.subject-scroll-head-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  transform: none;
+}
+
+.subject-scroll-head-btn.is-hidden {
+  display: none;
+}
+
 .section-max-btn {
   border: 1px solid var(--border-strong, #dfe4f0);
   background: var(--accent, #2f62f4);
@@ -3065,15 +3096,18 @@ body::-webkit-scrollbar,
       padding: 0;
     }
 
-    @media (max-width: 960px) {
-      .table-wrapper {
-        padding: 10px;
-        overflow: visible;
-      }
-      .subject-table {
-        grid-auto-flow: row;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 12px;
+@media (max-width: 960px) {
+  .table-wrapper {
+    padding: 10px;
+    overflow: visible;
+  }
+  .subject-scroll-head-btn {
+    display: none !important;
+  }
+  .subject-table {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
         background: transparent;
       }
       .subject-column {
