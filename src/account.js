@@ -430,6 +430,56 @@
         $("resetMsg").textContent = String(err?.message || "Reset failed");
       }
     });
+
+    // Enter-to-confirm shortcuts
+    const authEmail = $("authEmail");
+    const authPassword = $("authPassword");
+    authEmail?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      authPassword?.focus();
+    });
+    authPassword?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      $("loginBtn")?.click();
+    });
+
+    const currentPassword = $("currentPassword");
+    const newPassword = $("newPassword");
+    currentPassword?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      newPassword?.focus();
+    });
+    newPassword?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      $("changePasswordBtn")?.click();
+    });
+
+    $("verifyToken")?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      $("verifyEmailBtn")?.click();
+    });
+
+    $("resetEmail")?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      $("requestResetBtn")?.click();
+    });
+    const resetNewPassword = $("resetNewPassword");
+    $("resetToken")?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      resetNewPassword?.focus();
+    });
+    resetNewPassword?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      $("resetPasswordBtn")?.click();
+    });
   }
 
   if (document.readyState === "loading") {

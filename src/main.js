@@ -4503,6 +4503,15 @@ const DEFAULT_SUBJECT_COLORS = [
       renderSettingsPreview();
       showNotice("Colors and styles saved.", "success");
     });
+
+    ["settingsMeterSingleInput", "settingsMeterGradStartInput", "settingsMeterGradEndInput"].forEach((id) => {
+      document.getElementById(id)?.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        settingsColorsSaveBtn?.click();
+      });
+    });
+
     settingsColorsResetBtn?.addEventListener("click", () => {
       saveColorPalette([...DEFAULT_SUBJECT_COLORS]);
       renderSettingsColorsList();
@@ -4620,6 +4629,15 @@ const DEFAULT_SUBJECT_COLORS = [
       saveFocusConfig();
       showNotice("Preferences saved.", "success");
     });
+
+    ["settingsStudyMinutes", "settingsShortMinutes", "settingsLongMinutes"].forEach((id) => {
+      document.getElementById(id)?.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        settingsPrefsSaveBtn?.click();
+      });
+    });
+
     settingsThemePickerBtn?.addEventListener("click", () => {
       closeSettingsModal();
       openHeaderMenu();
@@ -4790,6 +4808,16 @@ const DEFAULT_SUBJECT_COLORS = [
       }
     });
 
+    const clickFileSaveOnEnter = (input) => {
+      input?.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        modalSaveBtn?.click();
+      });
+    };
+    clickFileSaveOnEnter(modalFileNameInput);
+    clickFileSaveOnEnter(modalFileNotesInput);
+
     modalSaveBtn.addEventListener("click", () => {
       if (!fileModalState) return;
 
@@ -4955,6 +4983,17 @@ const DEFAULT_SUBJECT_COLORS = [
         renderDueSoonLane();
         toggleInlineTimerPanel(false);
       });
+
+      const clickTimerInlineSaveOnEnter = (input) => {
+        input?.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          timerInlineSave.click();
+        });
+      };
+      clickTimerInlineSaveOnEnter(timerInlineStudy);
+      clickTimerInlineSaveOnEnter(timerInlineShort);
+      clickTimerInlineSaveOnEnter(timerInlineLong);
     }
 
     // Break buttons
