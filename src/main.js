@@ -190,6 +190,22 @@ const DEFAULT_SUBJECT_COLORS = [
     let headerMenuTimer = null;
     let addTodoModalState = null; // { subjectId, fileId, subjectName, fileName, subtasks: [] }
 
+    async function updateHeaderProfileLabel() {
+      if (!headerProfileBtn) return;
+      try {
+        const res = await fetch("/api/me", { credentials: "same-origin" });
+        if (res.ok) {
+          headerProfileBtn.textContent = "Profile";
+          headerProfileBtn.title = "Account & sync";
+        } else {
+          headerProfileBtn.textContent = "Login";
+          headerProfileBtn.title = "Login / register";
+        }
+      } catch {
+        // If offline or server unreachable, leave default label.
+      }
+    }
+
     // View / schedule refs
     const viewBoardBtn = document.getElementById("viewBoardBtn");
     const viewScheduleBtn = document.getElementById("viewScheduleBtn");
@@ -5299,3 +5315,4 @@ const DEFAULT_SUBJECT_COLORS = [
     renderTable();
     applyPageMode();
     setActiveView(getPageMode() === "schedule" ? "schedule" : "board");
+    updateHeaderProfileLabel();
