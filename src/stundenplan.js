@@ -1,6 +1,7 @@
 (() => {
   const SUBJECT_STORAGE_KEY = "studySubjects_v1";
   const TIMETABLE_KEY = "studyTimetable_v1";
+  const TIMETABLE_WEEKEND_KEY = "studyTimetableIncludeWeekend_v1";
   const COLOR_PALETTE_KEY = "studyColorPalette_v1";
   const DEFAULT_SUBJECT_COLORS = [
     "#4f8bff",
@@ -55,12 +56,40 @@
   const ttPrevDayBtn = document.getElementById("ttPrevDayBtn");
   const ttNextDayBtn = document.getElementById("ttNextDayBtn");
   const ttDayLabel = document.getElementById("ttDayLabel");
+  const toggleWeekendBtn = document.getElementById("toggleWeekendBtn");
   let subjects = [];
   let tables = [];
   let activeTableId = "";
   let editingId = null;
   let tabMenuTimer = null;
   let phoneDayIndex = null;
+  let includeWeekend = true;
+
+  function loadIncludeWeekend() {
+    try {
+      const raw = localStorage.getItem(TIMETABLE_WEEKEND_KEY);
+      if (raw === null || raw === undefined || raw === "") return true;
+      return raw === "1" || raw === "true";
+    } catch {
+      return true;
+    }
+  }
+
+  function saveIncludeWeekend() {
+    try {
+      localStorage.setItem(TIMETABLE_WEEKEND_KEY, includeWeekend ? "1" : "0");
+    } catch {}
+  }
+
+  function getVisibleDays() {
+    return includeWeekend ? DAY_LABELS : DAY_LABELS.slice(0, 5);
+  }
+
+  function updateWeekendToggleUi() {
+    if (!toggleWeekendBtn) return;
+    toggleWeekendBtn.textContent = includeWeekend ? "Hide weekend" : "Show weekend";
+    toggleWeekendBtn.setAttribute("aria-pressed", includeWeekend ? "true" : "false");
+  }
 
   function isPhoneLayout() {
     return window.matchMedia && window.matchMedia("(max-width: 1024px)").matches;
@@ -71,16 +100,19 @@
       const today = new Date().getDay(); // 0=Sun..6=Sat
       phoneDayIndex = today === 0 ? 6 : today - 1; // Monday-based
     }
-    return Math.max(0, Math.min(6, phoneDayIndex));
+    const maxIdx = getVisibleDays().length - 1;
+    return Math.max(0, Math.min(maxIdx, phoneDayIndex));
   }
 
   function setPhoneDayIndex(nextIndex) {
-    phoneDayIndex = Math.max(0, Math.min(6, Number(nextIndex) || 0));
+    const maxIdx = getVisibleDays().length - 1;
+    phoneDayIndex = Math.max(0, Math.min(maxIdx, Number(nextIndex) || 0));
     applyPhoneDayView();
   }
 
   function applyPhoneDayView() {
     if (!timetableGrid) return;
+    const days = getVisibleDays();
     if (!isPhoneLayout()) {
       timetableGrid.style.removeProperty("--tt-day");
       if (ttDayLabel) ttDayLabel.textContent = "";
@@ -90,9 +122,9 @@
     }
     const idx = getPhoneDayIndex();
     timetableGrid.style.setProperty("--tt-day", String(idx));
-    if (ttDayLabel) ttDayLabel.textContent = DAY_LABELS[idx]?.label?.slice(0, 3) || String(idx + 1);
+    if (ttDayLabel) ttDayLabel.textContent = days[idx]?.label?.slice(0, 3) || String(idx + 1);
     if (ttPrevDayBtn) ttPrevDayBtn.disabled = idx <= 0;
-    if (ttNextDayBtn) ttNextDayBtn.disabled = idx >= 6;
+    if (ttNextDayBtn) ttNextDayBtn.disabled = idx >= days.length - 1;
   }
 
   function createId(prefix = "ls_") {
@@ -116,6 +148,8 @@
   }
 
   loadColorPalette();
+  includeWeekend = loadIncludeWeekend();
+  updateWeekendToggleUi();
 
   function loadSubjects() {
     try {
@@ -512,7 +546,8 @@
     });
     const today = new Date().getDay(); // 0 (Sun) - 6 (Sat)
     const mondayBased = today === 0 ? 6 : today - 1;
-    lessonDaySelect.value = String(mondayBased);
+    const defaultDay = includeWeekend ? mondayBased : Math.min(4, mondayBased);
+    lessonDaySelect.value = String(defaultDay);
   }
 
   function populateSubjectOptions() {
@@ -608,6 +643,8 @@
   function renderTimetable() {
     if (!timetableGrid) return;
     timetableGrid.innerHTML = "";
+    const days = getVisibleDays();
+    timetableGrid.style.setProperty("--tt-days", String(days.length));
 
     const lessons = getWorkingLessons();
     let minStart = Infinity;
@@ -653,7 +690,7 @@
     colsHead.className = "timeline-cols-head";
     colsHead.style.gridColumn = "2";
     colsHead.style.gridRow = "1";
-    DAY_LABELS.forEach((day) => {
+    days.forEach((day) => {
       const h = document.createElement("div");
       h.className = "timeline-day-head";
       h.textContent = day.label;
@@ -679,7 +716,7 @@
     cols.style.gridColumn = "2";
     cols.style.gridRow = "2";
 
-    DAY_LABELS.forEach((day) => {
+    days.forEach((day) => {
       const col = document.createElement("div");
       col.className = "timeline-day";
       col.style.height = timelineHeight + "px";
@@ -896,7 +933,8 @@
       const mondayBased = today === 0 ? 6 : today - 1;
       const start = nearestHalfHour();
       const end = addMinutesToTime(start, 60);
-      openLessonModal(mondayBased, start, end);
+      const presetDay = includeWeekend ? mondayBased : Math.min(4, mondayBased);
+      openLessonModal(presetDay, start, end);
     });
     lessonModalCloseBtn?.addEventListener("click", closeLessonModal);
     lessonModalBackdrop?.addEventListener("click", closeLessonModal);
@@ -941,6 +979,16 @@
     });
     window.addEventListener("resize", applyPhoneDayView);
     window.addEventListener("orientationchange", applyPhoneDayView);
+
+    toggleWeekendBtn?.addEventListener("click", () => {
+      includeWeekend = !includeWeekend;
+      saveIncludeWeekend();
+      updateWeekendToggleUi();
+      populateDayOptions();
+      // Clamp phone day index to available days.
+      setPhoneDayIndex(getPhoneDayIndex());
+      renderTimetable();
+    });
   }
 
   function init() {
