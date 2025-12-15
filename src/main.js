@@ -2435,9 +2435,33 @@ const CVD_SAFE_SUBJECT_COLORS = [
       }
     }
 
-    function toggleTodoDone(todoId, checked) {
+    function promptConfidenceUpdateForFile(subjectId, fileId) {
+      const { file } = resolveFileRef(subjectId, fileId);
+      if (!file) return;
+      const current = Number(file.confidence) || 0;
+      openNoticePrompt("Update confidence (0–100)", String(current), (value) => {
+        const raw = String(value ?? "").trim();
+        if (!raw) return;
+        const n = Math.round(Number(raw));
+        if (!Number.isFinite(n)) {
+          showNotice("Please enter a number between 0 and 100.", "warn");
+          return;
+        }
+        const clamped = Math.max(0, Math.min(100, n));
+        file.confidence = clamped;
+        saveToStorage();
+        renderTable();
+        renderSmartSuggestions();
+        updateSummary();
+        renderTodayTodos();
+        renderScheduleView();
+      });
+    }
+
+    function toggleTodoDone(todoId, checked, { promptConfidence = false } = {}) {
       const todo = todayTodos.find((t) => t.id === todoId);
       if (!todo) return;
+      const wasDone = !!todo.done;
       todo.done = checked;
       if (checked && Array.isArray(todo.subtasks)) {
         todo.subtasks.forEach((s) => {
@@ -2450,6 +2474,9 @@ const CVD_SAFE_SUBJECT_COLORS = [
       }
       saveTodayTodos();
       renderTodayTodos();
+      if (checked && !wasDone && promptConfidence) {
+        promptConfidenceUpdateForFile(todo.subjectId, todo.fileId);
+      }
     }
 
     function moveTodo(sourceId, targetId) {
@@ -2483,11 +2510,12 @@ const CVD_SAFE_SUBJECT_COLORS = [
       renderTodayTodos();
     }
 
-    function toggleSubtask(todoId, subId, checked) {
+    function toggleSubtask(todoId, subId, checked, { promptConfidence = false } = {}) {
       const todo = todayTodos.find((t) => t.id === todoId);
       if (!todo || !Array.isArray(todo.subtasks)) return;
       const sub = todo.subtasks.find((s) => s.id === subId);
       if (!sub) return;
+      const wasDone = !!todo.done;
       sub.done = checked;
       const allDone = todo.subtasks.length > 0 && todo.subtasks.every((s) => s.done);
       if (allDone) {
@@ -2497,6 +2525,9 @@ const CVD_SAFE_SUBJECT_COLORS = [
       }
       saveTodayTodos();
       renderTodayTodos();
+      if (todo.done && !wasDone && promptConfidence) {
+        promptConfidenceUpdateForFile(todo.subjectId, todo.fileId);
+      }
     }
 
     function markTodoDoneByFile(subjectId, fileId) {
@@ -2625,7 +2656,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
         checkbox.type = "checkbox";
         checkbox.checked = !!todo.done;
         checkbox.addEventListener("change", () => {
-          toggleTodoDone(todo.id, checkbox.checked);
+          toggleTodoDone(todo.id, checkbox.checked, { promptConfidence: true });
         });
 
         const colorDot = document.createElement("span");
@@ -2741,7 +2772,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
             cb.type = "checkbox";
             cb.checked = !!sub.done;
             cb.addEventListener("change", () => {
-              toggleSubtask(todo.id, sub.id, cb.checked);
+              toggleSubtask(todo.id, sub.id, cb.checked, { promptConfidence: true });
             });
 
             const label = document.createElement("div");
@@ -3118,7 +3149,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
           if (onToday) {
             cb.addEventListener("change", () => {
-              toggleSubtask(todo.id, sub.id, cb.checked);
+              toggleSubtask(todo.id, sub.id, cb.checked, { promptConfidence: true });
             });
           }
 
