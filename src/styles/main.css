@@ -2322,11 +2322,10 @@ body::-webkit-scrollbar,
       overflow: auto;
     }
 
-    /* Maximized Today view: use full height and split into equal rows (no overlap). */
+    /* Maximized Today view: fixed row height to avoid cross-row overlap/clipping. */
     .layout-row.today-full .today-list.today-list-grid {
-      grid-auto-rows: minmax(0, 1fr);
-      height: 100%;
-      align-content: stretch;
+      grid-auto-rows: clamp(190px, 24vh, 240px);
+      align-content: start;
       gap: 16px;
       padding: 6px 2px 20px;
       box-sizing: border-box;
