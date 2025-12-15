@@ -93,6 +93,29 @@ body::-webkit-scrollbar,
       color: var(--ink);
     }
 
+    /* Accessibility modes (set by JS via html[data-contrast] / html[data-cvd]) */
+    html[data-contrast="high"] {
+      --ink: #0b1220;
+      --ink-muted: #1f2a44;
+      --border-subtle: #cbd5e1;
+      --accent-soft: #dbeafe;
+      --accent-soft-hover: #bfdbfe;
+      --shadow-card: 0 22px 60px rgba(0, 0, 0, 0.14);
+    }
+
+    html[data-contrast="low"] {
+      --ink: #1f2937;
+      --ink-muted: #6b7280;
+      --border-subtle: rgba(228, 232, 239, 0.65);
+      --shadow-card: 0 16px 44px rgba(15, 23, 42, 0.06);
+    }
+
+    html[data-cvd="safe"] {
+      --meter-low: linear-gradient(90deg, #D55E00, #D55E00);
+      --meter-mid: linear-gradient(90deg, #E69F00, #E69F00);
+      --meter-high: linear-gradient(90deg, #0072B2, #0072B2);
+    }
+
     html,
     body {
       height: 100%;

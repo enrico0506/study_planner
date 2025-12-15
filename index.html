@@ -172,13 +172,30 @@
             </div>
             <div class="settings-panel" id="settingsPrefsPanel">
               <div class="settings-panel-title">Preferences</div>
-              <p class="settings-panel-text">Choose language and tweak study timers.</p>
+              <p class="settings-panel-text">Choose language, accessibility, and tweak study timers.</p>
               <div class="settings-pref-row">
                 <label>
                   Language
                   <select id="settingsLanguageSelect">
                     <option value="en">English</option>
                     <option value="de">Deutsch</option>
+                  </select>
+                </label>
+              </div>
+              <div class="settings-pref-row settings-pref-grid">
+                <label>
+                  Contrast
+                  <select id="settingsContrastSelect">
+                    <option value="normal">Normal</option>
+                    <option value="high">High contrast</option>
+                    <option value="low">Low contrast</option>
+                  </select>
+                </label>
+                <label>
+                  Colorblind-friendly colors
+                  <select id="settingsCvdSelect">
+                    <option value="none">Off</option>
+                    <option value="safe">On</option>
                   </select>
                 </label>
               </div>

@@ -119,7 +119,9 @@ const DEFAULT_SUBJECT_COLORS = [
       meterSingle: "#f97373",
       meterGradStart: "#f97373",
       meterGradEnd: "#22c55e",
-      studyBar: "rounded"
+      studyBar: "rounded",
+      contrast: "normal", // "normal" | "high" | "low"
+      cvd: "none" // "none" | "safe"
     };
     let meterBaseColors = {
       low: "#fb7185",
@@ -826,6 +828,10 @@ const DEFAULT_SUBJECT_COLORS = [
       const lang = loadLanguagePreference();
       const langSelect = document.getElementById("settingsLanguageSelect");
       if (langSelect) langSelect.value = lang;
+      const contrastSelect = document.getElementById("settingsContrastSelect");
+      if (contrastSelect) contrastSelect.value = stylePrefs.contrast || "normal";
+      const cvdSelect = document.getElementById("settingsCvdSelect");
+      if (cvdSelect) cvdSelect.value = stylePrefs.cvd || "none";
       const study = document.getElementById("settingsStudyMinutes");
       const short = document.getElementById("settingsShortMinutes");
       const long = document.getElementById("settingsLongMinutes");
@@ -1109,6 +1115,8 @@ const DEFAULT_SUBJECT_COLORS = [
         if (parsed && typeof parsed === "object") {
           if (parsed.meter) stylePrefs.meter = parsed.meter;
           if (parsed.studyBar) stylePrefs.studyBar = parsed.studyBar;
+          if (parsed.contrast) stylePrefs.contrast = parsed.contrast;
+          if (parsed.cvd) stylePrefs.cvd = parsed.cvd;
         }
       } catch (e) {}
     }
@@ -1120,6 +1128,11 @@ const DEFAULT_SUBJECT_COLORS = [
     }
 
     function deriveMeterBase(prefs) {
+      const cvd = prefs?.cvd || "none";
+      if (cvd === "safe") {
+        // Okabe-Ito inspired (avoid red/green confusion)
+        return { low: "#D55E00", mid: "#E69F00", high: "#0072B2" };
+      }
       if (prefs.meter === "single") {
         const c = prefs.meterSingle || "#f97373";
         return { low: c, mid: c, high: c };
@@ -1141,6 +1154,11 @@ const DEFAULT_SUBJECT_COLORS = [
     function applyStylePrefs(prefs = {}) {
       stylePrefs = { ...stylePrefs, ...prefs };
       meterBaseColors = deriveMeterBase(stylePrefs);
+
+      const contrast = stylePrefs.contrast || "normal";
+      document.documentElement.setAttribute("data-contrast", contrast);
+      const cvd = stylePrefs.cvd || "none";
+      document.documentElement.setAttribute("data-cvd", cvd);
 
       let meter = METER_STYLES[stylePrefs.meter];
       if (stylePrefs.meter === "single") {
@@ -4843,11 +4861,22 @@ const DEFAULT_SUBJECT_COLORS = [
     const settingsPrefsSaveBtn = document.getElementById("settingsPrefsSaveBtn");
     settingsPrefsSaveBtn?.addEventListener("click", () => {
       const langSelect = document.getElementById("settingsLanguageSelect");
+      const contrastSelect = document.getElementById("settingsContrastSelect");
+      const cvdSelect = document.getElementById("settingsCvdSelect");
       const study = document.getElementById("settingsStudyMinutes");
       const short = document.getElementById("settingsShortMinutes");
       const long = document.getElementById("settingsLongMinutes");
       if (langSelect) {
         saveLanguagePreference(langSelect.value);
+      }
+      if (contrastSelect) {
+        applyStylePrefs({ contrast: contrastSelect.value });
+        saveStylePrefs();
+      }
+      if (cvdSelect) {
+        applyStylePrefs({ cvd: cvdSelect.value });
+        saveStylePrefs();
+        renderSettingsPreview();
       }
       const studyVal = Number(study?.value || pomoConfig.study);
       const shortVal = Number(short?.value || pomoConfig.short);
