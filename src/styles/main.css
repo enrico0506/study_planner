@@ -2248,9 +2248,9 @@ body::-webkit-scrollbar,
 .today-list.today-list-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      grid-auto-rows: minmax(320px, auto);
+      grid-auto-rows: clamp(320px, 42vh, 440px);
       gap: 12px;
-      align-items: start;
+      align-items: stretch;
     }
 
 .expand-btn {
@@ -2276,8 +2276,8 @@ body::-webkit-scrollbar,
       display: flex;
       flex-direction: column;
       min-height: 320px;
-      max-height: 440px;
-      height: auto;
+      height: 100%;
+      max-height: none;
       overflow: hidden;
       writing-mode: horizontal-tb;
       word-wrap: break-word;
@@ -2290,9 +2290,18 @@ body::-webkit-scrollbar,
 
     .today-list.today-list-grid .today-subtasks {
       flex: 1;
-      min-height: 70px;
-      max-height: 220px;
+      min-height: 0;
+      max-height: none;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .today-list.today-list-grid .today-subtasks-list {
+      flex: 1;
+      min-height: 0;
       overflow: auto;
+      scrollbar-gutter: stable;
     }
 
     .today-done-section {
