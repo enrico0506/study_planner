@@ -167,6 +167,16 @@ const CVD_SAFE_SUBJECT_COLORS = [
     const suggestionModalBackdrop = document.getElementById("suggestionModalBackdrop");
     const suggestionModalCloseBtn = document.getElementById("suggestionModalCloseBtn");
     const suggestionModalCloseBtn2 = document.getElementById("suggestionModalCloseBtn2");
+    const subjectSettingsBackdrop = document.getElementById("subjectSettingsBackdrop");
+    const subjectSettingsCloseBtn = document.getElementById("subjectSettingsCloseBtn");
+    const subjectSettingsCancelBtn = document.getElementById("subjectSettingsCancelBtn");
+    const subjectSettingsSaveBtn = document.getElementById("subjectSettingsSaveBtn");
+    const subjectSettingsNameInput = document.getElementById("subjectSettingsNameInput");
+    const subjectSettingsStrength = document.getElementById("subjectSettingsStrength");
+    const subjectSettingsSwatches = document.getElementById("subjectSettingsSwatches");
+    const subjectSettingsDot = document.getElementById("subjectSettingsDot");
+    const subjectSettingsCustomColor = document.getElementById("subjectSettingsCustomColor");
+    const subjectSettingsColorLabel = document.getElementById("subjectSettingsColorLabel");
     const addTodoModalBackdrop = document.getElementById("addTodoModalBackdrop");
     const addTodoModalTitle = document.getElementById("addTodoModalTitle");
     const addTodoModalSubtitle = document.getElementById("addTodoModalSubtitle");
@@ -636,6 +646,75 @@ const CVD_SAFE_SUBJECT_COLORS = [
         document.addEventListener("click", onDocClick, { once: true });
         document.addEventListener("keydown", onKey, { once: true });
       }, 0);
+    }
+
+    let subjectSettingsState = null; // { subjectId }
+    let subjectSettingsTempColor = null;
+
+    function closeSubjectSettingsModal() {
+      subjectSettingsState = null;
+      subjectSettingsTempColor = null;
+      if (subjectSettingsBackdrop) {
+        subjectSettingsBackdrop.hidden = true;
+        subjectSettingsBackdrop.style.display = "none";
+      }
+    }
+
+    function renderSubjectSettingsSwatches(selectedColor) {
+      if (!subjectSettingsSwatches) return;
+      subjectSettingsSwatches.innerHTML = "";
+      const colors = getSubjectSwatches();
+      colors.forEach((c) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "subject-swatch-btn";
+        btn.style.background = c;
+        btn.title = c;
+        if (String(c).toLowerCase() === String(selectedColor).toLowerCase()) {
+          btn.classList.add("is-selected");
+        }
+        btn.addEventListener("click", () => {
+          subjectSettingsTempColor = c;
+          if (subjectSettingsCustomColor) subjectSettingsCustomColor.value = c;
+          updateSubjectSettingsPreview();
+        });
+        subjectSettingsSwatches.appendChild(btn);
+      });
+    }
+
+    function updateSubjectSettingsPreview() {
+      if (subjectSettingsDot && subjectSettingsTempColor) {
+        subjectSettingsDot.style.backgroundColor = subjectSettingsTempColor;
+      }
+      if (subjectSettingsColorLabel && subjectSettingsTempColor) {
+        subjectSettingsColorLabel.textContent = subjectSettingsTempColor;
+      }
+    }
+
+    function openSubjectSettingsModal(subjectId) {
+      if (!subjectSettingsBackdrop) return;
+      const idx = subjects.findIndex((s) => s.id === subjectId);
+      if (idx === -1) return;
+      const subj = subjects[idx];
+
+      subjectSettingsState = { subjectId };
+      subjectSettingsTempColor = isHexColor(subj.color) ? subj.color : getSubjectColor(idx);
+
+      if (subjectSettingsNameInput) {
+        subjectSettingsNameInput.value = subj.name || "";
+        subjectSettingsNameInput.focus();
+        subjectSettingsNameInput.select?.();
+      }
+      if (subjectSettingsCustomColor) subjectSettingsCustomColor.value = subjectSettingsTempColor;
+      if (subjectSettingsStrength) {
+        subjectSettingsStrength.value = String(getSubjectTintAlphaById(subjectId));
+      }
+
+      renderSubjectSettingsSwatches(subjectSettingsTempColor);
+      updateSubjectSettingsPreview();
+
+      subjectSettingsBackdrop.hidden = false;
+      subjectSettingsBackdrop.style.display = "flex";
     }
 
     function showToast(message, tone = "info") {
@@ -3747,6 +3826,10 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
         const header = document.createElement("div");
         header.className = "subject-header";
+        header.addEventListener("click", (event) => {
+          if (event.target && event.target.closest && event.target.closest(".subject-delete-btn")) return;
+          openSubjectSettingsModal(subj.id);
+        });
 
         const headerLeft = document.createElement("div");
         headerLeft.style.display = "flex";
@@ -3756,36 +3839,21 @@ const CVD_SAFE_SUBJECT_COLORS = [
         const colorDot = document.createElement("span");
         colorDot.className = "subject-color-dot";
         colorDot.style.backgroundColor = subjColor;
-        colorDot.title = "Change subject color";
+        colorDot.title = "Subject settings";
         colorDot.setAttribute("role", "button");
         colorDot.setAttribute("tabindex", "0");
         colorDot.addEventListener("click", (event) => {
           event.stopPropagation();
-          openSubjectColorPopover(colorDot, subj, subjColor);
+          openSubjectSettingsModal(subj.id);
         });
         colorDot.addEventListener("keydown", (event) => {
           if (event.key !== "Enter" && event.key !== " ") return;
           event.preventDefault();
-          openSubjectColorPopover(colorDot, subj, subjColor);
+          openSubjectSettingsModal(subj.id);
         });
 
         const titleSpan = document.createElement("span");
         titleSpan.textContent = subj.name;
-        titleSpan.title = "Double-click to rename";
-        titleSpan.addEventListener("dblclick", (event) => {
-          event.stopPropagation();
-          openNoticePrompt("Rename subject", subj.name || "", (value) => {
-            const next = String(value || "").trim();
-            if (!next) return;
-            subj.name = next;
-            renameSubjectEverywhere(subj.id, next);
-            saveToStorage();
-            renderSubjectOptions();
-            renderTable();
-            renderTodayTodos();
-            renderScheduleView();
-          });
-        });
 
         headerLeft.appendChild(colorDot);
         headerLeft.appendChild(titleSpan);
@@ -5314,6 +5382,51 @@ const CVD_SAFE_SUBJECT_COLORS = [
       }
     });
     }
+
+    if (subjectSettingsBackdrop) {
+      subjectSettingsBackdrop.addEventListener("mousedown", (event) => {
+        if (event.target === subjectSettingsBackdrop) closeSubjectSettingsModal();
+      });
+    }
+    subjectSettingsCloseBtn?.addEventListener("click", closeSubjectSettingsModal);
+    subjectSettingsCancelBtn?.addEventListener("click", closeSubjectSettingsModal);
+
+    subjectSettingsCustomColor?.addEventListener("input", () => {
+      const v = String(subjectSettingsCustomColor.value || "").trim();
+      if (isHexColor(v)) {
+        subjectSettingsTempColor = v;
+        renderSubjectSettingsSwatches(v);
+        updateSubjectSettingsPreview();
+      }
+    });
+
+    subjectSettingsSaveBtn?.addEventListener("click", () => {
+      if (!subjectSettingsState) return;
+      const subj = subjects.find((s) => s.id === subjectSettingsState.subjectId);
+      if (!subj) return closeSubjectSettingsModal();
+
+      const nextName = String(subjectSettingsNameInput?.value || "").trim();
+      if (nextName) {
+        subj.name = nextName;
+        renameSubjectEverywhere(subj.id, nextName);
+      }
+
+      if (subjectSettingsTempColor && isHexColor(subjectSettingsTempColor)) {
+        subj.color = subjectSettingsTempColor;
+      }
+
+      const alpha = Number(subjectSettingsStrength?.value);
+      if (Number.isFinite(alpha)) {
+        subj.tintAlpha = Math.max(0.05, Math.min(0.6, alpha));
+      }
+
+      saveToStorage();
+      renderSubjectOptions();
+      renderTable();
+      renderTodayTodos();
+      renderScheduleView();
+      closeSubjectSettingsModal();
+    });
 
     if (scheduleTaskModalBackdrop) {
       scheduleTaskModalBackdrop.addEventListener("mousedown", (event) => {

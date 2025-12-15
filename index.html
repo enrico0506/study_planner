@@ -560,6 +560,48 @@
     </div>
   </div>
 
+  <!-- Subject Settings Modal -->
+  <div class="modal-backdrop" id="subjectSettingsBackdrop" hidden>
+    <div class="modal subject-settings-modal" role="dialog" aria-modal="true" aria-labelledby="subjectSettingsTitle">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="subjectSettingsTitle">Subject settings</div>
+          <div class="modal-subtitle">Rename the subject and adjust its color highlight.</div>
+        </div>
+        <button class="modal-close-btn" id="subjectSettingsCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="subject-settings-row">
+          <label class="subject-settings-label" for="subjectSettingsNameInput">Subject name</label>
+          <input type="text" id="subjectSettingsNameInput" />
+        </div>
+        <div class="subject-settings-row">
+          <div class="subject-settings-label">Color</div>
+          <div class="subject-settings-color">
+            <div class="subject-settings-preview">
+              <span class="subject-settings-dot" id="subjectSettingsDot"></span>
+              <span class="subject-settings-preview-text" id="subjectSettingsColorLabel">Selected</span>
+            </div>
+            <div class="subject-swatch-grid" id="subjectSettingsSwatches"></div>
+            <div class="subject-settings-custom">
+              <label for="subjectSettingsCustomColor">Custom</label>
+              <input type="color" id="subjectSettingsCustomColor" />
+            </div>
+          </div>
+        </div>
+        <div class="subject-settings-row">
+          <label class="subject-settings-label" for="subjectSettingsStrength">Highlight strength</label>
+          <input type="range" id="subjectSettingsStrength" min="0.05" max="0.6" step="0.05" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="subjectSettingsCancelBtn" type="button">Cancel</button>
+        <button class="btn" id="subjectSettingsSaveBtn" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Notice Modal -->
   <div class="modal-backdrop" id="noticeModalBackdrop" hidden>
     <div class="modal notice-modal" role="dialog" aria-modal="true">
