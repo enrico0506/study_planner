@@ -142,9 +142,10 @@ body::-webkit-scrollbar,
   padding: 20px 22px 36px;
   width: clamp(980px, 92vw, 1520px);
   max-width: 1520px;
-  height: calc(100vh - 24px);
-  height: calc(100dvh - 24px);
+  aspect-ratio: 5 / 3;
+  height: auto;
   max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
   box-sizing: border-box;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), #fffdf8);
   border-radius: var(--radius-lg);
@@ -160,6 +161,7 @@ body::-webkit-scrollbar,
   max-height: none;
   height: auto;
   overflow: visible;
+  aspect-ratio: auto;
 }
 
     .header-row {

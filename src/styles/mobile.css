@@ -39,6 +39,7 @@
     border-radius: 0;
     max-height: none;
     height: auto;
+    aspect-ratio: auto;
     overflow: visible;
     box-shadow: none;
   }
