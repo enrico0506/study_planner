@@ -2336,11 +2336,7 @@ body::-webkit-scrollbar,
   background: #ffffff;
   box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
   border-left: 10px solid var(--todo-accent, #4f46e5);
-  background-image: linear-gradient(
-    120deg,
-    rgba(79, 70, 229, 0.08),
-    rgba(79, 70, 229, 0) 38%
-  );
+  background-image: none;
 }
 
 .today-item-top {
@@ -2896,6 +2892,100 @@ body::-webkit-scrollbar,
       border: 0;
       padding: 0;
       margin: 0;
+    }
+
+    /* Subject color popover */
+    .subject-color-popover {
+      position: fixed;
+      z-index: 999;
+      width: 260px;
+      max-width: calc(100vw - 24px);
+      background: #ffffff;
+      border: 1px solid rgba(228, 232, 239, 0.95);
+      border-radius: 14px;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+      padding: 12px;
+    }
+
+    .subject-color-popover-title {
+      font-weight: 800;
+      color: var(--accent-ink);
+      margin-bottom: 10px;
+      font-size: 0.92rem;
+    }
+
+    .subject-color-swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+    }
+
+    .subject-color-swatch {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 10px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    }
+
+    .subject-color-swatch.is-active {
+      outline: 2px solid rgba(15, 23, 42, 0.22);
+      outline-offset: 2px;
+    }
+
+    .subject-color-custom-row {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border: 1px solid rgba(228, 232, 239, 0.95);
+      border-radius: 12px;
+      padding: 8px 10px;
+      background: #f8fafc;
+    }
+
+    .subject-color-custom-label {
+      font-weight: 700;
+      font-size: 0.86rem;
+      color: var(--accent-ink);
+    }
+
+    .subject-color-custom-input {
+      width: 44px;
+      height: 28px;
+      border: 1px solid rgba(15, 23, 42, 0.14);
+      border-radius: 10px;
+      padding: 0;
+      background: transparent;
+    }
+
+    .subject-color-strength {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px 10px;
+      align-items: center;
+    }
+
+    .subject-color-strength-label {
+      grid-column: 1 / -1;
+      font-weight: 700;
+      font-size: 0.86rem;
+      color: var(--accent-ink);
+    }
+
+    .subject-color-strength-range {
+      width: 100%;
+    }
+
+    .subject-color-strength-value {
+      font-weight: 800;
+      color: var(--ink-muted);
+      font-size: 0.85rem;
+      min-width: 42px;
+      text-align: right;
     }
 
 .subject-header small {

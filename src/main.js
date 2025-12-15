@@ -398,6 +398,153 @@ const DEFAULT_SUBJECT_COLORS = [
       return getSubjectColor(idx);
     }
 
+    function getSubjectTintAlphaById(subjectId) {
+      const subj = subjects.find((s) => s.id === subjectId);
+      const value = Number(subj?.tintAlpha);
+      if (!Number.isFinite(value)) return 0.2;
+      return Math.max(0.05, Math.min(0.6, value));
+    }
+
+    const SUBJECT_SWATCHES = [
+      "#4f8bff",
+      "#4ec58a",
+      "#f77fb3",
+      "#f6a23c",
+      "#b18bff",
+      "#37c6c0",
+      "#f17575",
+      "#f4c74f",
+      "#0ea5e9",
+      "#22c55e",
+      "#a855f7",
+      "#ef4444"
+    ];
+
+    let subjectColorPopover = null;
+    function closeSubjectColorPopover() {
+      if (!subjectColorPopover) return;
+      subjectColorPopover.remove();
+      subjectColorPopover = null;
+    }
+
+    function openSubjectColorPopover(anchorEl, subj, fallbackColor) {
+      closeSubjectColorPopover();
+      if (!anchorEl) return;
+
+      const baseColor = isHexColor(subj.color) ? subj.color : fallbackColor;
+      const tintAlpha = Number.isFinite(Number(subj.tintAlpha)) ? getSubjectTintAlphaById(subj.id) : 0.2;
+
+      const pop = document.createElement("div");
+      pop.className = "subject-color-popover";
+      pop.setAttribute("role", "dialog");
+      pop.setAttribute("aria-label", "Choose subject color");
+      pop.addEventListener("click", (e) => e.stopPropagation());
+
+      const title = document.createElement("div");
+      title.className = "subject-color-popover-title";
+      title.textContent = "Subject color";
+
+      const grid = document.createElement("div");
+      grid.className = "subject-color-swatch-grid";
+      SUBJECT_SWATCHES.forEach((color) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "subject-color-swatch";
+        btn.style.backgroundColor = color;
+        btn.setAttribute("aria-label", `Set color ${color}`);
+        if (color.toLowerCase() === String(baseColor).toLowerCase()) {
+          btn.classList.add("is-active");
+        }
+        btn.addEventListener("click", () => {
+          subj.color = color;
+          saveToStorage();
+          renderTable();
+          renderTodayTodos();
+          renderScheduleView();
+          renderFocusState();
+          closeSubjectColorPopover();
+        });
+        grid.appendChild(btn);
+      });
+
+      const customRow = document.createElement("div");
+      customRow.className = "subject-color-custom-row";
+      const customLabel = document.createElement("div");
+      customLabel.className = "subject-color-custom-label";
+      customLabel.textContent = "Custom";
+      const customInput = document.createElement("input");
+      customInput.type = "color";
+      customInput.value = baseColor;
+      customInput.className = "subject-color-custom-input";
+      customInput.addEventListener("change", () => {
+        subj.color = customInput.value;
+        saveToStorage();
+        renderTable();
+        renderTodayTodos();
+        renderScheduleView();
+        renderFocusState();
+        closeSubjectColorPopover();
+      });
+      customRow.appendChild(customLabel);
+      customRow.appendChild(customInput);
+
+      const strength = document.createElement("div");
+      strength.className = "subject-color-strength";
+      const strengthLabel = document.createElement("div");
+      strengthLabel.className = "subject-color-strength-label";
+      strengthLabel.textContent = "Highlight strength";
+      const strengthRange = document.createElement("input");
+      strengthRange.type = "range";
+      strengthRange.min = "5";
+      strengthRange.max = "60";
+      strengthRange.step = "1";
+      strengthRange.value = String(Math.round(tintAlpha * 100));
+      strengthRange.className = "subject-color-strength-range";
+      const strengthValue = document.createElement("div");
+      strengthValue.className = "subject-color-strength-value";
+      strengthValue.textContent = `${strengthRange.value}%`;
+      strengthRange.addEventListener("input", () => {
+        strengthValue.textContent = `${strengthRange.value}%`;
+        subj.tintAlpha = Number(strengthRange.value) / 100;
+        saveToStorage();
+        renderTodayTodos();
+        renderScheduleView();
+      });
+      strength.appendChild(strengthLabel);
+      strength.appendChild(strengthRange);
+      strength.appendChild(strengthValue);
+
+      pop.appendChild(title);
+      pop.appendChild(grid);
+      pop.appendChild(customRow);
+      pop.appendChild(strength);
+
+      document.body.appendChild(pop);
+      subjectColorPopover = pop;
+
+      const rect = anchorEl.getBoundingClientRect();
+      const popRect = pop.getBoundingClientRect();
+      const margin = 8;
+      const left = Math.min(
+        window.innerWidth - popRect.width - margin,
+        Math.max(margin, rect.left - popRect.width / 2 + rect.width / 2)
+      );
+      const top = Math.min(window.innerHeight - popRect.height - margin, rect.bottom + 8);
+      pop.style.left = `${left}px`;
+      pop.style.top = `${top}px`;
+
+      // Close on outside click / Escape.
+      const onDocClick = () => closeSubjectColorPopover();
+      const onKey = (e) => {
+        if (e.key !== "Escape") return;
+        closeSubjectColorPopover();
+      };
+      setTimeout(() => {
+        document.addEventListener("click", onDocClick, { once: true });
+        document.addEventListener("keydown", onKey, { once: true });
+      }, 0);
+    }
+
     function showToast(message, tone = "info") {
       if (!toastContainer) return;
       const toast = document.createElement("div");
@@ -2276,10 +2423,11 @@ const DEFAULT_SUBJECT_COLORS = [
       sortedTodos.forEach((todo) => {
         const { subj, file } = resolveFileRef(todo.subjectId, todo.fileId);
         const subjColor = getSubjectColorById(todo.subjectId);
+        const tintAlpha = getSubjectTintAlphaById(todo.subjectId);
         const item = document.createElement("div");
         item.className = "today-item";
-        const tinted = hexToRgba(subjColor, 0.2);
-        const borderTint = hexToRgba(subjColor, 0.45);
+        const tinted = hexToRgba(subjColor, tintAlpha);
+        const borderTint = hexToRgba(subjColor, Math.max(0.2, Math.min(0.7, tintAlpha * 2.25)));
         item.style.setProperty("--todo-accent", subjColor);
         if (tinted) item.style.backgroundColor = tinted;
         if (borderTint) item.style.borderColor = borderTint;
@@ -2652,8 +2800,10 @@ const DEFAULT_SUBJECT_COLORS = [
             const chip = document.createElement("div");
             chip.className = "schedule-focus-chip schedule-chip-subject";
             const color = getSubjectColorById(todo.subjectId);
-            const bg = hexToRgba(color, 0.3) || "#f4f6fb";
-            const border = hexToRgba(color, 0.55) || "#dfe4f0";
+            const tintAlpha = getSubjectTintAlphaById(todo.subjectId);
+            const bg = hexToRgba(color, Math.max(0.12, Math.min(0.45, tintAlpha))) || "#f4f6fb";
+            const border =
+              hexToRgba(color, Math.max(0.25, Math.min(0.7, tintAlpha * 2.25))) || "#dfe4f0";
             chip.style.setProperty("--chip-bg", bg);
             chip.style.setProperty("--chip-border", border);
             chip.style.setProperty("--chip-ink", "#0f172a");
@@ -3337,21 +3487,17 @@ const DEFAULT_SUBJECT_COLORS = [
         colorDot.className = "subject-color-dot";
         colorDot.style.backgroundColor = subjColor;
         colorDot.title = "Change subject color";
-
-        const colorInput = document.createElement("input");
-        colorInput.type = "color";
-        colorInput.className = "subject-color-input";
-        colorInput.value = isHexColor(subj.color) ? subj.color : subjColor;
-        colorInput.addEventListener("change", () => {
-          subj.color = colorInput.value;
-          saveToStorage();
-          renderTable();
-          renderTodayTodos();
-          renderScheduleView();
-          renderFocusState();
+        colorDot.setAttribute("role", "button");
+        colorDot.setAttribute("tabindex", "0");
+        colorDot.addEventListener("click", (event) => {
+          event.stopPropagation();
+          openSubjectColorPopover(colorDot, subj, subjColor);
         });
-        colorInput.addEventListener("click", (event) => event.stopPropagation());
-        colorDot.appendChild(colorInput);
+        colorDot.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          openSubjectColorPopover(colorDot, subj, subjColor);
+        });
 
         const titleSpan = document.createElement("span");
         titleSpan.textContent = subj.name;
