@@ -2875,6 +2875,13 @@ body::-webkit-scrollbar,
       height: 8px;
       border-radius: 999px;
       flex-shrink: 0;
+      cursor: pointer;
+      outline: 2px solid transparent;
+      outline-offset: 2px;
+    }
+
+    .subject-color-dot:hover {
+      outline-color: rgba(15, 23, 42, 0.12);
     }
 
 .subject-header small {

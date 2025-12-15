@@ -385,9 +385,16 @@ const DEFAULT_SUBJECT_COLORS = [
       return subjectColors[index % subjectColors.length];
     }
 
+    function isHexColor(value) {
+      const v = String(value || "").trim();
+      return /^#[0-9a-f]{6}$/i.test(v);
+    }
+
     function getSubjectColorById(subjectId) {
       const idx = subjects.findIndex((s) => s.id === subjectId);
       if (idx === -1) return "#d1d5db";
+      const subj = subjects[idx];
+      if (subj && isHexColor(subj.color)) return subj.color;
       return getSubjectColor(idx);
     }
 
@@ -3315,7 +3322,7 @@ const DEFAULT_SUBJECT_COLORS = [
 
         const col = document.createElement("div");
         col.className = "subject-column";
-        const subjColor = getSubjectColor(subjIndex);
+        const subjColor = isHexColor(subj.color) ? subj.color : getSubjectColor(subjIndex);
         col.style.borderTop = "3px solid " + subjColor;
 
         const header = document.createElement("div");
@@ -3329,6 +3336,39 @@ const DEFAULT_SUBJECT_COLORS = [
         const colorDot = document.createElement("span");
         colorDot.className = "subject-color-dot";
         colorDot.style.backgroundColor = subjColor;
+        colorDot.title = "Change subject color";
+        colorDot.setAttribute("role", "button");
+        colorDot.setAttribute("tabindex", "0");
+        const openColorPicker = (event) => {
+          event?.stopPropagation?.();
+          const input = document.createElement("input");
+          input.type = "color";
+          input.value = isHexColor(subj.color) ? subj.color : subjColor;
+          input.style.position = "fixed";
+          input.style.left = "-1000px";
+          input.style.top = "-1000px";
+          input.addEventListener(
+            "change",
+            () => {
+              subj.color = input.value;
+              saveToStorage();
+              renderTable();
+              renderTodayTodos();
+              renderScheduleView();
+              renderFocusState();
+            },
+            { once: true }
+          );
+          document.body.appendChild(input);
+          input.click();
+          setTimeout(() => input.remove(), 0);
+        };
+        colorDot.addEventListener("click", openColorPicker);
+        colorDot.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          openColorPicker(event);
+        });
 
         const titleSpan = document.createElement("span");
         titleSpan.textContent = subj.name;
