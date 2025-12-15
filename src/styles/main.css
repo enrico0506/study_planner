@@ -142,8 +142,8 @@ body::-webkit-scrollbar,
   padding: 20px 22px 36px;
   width: clamp(980px, 92vw, 1520px);
   max-width: 1520px;
-  aspect-ratio: 5 / 3;
-  height: auto;
+  height: calc(100vh - 24px);
+  height: calc(100dvh - 24px);
   max-height: calc(100vh - 24px);
   max-height: calc(100dvh - 24px);
   box-sizing: border-box;
@@ -161,7 +161,6 @@ body::-webkit-scrollbar,
   max-height: none;
   height: auto;
   overflow: visible;
-  aspect-ratio: auto;
 }
 
     .header-row {
