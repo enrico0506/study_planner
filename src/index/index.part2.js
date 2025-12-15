@@ -57,7 +57,7 @@
 
     function loadLanguagePreference() {
       try {
-        const raw = localStorage.getItem(LANGUAGE_KEY);
+        const raw = SP_STORAGE ? SP_STORAGE.getRaw(LANGUAGE_KEY, null) : localStorage.getItem(LANGUAGE_KEY);
         if (!raw) return "en";
         const val = String(raw);
         return val || "en";
@@ -69,14 +69,15 @@
     function saveLanguagePreference(lang) {
       const value = lang || "en";
       try {
-        localStorage.setItem(LANGUAGE_KEY, value);
+        if (SP_STORAGE) SP_STORAGE.setRaw(LANGUAGE_KEY, value, { debounceMs: 0 });
+        else localStorage.setItem(LANGUAGE_KEY, value);
       } catch (e) {}
       document.documentElement.setAttribute("lang", value);
     }
 
     function loadColorPalette() {
       try {
-        const raw = localStorage.getItem(COLOR_PALETTE_KEY);
+        const raw = SP_STORAGE ? SP_STORAGE.getRaw(COLOR_PALETTE_KEY, null) : localStorage.getItem(COLOR_PALETTE_KEY);
         if (!raw) {
           subjectColors = [...DEFAULT_SUBJECT_COLORS];
           return;
@@ -93,7 +94,8 @@
     function saveColorPalette(colors) {
       subjectColors = colors && Array.isArray(colors) && colors.length ? colors : [...DEFAULT_SUBJECT_COLORS];
       try {
-        localStorage.setItem(COLOR_PALETTE_KEY, JSON.stringify(subjectColors));
+        if (SP_STORAGE) SP_STORAGE.setJSON(COLOR_PALETTE_KEY, subjectColors, { debounceMs: 150 });
+        else localStorage.setItem(COLOR_PALETTE_KEY, JSON.stringify(subjectColors));
       } catch (e) {}
     }
 
@@ -140,7 +142,8 @@
       }
       if (!options.skipSave) {
         try {
-          localStorage.setItem(THEME_KEY, activeTheme);
+          if (SP_STORAGE) SP_STORAGE.setRaw(THEME_KEY, activeTheme, { debounceMs: 0 });
+          else localStorage.setItem(THEME_KEY, activeTheme);
         } catch (e) {}
       }
     }
@@ -169,7 +172,7 @@
     function loadThemePreference() {
       let stored = null;
       try {
-        stored = localStorage.getItem(THEME_KEY);
+        stored = SP_STORAGE ? SP_STORAGE.getRaw(THEME_KEY, null) : localStorage.getItem(THEME_KEY);
       } catch (e) {}
       const fallback =
         document.documentElement.getAttribute("data-theme") || activeTheme || "breeze";
@@ -270,7 +273,7 @@
 
     function loadCalendarEvents() {
       try {
-        const raw = localStorage.getItem(CALENDAR_KEY);
+        const raw = SP_STORAGE ? SP_STORAGE.getRaw(CALENDAR_KEY, null) : localStorage.getItem(CALENDAR_KEY);
         if (!raw) {
           calendarEvents = [];
           return;
@@ -1408,4 +1411,3 @@
         renderScheduleView();
       }
     }
-

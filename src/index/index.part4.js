@@ -835,7 +835,8 @@
     });
     manualConfBtn?.addEventListener("click", () => {
       confidenceMode = "manual";
-      localStorage.setItem(CONF_MODE_KEY, confidenceMode);
+      if (SP_STORAGE) SP_STORAGE.setRaw(CONF_MODE_KEY, confidenceMode, { debounceMs: 0 });
+      else localStorage.setItem(CONF_MODE_KEY, confidenceMode);
       manualConfBtn.classList.add("confidence-toggle-active");
       perceivedConfBtn?.classList.remove("confidence-toggle-active");
       renderTable();
@@ -845,7 +846,8 @@
     });
     perceivedConfBtn?.addEventListener("click", () => {
       confidenceMode = "perceived";
-      localStorage.setItem(CONF_MODE_KEY, confidenceMode);
+      if (SP_STORAGE) SP_STORAGE.setRaw(CONF_MODE_KEY, confidenceMode, { debounceMs: 0 });
+      else localStorage.setItem(CONF_MODE_KEY, confidenceMode);
       perceivedConfBtn.classList.add("confidence-toggle-active");
       manualConfBtn?.classList.remove("confidence-toggle-active");
       renderTable();
@@ -1405,14 +1407,14 @@
 	      applySubjectPaging();
 	    }
 
-	    function applySyncedStateFromStorage() {
+		    function applySyncedStateFromStorage() {
 	      loadThemePreference();
 	      loadColorPalette();
 	      loadStylePrefs();
 	      applyStylePrefs();
 
-	      const savedConfMode = localStorage.getItem(CONF_MODE_KEY);
-	      confidenceMode = savedConfMode === "perceived" ? "perceived" : "manual";
+		      const savedConfMode = SP_STORAGE ? SP_STORAGE.getRaw(CONF_MODE_KEY, null) : localStorage.getItem(CONF_MODE_KEY);
+		      confidenceMode = savedConfMode === "perceived" ? "perceived" : "manual";
 	      if (confidenceMode === "perceived") {
 	        perceivedConfBtn?.classList.add("confidence-toggle-active");
 	        manualConfBtn?.classList.remove("confidence-toggle-active");
@@ -1468,9 +1470,9 @@
     loadThemePreference();
     loadColorPalette();
     loadStylePrefs();
-    applyStylePrefs();
-    const savedConfMode = localStorage.getItem(CONF_MODE_KEY);
-    if (savedConfMode === "perceived") confidenceMode = "perceived";
+	    applyStylePrefs();
+	    const savedConfMode = SP_STORAGE ? SP_STORAGE.getRaw(CONF_MODE_KEY, null) : localStorage.getItem(CONF_MODE_KEY);
+	    if (savedConfMode === "perceived") confidenceMode = "perceived";
     if (confidenceMode === "perceived") {
       perceivedConfBtn?.classList.add("confidence-toggle-active");
       manualConfBtn?.classList.remove("confidence-toggle-active");

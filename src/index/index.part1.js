@@ -9,6 +9,8 @@ const STORAGE_KEY = "studySubjects_v1";
     const STYLE_PREF_KEY = "studyStylePrefs_v1";
     const CALENDAR_KEY = "studyCalendarEvents_v1";
     const CONF_MODE_KEY = "studyConfidenceMode_v1";
+    const SP_STORAGE =
+      window.StudyPlanner && window.StudyPlanner.Storage ? window.StudyPlanner.Storage : null;
 
 const DEFAULT_SUBJECT_COLORS = [
       "#4f8bff", // vivid blue
@@ -1261,30 +1263,36 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
     function saveToStorage() {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(subjects));
+        if (SP_STORAGE) SP_STORAGE.setJSON(STORAGE_KEY, subjects, { debounceMs: 150 });
+        else localStorage.setItem(STORAGE_KEY, JSON.stringify(subjects));
       } catch (e) {}
     }
 
     function saveActiveSession() {
       try {
         if (!activeStudy) {
-          localStorage.removeItem(ACTIVE_SESSION_KEY);
+          if (SP_STORAGE) SP_STORAGE.setRaw(ACTIVE_SESSION_KEY, null, { debounceMs: 0 });
+          else localStorage.removeItem(ACTIVE_SESSION_KEY);
           return;
         }
         activeStudy.savedAtMs = Date.now();
-        localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(activeStudy));
+        if (SP_STORAGE) SP_STORAGE.setJSON(ACTIVE_SESSION_KEY, activeStudy, { debounceMs: 0 });
+        else localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(activeStudy));
       } catch (e) {}
     }
 
     function clearActiveSession() {
       try {
-        localStorage.removeItem(ACTIVE_SESSION_KEY);
+        if (SP_STORAGE) SP_STORAGE.setRaw(ACTIVE_SESSION_KEY, null, { debounceMs: 0 });
+        else localStorage.removeItem(ACTIVE_SESSION_KEY);
       } catch (e) {}
     }
 
     function loadActiveSession() {
       try {
-        const raw = localStorage.getItem(ACTIVE_SESSION_KEY);
+        const raw = SP_STORAGE
+          ? SP_STORAGE.getRaw(ACTIVE_SESSION_KEY, null)
+          : localStorage.getItem(ACTIVE_SESSION_KEY);
         if (!raw) return null;
         const parsed = JSON.parse(raw);
         if (!parsed || typeof parsed !== "object") return null;
@@ -1343,13 +1351,16 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
     function saveDailyFocusMap() {
       try {
-        localStorage.setItem(DAILY_FOCUS_KEY, JSON.stringify(dailyFocusMap));
+        if (SP_STORAGE) SP_STORAGE.setJSON(DAILY_FOCUS_KEY, dailyFocusMap, { debounceMs: 150 });
+        else localStorage.setItem(DAILY_FOCUS_KEY, JSON.stringify(dailyFocusMap));
       } catch (e) {}
     }
 
     function loadDailyFocusMap() {
       try {
-        const raw = localStorage.getItem(DAILY_FOCUS_KEY);
+        const raw = SP_STORAGE
+          ? SP_STORAGE.getRaw(DAILY_FOCUS_KEY, null)
+          : localStorage.getItem(DAILY_FOCUS_KEY);
         if (!raw) {
           dailyFocusMap = {};
           return;
@@ -1365,7 +1376,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
     function loadFromStorage() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = SP_STORAGE ? SP_STORAGE.getRaw(STORAGE_KEY, null) : localStorage.getItem(STORAGE_KEY);
         if (!raw) return;
         const data = JSON.parse(raw);
       if (Array.isArray(data)) {
@@ -1411,7 +1422,8 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
     function saveTodayTodos() {
       try {
-        localStorage.setItem(TODO_KEY, JSON.stringify(todayTodos));
+        if (SP_STORAGE) SP_STORAGE.setJSON(TODO_KEY, todayTodos, { debounceMs: 150 });
+        else localStorage.setItem(TODO_KEY, JSON.stringify(todayTodos));
       } catch (e) {}
       const key = getTodayKey();
       dailyFocusMap[key] = cloneTodos(todayTodos);
@@ -1434,7 +1446,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
       if (seeded) return;
 
       try {
-        const raw = localStorage.getItem(TODO_KEY);
+        const raw = SP_STORAGE ? SP_STORAGE.getRaw(TODO_KEY, null) : localStorage.getItem(TODO_KEY);
         if (!raw) return;
         const data = JSON.parse(raw);
         if (Array.isArray(data)) {
@@ -1449,16 +1461,17 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
     function saveFocusConfig() {
       try {
-        localStorage.setItem(
-          CONFIG_KEY,
-          JSON.stringify({ pomoConfig, weeklyTargetMinutes })
-        );
+        if (SP_STORAGE) {
+          SP_STORAGE.setJSON(CONFIG_KEY, { pomoConfig, weeklyTargetMinutes }, { debounceMs: 150 });
+        } else {
+          localStorage.setItem(CONFIG_KEY, JSON.stringify({ pomoConfig, weeklyTargetMinutes }));
+        }
       } catch (e) {}
     }
 
     function loadFocusConfig() {
       try {
-        const raw = localStorage.getItem(CONFIG_KEY);
+        const raw = SP_STORAGE ? SP_STORAGE.getRaw(CONFIG_KEY, null) : localStorage.getItem(CONFIG_KEY);
         if (!raw) return;
         const data = JSON.parse(raw);
         if (!data) return;
@@ -1478,7 +1491,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
     function loadStylePrefs() {
       try {
-        const raw = localStorage.getItem(STYLE_PREF_KEY);
+        const raw = SP_STORAGE ? SP_STORAGE.getRaw(STYLE_PREF_KEY, null) : localStorage.getItem(STYLE_PREF_KEY);
         if (!raw) return;
         const parsed = JSON.parse(raw);
         if (parsed && typeof parsed === "object") {
@@ -1492,7 +1505,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
     function saveStylePrefs() {
       try {
-        localStorage.setItem(STYLE_PREF_KEY, JSON.stringify(stylePrefs));
+        if (SP_STORAGE) SP_STORAGE.setJSON(STYLE_PREF_KEY, stylePrefs, { debounceMs: 150 });
+        else localStorage.setItem(STYLE_PREF_KEY, JSON.stringify(stylePrefs));
       } catch (e) {}
     }
-

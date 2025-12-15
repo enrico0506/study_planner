@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Study Planner – Account</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#2f62f4" />
   <script>
     (function() {
       try {
@@ -14,6 +15,8 @@
       } catch (e) {}
     })();
   </script>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./public/icons/app-icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="./src/styles/main.css" />
   <link rel="stylesheet" href="./src/styles/mobile.css" />
   <link rel="stylesheet" href="./src/styles/phone-menu.css" />
@@ -54,7 +57,7 @@
       <div class="pill" id="authPill"><span class="pill-dot" id="authDot"></span><span id="authPillText">Checking session…</span></div>
       <a class="btn btn-secondary" href="./index.html">Back to app</a>
       <div class="header-menu" aria-label="Menu">
-        <button class="header-menu-toggle" type="button" aria-haspopup="true" aria-expanded="false">...</button>
+        <button class="header-menu-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Open menu">...</button>
         <div class="header-menu-panel">
           <div class="header-menu-group">
             <div class="header-menu-subtitle">Pages</div>
@@ -155,6 +158,8 @@
     </div>
   </div>
 
+  <script src="./src/storage.js" defer></script>
+  <script src="./src/pwa.js" defer></script>
   <script src="./src/sync.js" defer></script>
   <script src="./src/page-menu.js" defer></script>
   <script src="./src/account.js" defer></script>
