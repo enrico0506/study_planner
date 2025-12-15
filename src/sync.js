@@ -136,6 +136,19 @@
     const cloudUpdatedMs = cloud?.updatedAt ? Date.parse(cloud.updatedAt) : 0;
     const lastSeenCloudMs = Number(localStorage.getItem(SYNC_META_KEY) || 0) || 0;
 
+    // First time on this device:
+    // - If cloud has data, always pull it (keep local prefs) to avoid overwriting the account.
+    // - If cloud is empty, do not upload local data automatically (only register or explicit sync).
+    if (!lastSeenCloudMs) {
+      if (cloudHasData) {
+        const applied = mergeCloudWithLocalPrefs(cloudData, local);
+        replaceLocalStateFromSnapshot(applied);
+        localStorage.setItem(SYNC_META_KEY, String(cloudUpdatedMs || Date.now()));
+        location.reload();
+      }
+      return;
+    }
+
     if (cloudHasData && !localHasData) {
       const applied = mergeCloudWithLocalPrefs(cloudData, local);
       replaceLocalStateFromSnapshot(applied);
@@ -211,6 +224,8 @@
   async function pushIfChanged() {
     const me = await getMe();
     if (!me) return;
+    const lastSeenCloudMs = Number(localStorage.getItem(SYNC_META_KEY) || 0) || 0;
+    if (!lastSeenCloudMs) return;
 
     const snapshot = snapshotLocalState();
     const signature = stableStringifyObject(snapshot);

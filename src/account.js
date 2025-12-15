@@ -70,6 +70,27 @@
     return out;
   }
 
+  function replaceLocalStateFromSnapshot(snapshot) {
+    const wantedKeys = new Set(Object.keys(snapshot || {}));
+    const existingKeys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("study")) existingKeys.push(key);
+    }
+
+    for (const key of existingKeys) {
+      if (!wantedKeys.has(key)) localStorage.removeItem(key);
+    }
+
+    for (const [key, value] of Object.entries(snapshot || {})) {
+      if (typeof value === "string" || value === null) {
+        localStorage.setItem(key, value ?? "");
+      } else {
+        localStorage.setItem(key, String(value));
+      }
+    }
+  }
+
   function clearLocalStudyData() {
     const keys = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -145,38 +166,54 @@
     await apiFetch(path, { method: "POST", body: JSON.stringify({ email, password }) });
   }
 
-  async function initialSyncAfterAuth() {
+  async function initialSyncAfterAuth(mode) {
+    const flow = mode === "register" ? "register" : "login";
     const local = snapshotLocalState();
     const cloud = await apiFetch("/api/state");
     const cloudData = (cloud && cloud.data) || {};
     const localHasData = hasPlannerData(local);
     const cloudHasData = hasPlannerData(cloudData);
+    const cloudUpdatedMs = cloud?.updatedAt ? Date.parse(cloud.updatedAt) : 0;
 
-    if (!cloudHasData && localHasData) {
+    if (flow === "register" && !cloudHasData && localHasData) {
       await apiFetch("/api/state", { method: "PUT", body: JSON.stringify({ data: local }) });
       localStorage.setItem(SYNC_META_KEY, String(Date.now()));
       return "Uploaded your existing local data to the new account.";
     }
 
+    // On login, never upload/merge local data into the account automatically.
+    // If the cloud already has data, always prefer it (keep local prefs).
+    if (flow === "login" && cloudHasData) {
+      const applied = mergeCloudWithLocalPrefs(cloudData, local);
+      replaceLocalStateFromSnapshot(applied);
+      localStorage.setItem(SYNC_META_KEY, String(cloudUpdatedMs || Date.now()));
+      return "Loaded your account data into this browser.";
+    }
+
     if (cloudHasData && !localHasData) {
       const applied = mergeCloudWithLocalPrefs(cloudData, local);
-      for (const [k, v] of Object.entries(applied)) localStorage.setItem(k, v ?? "");
-      if (cloud?.updatedAt) {
-        const ms = Date.parse(cloud.updatedAt);
-        if (ms) localStorage.setItem(SYNC_META_KEY, String(ms));
-      }
+      replaceLocalStateFromSnapshot(applied);
+      localStorage.setItem(SYNC_META_KEY, String(cloudUpdatedMs || Date.now()));
       return "Downloaded your cloud data into this browser.";
+    }
+
+    if (flow === "login" && !cloudHasData && localHasData) {
+      return "Signed in. Cloud is empty, so local data was kept (no upload on login). Use “Sync now” if you want to upload it.";
     }
 
     const localStr = stableStringifyObject(local);
     const cloudStr = stableStringifyObject(cloudData);
     if (cloudStr === localStr) return "Already in sync.";
 
-    // Default: merge local wins to avoid losing the user's current work.
-    const merged = { ...cloudData, ...local };
-    await apiFetch("/api/state", { method: "PUT", body: JSON.stringify({ data: merged }) });
-    localStorage.setItem(SYNC_META_KEY, String(Date.now()));
-    return "Merged cloud + local (local wins) and synced.";
+    // Register flow fallback: merge local wins to avoid losing the user's current work.
+    if (flow === "register") {
+      const merged = { ...cloudData, ...local };
+      await apiFetch("/api/state", { method: "PUT", body: JSON.stringify({ data: merged }) });
+      localStorage.setItem(SYNC_META_KEY, String(Date.now()));
+      return "Merged cloud + local (local wins) and synced.";
+    }
+
+    return "Signed in.";
   }
 
   async function syncNow() {
@@ -368,7 +405,7 @@
           $("authPassword").value
         );
         $("authPassword").value = "";
-        const msg = await initialSyncAfterAuth().catch(() => "Signed in.");
+        const msg = await initialSyncAfterAuth("login").catch(() => "Signed in.");
         $("authMsg").textContent = msg;
         window.location.reload();
       } catch (err) {
@@ -385,7 +422,7 @@
           $("authPassword").value
         );
         $("authPassword").value = "";
-        const msg = await initialSyncAfterAuth().catch(() => "Registered.");
+        const msg = await initialSyncAfterAuth("register").catch(() => "Registered.");
         $("authMsg").textContent = msg;
         window.location.reload();
       } catch (err) {
