@@ -2755,6 +2755,17 @@ body::-webkit-scrollbar,
       overflow: visible;
     }
 
+/* Desktop: dynamic subject sizing (set via JS on non-phone, non-maximized view). */
+.subject-table.subject-table-dynamic {
+  grid-auto-columns: auto;
+}
+
+.subject-table.subject-table-dynamic .subject-column {
+  min-width: 0;
+  max-width: none;
+  width: 100%;
+}
+
 .section-heading {
   display: flex;
   flex-direction: row;

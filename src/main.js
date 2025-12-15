@@ -305,6 +305,47 @@ const DEFAULT_SUBJECT_COLORS = [
       );
     }
 
+    function applyDesktopSubjectSizing() {
+      if (!subjectTable) return;
+      if (subjectsMaximized) {
+        subjectTable.classList.remove("subject-table-dynamic");
+        subjectTable.style.removeProperty("grid-template-columns");
+        return;
+      }
+      if (isPhoneLayout()) return;
+      if (window.matchMedia && window.matchMedia("(max-width: 960px)").matches) return;
+
+      const wrapper = subjectTable.closest(".table-wrapper");
+      if (!wrapper) return;
+
+      const count = subjects.length;
+      const addColWidth = 96; // "scroll a little" to reach Add subject
+
+      if (count <= 0) {
+        subjectTable.classList.remove("subject-table-dynamic");
+        subjectTable.style.removeProperty("grid-template-columns");
+        return;
+      }
+
+      const wrapperStyles = window.getComputedStyle(wrapper);
+      const paddingLeft = parseFloat(wrapperStyles.paddingLeft) || 0;
+      const paddingRight = parseFloat(wrapperStyles.paddingRight) || 0;
+      const viewportWidth = Math.max(0, wrapper.clientWidth - paddingLeft - paddingRight);
+
+      const tableStyles = window.getComputedStyle(subjectTable);
+      const gapRaw = tableStyles.columnGap || tableStyles.gap || "0px";
+      const gap = parseFloat(gapRaw) || 0;
+
+      const visibleSubjects = count >= 4 ? 4 : Math.max(1, count);
+      const base =
+        (viewportWidth - gap * Math.max(0, visibleSubjects - 1)) / Math.max(1, visibleSubjects);
+      const subjectWidth = Math.round(Math.max(220, Math.min(360, base)));
+
+      const template = `repeat(${count}, ${subjectWidth}px) ${addColWidth}px`;
+      subjectTable.classList.add("subject-table-dynamic");
+      subjectTable.style.gridTemplateColumns = template;
+    }
+
     function getScheduleCursorDay() {
       if (!scheduleCursorDay) {
         scheduleCursorDay = new Date();
@@ -3714,6 +3755,8 @@ const DEFAULT_SUBJECT_COLORS = [
       // Add subject column at the right
       subjectTable.appendChild(createAddSubjectColumn());
 
+      applyDesktopSubjectSizing();
+
       updateSummary();
       renderDueSoonLane();
       renderSmartSuggestions();
@@ -4610,6 +4653,7 @@ const DEFAULT_SUBJECT_COLORS = [
     expandPageBtn?.addEventListener("click", toggleExpand);
     window.addEventListener("resize", () => {
       enforceTodayHeight();
+      applyDesktopSubjectSizing();
     });
     const settingsPrefsSaveBtn = document.getElementById("settingsPrefsSaveBtn");
     settingsPrefsSaveBtn?.addEventListener("click", () => {
