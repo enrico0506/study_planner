@@ -377,6 +377,62 @@ const CVD_SAFE_SUBJECT_COLORS = [
       subjectTable.style.gridTemplateColumns = template;
     }
 
+    function ensureSubjectScrollButtons() {
+      if (!subjectTable) return;
+      if (isPhoneLayout()) return;
+      const wrapper = subjectTable.closest(".table-wrapper");
+      if (!wrapper) return;
+
+      let nav = wrapper.querySelector(".subject-scroll-nav");
+      if (!nav) {
+        nav = document.createElement("div");
+        nav.className = "subject-scroll-nav";
+
+        const leftBtn = document.createElement("button");
+        leftBtn.type = "button";
+        leftBtn.className = "subject-scroll-btn subject-scroll-btn-left";
+        leftBtn.textContent = "‹";
+        leftBtn.title = "Scroll left";
+
+        const rightBtn = document.createElement("button");
+        rightBtn.type = "button";
+        rightBtn.className = "subject-scroll-btn subject-scroll-btn-right";
+        rightBtn.textContent = "›";
+        rightBtn.title = "Scroll right";
+
+        leftBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          const step = Math.max(240, Math.round(wrapper.clientWidth * 0.8));
+          wrapper.scrollBy({ left: -step, behavior: "smooth" });
+        });
+        rightBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          const step = Math.max(240, Math.round(wrapper.clientWidth * 0.8));
+          wrapper.scrollBy({ left: step, behavior: "smooth" });
+        });
+
+        nav.appendChild(leftBtn);
+        nav.appendChild(rightBtn);
+        wrapper.appendChild(nav);
+
+        const update = () => {
+          const max = Math.max(0, wrapper.scrollWidth - wrapper.clientWidth);
+          const atStart = wrapper.scrollLeft <= 2;
+          const atEnd = wrapper.scrollLeft >= max - 2;
+          const hasOverflow = max > 4;
+          nav.classList.toggle("is-hidden", !hasOverflow);
+          leftBtn.disabled = atStart;
+          rightBtn.disabled = atEnd;
+        };
+
+        wrapper.addEventListener("scroll", () => requestAnimationFrame(update), { passive: true });
+        window.addEventListener("resize", () => requestAnimationFrame(update));
+        nav._update = update;
+      }
+
+      nav._update?.();
+    }
+
     function getScheduleCursorDay() {
       if (!scheduleCursorDay) {
         scheduleCursorDay = new Date();
@@ -2440,6 +2496,29 @@ const CVD_SAFE_SUBJECT_COLORS = [
       }
     }
 
+    function renameSubjectEverywhere(subjectId, newName) {
+      let changed = false;
+      todayTodos.forEach((t) => {
+        if (t.subjectId === subjectId) {
+          t.subjectName = newName;
+          changed = true;
+        }
+      });
+      Object.values(dailyFocusMap || {}).forEach((list) => {
+        if (!Array.isArray(list)) return;
+        list.forEach((t) => {
+          if (t && t.subjectId === subjectId) {
+            t.subjectName = newName;
+            changed = true;
+          }
+        });
+      });
+      if (changed) {
+        saveTodayTodos();
+        saveDailyFocusMap();
+      }
+    }
+
     function promptConfidenceUpdateForFile(subjectId, fileId) {
       const { file } = resolveFileRef(subjectId, fileId);
       if (!file) return;
@@ -3692,6 +3771,21 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
         const titleSpan = document.createElement("span");
         titleSpan.textContent = subj.name;
+        titleSpan.title = "Double-click to rename";
+        titleSpan.addEventListener("dblclick", (event) => {
+          event.stopPropagation();
+          openNoticePrompt("Rename subject", subj.name || "", (value) => {
+            const next = String(value || "").trim();
+            if (!next) return;
+            subj.name = next;
+            renameSubjectEverywhere(subj.id, next);
+            saveToStorage();
+            renderSubjectOptions();
+            renderTable();
+            renderTodayTodos();
+            renderScheduleView();
+          });
+        });
 
         headerLeft.appendChild(colorDot);
         headerLeft.appendChild(titleSpan);
@@ -3811,13 +3905,13 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
         // Allow dropping at end of list (reorder only within same subject)
         fileList.addEventListener("dragover", (event) => {
-          if (!dragState || dragState.subjectId !== subj.id) return;
+          if (!dragState) return;
           event.preventDefault();
         });
 
         fileList.addEventListener("drop", (event) => {
           event.preventDefault();
-          if (!dragState || dragState.subjectId !== subj.id) return;
+          if (!dragState) return;
 
           const sourceSubject = subjects.find(
             (s) => s.id === dragState.subjectId
@@ -3830,15 +3924,28 @@ const CVD_SAFE_SUBJECT_COLORS = [
           if (sourceIndex === -1) return;
 
           const [movedFile] = sourceSubject.files.splice(sourceIndex, 1);
-          if (sourceSubject.id !== subj.id) {
-            // Only reorder within same subject
-            sourceSubject.files.splice(sourceIndex, 0, movedFile);
-            dragState = null;
-            return;
+          if (sourceSubject.id === subj.id) {
+            subj.files.push(movedFile);
+            subj.sortMode = "manual"; // manual override after drag
+            updateManualOrder(subj);
+          } else {
+            // Move across subjects
+            subj.files.push(movedFile);
+            sourceSubject.sortMode = "manual";
+            subj.sortMode = "manual";
+            updateManualOrder(sourceSubject);
+            updateManualOrder(subj);
+            syncTodoForFile(sourceSubject.id, subj.id, movedFile.id, movedFile.name, subj.name);
+            if (
+              activeStudy &&
+              activeStudy.kind === "study" &&
+              activeStudy.subjectId === sourceSubject.id &&
+              activeStudy.fileId === movedFile.id
+            ) {
+              activeStudy.subjectId = subj.id;
+              saveActiveSession();
+            }
           }
-
-          subj.files.push(movedFile);
-          subj.sortMode = "manual"; // manual override after drag
           saveToStorage();
           renderTable();
         });
@@ -3884,13 +3991,13 @@ const CVD_SAFE_SUBJECT_COLORS = [
             });
 
             row.addEventListener("dragenter", (event) => {
-              if (!dragState || dragState.subjectId !== subj.id) return;
+              if (!dragState) return;
               event.preventDefault();
               row.classList.add("drag-over");
             });
 
             row.addEventListener("dragover", (event) => {
-              if (!dragState || dragState.subjectId !== subj.id) return;
+              if (!dragState) return;
               event.preventDefault();
             });
 
@@ -3901,7 +4008,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
             row.addEventListener("drop", (event) => {
               event.preventDefault();
               row.classList.remove("drag-over");
-              if (!dragState || dragState.subjectId !== subj.id) return;
+              if (!dragState) return;
 
               const sourceSubject = subjects.find(
                 (s) => s.id === dragState.subjectId
@@ -3919,22 +4026,31 @@ const CVD_SAFE_SUBJECT_COLORS = [
               if (targetIndex === -1) return;
 
               const [movedFile] = sourceSubject.files.splice(sourceIndex, 1);
-
-              if (sourceSubject.id !== subj.id) {
-                // no cross-subject moving
-                sourceSubject.files.splice(sourceIndex, 0, movedFile);
-                dragState = null;
-                return;
+              if (sourceSubject.id === subj.id) {
+                let insertIndex = targetIndex;
+                if (sourceIndex < targetIndex) {
+                  insertIndex = targetIndex - 1;
+                }
+                subj.files.splice(insertIndex, 0, movedFile);
+                subj.sortMode = "manual"; // manual override after drag
+                updateManualOrder(subj);
+              } else {
+                subj.files.splice(targetIndex, 0, movedFile);
+                sourceSubject.sortMode = "manual";
+                subj.sortMode = "manual";
+                updateManualOrder(sourceSubject);
+                updateManualOrder(subj);
+                syncTodoForFile(sourceSubject.id, subj.id, movedFile.id, movedFile.name, subj.name);
+                if (
+                  activeStudy &&
+                  activeStudy.kind === "study" &&
+                  activeStudy.subjectId === sourceSubject.id &&
+                  activeStudy.fileId === movedFile.id
+                ) {
+                  activeStudy.subjectId = subj.id;
+                  saveActiveSession();
+                }
               }
-
-              let insertIndex = targetIndex;
-              if (sourceIndex < targetIndex) {
-                insertIndex = targetIndex - 1;
-              }
-              subj.files.splice(insertIndex, 0, movedFile);
-              subj.sortMode = "manual"; // manual override after drag
-              updateManualOrder(subj);
-              updateManualOrder(subj);
 
               dragState = null;
               saveToStorage();
@@ -4131,6 +4247,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
       subjectTable.appendChild(createAddSubjectColumn());
 
       applyDesktopSubjectSizing();
+      ensureSubjectScrollButtons();
 
       updateSummary();
       renderDueSoonLane();

@@ -2800,6 +2800,60 @@ body::-webkit-scrollbar,
   position: relative;
 }
 
+.subject-scroll-nav {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px;
+  z-index: 8;
+}
+
+.subject-scroll-nav.is-hidden {
+  display: none;
+}
+
+.subject-scroll-btn {
+  pointer-events: auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.92);
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 1.25rem;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  transition: opacity 0.12s ease, transform 0.12s ease, background 0.12s ease;
+  opacity: 0.0;
+}
+
+.table-wrapper:hover .subject-scroll-btn,
+.table-wrapper:focus-within .subject-scroll-btn {
+  opacity: 1;
+}
+
+.subject-scroll-btn:disabled {
+  opacity: 0;
+  cursor: default;
+}
+
+.subject-scroll-btn:not(:disabled):hover {
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 960px) {
+  .subject-scroll-nav {
+    display: none !important;
+  }
+}
+
 .table-wrapper.dragging-scroll {
   cursor: grabbing;
 }
