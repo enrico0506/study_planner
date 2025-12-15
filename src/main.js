@@ -20,6 +20,18 @@ const DEFAULT_SUBJECT_COLORS = [
       "#f4c74f"  // warm gold
     ];
 
+const CVD_SAFE_SUBJECT_COLORS = [
+  // Okabe-Ito inspired (good separation for common CVD types)
+  "#0072B2", // blue
+  "#E69F00", // orange
+  "#009E73", // bluish green
+  "#D55E00", // vermillion
+  "#56B4E9", // sky blue
+  "#CC79A7", // reddish purple
+  "#F0E442", // yellow
+  "#000000" // black
+];
+
     let subjectColors = [...DEFAULT_SUBJECT_COLORS];
     const THEMES = [
       {
@@ -397,10 +409,13 @@ const DEFAULT_SUBJECT_COLORS = [
     }
 
     function getSubjectColor(index) {
-      if (!Array.isArray(subjectColors) || !subjectColors.length) {
-        subjectColors = [...DEFAULT_SUBJECT_COLORS];
-      }
-      return subjectColors[index % subjectColors.length];
+      const palette =
+        stylePrefs?.cvd === "safe"
+          ? CVD_SAFE_SUBJECT_COLORS
+          : Array.isArray(subjectColors) && subjectColors.length
+            ? subjectColors
+            : DEFAULT_SUBJECT_COLORS;
+      return palette[index % palette.length];
     }
 
     function isHexColor(value) {
@@ -423,20 +438,23 @@ const DEFAULT_SUBJECT_COLORS = [
       return Math.max(0.05, Math.min(0.6, value));
     }
 
-    const SUBJECT_SWATCHES = [
-      "#4f8bff",
-      "#4ec58a",
-      "#f77fb3",
-      "#f6a23c",
-      "#b18bff",
-      "#37c6c0",
-      "#f17575",
-      "#f4c74f",
-      "#0ea5e9",
-      "#22c55e",
-      "#a855f7",
-      "#ef4444"
-    ];
+    function getSubjectSwatches() {
+      if (stylePrefs?.cvd === "safe") return [...CVD_SAFE_SUBJECT_COLORS];
+      return [
+        "#4f8bff",
+        "#4ec58a",
+        "#f77fb3",
+        "#f6a23c",
+        "#b18bff",
+        "#37c6c0",
+        "#f17575",
+        "#f4c74f",
+        "#0ea5e9",
+        "#22c55e",
+        "#a855f7",
+        "#ef4444"
+      ];
+    }
 
     let subjectColorPopover = null;
     function closeSubjectColorPopover() {
@@ -464,7 +482,7 @@ const DEFAULT_SUBJECT_COLORS = [
 
       const grid = document.createElement("div");
       grid.className = "subject-color-swatch-grid";
-      SUBJECT_SWATCHES.forEach((color) => {
+      getSubjectSwatches().forEach((color) => {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "subject-color-swatch";
@@ -773,13 +791,17 @@ const DEFAULT_SUBJECT_COLORS = [
       const meterSingle = document.getElementById("settingsMeterSingleInput");
       const meterGradStart = document.getElementById("settingsMeterGradStartInput");
       const meterGradEnd = document.getElementById("settingsMeterGradEndInput");
+      const contrastSelect = document.getElementById("settingsContrastSelect");
+      const cvdSelect = document.getElementById("settingsCvdSelect");
       return {
         ...stylePrefs,
         meter: meterSelect ? meterSelect.value : stylePrefs.meter,
         studyBar: barSelect ? barSelect.value : stylePrefs.studyBar,
         meterSingle: meterSingle ? meterSingle.value : stylePrefs.meterSingle,
         meterGradStart: meterGradStart ? meterGradStart.value : stylePrefs.meterGradStart,
-        meterGradEnd: meterGradEnd ? meterGradEnd.value : stylePrefs.meterGradEnd
+        meterGradEnd: meterGradEnd ? meterGradEnd.value : stylePrefs.meterGradEnd,
+        contrast: contrastSelect ? contrastSelect.value : stylePrefs.contrast,
+        cvd: cvdSelect ? cvdSelect.value : stylePrefs.cvd
       };
     }
 
@@ -4877,6 +4899,13 @@ const DEFAULT_SUBJECT_COLORS = [
         applyStylePrefs({ cvd: cvdSelect.value });
         saveStylePrefs();
         renderSettingsPreview();
+        renderTable();
+        renderTodayTodos();
+        renderScheduleView();
+        renderDueSoonLane();
+        renderSmartSuggestions();
+        updateTodayStudyUI();
+        updateSummary();
       }
       const studyVal = Number(study?.value || pomoConfig.study);
       const shortVal = Number(short?.value || pomoConfig.short);
