@@ -8,6 +8,11 @@ body.flashcards-page .flashcards-shell {
   padding: 20px 22px 36px;
 }
 
+body.flashcards-page {
+  overflow: auto;
+  min-height: 100vh;
+}
+
 body.flashcards-page .flashcards-layout {
   align-items: start;
 }
