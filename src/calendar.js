@@ -1,6 +1,7 @@
 (() => {
   const STORAGE_KEY = "studyCalendarEvents_v1";
   const Storage = window.StudyPlanner && window.StudyPlanner.Storage ? window.StudyPlanner.Storage : null;
+  const Assignments = window.StudyPlanner && window.StudyPlanner.Assignments ? window.StudyPlanner.Assignments : null;
 
   const monthLabel = document.getElementById("monthLabel");
   const calendarGrid = document.getElementById("calendarGrid");
@@ -34,6 +35,7 @@
   let currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   let currentWeekStart = weekStart(today);
   let events = loadEvents();
+  let assignments = loadAssignments();
   let editingId = null;
 
   function isPhoneLayout() {
@@ -76,6 +78,17 @@
       return Array.isArray(parsed) ? parsed : [];
     } catch (err) {
       console.warn("Could not load calendar events", err);
+      return [];
+    }
+  }
+
+  function loadAssignments() {
+    try {
+      if (!Assignments) return [];
+      const list = Assignments.loadAll();
+      return Array.isArray(list) ? list : [];
+    } catch (err) {
+      console.warn("Could not load assignments", err);
       return [];
     }
   }
@@ -154,6 +167,32 @@
     }
   }
 
+  function assignmentDotType(item) {
+    if (!item) return "deadline";
+    return item.type === "exam" ? "exam" : "deadline";
+  }
+
+  function assignmentDueDateKey(item) {
+    if (!item || !item.dueAt) return null;
+    const d = new Date(item.dueAt);
+    if (Number.isNaN(d.getTime())) return null;
+    return formatDate(d);
+  }
+
+  function assignmentDueTime(item) {
+    if (!item || !item.dueAt) return "";
+    const d = new Date(item.dueAt);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function assignmentsForDate(dateString) {
+    const list = assignments || [];
+    return list
+      .filter((a) => assignmentDueDateKey(a) === dateString)
+      .sort((a, b) => assignmentDueTime(a).localeCompare(assignmentDueTime(b)));
+  }
+
   function buildDotsForEvents(dayEvents) {
     const types = new Set();
     (dayEvents || []).forEach((evt) => {
@@ -170,6 +209,13 @@
       wrap.appendChild(dot);
     });
     return wrap;
+  }
+
+  function buildDotsForDay(dayEvents, dayAssignments) {
+    const combined = [];
+    (dayEvents || []).forEach((e) => combined.push(e));
+    (dayAssignments || []).forEach((a) => combined.push({ type: assignmentDotType(a) }));
+    return buildDotsForEvents(combined);
   }
 
   function sortEvents(list) {
@@ -195,12 +241,13 @@
         day.setDate(start.getDate() + i);
         const dayKey = formatDate(day);
         const dayEvents = eventsForDate(dayKey);
+        const dayAssignments = assignmentsForDate(dayKey);
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "calendar-day";
         if (dayKey === selectedDate) btn.classList.add("calendar-day-selected");
         if (dayKey === formatDate(today)) btn.classList.add("calendar-day-today");
-        if (dayEvents.length) btn.classList.add("calendar-day-has");
+        if (dayEvents.length || dayAssignments.length) btn.classList.add("calendar-day-has");
 
         const top = document.createElement("div");
         top.className = "calendar-day-top";
@@ -208,10 +255,11 @@
 
         const badges = document.createElement("div");
         badges.className = "calendar-day-badges";
-        if (dayEvents.length) {
+        const totalCount = dayEvents.length + dayAssignments.length;
+        if (totalCount) {
           const countChip = document.createElement("span");
           countChip.className = "calendar-chip calendar-chip-more";
-          countChip.textContent = `${dayEvents.length} item${dayEvents.length === 1 ? "" : "s"}`;
+          countChip.textContent = `${totalCount} item${totalCount === 1 ? "" : "s"}`;
           badges.appendChild(countChip);
           dayEvents.slice(0, 2).forEach((evt) => {
             const chip = document.createElement("span");
@@ -228,9 +276,9 @@
 
         btn.appendChild(top);
         btn.appendChild(badges);
-        const dots = buildDotsForEvents(dayEvents);
+        const dots = buildDotsForDay(dayEvents, dayAssignments);
         if (dots) btn.appendChild(dots);
-        btn.setAttribute("aria-label", `${formatDisplayDate(day)}`);
+        btn.setAttribute("aria-label", `${formatDisplayDate(day)} · ${totalCount ? `${totalCount} item${totalCount === 1 ? "" : "s"}` : "No items"}`);
         btn.addEventListener("click", () => selectDate(dayKey, false));
         calendarGrid.appendChild(btn);
       }
@@ -244,13 +292,15 @@
       day.setDate(start.getDate() + i);
       const dayKey = formatDate(day);
       const dayEvents = eventsForDate(dayKey);
+      const dayAssignments = assignmentsForDate(dayKey);
+      const totalCount = dayEvents.length + dayAssignments.length;
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "calendar-day";
       if (day.getMonth() !== currentMonth.getMonth()) btn.classList.add("calendar-day-outside");
       if (dayKey === selectedDate) btn.classList.add("calendar-day-selected");
       if (dayKey === formatDate(today)) btn.classList.add("calendar-day-today");
-      if (dayEvents.length) btn.classList.add("calendar-day-has");
+      if (totalCount) btn.classList.add("calendar-day-has");
 
       const top = document.createElement("div");
       top.className = "calendar-day-top";
@@ -273,25 +323,49 @@
 
       btn.appendChild(top);
       btn.appendChild(badges);
-      const dots = buildDotsForEvents(dayEvents);
+      const dots = buildDotsForDay(dayEvents, dayAssignments);
       if (dots) btn.appendChild(dots);
-      const eventLabel = dayEvents.length ? `${dayEvents.length} item${dayEvents.length === 1 ? "" : "s"}` : "No items";
+      const eventLabel = totalCount ? `${totalCount} item${totalCount === 1 ? "" : "s"}` : "No items";
       btn.setAttribute("aria-label", `${formatDisplayDate(day)} · ${eventLabel}`);
       btn.addEventListener("click", () => selectDate(dayKey, true));
       calendarGrid.appendChild(btn);
     }
   }
 
+  function dispatchOpenAssignment(id) {
+    try {
+      window.dispatchEvent(new CustomEvent("study:open-assignment", { detail: { id } }));
+    } catch {}
+  }
+
+  function goStudyAssignment(item) {
+    if (!item || !item.subjectId || !item.fileId) return;
+    try {
+      if (Assignments) {
+        Assignments.upsert({ ...item, status: item.status === "done" ? "in_progress" : item.status || "in_progress" });
+      }
+    } catch {}
+    const params = new URLSearchParams();
+    params.set("mode", "board");
+    params.set("startAssignment", "1");
+    params.set("assignmentId", item.id);
+    params.set("subjectId", item.subjectId);
+    params.set("fileId", item.fileId);
+    window.location.href = `index.html?${params.toString()}`;
+  }
+
   function renderSelectedDay() {
     const dateObj = parseDateString(selectedDate);
     selectedDateLabel.textContent = formatDisplayDate(dateObj);
     const list = eventsForDate(selectedDate);
-    selectedDateMeta.textContent = list.length
-      ? `${list.length} scheduled item${list.length === 1 ? "" : "s"}`
+    const due = assignmentsForDate(selectedDate);
+    const total = list.length + due.length;
+    selectedDateMeta.textContent = total
+      ? `${list.length} calendar item${list.length === 1 ? "" : "s"} · ${due.length} due`
       : "No items yet – add one from the form.";
     selectedEventList.innerHTML = "";
 
-    if (!list.length) {
+    if (!total) {
       const empty = document.createElement("div");
       empty.className = "calendar-empty";
       empty.textContent = "Nothing planned here yet.";
@@ -355,6 +429,79 @@
       row.appendChild(actions);
       selectedEventList.appendChild(row);
     });
+
+    if (due.length) {
+      const header = document.createElement("div");
+      header.className = "calendar-empty";
+      header.textContent = "Assignments & exams due";
+      selectedEventList.appendChild(header);
+
+      due.forEach((a) => {
+        const row = document.createElement("div");
+        row.className = "calendar-event-row";
+        if (a.status === "done") row.classList.add("calendar-event-done");
+
+        const left = document.createElement("div");
+        left.className = "calendar-event-left";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = a.status === "done";
+        checkbox.addEventListener("change", () => {
+          if (!Assignments) return;
+          Assignments.upsert({ ...a, status: checkbox.checked ? "done" : "todo" });
+        });
+        left.appendChild(checkbox);
+
+        const body = document.createElement("div");
+        body.className = "calendar-event-body";
+        const title = document.createElement("div");
+        title.className = "calendar-event-title";
+        title.textContent = a.title;
+        const meta = document.createElement("div");
+        meta.className = "calendar-event-meta";
+        const dueTime = assignmentDueTime(a) || "Any time";
+        const est = a.estimateMinutes ? `${a.estimateMinutes} min` : "est. ?";
+        const spent = `${a.spentMinutes || 0} min spent`;
+        meta.textContent = `${a.type === "exam" ? "Exam" : "Assignment"} · ${dueTime} · ${a.status.replace("_", " ")} · ${est} · ${spent}`;
+        body.appendChild(title);
+        body.appendChild(meta);
+
+        const actions = document.createElement("div");
+        actions.className = "calendar-event-actions";
+        const editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.className = "chip-btn";
+        editBtn.textContent = "Edit";
+        editBtn.addEventListener("click", () => dispatchOpenAssignment(a.id));
+
+        const studyBtn = document.createElement("button");
+        studyBtn.type = "button";
+        studyBtn.className = "chip-btn chip-btn-primary";
+        studyBtn.textContent = "Study";
+        studyBtn.disabled = !(a.subjectId && a.fileId);
+        studyBtn.addEventListener("click", () => goStudyAssignment(a));
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "icon-btn icon-btn-ghost";
+        deleteBtn.textContent = "✕";
+        deleteBtn.setAttribute("aria-label", "Delete assignment");
+        deleteBtn.addEventListener("click", () => {
+          if (!Assignments) return;
+          if (!confirm("Delete this assignment/exam?")) return;
+          Assignments.remove(a.id);
+        });
+
+        actions.appendChild(editBtn);
+        actions.appendChild(studyBtn);
+        actions.appendChild(deleteBtn);
+
+        row.appendChild(left);
+        row.appendChild(body);
+        row.appendChild(actions);
+        selectedEventList.appendChild(row);
+      });
+    }
   }
 
   function renderUpcoming() {
@@ -362,12 +509,27 @@
     now.setHours(0, 0, 0, 0);
     const horizon = new Date(now);
     horizon.setDate(now.getDate() + 21);
-    const upcoming = events
+    const upcomingEvents = events
       .filter((evt) => {
         if (evt.done) return false;
         const date = parseDateString(evt.date);
         return date >= now && date <= horizon;
       })
+      .map((evt) => ({ kind: "calendar", date: evt.date, time: evt.time || "", title: evt.title, evt }));
+
+    const upcomingAssignments = (assignments || [])
+      .filter((a) => a && a.status !== "done")
+      .map((a) => {
+        const d = assignmentDueDateKey(a);
+        if (!d) return null;
+        const dateObj = parseDateString(d);
+        if (dateObj < now || dateObj > horizon) return null;
+        return { kind: "assignment", date: d, time: assignmentDueTime(a), title: a.title, a };
+      })
+      .filter(Boolean);
+
+    const upcoming = upcomingEvents
+      .concat(upcomingAssignments)
       .sort((a, b) => {
         const da = parseDateString(a.date);
         const db = parseDateString(b.date);
@@ -379,7 +541,7 @@
         }
         return da - db;
       })
-      .slice(0, 8);
+      .slice(0, 10);
 
     upcomingList.innerHTML = "";
     if (!upcoming.length) {
@@ -390,21 +552,26 @@
       return;
     }
 
-    upcoming.forEach((evt) => {
+    upcoming.forEach((item) => {
       const card = document.createElement("div");
       card.className = "calendar-upcoming-row";
       const chip = document.createElement("span");
-      chip.className = `calendar-chip calendar-chip-${badgeTone(evt.type)}`;
-      chip.textContent = labelForType(evt.type);
+      if (item.kind === "assignment") {
+        chip.className = `calendar-chip calendar-chip-${item.a.type === "exam" ? "exam" : "deadline"}`;
+        chip.textContent = item.a.type === "exam" ? "Exam" : "Assignment";
+      } else {
+        chip.className = `calendar-chip calendar-chip-${badgeTone(item.evt.type)}`;
+        chip.textContent = labelForType(item.evt.type);
+      }
       const title = document.createElement("div");
       title.className = "calendar-upcoming-title";
-      title.textContent = evt.title;
+      title.textContent = item.title;
       const dateLine = document.createElement("div");
       dateLine.className = "calendar-upcoming-meta";
-      const dateObj = parseDateString(evt.date);
+      const dateObj = parseDateString(item.date);
       const relDays = Math.round((dateObj - now) / (1000 * 60 * 60 * 24));
       const relLabel = relDays === 0 ? "Today" : relDays === 1 ? "Tomorrow" : `In ${relDays} days`;
-      const timeLabel = evt.time ? evt.time : "Any time";
+      const timeLabel = item.time ? item.time : "Any time";
       dateLine.textContent = `${formatDisplayDate(dateObj)} · ${timeLabel} · ${relLabel}`;
       card.appendChild(chip);
       card.appendChild(title);
@@ -575,6 +742,21 @@
   });
 
   window.addEventListener("study:state-replaced", () => {
+    events = loadEvents();
+    assignments = loadAssignments();
+    renderCalendar();
+    renderSelectedDay();
+    renderUpcoming();
+  });
+
+  window.addEventListener("study:assignments-changed", () => {
+    assignments = loadAssignments();
+    renderCalendar();
+    renderSelectedDay();
+    renderUpcoming();
+  });
+
+  window.addEventListener("study:calendar-changed", () => {
     events = loadEvents();
     renderCalendar();
     renderSelectedDay();

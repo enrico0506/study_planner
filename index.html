@@ -24,6 +24,10 @@
   <link rel="stylesheet" href="./src/styles/phone-modals.css" />
   <link rel="stylesheet" href="./src/styles/a11y.css" />
   <link rel="stylesheet" href="./src/styles/enhancements.css" />
+  <link rel="stylesheet" href="./src/styles/notes.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 </head>
 <body>
   <div class="app" id="appRoot">
@@ -539,6 +543,9 @@
           <label for="modalFileNotes">Notes (optional)</label>
           <input type="text" id="modalFileNotes" placeholder="e.g. 'Important formulas on page 3'" />
         </div>
+        <div class="modal-field-row">
+          <button class="btn btn-secondary" id="openFileNotesBtn" type="button">Open notes (Markdown)</button>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="modal-delete-btn" id="fileModalDeleteBtn" hidden>Delete file</button>
@@ -638,6 +645,7 @@
         </div>
       </div>
       <div class="modal-footer">
+        <button class="btn btn-secondary" id="subjectNotesBtn" type="button">Notes</button>
         <div class="spacer"></div>
         <button class="btn btn-secondary" id="subjectSettingsCancelBtn" type="button">Cancel</button>
         <button class="btn" id="subjectSettingsSaveBtn" type="button">Save</button>
@@ -690,8 +698,52 @@
       </div>
     </div>
 	  </div>
+
+  <!-- Notes Modal -->
+  <div class="calendar-modal notes-modal" id="notesModal" aria-hidden="true">
+    <div class="calendar-modal-backdrop" id="notesModalBackdrop"></div>
+    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="notesModalTitle">
+      <div class="calendar-modal-head">
+        <div>
+          <div class="modal-label">Notes</div>
+          <div class="modal-title" id="notesModalTitle">Notes</div>
+          <div class="modal-subtitle" id="notesModalSubtitle">Markdown + KaTeX.</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="closeNotesModalBtn" type="button">Close</button>
+        </div>
+      </div>
+      <div class="calendar-form">
+        <div class="notes-toolbar">
+          <div class="notes-toolbar-left">
+            <label class="sr-only" for="notesSearchInput">Search</label>
+            <input class="notes-search" id="notesSearchInput" type="search" placeholder="Find in note…" />
+            <button class="btn btn-secondary" id="notesSearchBtn" type="button">Find</button>
+          </div>
+          <div class="notes-toolbar-right">
+            <label class="sr-only" for="notesInsertSelect">Insert link</label>
+            <select id="notesInsertSelect"></select>
+            <button class="btn btn-secondary" id="notesInsertBtn" type="button">Insert link</button>
+          </div>
+        </div>
+        <div class="calendar-form-status" id="notesSaveHint" role="status" aria-live="polite"></div>
+        <div class="notes-layout">
+          <div class="notes-pane">
+            <label class="sr-only" for="notesEditor">Markdown editor</label>
+            <textarea class="notes-editor" id="notesEditor" rows="12" placeholder="# Notes&#10;&#10;- Use **bold** / *italic* / `code`&#10;- Math: $a^2 + b^2 = c^2$&#10;- Links: [Title](https://...)"></textarea>
+          </div>
+          <div class="notes-pane">
+            <div class="notes-preview" id="notesPreview" aria-label="Preview"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 	  <button class="expand-btn" id="expandPageBtn" type="button" aria-label="Toggle expand">⤢</button>
 	  <script src="./src/storage.js"></script>
+	  <script src="./src/assignments.js"></script>
+	  <script src="./src/notes.js"></script>
 	  <script src="./src/data-tools.js"></script>
 	  <script src="./src/pwa.js"></script>
 	  <script src="./src/sync.js"></script>

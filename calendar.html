@@ -24,6 +24,11 @@
   <link rel="stylesheet" href="./src/styles/phone-modals.css" />
   <link rel="stylesheet" href="./src/styles/a11y.css" />
   <link rel="stylesheet" href="./src/styles/enhancements.css" />
+  <link rel="stylesheet" href="./src/styles/calendar-extras.css" />
+  <link rel="stylesheet" href="./src/styles/notes.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 </head>
 <body class="calendar-page">
   <div class="calendar-shell">
@@ -105,6 +110,29 @@
             <div class="side-subtitle">Upcoming focus</div>
             <div class="calendar-upcoming" id="upcomingList"></div>
           </div>
+
+          <div class="calendar-card" id="assignmentsPanel">
+            <div class="side-subtitle">Assignments & exams</div>
+            <div class="assignments-actions">
+              <button class="chip-btn chip-btn-primary" id="assignmentsAddBtn" type="button">Add</button>
+              <button class="chip-btn" id="autoPlanWeekBtn" type="button">Auto-plan week</button>
+            </div>
+            <div class="assignments-filters">
+              <div class="assignments-filter-tabs assignments-tabs" aria-label="Assignments filter tabs">
+                <button class="chip-btn" id="assignmentsFilterDueSoon" type="button" aria-pressed="true">Due soon</button>
+                <button class="chip-btn" id="assignmentsFilterThisWeek" type="button" aria-pressed="false">This week</button>
+                <button class="chip-btn" id="assignmentsFilterAll" type="button" aria-pressed="false">All</button>
+              </div>
+              <label class="sr-only" for="assignmentsStatusFilter">Status</label>
+              <select id="assignmentsStatusFilter">
+                <option value="open">Open</option>
+                <option value="all">All</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+            <div class="calendar-form-status" id="assignmentsStatus"></div>
+            <div class="calendar-upcoming" id="assignmentsList"></div>
+          </div>
         </aside>
       </div>
     </div>
@@ -177,10 +205,215 @@
     </div>
   </div>
 
+  <!-- Assignments / exams Modal -->
+  <div class="calendar-modal" id="assignmentModal" aria-hidden="true">
+    <div class="calendar-modal-backdrop" id="assignmentModalBackdrop"></div>
+    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="assignmentModalTitle">
+      <div class="calendar-modal-head">
+        <div>
+          <div class="modal-label">Assignments & exams</div>
+          <div class="modal-title" id="assignmentModalTitle">Add assignment/exam</div>
+          <div class="modal-subtitle">Plan deliverables and link them to subjects/files for tracked study time.</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="closeAssignmentModalBtn" type="button">Close</button>
+        </div>
+      </div>
+      <form class="calendar-form" id="assignmentForm">
+        <div class="form-row">
+          <label>
+            Type
+            <select id="assignmentTypeSelect">
+              <option value="assignment">Assignment</option>
+              <option value="exam">Exam</option>
+            </select>
+          </label>
+          <label>
+            Status
+            <select id="assignmentStatusSelect">
+              <option value="todo">To do</option>
+              <option value="in_progress">In progress</option>
+              <option value="done">Done</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Title
+            <input id="assignmentTitleInput" type="text" placeholder="e.g. Stats problem set 3" required />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Due
+            <input id="assignmentDueInput" type="datetime-local" required />
+          </label>
+          <label>
+            Priority
+            <select id="assignmentPrioritySelect">
+              <option value="normal">Normal</option>
+              <option value="high">High</option>
+              <option value="low">Low</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Link subject
+            <select id="assignmentSubjectSelect"></select>
+          </label>
+          <label>
+            Link file/topic
+            <select id="assignmentFileSelect"></select>
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Estimate (minutes)
+            <input id="assignmentEstimateInput" type="number" inputmode="numeric" min="0" placeholder="e.g. 180" />
+          </label>
+          <label>
+            Tracked (spent)
+            <div class="calendar-event-meta" id="assignmentSpentLabel">0 min</div>
+          </label>
+        </div>
+        <div class="calendar-form-actions">
+          <div class="calendar-form-status" id="assignmentFormStatus"></div>
+          <div class="calendar-form-buttons">
+            <button class="btn btn-secondary" id="assignmentNotesBtn" type="button">Notes</button>
+            <button class="btn btn-secondary" id="assignmentDuplicateBtn" type="button">Duplicate</button>
+            <button class="btn btn-secondary" id="assignmentStudyBtn" type="button">Study</button>
+            <button class="btn btn-secondary" id="assignmentDeleteBtn" type="button">Delete</button>
+            <button class="btn" type="submit">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notes Modal -->
+  <div class="calendar-modal notes-modal" id="notesModal" aria-hidden="true">
+    <div class="calendar-modal-backdrop" id="notesModalBackdrop"></div>
+    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="notesModalTitle">
+      <div class="calendar-modal-head">
+        <div>
+          <div class="modal-label">Notes</div>
+          <div class="modal-title" id="notesModalTitle">Notes</div>
+          <div class="modal-subtitle" id="notesModalSubtitle">Markdown + KaTeX.</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="closeNotesModalBtn" type="button">Close</button>
+        </div>
+      </div>
+      <div class="calendar-form">
+        <div class="notes-toolbar">
+          <div class="notes-toolbar-left">
+            <label class="sr-only" for="notesSearchInput">Search</label>
+            <input class="notes-search" id="notesSearchInput" type="search" placeholder="Find in note…" />
+            <button class="btn btn-secondary" id="notesSearchBtn" type="button">Find</button>
+          </div>
+          <div class="notes-toolbar-right">
+            <label class="sr-only" for="notesInsertSelect">Insert link</label>
+            <select id="notesInsertSelect"></select>
+            <button class="btn btn-secondary" id="notesInsertBtn" type="button">Insert link</button>
+          </div>
+        </div>
+        <div class="calendar-form-status" id="notesSaveHint" role="status" aria-live="polite"></div>
+        <div class="notes-layout">
+          <div class="notes-pane">
+            <label class="sr-only" for="notesEditor">Markdown editor</label>
+            <textarea class="notes-editor" id="notesEditor" rows="12" placeholder="# Notes&#10;&#10;- Use **bold** / *italic* / `code`&#10;- Math: $a^2 + b^2 = c^2$&#10;- Links: [Title](https://...)"></textarea>
+          </div>
+          <div class="notes-pane">
+            <div class="notes-preview" id="notesPreview" aria-label="Preview"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auto-plan week Modal -->
+  <div class="calendar-modal" id="autoPlanModal" aria-hidden="true">
+    <div class="calendar-modal-backdrop" id="autoPlanModalBackdrop"></div>
+    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="autoPlanModalTitle">
+      <div class="calendar-modal-head">
+        <div>
+          <div class="modal-label">Auto-plan</div>
+          <div class="modal-title" id="autoPlanModalTitle">Auto-plan week</div>
+          <div class="modal-subtitle" id="autoPlanModalSubtitle">Fill free time with study blocks without deleting existing items.</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="closeAutoPlanModalBtn" type="button">Close</button>
+        </div>
+      </div>
+      <div class="calendar-form" id="autoPlanStep1">
+        <div class="form-row">
+          <label>
+            Session length (min)
+            <input id="autoPlanSessionLen" type="number" inputmode="numeric" min="15" step="5" value="50" />
+          </label>
+          <label>
+            Break buffer (min)
+            <input id="autoPlanBreakBuffer" type="number" inputmode="numeric" min="0" step="5" value="10" />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Daily max (min)
+            <input id="autoPlanDailyMax" type="number" inputmode="numeric" min="0" step="15" value="180" />
+          </label>
+          <label>
+            Priority
+            <select id="autoPlanPriority">
+              <option value="deadlines">Deadlines first</option>
+              <option value="confidence">Low confidence first</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Earliest start
+            <input id="autoPlanEarliest" type="time" value="08:00" />
+          </label>
+          <label>
+            Latest end
+            <input id="autoPlanLatest" type="time" value="20:00" />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            <input id="autoPlanIncludeWeekend" type="checkbox" checked />
+            Include weekends
+          </label>
+        </div>
+        <div class="calendar-form-actions">
+          <div class="calendar-form-status" id="autoPlanStatus"></div>
+          <div class="calendar-form-buttons">
+            <button class="btn" id="autoPlanNextBtn" type="button">Preview</button>
+          </div>
+        </div>
+      </div>
+      <div class="calendar-form" id="autoPlanStep2" hidden>
+        <div class="calendar-form-status" id="autoPlanPreviewMeta"></div>
+        <div class="calendar-upcoming" id="autoPlanPreviewList"></div>
+        <div class="calendar-form-actions">
+          <div class="calendar-form-buttons">
+            <button class="btn btn-secondary" id="autoPlanBackBtn" type="button">Back</button>
+            <button class="btn" id="autoPlanApplyBtn" type="button">Apply blocks</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="./src/storage.js" defer></script>
+  <script src="./src/assignments.js" defer></script>
+  <script src="./src/notes.js" defer></script>
+  <script src="./src/autoplan.js" defer></script>
   <script src="./src/pwa.js" defer></script>
   <script src="./src/sync.js" defer></script>
   <script src="./src/page-menu.js" defer></script>
   <script src="./src/calendar.js" defer></script>
+  <script src="./src/assignments-ui.js" defer></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
   const existing = window.StudyPlanner && typeof window.StudyPlanner === "object" ? window.StudyPlanner : {};
   const StudyPlanner = (window.StudyPlanner = existing);
 
-  const APP_SCHEMA_VERSION = 1;
+  const APP_SCHEMA_VERSION = 2;
   const SCHEMA_KEY = "study_schema_version";
   const SNAPSHOT_KEY = "studyLocalSnapshots_v1";
   const SNAPSHOT_LIMIT = 12;
@@ -172,19 +172,69 @@
     migrations.set(Number(fromVersion) || 0, fn);
   }
 
+  function migrateNotesFromSubjectsRaw(subjectsRaw, notesRaw) {
+    const subjects = safeJsonParse(subjectsRaw);
+    const notes = safeJsonParse(notesRaw);
+    const notesMap = notes && typeof notes === "object" && !Array.isArray(notes) ? { ...notes } : {};
+    if (!Array.isArray(subjects)) return notesMap;
+    const nowIso = new Date().toISOString();
+    subjects.forEach((subj) => {
+      if (!subj || typeof subj !== "object") return;
+      const sid = subj.id;
+      const files = Array.isArray(subj.files) ? subj.files : [];
+      files.forEach((file) => {
+        if (!file || typeof file !== "object") return;
+        if (!sid || !file.id) return;
+        const plain = String(file.notes || "").trim();
+        if (!plain) return;
+        const scopeId = `${sid}:${file.id}`;
+        const key = `file:${scopeId}`;
+        if (notesMap[key] && typeof notesMap[key] === "object") return;
+        notesMap[key] = { scope: "file", scopeId, contentMd: plain, updatedAt: nowIso };
+      });
+    });
+    return notesMap;
+  }
+
+  // v1 -> v2: Introduce `studyNotes_v1` and migrate file.notes into Markdown notes (additive; preserves original).
+  registerMigration(1, (backup) => {
+    if (backup && backup.data && typeof backup.data === "object") {
+      const subjectsRaw = backup.data.studySubjects_v1 || "";
+      const notesRaw = backup.data.studyNotes_v1 || "";
+      const nextNotes = migrateNotesFromSubjectsRaw(subjectsRaw, notesRaw);
+      return {
+        ...backup,
+        schemaVersion: 2,
+        data: {
+          ...backup.data,
+          studyNotes_v1: JSON.stringify(nextNotes)
+        }
+      };
+    }
+    try {
+      const subjectsRaw = getRaw("studySubjects_v1", "");
+      const notesRaw = getRaw("studyNotes_v1", "");
+      const nextNotes = migrateNotesFromSubjectsRaw(subjectsRaw, notesRaw);
+      setJSON("studyNotes_v1", nextNotes, { debounceMs: 0 });
+    } catch {}
+  });
+
   function migrateLocal() {
     let current = 0;
+    let hadSchemaKey = true;
     try {
-      current = Number(getRaw(SCHEMA_KEY, "0")) || 0;
+      const raw = localStorage.getItem(SCHEMA_KEY);
+      if (raw == null || raw === "") {
+        hadSchemaKey = false;
+        current = 1; // assume legacy v1 and run forward migrations (safe no-ops for fresh installs)
+      } else {
+        current = Number(raw) || 0;
+      }
     } catch {
-      current = 0;
+      hadSchemaKey = false;
+      current = 1;
     }
-    if (!current) {
-      // First run: mark existing data as schema v1 without changing it.
-      setRaw(SCHEMA_KEY, String(APP_SCHEMA_VERSION), { debounceMs: 0 });
-      return;
-    }
-    let v = current;
+    let v = current || 1;
     while (v < APP_SCHEMA_VERSION) {
       const fn = migrations.get(v);
       if (!fn) break;
@@ -193,6 +243,9 @@
       } catch {}
       v += 1;
       setRaw(SCHEMA_KEY, String(v), { debounceMs: 0 });
+    }
+    if (!hadSchemaKey) {
+      setRaw(SCHEMA_KEY, String(APP_SCHEMA_VERSION), { debounceMs: 0 });
     }
   }
 

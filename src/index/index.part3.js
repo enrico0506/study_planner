@@ -738,6 +738,14 @@
         }
       }
 
+      if (session.kind === "study" && session.assignmentId) {
+        const addMin = Math.max(1, Math.round(elapsed / 60000));
+        const A = window.StudyPlanner && window.StudyPlanner.Assignments ? window.StudyPlanner.Assignments : null;
+        try {
+          if (A) A.addSpentMinutes(session.assignmentId, addMin);
+        } catch {}
+      }
+
       activeStudy = null;
       clearActiveSession();
       saveToStorage();
@@ -795,6 +803,22 @@
       renderTodayTodos();
       renderScheduleView();
       updateStudyTimerDisplay();
+    }
+
+    function startStudyForAssignment(assignmentId, subjectId, file) {
+      if (!assignmentId) return startStudy(subjectId, file);
+      startStudy(subjectId, file);
+      if (activeStudy && activeStudy.kind === "study" && activeStudy.subjectId === subjectId && activeStudy.fileId === file.id) {
+        activeStudy.assignmentId = assignmentId;
+        saveActiveSession();
+        const A = window.StudyPlanner && window.StudyPlanner.Assignments ? window.StudyPlanner.Assignments : null;
+        try {
+          if (A) {
+            const item = A.getById(assignmentId);
+            if (item && item.status === "todo") A.upsert({ ...item, status: "in_progress" });
+          }
+        } catch {}
+      }
     }
 
     function pauseStudy(subjectId, fileId) {

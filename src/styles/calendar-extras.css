@@ -1,0 +1,51 @@
+/* Calendar-only additions for Assignments/Notes/Auto-plan (scoped; no redesign). */
+
+body.calendar-page .assignments-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+body.calendar-page .assignments-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 10px;
+}
+
+body.calendar-page .assignments-filter-tabs {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+body.calendar-page .assignments-row-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+body.calendar-page .assignments-meta-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+body.calendar-page .subject-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
+body.calendar-page .assignments-tabs .chip-btn[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 1px rgba(47, 98, 244, 0.28);
+}
+

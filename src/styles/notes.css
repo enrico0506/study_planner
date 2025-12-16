@@ -1,0 +1,79 @@
+/* Notes modal UI (scoped; reused across pages). */
+
+.notes-modal .notes-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.notes-modal .notes-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 260px;
+}
+
+.notes-modal .notes-toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notes-modal .notes-toolbar-left,
+.notes-modal .notes-toolbar-right {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.notes-modal .notes-search {
+  min-width: 220px;
+}
+
+.notes-modal textarea.notes-editor {
+  width: 100%;
+  min-height: 260px;
+  resize: vertical;
+}
+
+.notes-modal .notes-preview {
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.75);
+  padding: 12px;
+  overflow: auto;
+}
+
+.notes-modal .notes-preview h1,
+.notes-modal .notes-preview h2,
+.notes-modal .notes-preview h3 {
+  margin: 0.2em 0 0.4em;
+}
+
+.notes-modal .notes-preview pre {
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.06);
+  overflow: auto;
+}
+
+.notes-modal .notes-preview code {
+  background: rgba(15, 23, 42, 0.06);
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+@media (max-width: 820px) {
+  .notes-modal .notes-layout {
+    grid-template-columns: 1fr;
+  }
+  .notes-modal .notes-search {
+    min-width: 140px;
+    flex: 1 1 160px;
+  }
+}
+

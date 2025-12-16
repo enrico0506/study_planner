@@ -11,7 +11,10 @@
     "studyTodayTodos_v1",
     "studyDailyFocus_v1",
     "studyCalendarEvents_v1",
-    "studyFlashcards_v1"
+    "studyFlashcards_v1",
+    "studyAssignments",
+    "studyAssignmentsSettings",
+    "studyNotes_v1"
   ]);
 
   function stableStringifyObject(obj) {

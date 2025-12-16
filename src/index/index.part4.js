@@ -1067,6 +1067,14 @@
     }
     subjectSettingsCloseBtn?.addEventListener("click", closeSubjectSettingsModal);
     subjectSettingsCancelBtn?.addEventListener("click", closeSubjectSettingsModal);
+    subjectNotesBtn?.addEventListener("click", () => {
+      const Notes = window.StudyPlanner && window.StudyPlanner.Notes ? window.StudyPlanner.Notes : null;
+      if (!Notes) return;
+      if (!subjectSettingsState) return;
+      const subj = subjects.find((s) => s.id === subjectSettingsState.subjectId);
+      if (!subj) return;
+      Notes.open({ scope: "subject", scopeId: subj.id, label: `Notes · ${subj.name}` });
+    });
 
     subjectSettingsCustomColor?.addEventListener("input", () => {
       const v = String(subjectSettingsCustomColor.value || "").trim();
@@ -1164,6 +1172,22 @@
     };
     clickFileSaveOnEnter(modalFileNameInput);
     clickFileSaveOnEnter(modalFileNotesInput);
+
+    openFileNotesBtn?.addEventListener("click", () => {
+      const Notes = window.StudyPlanner && window.StudyPlanner.Notes ? window.StudyPlanner.Notes : null;
+      if (!Notes) {
+        showNotice("Notes are unavailable (notes.js not loaded).", "warn");
+        return;
+      }
+      if (!fileModalState || fileModalState.mode !== "edit") {
+        showNotice("Save the file once before adding Markdown notes.", "warn");
+        return;
+      }
+      const subj = subjects.find((s) => s.id === fileModalState.subjectId);
+      const file = subj && Array.isArray(subj.files) ? subj.files.find((f) => f.id === fileModalState.fileId) : null;
+      if (!subj || !file) return;
+      Notes.open({ scope: "file", scopeId: `${subj.id}:${file.id}`, label: `Notes · ${file.name}` });
+    });
 
     modalSaveBtn.addEventListener("click", () => {
       if (!fileModalState) return;
@@ -1494,6 +1518,65 @@
     applyPageMode();
     setActiveView(getPageMode() === "schedule" ? "schedule" : "board");
     updateHeaderProfileLabel();
+
+    function handleOpenEntity(detail) {
+      if (!detail || typeof detail !== "object") return;
+      if (detail.kind === "subject" && detail.subjectId) {
+        openSubjectSettingsModal(detail.subjectId);
+        return;
+      }
+      if (detail.kind === "file" && detail.subjectId && detail.fileId) {
+        const subj = subjects.find((s) => s.id === detail.subjectId);
+        const file = subj && Array.isArray(subj.files) ? subj.files.find((f) => f.id === detail.fileId) : null;
+        if (subj && file) openFileModalEdit(subj.id, file);
+        return;
+      }
+      if (detail.kind === "assignment" && detail.assignmentId) {
+        const params = new URLSearchParams();
+        params.set("openAssignmentId", detail.assignmentId);
+        window.location.href = `calendar.html?${params.toString()}`;
+      }
+    }
+
+    window.addEventListener("study:open-entity", (event) => {
+      handleOpenEntity(event && event.detail);
+    });
+
+    // URL deep-links (from Notes links or other pages).
+    try {
+      const params = new URLSearchParams(window.location.search || "");
+      const startAssignment = params.get("startAssignment");
+      const assignmentId = params.get("assignmentId");
+      const subjectId = params.get("subjectId");
+      const fileId = params.get("fileId");
+      const openSubjectId = params.get("openSubjectId");
+      const openFileSubjectId = params.get("openFileSubjectId");
+      const openFileId = params.get("openFileId");
+      if (startAssignment && assignmentId && subjectId && fileId && !activeStudy) {
+        const ref = resolveFileRef(subjectId, fileId);
+        if (ref && ref.subj && ref.file) {
+          startStudyForAssignment(assignmentId, subjectId, ref.file);
+        }
+      }
+      if (openSubjectId) {
+        openSubjectSettingsModal(openSubjectId);
+      } else if (openFileSubjectId && openFileId) {
+        const subj = subjects.find((s) => s.id === openFileSubjectId);
+        const file = subj && Array.isArray(subj.files) ? subj.files.find((f) => f.id === openFileId) : null;
+        if (subj && file) openFileModalEdit(subj.id, file);
+      }
+      if (startAssignment || openSubjectId || (openFileSubjectId && openFileId)) {
+        params.delete("startAssignment");
+        params.delete("assignmentId");
+        params.delete("subjectId");
+        params.delete("fileId");
+        params.delete("openSubjectId");
+        params.delete("openFileSubjectId");
+        params.delete("openFileId");
+        const next = params.toString();
+        history.replaceState({}, "", next ? `?${next}` : window.location.pathname);
+      }
+    } catch {}
 
     // If the user navigates away (calendar, schedule, etc.), pause the timer and
     // auto-resume when coming back to the main page.
