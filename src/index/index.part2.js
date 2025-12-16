@@ -244,8 +244,32 @@
       return `${year}-${month}-${day}`;
     }
 
+    // Study-day key with a configurable day-boundary offset.
+    // Day change is at 02:00 Europe/Berlin by default.
+    function getDayId(date, offsetHours = 2) {
+      const base = date instanceof Date ? date : new Date(date);
+      const shifted = new Date(base.getTime() - offsetHours * 60 * 60 * 1000);
+      try {
+        const parts = new Intl.DateTimeFormat("en-CA", {
+          timeZone: "Europe/Berlin",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit"
+        }).formatToParts(shifted);
+        const out = {};
+        parts.forEach((p) => {
+          if (p && p.type) out[p.type] = p.value;
+        });
+        if (out.year && out.month && out.day) return `${out.year}-${out.month}-${out.day}`;
+      } catch (e) {}
+      const year = shifted.getFullYear();
+      const month = String(shifted.getMonth() + 1).padStart(2, "0");
+      const day = String(shifted.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
     function getTodayKey() {
-      return formatLocalDateKey(new Date());
+      return getDayId(new Date(), 2);
     }
 
     function dateToKey(date) {
@@ -510,8 +534,37 @@
         activeStudy.kind === "study" &&
         activeStudy.startTimeMs
       ) {
-        const key = getTodayKey();
-        totals[key] = (totals[key] || 0) + computeElapsedMs(activeStudy);
+        const elapsed = computeElapsedMs(activeStudy);
+        const endedAtMs = Date.now();
+        const startedAtMs = endedAtMs - elapsed;
+        const startKey = getDayId(new Date(startedAtMs), 2);
+        const endKey = getDayId(new Date(endedAtMs - 1), 2);
+        if (startKey && endKey && startKey !== endKey) {
+          let cursorStart = startedAtMs;
+          let safety = 0;
+          while (cursorStart < endedAtMs && safety < 8) {
+            const key = getDayId(new Date(cursorStart), 2);
+            const finalKey = getDayId(new Date(endedAtMs - 1), 2);
+            if (!key || !finalKey) break;
+            if (key === finalKey) {
+              totals[key] = (totals[key] || 0) + (endedAtMs - cursorStart);
+              break;
+            }
+            let lo = cursorStart;
+            let hi = endedAtMs;
+            while (hi - lo > 1000) {
+              const mid = Math.floor((lo + hi) / 2);
+              if (getDayId(new Date(mid), 2) === key) lo = mid;
+              else hi = mid;
+            }
+            const boundary = hi;
+            totals[key] = (totals[key] || 0) + (boundary - cursorStart);
+            cursorStart = boundary;
+            safety += 1;
+          }
+        } else if (endKey) {
+          totals[endKey] = (totals[endKey] || 0) + elapsed;
+        }
       }
 
       return totals;
@@ -520,11 +573,11 @@
     function sumLastNDays(totals, days) {
       if (!totals || typeof totals !== "object") return 0;
       let sum = 0;
-      const today = new Date();
+      const baseDayId = dateKeyToDayId(getTodayKey());
+      if (baseDayId === null) return 0;
       for (let i = 0; i < days; i++) {
-        const d = new Date(today);
-        d.setDate(today.getDate() - i);
-        const key = dateToKey(d);
+        const key = dayIdToDateKey(baseDayId - i);
+        if (!key) continue;
         sum += Number(totals[key]) || 0;
       }
       return sum;
@@ -532,46 +585,38 @@
 
     function computeStreakStats(totals, thresholdMinutes = STREAK_THRESHOLD_MINUTES) {
       const thresholdMs = Math.max(1, thresholdMinutes) * 60 * 1000;
-      const dayMs = 24 * 60 * 60 * 1000;
-      const activeDays = [];
+      const activeDays = new Set();
       Object.entries(totals || {}).forEach(([key, val]) => {
-        const ts = dateKeyToMs(key);
-        if (ts === null) return;
-        if ((Number(val) || 0) >= thresholdMs) {
-          activeDays.push(ts);
-        }
+        const dayId = dateKeyToDayId(key);
+        if (dayId === null) return;
+        if ((Number(val) || 0) >= thresholdMs) activeDays.add(dayId);
       });
 
-      if (!activeDays.length) return { current: 0, best: 0 };
+      if (!activeDays.size) return { current: 0, best: 0 };
 
-      activeDays.sort((a, b) => a - b);
+      const sorted = [...activeDays].sort((a, b) => a - b);
       let best = 0;
       let streak = 0;
       let prev = null;
-      activeDays.forEach((ts) => {
-        if (prev !== null && Math.abs(ts - prev - dayMs) <= 1000) {
+      sorted.forEach((dayId) => {
+        if (prev !== null && dayId === prev + 1) {
           streak += 1;
         } else {
           streak = 1;
         }
         if (streak > best) best = streak;
-        prev = ts;
+        prev = dayId;
       });
 
       let current = 0;
-      const todayStart = dateKeyToMs(getTodayKey());
-      if (todayStart !== null) {
-        let cursor = todayStart;
-        while (true) {
-          const key = dateToKey(new Date(cursor));
-          const val = totals ? totals[key] || 0 : 0;
-          if (val >= thresholdMs) {
-            current += 1;
-            cursor -= dayMs;
-          } else {
-            break;
-          }
-        }
+      let cursor = dateKeyToDayId(getTodayKey());
+      while (cursor !== null) {
+        const key = dayIdToDateKey(cursor);
+        if (!key) break;
+        const val = totals ? totals[key] || 0 : 0;
+        if (val >= thresholdMs) current += 1;
+        else break;
+        cursor -= 1;
       }
 
       return { current, best };

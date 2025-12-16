@@ -698,6 +698,7 @@
     function finalizeActiveSession(autoFinished, markComplete = true) {
       if (!activeStudy) return;
       const session = activeStudy;
+      const endedAtMs = Date.now();
       const rawElapsed = computeElapsedMs(session);
       const elapsed =
         typeof session.targetMs === "number"
@@ -731,7 +732,44 @@
             file.sessions = (file.sessions || 0) + 1;
             file.lastSessionMs = elapsed;
             file.lastReviewed = new Date().toISOString();
-            addDailyStudyForFile(file, elapsed);
+            const startedAtMs = endedAtMs - elapsed;
+            const startKey = getDayId(new Date(startedAtMs), 2);
+            const endKey = getDayId(new Date(endedAtMs - 1), 2);
+            if (startKey && endKey && startKey !== endKey) {
+              // Split the counted study time across the 02:00 Europe/Berlin day boundary.
+              ensureDailyPacked(file);
+              let cursorStart = startedAtMs;
+              let safety = 0;
+              while (cursorStart < endedAtMs && safety < 8) {
+                const key = getDayId(new Date(cursorStart), 2);
+                const finalKey = getDayId(new Date(endedAtMs - 1), 2);
+                if (!key || !finalKey) break;
+                if (key === finalKey) {
+                  const dayId = dateKeyToDayId(key);
+                  if (dayId !== null) {
+                    file.dailyMsPacked = packedAdd(file.dailyMsPacked || "", dayId, endedAtMs - cursorStart);
+                  }
+                  break;
+                }
+
+                let lo = cursorStart;
+                let hi = endedAtMs;
+                while (hi - lo > 1000) {
+                  const mid = Math.floor((lo + hi) / 2);
+                  if (getDayId(new Date(mid), 2) === key) lo = mid;
+                  else hi = mid;
+                }
+                const boundary = hi;
+                const dayId = dateKeyToDayId(key);
+                if (dayId !== null) {
+                  file.dailyMsPacked = packedAdd(file.dailyMsPacked || "", dayId, boundary - cursorStart);
+                }
+                cursorStart = boundary;
+                safety += 1;
+              }
+            } else {
+              addDailyStudyForFile(file, elapsed);
+            }
             addDailySessionForFile(file);
             if (markComplete) {
               markTodoDoneByFile(session.subjectId, session.fileId);
@@ -743,8 +781,8 @@
                 fileId: session.fileId,
                 assignmentId: session.assignmentId || null,
                 elapsedMs: elapsed,
-                endedAtMs: Date.now(),
-                startedAtMs: Date.now() - elapsed,
+                endedAtMs,
+                startedAtMs,
                 confidenceBefore
               };
             }
@@ -987,7 +1025,27 @@
       }
     }
 
+    let lastStudyDayKey = null;
+    function maybeHandleStudyDayRollover() {
+      const key = getTodayKey();
+      if (!key) return;
+      if (lastStudyDayKey === null) {
+        lastStudyDayKey = key;
+        return;
+      }
+      if (key === lastStudyDayKey) return;
+      lastStudyDayKey = key;
+
+      const next = dailyFocusMap && Array.isArray(dailyFocusMap[key]) ? dailyFocusMap[key] : [];
+      todayTodos = cloneTodos(next);
+      saveTodayTodos();
+      renderTodayTodos();
+      renderScheduleView();
+      renderTable();
+    }
+
     setInterval(function () {
+      maybeHandleStudyDayRollover();
       if (activeStudy && !activeStudy.paused && activeStudy.startTimeMs) {
         const now = Date.now();
         const lastSaved = Number(activeStudy.savedAtMs) || 0;

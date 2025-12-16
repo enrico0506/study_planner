@@ -1,6 +1,7 @@
 const STORAGE_KEY = "studySubjects_v1";
     const CONFIG_KEY = "studyFocusConfig_v1";
     const TODO_KEY = "studyTodayTodos_v1";
+    const TODAY_TODOS_DAY_KEY = "studyTodayTodosDay_v1";
     const DAILY_FOCUS_KEY = "studyDailyFocus_v1";
     const ACTIVE_SESSION_KEY = "studyActiveSession_v1";
     const THEME_KEY = "studyTheme_v1";
@@ -1453,6 +1454,11 @@ const CVD_SAFE_SUBJECT_COLORS = [
         if (SP_STORAGE) SP_STORAGE.setJSON(TODO_KEY, todayTodos, { debounceMs: 150 });
         else localStorage.setItem(TODO_KEY, JSON.stringify(todayTodos));
       } catch (e) {}
+      try {
+        const dayKey = getTodayKey();
+        if (SP_STORAGE) SP_STORAGE.setRaw(TODAY_TODOS_DAY_KEY, dayKey, { debounceMs: 150 });
+        else localStorage.setItem(TODAY_TODOS_DAY_KEY, dayKey);
+      } catch (e) {}
       const key = getTodayKey();
       dailyFocusMap[key] = cloneTodos(todayTodos);
       saveDailyFocusMap();
@@ -1474,6 +1480,18 @@ const CVD_SAFE_SUBJECT_COLORS = [
       if (seeded) return;
 
       try {
+        let storedDayKey = null;
+        try {
+          storedDayKey = SP_STORAGE ? SP_STORAGE.getRaw(TODAY_TODOS_DAY_KEY, null) : localStorage.getItem(TODAY_TODOS_DAY_KEY);
+        } catch (e) {
+          storedDayKey = null;
+        }
+        if (storedDayKey && storedDayKey !== todayKey) {
+          todayTodos = [];
+          saveTodayTodos();
+          return;
+        }
+
         const raw = SP_STORAGE ? SP_STORAGE.getRaw(TODO_KEY, null) : localStorage.getItem(TODO_KEY);
         if (!raw) return;
         const data = JSON.parse(raw);
@@ -1481,6 +1499,10 @@ const CVD_SAFE_SUBJECT_COLORS = [
           todayTodos = cloneTodos(data.filter((t) => t && t.id && t.subjectId && t.fileId));
           dailyFocusMap[todayKey] = cloneTodos(todayTodos);
           saveDailyFocusMap();
+          try {
+            if (SP_STORAGE) SP_STORAGE.setRaw(TODAY_TODOS_DAY_KEY, todayKey, { debounceMs: 150 });
+            else localStorage.setItem(TODAY_TODOS_DAY_KEY, todayKey);
+          } catch (e) {}
         }
       } catch (e) {
         todayTodos = [];
