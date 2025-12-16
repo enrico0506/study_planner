@@ -206,6 +206,24 @@
   function renderDeckList() {
     const deck = getActiveDeck();
     elements.deckList.replaceChildren();
+    if (!state.decks.length) {
+      const empty = document.createElement("div");
+      empty.className = "cards-empty-cta";
+      empty.textContent = "Keine Stapel vorhanden.";
+      const actions = document.createElement("div");
+      actions.className = "cards-empty-actions";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn";
+      btn.textContent = "+ Neuer Stapel";
+      btn.addEventListener("click", () => {
+        elements.deckNameInput?.focus();
+      });
+      actions.appendChild(btn);
+      empty.appendChild(actions);
+      elements.deckList.appendChild(empty);
+      return;
+    }
     state.decks.forEach((d) => {
       const stats = summarizeDeck(d);
       const btn = document.createElement("button");

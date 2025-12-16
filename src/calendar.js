@@ -369,7 +369,7 @@
     if (!total) {
       const empty = document.createElement("div");
       empty.className = "calendar-empty";
-      empty.textContent = "Nothing planned here yet.";
+      empty.textContent = "Nothing planned here yet. Add a deadline or study block with the form on the left.";
       selectedEventList.appendChild(empty);
       return;
     }

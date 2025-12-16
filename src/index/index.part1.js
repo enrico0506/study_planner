@@ -653,8 +653,12 @@ const CVD_SAFE_SUBJECT_COLORS = [
       subjectSettingsState = null;
       subjectSettingsTempColor = null;
       if (subjectSettingsBackdrop) {
-        subjectSettingsBackdrop.hidden = true;
-        subjectSettingsBackdrop.style.display = "none";
+        const helper = window.subjectSettingsA11y;
+        if (helper && helper.close) helper.close();
+        else {
+          subjectSettingsBackdrop.hidden = true;
+          subjectSettingsBackdrop.style.display = "none";
+        }
       }
     }
 
@@ -711,8 +715,12 @@ const CVD_SAFE_SUBJECT_COLORS = [
       renderSubjectSettingsSwatches(subjectSettingsTempColor);
       updateSubjectSettingsPreview();
 
-      subjectSettingsBackdrop.hidden = false;
-      subjectSettingsBackdrop.style.display = "flex";
+      const helper = window.subjectSettingsA11y;
+      if (helper && helper.open) helper.open();
+      else {
+        subjectSettingsBackdrop.hidden = false;
+        subjectSettingsBackdrop.style.display = "flex";
+      }
     }
 
     function showToast(message, tone = "info") {

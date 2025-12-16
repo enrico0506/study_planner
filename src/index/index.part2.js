@@ -1333,17 +1333,25 @@
       if (addTodoSubtaskInput) addTodoSubtaskInput.value = "";
       renderAddTodoSubtasks();
       if (addTodoModalBackdrop) {
-        addTodoModalBackdrop.hidden = false;
-        addTodoModalBackdrop.style.display = "flex";
+        const helper = window.addTodoModalA11y;
+        if (helper && helper.open) helper.open();
+        else {
+          addTodoModalBackdrop.hidden = false;
+          addTodoModalBackdrop.style.display = "flex";
+          addTodoSubtaskInput?.focus();
+        }
       }
-      addTodoSubtaskInput?.focus();
     }
 
     function closeAddTodoModal() {
       addTodoModalState = null;
       if (addTodoModalBackdrop) {
-        addTodoModalBackdrop.hidden = true;
-        addTodoModalBackdrop.style.display = "none";
+        const helper = window.addTodoModalA11y;
+        if (helper && helper.close) helper.close();
+        else {
+          addTodoModalBackdrop.hidden = true;
+          addTodoModalBackdrop.style.display = "none";
+        }
       }
     }
 

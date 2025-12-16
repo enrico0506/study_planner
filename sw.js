@@ -16,6 +16,7 @@
     "./src/storage.js",
     "./src/data-tools.js",
     "./src/pwa.js",
+    "./src/a11y-utils.js",
     "./src/index/index.part1.js",
     "./src/index/index.part2.js",
     "./src/index/index.part3.js",
@@ -78,4 +79,3 @@
     );
   });
 })();
-

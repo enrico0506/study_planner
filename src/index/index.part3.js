@@ -31,13 +31,24 @@
 		        todayCollapsedMap = loadTodayCollapsedMap();
 		      }
 
-	      if (!todayTodos.length) {
-	        const empty = document.createElement("div");
-	        empty.className = "today-empty";
-	        empty.textContent = "Drag files from subjects to build today's todo list.";
-	        todayList.appendChild(empty);
-	        return;
-	      }
+      if (!todayTodos.length) {
+        const empty = document.createElement("div");
+        empty.className = "today-empty";
+        empty.textContent = "Drag files from subjects to build today's todo list.";
+        const ctaRow = document.createElement("div");
+        ctaRow.style.marginTop = "10px";
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn";
+        btn.textContent = "Add from subjects";
+        btn.addEventListener("click", () => {
+          window.location.href = "index.html?mode=subjects";
+        });
+        ctaRow.appendChild(btn);
+        empty.appendChild(ctaRow);
+        todayList.appendChild(empty);
+        return;
+      }
 
       const isDragMode = todayExpanded && !subjectsMaximized;
       const sortedTodos = isDragMode
@@ -1330,9 +1341,20 @@
       subjectTable.innerHTML = "";
 
       if (!subjects.length) {
-        emptyHint.textContent =
-          "No subjects yet. Use “Add subject” on the right to create your first subject.";
+        emptyHint.innerHTML = "";
         emptyHint.style.display = "block";
+        const msg = document.createElement("div");
+        msg.textContent = "No subjects yet. Create your first subject to start tracking.";
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn";
+        btn.textContent = "+ Add first subject";
+        btn.addEventListener("click", () => {
+          const addBtn = document.getElementById("addSubjectBtn");
+          if (addBtn) addBtn.click();
+        });
+        emptyHint.appendChild(msg);
+        emptyHint.appendChild(btn);
       } else {
         emptyHint.style.display = "none";
       }

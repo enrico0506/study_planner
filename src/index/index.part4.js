@@ -22,6 +22,12 @@
       }
     }
 
+    const fileModalA11y = window.StudyA11y
+      ? window.StudyA11y.withModalA11y(fileModalBackdrop, () => {
+          closeFileModal();
+        }, () => modalFileNameInput)
+      : null;
+
     function openFileModalAdd(subjectId) {
       fileModalState = { mode: "add", subjectId };
       fileModalTitle.textContent = "Add file";
@@ -34,8 +40,11 @@
       modalConfidenceRange.value = "50";
       modalConfidenceValue.textContent = "50%";
 
-      fileModalBackdrop.style.display = "flex";
-      modalFileNameInput.focus();
+      if (fileModalA11y) fileModalA11y.open();
+      else {
+        fileModalBackdrop.style.display = "flex";
+        modalFileNameInput.focus();
+      }
     }
 
     function openFileModalEdit(subjectId, file) {
@@ -50,13 +59,17 @@
       modalConfidenceRange.value = file.confidence;
       modalConfidenceValue.textContent = file.confidence + "%";
 
-      fileModalBackdrop.style.display = "flex";
-      modalFileNameInput.focus();
+      if (fileModalA11y) fileModalA11y.open();
+      else {
+        fileModalBackdrop.style.display = "flex";
+        modalFileNameInput.focus();
+      }
     }
 
     function closeFileModal() {
       fileModalState = null;
-      fileModalBackdrop.style.display = "none";
+      if (fileModalA11y) fileModalA11y.close();
+      else fileModalBackdrop.style.display = "none";
     }
 
     // Stats modal
@@ -1070,6 +1083,14 @@
         addSubtaskFromInput();
       }
     });
+    const addTodoModalA11y = window.StudyA11y
+      ? window.StudyA11y.withModalA11y(
+          addTodoModalBackdrop,
+          () => closeAddTodoModal(),
+          () => addTodoSubtaskInput || addTodoModalSave || addTodoModalTitle
+        )
+      : null;
+    window.addTodoModalA11y = addTodoModalA11y;
     addTodoModalClose?.addEventListener("click", () => closeAddTodoModal());
     addTodoModalSave?.addEventListener("click", () => submitAddTodoModal());
     addTodoModalBackdrop?.addEventListener("mousedown", (event) => {
@@ -1090,6 +1111,13 @@
       subjectSettingsBackdrop.addEventListener("mousedown", (event) => {
         if (event.target === subjectSettingsBackdrop) closeSubjectSettingsModal();
       });
+    }
+    if (window.StudyA11y && subjectSettingsBackdrop) {
+      window.subjectSettingsA11y = window.StudyA11y.withModalA11y(
+        subjectSettingsBackdrop,
+        () => closeSubjectSettingsModal(),
+        () => subjectSettingsNameInput || subjectSettingsNameInput
+      );
     }
     subjectSettingsCloseBtn?.addEventListener("click", closeSubjectSettingsModal);
     subjectSettingsCancelBtn?.addEventListener("click", closeSubjectSettingsModal);
