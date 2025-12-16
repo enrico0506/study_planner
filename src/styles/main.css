@@ -2525,12 +2525,17 @@ body::-webkit-scrollbar,
 .today-reorder-actions {
   display: inline-flex;
   gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-2px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.today-item:hover .today-reorder-actions,
+.today-item:focus-within .today-reorder-actions {
   opacity: 1;
   pointer-events: auto;
-  max-width: none;
-  max-height: none;
-  overflow: visible;
-  transform: none;
+  transform: translateY(0);
 }
 
 .today-reorder-btn {
@@ -3612,11 +3617,17 @@ body::-webkit-scrollbar,
       display: flex;
       gap: 6px;
       justify-content: flex-end;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-2px);
+      transition: opacity 0.12s ease, transform 0.12s ease;
+    }
+
+    .file-row:hover .file-actions-row,
+    .file-row:focus-within .file-actions-row {
       opacity: 1;
       pointer-events: auto;
-      max-height: none;
-      overflow: visible;
-      transform: none;
+      transform: translateY(0);
     }
 
     .file-action-btn {
