@@ -27,6 +27,7 @@
     "studyFocusConfig_v1",
     "studyColorPalette_v1"
   ]);
+  const SYNC_KEYS = new Set([...DATA_KEYS, ...PREF_KEYS]);
 
   function $(id) {
     return document.getElementById(id);
@@ -76,27 +77,40 @@
 
   function snapshotLocalState() {
     const out = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key || !key.startsWith("study")) continue;
-      out[key] = localStorage.getItem(key);
+    for (const key of SYNC_KEYS) {
+      try {
+        const val = localStorage.getItem(key);
+        if (val == null) continue;
+        out[key] = val;
+      } catch {}
+    }
+    return out;
+  }
+
+  function filterSnapshot(snapshot) {
+    const src = snapshot && typeof snapshot === "object" ? snapshot : {};
+    const out = {};
+    for (const key of SYNC_KEYS) {
+      if (key in src) out[key] = src[key];
     }
     return out;
   }
 
   function replaceLocalStateFromSnapshot(snapshot) {
-    const wantedKeys = new Set(Object.keys(snapshot || {}));
+    const incoming = snapshot && typeof snapshot === "object" ? snapshot : {};
+    const wantedKeys = new Set(Object.keys(incoming).filter((k) => SYNC_KEYS.has(k)));
     const existingKeys = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && key.startsWith("study")) existingKeys.push(key);
+      if (key && SYNC_KEYS.has(key)) existingKeys.push(key);
     }
 
     for (const key of existingKeys) {
       if (!wantedKeys.has(key)) localStorage.removeItem(key);
     }
 
-    for (const [key, value] of Object.entries(snapshot || {})) {
+    for (const [key, value] of Object.entries(incoming)) {
+      if (!SYNC_KEYS.has(key)) continue;
       if (typeof value === "string" || value === null) {
         localStorage.setItem(key, value ?? "");
       } else {
@@ -115,10 +129,24 @@
     localStorage.removeItem(SYNC_META_KEY);
   }
 
-  function stableStringifyObject(obj) {
-    const keys = Object.keys(obj).sort();
-    const entries = keys.map((key) => [key, obj[key]]);
-    return JSON.stringify(Object.fromEntries(entries));
+  function hashString(input, seed) {
+    let hash = seed >>> 0;
+    for (let i = 0; i < input.length; i++) {
+      hash ^= input.charCodeAt(i);
+      hash = Math.imul(hash, 0x01000193) >>> 0;
+    }
+    return hash >>> 0;
+  }
+
+  function stableHashSnapshot(obj) {
+    const keys = Object.keys(obj || {}).sort();
+    let hash = 0x811c9dc5;
+    for (const key of keys) {
+      hash = hashString(key, hash);
+      const value = obj[key];
+      hash = hashString(value == null ? "" : String(value), hash);
+    }
+    return `h${hash.toString(16)}`;
   }
 
   function isEmptyJsonString(value) {
@@ -182,7 +210,7 @@
     const flow = mode === "register" ? "register" : "login";
     const local = snapshotLocalState();
     const cloud = await apiFetch("/api/state");
-    const cloudData = (cloud && cloud.data) || {};
+    const cloudData = filterSnapshot((cloud && cloud.data) || {});
     const localHasData = hasPlannerData(local);
     const cloudHasData = hasPlannerData(cloudData);
     const cloudUpdatedMs = cloud?.updatedAt ? Date.parse(cloud.updatedAt) : 0;
@@ -213,9 +241,9 @@
       return "Signed in. Cloud is empty, so local data was kept (no upload on login). Use “Sync now” if you want to upload it.";
     }
 
-    const localStr = stableStringifyObject(local);
-    const cloudStr = stableStringifyObject(cloudData);
-    if (cloudStr === localStr) return "Already in sync.";
+    const localSig = stableHashSnapshot(local);
+    const cloudSig = stableHashSnapshot(cloudData);
+    if (cloudSig === localSig) return "Already in sync.";
 
     // Register flow fallback: merge local wins to avoid losing the user's current work.
     if (flow === "register") {
@@ -232,7 +260,7 @@
     if (!window.location.origin) return;
     const local = snapshotLocalState();
     const cloud = await apiFetch("/api/state");
-    const cloudData = (cloud && cloud.data) || {};
+    const cloudData = filterSnapshot((cloud && cloud.data) || {});
 
     const localHasData = hasPlannerData(local);
     const cloudHasData = hasPlannerData(cloudData);
@@ -291,16 +319,8 @@
               method: "POST",
               body: JSON.stringify({ versionId: v.id })
             });
-            const data = restored.data || {};
-            // Replace only study* keys
-            const wanted = new Set(Object.keys(data));
-            const existing = [];
-            for (let i = 0; i < localStorage.length; i++) {
-              const key = localStorage.key(i);
-              if (key && key.startsWith("study")) existing.push(key);
-            }
-            for (const key of existing) if (!wanted.has(key)) localStorage.removeItem(key);
-            for (const [k, val] of Object.entries(data)) localStorage.setItem(k, val ?? "");
+            const data = filterSnapshot(restored.data || {});
+            replaceLocalStateFromSnapshot(data);
             window.location.href = "./index.html";
           } catch (err) {
             $("versionsMsg").textContent = String(err?.message || "Restore failed");
