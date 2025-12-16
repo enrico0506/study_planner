@@ -251,7 +251,8 @@
       active.running = false;
       active.startedAtMs = null;
       active.accumulatedMs = elapsed;
-      if (elapsed >= MIN_MS && SessionJournal && typeof SessionJournal.appendSession === "function") {
+      const minMs = typeof active.meta?.minMs === "number" ? Math.max(0, active.meta.minMs) : MIN_MS;
+      if (elapsed >= minMs && SessionJournal && typeof SessionJournal.appendSession === "function") {
         SessionJournal.appendSession({
           id: `sess_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
           startedAt: new Date(startedAt).toISOString(),

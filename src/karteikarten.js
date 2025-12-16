@@ -103,6 +103,14 @@
     el.classList.toggle(className, force);
   }
 
+  const CARD_LIST_PAGE_SIZE = 200;
+  const KATEX_DELIMITERS = [
+    { left: "$$", right: "$$", display: true },
+    { left: "$", right: "$", display: false },
+    { left: "\\(", right: "\\)", display: false },
+    { left: "\\[", right: "\\]", display: true },
+  ];
+
   const defaultDeck = () => ({
     id: `deck-${Date.now()}`,
     name: "Allgemein",
@@ -114,6 +122,7 @@
     decks: [],
     activeDeckId: null,
     mode: "normal",
+    cardListLimit: CARD_LIST_PAGE_SIZE,
     reviewQueue: [],
     currentCard: null,
     showAnswer: false,
@@ -122,7 +131,6 @@
     selectedCardIds: new Set(),
     cardSearch: "",
     csvCandidate: null,
-    lastCsvText: "",
     searchTimer: null,
     sessionHeader: null,
     sessionStartedHere: false,
@@ -135,6 +143,7 @@
       source: "flashcards",
       deckId: deck ? deck.id : null,
       mode: state.mode,
+      minMs: 0,
     });
   }
 
@@ -145,7 +154,7 @@
     state.sessionHeader = mount({
       mountEl: elements.sessionHeaderMount,
       variant: "compact",
-      context: { source: "flashcards", mode: state.mode },
+      context: { source: "flashcards", mode: state.mode, minMs: 0 },
     });
     updateSessionHeaderContext();
   }
@@ -298,6 +307,7 @@
     state.editingCardId = null;
     state.selectedCardIds.clear();
     state.cardSearch = "";
+    state.cardListLimit = CARD_LIST_PAGE_SIZE;
     if (elements.cardSearchInput) elements.cardSearchInput.value = "";
     buildQueue();
     state.reviewDone = 0;
@@ -314,8 +324,13 @@
   function summarizeDeck(deck) {
     const now = Date.now();
     const total = deck.cards.length;
-    const due = deck.cards.filter((card) => !card.due || card.due <= now).length;
-    const newCards = deck.cards.filter((card) => !card.reviewCount || card.reviewCount === 0).length;
+    let due = 0;
+    let newCards = 0;
+    for (let i = 0; i < deck.cards.length; i += 1) {
+      const card = deck.cards[i];
+      if (!card.due || card.due <= now) due += 1;
+      if (!card.reviewCount || card.reviewCount === 0) newCards += 1;
+    }
     return { total, due, newCards };
   }
 
@@ -490,13 +505,23 @@
 
     const query = String(state.cardSearch || "").trim().toLowerCase();
     const now = Date.now();
-    const cards = deck.cards.slice().reverse().filter((card) => {
-      if (!query) return true;
-      const hay = `${card.front || ""}\n${card.back || ""}\n${card.hint || ""}`.toLowerCase();
-      return hay.includes(query);
-    });
+    const limit = state.cardListLimit || CARD_LIST_PAGE_SIZE;
+    const results = [];
+    for (let i = deck.cards.length - 1; i >= 0; i -= 1) {
+      if (results.length >= limit + 1) break;
+      const card = deck.cards[i];
+      if (!card) continue;
+      if (query) {
+        const haystack = `${card.front || ""}\n${card.back || ""}\n${card.hint || ""}`.toLowerCase();
+        if (!haystack.includes(query)) continue;
+      }
+      results.push(card);
+    }
 
-    if (!cards.length) {
+    const hasMore = results.length > limit;
+    if (hasMore) results.length = limit;
+
+    if (!results.length) {
       const empty = document.createElement("div");
       empty.className = "card-list-empty";
       empty.textContent = "Keine Treffer. Passe die Suche an oder lösche den Filter.";
@@ -504,7 +529,7 @@
       return;
     }
 
-    cards.forEach((card) => {
+    results.forEach((card) => {
       const item = document.createElement("div");
       item.className = "card-list-item";
       item.dataset.cardId = card.id;
@@ -576,6 +601,21 @@
 
       elements.cardList.appendChild(item);
     });
+
+    if (hasMore) {
+      const loadMore = document.createElement("button");
+      loadMore.type = "button";
+      loadMore.className = "btn btn-secondary card-list-load-more";
+      loadMore.textContent = "Mehr laden";
+      loadMore.addEventListener("click", () => {
+        state.cardListLimit = (state.cardListLimit || CARD_LIST_PAGE_SIZE) + CARD_LIST_PAGE_SIZE;
+        renderCardList();
+        refreshSelectionFromDom();
+      });
+      elements.cardList.appendChild(loadMore);
+    }
+
+    applyKatex(elements.cardList);
   }
 
   function setMode(mode) {
@@ -714,21 +754,12 @@
     setText(elements.reviewBack, state.currentCard.back);
     elements.reviewBack.classList.toggle("review-back-visible", state.showAnswer);
     toggleActionButtons(state.showAnswer);
-    applyKatex();
+    applyKatex(elements.reviewCard);
   }
 
-  function applyKatex() {
-    if (!window.renderMathInElement) return;
-    const delimiters = [
-      { left: "$$", right: "$$", display: true },
-      { left: "$", right: "$", display: false },
-      { left: "\\(", right: "\\)", display: false },
-      { left: "\\[", right: "\\]", display: true },
-    ];
-    if (elements.reviewCard) renderMathInElement(elements.reviewCard, { delimiters, throwOnError: false });
-    if (elements.cardList) {
-      renderMathInElement(elements.cardList, { delimiters, throwOnError: false });
-    }
+  function applyKatex(scopeEl) {
+    if (!scopeEl || !window.renderMathInElement) return;
+    renderMathInElement(scopeEl, { delimiters: KATEX_DELIMITERS, throwOnError: false });
   }
 
   function toggleActionButtons(show) {
@@ -745,7 +776,10 @@
       buildQueue(true);
     }
     state.showAnswer = false;
-    render();
+    renderReview();
+    renderActiveDeckMeta();
+    renderDeckList();
+    renderDeckModalList();
   }
 
   function handleNormalReview(known) {
@@ -869,6 +903,7 @@
     setStatus(elements.importStatus, `${candidate.rows.length} Karten importiert (Trennung: ${delimiterLabel}).`, { tone: "good" });
     setStatus(elements.csvStatus, `Import abgeschlossen: ${candidate.rows.length} Karten.`, { tone: "good" });
     state.activeDeckId = targetDeck.id;
+    state.cardListLimit = CARD_LIST_PAGE_SIZE;
     state.reviewDone = 0;
     setModalState(elements.csvModal, false);
     buildQueue(true);
@@ -876,7 +911,7 @@
     render();
     elements.csvFileInput.value = "";
     state.csvCandidate = null;
-    state.lastCsvText = "";
+    renderCsvPreview(null);
   }
 
   function renderCsvPreview(candidate) {
@@ -936,14 +971,12 @@
     const file = elements.csvFileInput.files && elements.csvFileInput.files[0];
     if (!file) {
       state.csvCandidate = null;
-      state.lastCsvText = "";
       renderCsvPreview(null);
       return;
     }
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = String(event.target.result || "");
-      state.lastCsvText = text;
       const candidate = parseCsv(text);
       state.csvCandidate = candidate;
       renderCsvPreview(candidate);
@@ -1065,9 +1098,9 @@
     state.currentCard = null;
     state.reviewQueue = [];
     state.reviewDone = 0;
-    renderReview();
     stopFlashcardsTimer("exit-review");
     toggleReviewMaximize(false);
+    render();
   }
 
   function showUpcoming() {
@@ -1093,7 +1126,6 @@
     renderActiveDeckMeta();
     renderCardList();
     renderReview();
-    applyKatex();
     if (elements.bulkDeleteBtn) elements.bulkDeleteBtn.disabled = state.selectedCardIds.size === 0;
   }
 
@@ -1151,6 +1183,7 @@
       };
       state.decks.push(newDeck);
       state.activeDeckId = newDeck.id;
+      state.cardListLimit = CARD_LIST_PAGE_SIZE;
       elements.deckForm.reset();
       setStatus(elements.deckFormStatus, "Stapel gespeichert.", { tone: "good" });
       setModalState(elements.deckModal, false);
@@ -1237,7 +1270,13 @@
     const openCardModal = () => setModalState(elements.cardModal, true);
     const closeCardModal = () => setModalState(elements.cardModal, false);
     const openCsvModal = () => setModalState(elements.csvModal, true);
-    const closeCsvModal = () => setModalState(elements.csvModal, false);
+    const closeCsvModal = () => {
+      setModalState(elements.csvModal, false);
+      if (elements.csvFileInput) elements.csvFileInput.value = "";
+      state.csvCandidate = null;
+      renderCsvPreview(null);
+      setStatus(elements.csvStatus, "");
+    };
 
     const openCardForm = () => {
       state.editingCardId = null;
@@ -1285,15 +1324,12 @@
       elements.csvFileInput.value = "";
       setStatus(elements.csvStatus, "");
       state.csvCandidate = null;
-      state.lastCsvText = "";
       renderCsvPreview(null);
     });
 
     on(elements.csvFileInput, "change", () => updateCsvCandidate());
     on(elements.csvDelimiterSelect, "change", () => {
-      if (!state.lastCsvText) return updateCsvCandidate();
-      state.csvCandidate = parseCsv(state.lastCsvText);
-      renderCsvPreview(state.csvCandidate);
+      updateCsvCandidate();
     });
 
     if (elements.exportDeckBtn) on(elements.exportDeckBtn, "click", exportActiveDeckCsv);
@@ -1409,9 +1445,9 @@
         if (state.searchTimer) clearTimeout(state.searchTimer);
         state.searchTimer = setTimeout(() => {
           state.cardSearch = elements.cardSearchInput.value || "";
+          state.cardListLimit = CARD_LIST_PAGE_SIZE;
           renderCardList();
           refreshSelectionFromDom();
-          applyKatex();
         }, 120);
       });
     }
