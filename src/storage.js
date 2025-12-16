@@ -65,9 +65,42 @@
     setRaw(key, JSON.stringify(value), { debounceMs });
   }
 
+  function compactSnapshots() {
+    const raw = getRaw(SNAPSHOT_KEY, null);
+    if (raw == null) return;
+
+    const MAX_BYTES = 1_000_000;
+    if (String(raw).length > MAX_BYTES) {
+      setJSON(SNAPSHOT_KEY, [], { debounceMs: 0 });
+      return;
+    }
+
+    const parsed = safeJsonParse(raw);
+    if (!Array.isArray(parsed)) {
+      setJSON(SNAPSHOT_KEY, [], { debounceMs: 0 });
+      return;
+    }
+
+    const cleaned = [];
+    for (const entry of parsed) {
+      if (!entry || typeof entry !== "object") continue;
+      const next = { ...entry };
+      if (next.data && typeof next.data === "object") {
+        const data = { ...next.data };
+        delete data[SNAPSHOT_KEY];
+        delete data.sync_cloud_updated_ms_v1;
+        next.data = data;
+      }
+      cleaned.push(next);
+      if (cleaned.length >= SNAPSHOT_LIMIT) break;
+    }
+
+    setJSON(SNAPSHOT_KEY, cleaned, { debounceMs: 0 });
+  }
+
   function snapshotNow({ label = "Snapshot" } = {}) {
     const data = {};
-    const keys = listStudyKeys({ includeSyncMeta: true });
+    const keys = listStudyKeys({ includeSyncMeta: true }).filter((k) => k !== SNAPSHOT_KEY);
     for (const k of keys) data[k] = getRaw(k, null);
 
     const entry = {
@@ -283,6 +316,29 @@
     setTimeout(() => URL.revokeObjectURL(url), 2500);
   }
 
+  function estimateLocalStorageBytes() {
+    const encoder = typeof TextEncoder !== "undefined" ? new TextEncoder() : null;
+    const entries = [];
+    let totalBytes = 0;
+
+    const measure = (str) => {
+      const text = String(str ?? "");
+      return encoder ? encoder.encode(text).length : text.length * 2;
+    };
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      const value = getRaw(key, "");
+      const bytes = measure(key) + measure(value);
+      entries.push({ key, bytes });
+      totalBytes += bytes;
+    }
+
+    entries.sort((a, b) => b.bytes - a.bytes);
+    return { totalBytes, entries };
+  }
+
   StudyPlanner.Storage = Object.assign(StudyPlanner.Storage || {}, {
     APP_SCHEMA_VERSION,
     SCHEMA_KEY,
@@ -300,8 +356,11 @@
     snapshotNow,
     listSnapshots,
     restoreSnapshot,
-    downloadJson
+    downloadJson,
+    compactSnapshots,
+    estimateLocalStorageBytes
   });
 
+  compactSnapshots();
   migrateLocal();
 })();

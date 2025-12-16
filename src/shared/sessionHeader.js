@@ -83,6 +83,15 @@
     return getJSON(SESSIONS_KEY, []);
   }
 
+  function computeTotals(sessions) {
+    const list = Array.isArray(sessions) ? sessions : [];
+    return {
+      today: sumToday(list),
+      week: sumInRange(list, 7),
+      month: sumInRange(list, 30),
+    };
+  }
+
   function sumInRange(sessions, days) {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
@@ -175,19 +184,16 @@
     mountEl.appendChild(ui.root);
 
     let active = loadActive();
+    let sessionsCache = loadSessions();
+    if (!Array.isArray(sessionsCache)) sessionsCache = [];
+    let cachedTotals = computeTotals(sessionsCache);
 
     function updateStats() {
-      const sessions = loadSessions();
-      const nowTotals = {
-        today: sumToday(sessions),
-        week: sumInRange(sessions, 7),
-        month: sumInRange(sessions, 30),
-      };
+      const baseTotals = cachedTotals || { today: 0, week: 0, month: 0 };
       const elapsed = computeElapsed(active);
-      nowTotals.today += elapsed;
-      ui.stats.today.querySelector(".session-stat-value").textContent = formatDuration(nowTotals.today);
-      ui.stats.week.querySelector(".session-stat-value").textContent = formatDuration(nowTotals.week);
-      ui.stats.month.querySelector(".session-stat-value").textContent = formatDuration(nowTotals.month);
+      ui.stats.today.querySelector(".session-stat-value").textContent = formatDuration(baseTotals.today + elapsed);
+      ui.stats.week.querySelector(".session-stat-value").textContent = formatDuration(baseTotals.week);
+      ui.stats.month.querySelector(".session-stat-value").textContent = formatDuration(baseTotals.month);
     }
 
     function renderState() {
@@ -205,6 +211,13 @@
       ui.startBtn.disabled = !!(active && active.running);
       ui.pauseBtn.disabled = !active || !active.running;
       ui.stopBtn.disabled = !active || (!active.running && !active.accumulatedMs);
+    }
+
+    function refreshSessionsFromStorage() {
+      const next = loadSessions();
+      sessionsCache = Array.isArray(next) ? next : [];
+      cachedTotals = computeTotals(sessionsCache);
+      updateStats();
     }
 
     function persist() {
@@ -279,6 +292,17 @@
     });
     window.addEventListener("beforeunload", () => pause("nav"));
 
+    const handleSessionsChanged = () => refreshSessionsFromStorage();
+    const handleStorage = (event) => {
+      if (event && event.key && event.key !== SESSIONS_KEY) return;
+      refreshSessionsFromStorage();
+    };
+    const handleStateReplaced = () => refreshSessionsFromStorage();
+
+    window.addEventListener("study:sessions-changed", handleSessionsChanged);
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("study:state-replaced", handleStateReplaced);
+
     let tickHandle = null;
     function tick() {
       renderState();
@@ -286,6 +310,7 @@
     }
     tickHandle = setInterval(tick, 1000);
 
+    refreshSessionsFromStorage();
     tick();
     return {
       start: startOrResume,
@@ -298,6 +323,9 @@
       },
       destroy() {
         if (tickHandle) clearInterval(tickHandle);
+        window.removeEventListener("study:sessions-changed", handleSessionsChanged);
+        window.removeEventListener("storage", handleStorage);
+        window.removeEventListener("study:state-replaced", handleStateReplaced);
       },
     };
   }

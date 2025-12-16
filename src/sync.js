@@ -1,5 +1,4 @@
 (() => {
-  const STORAGE_PREFIX = "study";
   const STATE_PUSH_DEBOUNCE_MS = 1500;
   const SYNC_META_KEY = "sync_cloud_updated_ms_v1";
   const CLOUD_POLL_MS = 15000;
@@ -25,10 +24,28 @@
     "studyAutoPlanSettings_v1"
   ]);
 
-  function stableStringifyObject(obj) {
-    const keys = Object.keys(obj).sort();
-    const entries = keys.map((key) => [key, obj[key]]);
-    return JSON.stringify(Object.fromEntries(entries));
+  function isSyncedKey(key) {
+    return DATA_KEYS.has(String(key));
+  }
+
+  function hashString(input, seed) {
+    let hash = seed >>> 0;
+    for (let i = 0; i < input.length; i++) {
+      hash ^= input.charCodeAt(i);
+      hash = Math.imul(hash, 0x01000193) >>> 0;
+    }
+    return hash >>> 0;
+  }
+
+  function stableHashSnapshot(obj) {
+    const keys = Object.keys(obj || {}).sort();
+    let hash = 0x811c9dc5;
+    for (const key of keys) {
+      hash = hashString(key, hash);
+      const value = obj[key];
+      hash = hashString(value == null ? "" : String(value), hash);
+    }
+    return `h${hash.toString(16)}`;
   }
 
   function isEmptyJsonString(value) {
@@ -55,35 +72,49 @@
 
   function hasAnySyncedState(snapshot) {
     if (!snapshot || typeof snapshot !== "object") return false;
-    for (const value of Object.values(snapshot)) {
-      if (!isEmptyJsonString(value)) return true;
+    for (const key of DATA_KEYS) {
+      if (!(key in snapshot)) continue;
+      if (!isEmptyJsonString(snapshot[key])) return true;
     }
     return false;
   }
 
   function snapshotLocalState() {
     const out = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key || !key.startsWith(STORAGE_PREFIX)) continue;
-      out[key] = localStorage.getItem(key);
+    for (const key of DATA_KEYS) {
+      try {
+        const value = localStorage.getItem(key);
+        if (value == null) continue;
+        out[key] = value;
+      } catch {}
+    }
+    return out;
+  }
+
+  function filterSnapshot(snapshot) {
+    const source = snapshot && typeof snapshot === "object" ? snapshot : {};
+    const out = {};
+    for (const key of DATA_KEYS) {
+      if (key in source) out[key] = source[key];
     }
     return out;
   }
 
   function replaceLocalStateFromSnapshot(snapshot) {
-    const wantedKeys = new Set(Object.keys(snapshot));
+    const incoming = filterSnapshot(snapshot);
+    const wantedKeys = new Set(Object.keys(incoming).filter((key) => isSyncedKey(key)));
     const existingKeys = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && key.startsWith(STORAGE_PREFIX)) existingKeys.push(key);
+      if (key && isSyncedKey(key)) existingKeys.push(key);
     }
 
     for (const key of existingKeys) {
       if (!wantedKeys.has(key)) localStorage.removeItem(key);
     }
 
-    for (const [key, value] of Object.entries(snapshot)) {
+    for (const [key, value] of Object.entries(incoming)) {
+      if (!isSyncedKey(key)) continue;
       if (typeof value === "string" || value === null) {
         localStorage.setItem(key, value ?? "");
       } else {
@@ -128,10 +159,11 @@
 
   let suppressPush = false;
   function applyCloudSnapshot(snapshot, cloudUpdatedMs) {
-    const signature = stableStringifyObject(snapshot || {});
+    const filtered = filterSnapshot(snapshot);
+    const signature = stableHashSnapshot(filtered);
     suppressPush = true;
     try {
-      replaceLocalStateFromSnapshot(snapshot || {});
+      replaceLocalStateFromSnapshot(filtered);
     } finally {
       suppressPush = false;
     }
@@ -153,7 +185,7 @@
 
     const local = snapshotLocalState();
     const cloud = await pullCloudState();
-    const cloudData = (cloud && cloud.data) || {};
+    const cloudData = filterSnapshot((cloud && cloud.data) || {});
     const localHasData = hasAnySyncedState(local) || hasPlannerData(local);
     const cloudHasData = hasAnySyncedState(cloudData) || hasPlannerData(cloudData);
 
@@ -168,7 +200,7 @@
       }
       if (localHasData) {
         await pushCloudState(local);
-        lastPushedSignature = stableStringifyObject(local);
+        lastPushedSignature = stableHashSnapshot(local);
         localStorage.setItem(SYNC_META_KEY, String(Date.now()));
         return;
       }
@@ -182,14 +214,14 @@
 
     if (!cloudHasData && localHasData) {
       await pushCloudState(local);
-      lastPushedSignature = stableStringifyObject(local);
+      lastPushedSignature = stableHashSnapshot(local);
       localStorage.setItem(SYNC_META_KEY, String(Date.now()));
       return;
     }
 
-    const localStr = stableStringifyObject(local);
-    const cloudStr = stableStringifyObject(cloudData);
-    if (cloudStr === localStr) {
+    const localSig = stableHashSnapshot(local);
+    const cloudSig = stableHashSnapshot(cloudData);
+    if (cloudSig === localSig) {
       if (cloudUpdatedMs) localStorage.setItem(SYNC_META_KEY, String(cloudUpdatedMs));
       return;
     }
@@ -202,7 +234,7 @@
 
     // Otherwise, push local snapshot (last-writer-wins). This avoids wiping cloud when local only has prefs.
     await pushCloudState(local);
-    lastPushedSignature = localStr;
+    lastPushedSignature = localSig;
     localStorage.setItem(SYNC_META_KEY, String(Date.now()));
   }
 
@@ -227,7 +259,7 @@
     const cloudUpdatedMs = cloud?.updatedAt ? Date.parse(cloud.updatedAt) : 0;
     if (!cloudUpdatedMs || cloudUpdatedMs <= lastSeenCloudMs) return;
 
-    const cloudData = (cloud && cloud.data) || {};
+    const cloudData = filterSnapshot((cloud && cloud.data) || {});
     applyCloudSnapshot(cloudData, cloudUpdatedMs);
   }
 
@@ -245,7 +277,7 @@
     if (!lastSeenCloudMs) return;
 
     const snapshot = snapshotLocalState();
-    const signature = stableStringifyObject(snapshot);
+    const signature = stableHashSnapshot(snapshot);
     if (signature === lastPushedSignature) return;
 
     await pushCloudState(snapshot);
@@ -268,12 +300,12 @@
 
     localStorage.setItem = (key, value) => {
       originalSetItem(key, value);
-      if (!suppressPush && String(key).startsWith(STORAGE_PREFIX)) schedulePush();
+      if (!suppressPush && isSyncedKey(key)) schedulePush();
     };
 
     localStorage.removeItem = (key) => {
       originalRemoveItem(key);
-      if (!suppressPush && String(key).startsWith(STORAGE_PREFIX)) schedulePush();
+      if (!suppressPush && isSyncedKey(key)) schedulePush();
     };
 
     localStorage.clear = () => {
@@ -293,7 +325,7 @@
     try {
       await syncNowAuto();
     } catch {}
-    lastPushedSignature = stableStringifyObject(snapshotLocalState());
+    lastPushedSignature = stableHashSnapshot(snapshotLocalState());
     startPolling();
   }
 
