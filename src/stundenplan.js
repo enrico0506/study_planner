@@ -726,6 +726,8 @@
     editingId = null;
     if (lessonFormTitle) lessonFormTitle.textContent = "Add lesson";
     if (lessonSubmitBtn) lessonSubmitBtn.textContent = "Save lesson";
+    if (lessonStartInput) lessonStartInput.step = "900";
+    if (lessonEndInput) lessonEndInput.step = "900";
     lessonTitleInput && (lessonTitleInput.value = "");
     lessonSubjectSelect && (lessonSubjectSelect.value = "");
     if (lessonDaySelect) {
@@ -1052,7 +1054,8 @@
     selectStartMin: null,
     selectLastMin: null,
     selectEl: null,
-    drag: null, // { mode, lessonId, origin, durationMin }
+    drag: null, // { mode, lessonId, origin, durationMin, blockEl, pointerId }
+    dragCandidate: null, // { pointerId, downX, downY, mode, lessonId, origin, durationMin, blockEl, started: false }
     lastDragEndMs: 0
   };
 
@@ -1172,14 +1175,15 @@
 
     timetableGrid.addEventListener("pointerleave", () => clearHover());
 
+    const DRAG_THRESHOLD_PX = 6;
+
     timetableGrid.addEventListener("pointerdown", (event) => {
       if (event.button !== 0) return;
       if (!timelineState.cols) return;
 
       const block = event.target.closest(".timetable-slot-lesson.timeline-lesson-block");
       if (block) {
-        const menuToggle = event.target.closest(".timetable-slot-menu-toggle");
-        if (menuToggle) return;
+        if (event.target.closest(".timetable-slot-actions") || event.target.closest(".timetable-slot-menu")) return;
         const lessonId = block.dataset.lessonId;
         const lesson = lessonId ? lessonById(lessonId) : null;
         if (!lesson) return;
@@ -1187,14 +1191,17 @@
         const isResize = !!event.target.closest(".tt-resize-handle");
         const start = timeToMinutes(lesson.start) ?? 0;
         const end = timeToMinutes(lesson.end) ?? start + 60;
-        interaction.drag = {
+        interaction.dragCandidate = {
           mode: isResize ? "resize" : "move",
           lessonId: lesson.id,
           origin: { ...lesson },
-          durationMin: Math.max(15, end - start)
+          durationMin: Math.max(15, end - start),
+          pointerId: event.pointerId,
+          downX: event.clientX,
+          downY: event.clientY,
+          blockEl: block,
+          started: false
         };
-        block.classList.add("is-dragging");
-        timetableGrid.setPointerCapture(event.pointerId);
         return;
       }
 
@@ -1220,6 +1227,21 @@
     });
 
     timetableGrid.addEventListener("pointermove", (event) => {
+      if (interaction.dragCandidate && !interaction.drag) {
+        const cand = interaction.dragCandidate;
+        if (event.pointerId !== cand.pointerId) return;
+        const dist = Math.hypot(event.clientX - cand.downX, event.clientY - cand.downY);
+        if (dist >= DRAG_THRESHOLD_PX) {
+          interaction.drag = { ...cand };
+          interaction.drag.started = true;
+          interaction.dragCandidate = null;
+          cand.blockEl?.classList.add("is-dragging");
+          timetableGrid.setPointerCapture(event.pointerId);
+        } else {
+          return;
+        }
+      }
+
       if (!interaction.drag || !timelineState.cols) return;
       const day = dayFromClientX(event.clientX);
       const mins = minutesFromClientY(event.clientY);
@@ -1248,6 +1270,10 @@
     });
 
     timetableGrid.addEventListener("pointerup", (event) => {
+      if (interaction.dragCandidate && !interaction.drag) {
+        interaction.dragCandidate = null;
+      }
+
       // Finish selection
       if (interaction.selecting) {
         const day = interaction.selectDay;
@@ -1278,6 +1304,7 @@
         const day = dayFromClientX(event.clientX);
         const mins = minutesFromClientY(event.clientY);
         interaction.drag = null;
+        interaction.dragCandidate = null;
         interaction.lastDragEndMs = Date.now();
 
         timetableGrid.querySelectorAll(".tt-drag-preview").forEach((el) => el.remove());
@@ -1303,6 +1330,7 @@
         saveTimetableState();
         renderTimetable();
       }
+      interaction.dragCandidate = null;
     });
   }
 
