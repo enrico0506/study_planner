@@ -152,6 +152,23 @@ body.flashcards-page .card-list-item.card-selected {
   box-shadow: 0 0 0 2px rgba(47, 98, 244, 0.28);
 }
 
+@media (min-width: 900px) {
+  /* Keep the Übersicht list from pushing the page height */
+  body.flashcards-page .card-editor-list {
+    display: flex;
+    flex-direction: column;
+    max-height: 420px;
+    overflow: hidden;
+  }
+
+  body.flashcards-page .card-list {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding-right: 4px;
+  }
+}
+
 body.flashcards-page .card-badge {
   display: inline-flex;
   align-items: center;
