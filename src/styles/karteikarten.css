@@ -15,6 +15,7 @@ body.flashcards-page {
 
 body.flashcards-page .flashcards-layout {
   align-items: start;
+  grid-template-columns: 280px 1fr;
 }
 
 /* Sticky sidebar + internal scrolling for large deck lists */
@@ -29,14 +30,14 @@ body.flashcards-page .deck-column {
 body.flashcards-page .deck-card.deck-card-decks {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
   max-height: calc(100vh - 220px);
   overflow: hidden;
+  padding: 10px 12px;
 }
 
 body.flashcards-page .deck-list-scroll {
-  overflow: auto;
-  padding-right: 2px;
+  display: none;
 }
 
 body.flashcards-page .deck-card.deck-card-import {
@@ -115,6 +116,20 @@ body.flashcards-page .cards-empty-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+/* Smaller add deck / add card containers */
+body.flashcards-page .card-editor {
+  grid-template-columns: minmax(260px, 360px) 1fr;
+}
+
+body.flashcards-page .card-editor-form {
+  padding: 12px;
+}
+
+body.flashcards-page .card-editor-inline-note {
+  margin-top: 6px;
+  padding: 10px;
 }
 
 /* Card browser header */
