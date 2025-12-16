@@ -58,6 +58,7 @@
   const ttNextDayBtn = document.getElementById("ttNextDayBtn");
   const ttDayLabel = document.getElementById("ttDayLabel");
   const toggleWeekendBtn = document.getElementById("toggleWeekendBtn");
+  const ttNowBtn = document.getElementById("ttNowBtn");
   let subjects = [];
   let tables = [];
   let activeTableId = "";
@@ -132,6 +133,20 @@
   function createId(prefix = "ls_") {
     return prefix + Math.random().toString(36).slice(2, 9);
   }
+
+  const timelineState = {
+    minuteHeight: 1,
+    startHour: 8,
+    endHour: 20,
+    days: [],
+    wrap: null,
+    cols: null,
+    rail: null,
+    hoverRowEl: null,
+    nowLineEl: null,
+    nowLabelEl: null,
+    nowTimer: null
+  };
 
   function loadColorPalette() {
     try {
@@ -441,6 +456,123 @@
     return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   }
 
+  function snapMinutes(totalMinutes, step = 15) {
+    const m = Math.max(0, Math.min(24 * 60 - 1, Number(totalMinutes) || 0));
+    return Math.round(m / step) * step;
+  }
+
+  function yToMinutes(y) {
+    const mh = Number(timelineState.minuteHeight) || 1;
+    const minutesFromTop = Math.max(0, y / mh);
+    return timelineState.startHour * 60 + minutesFromTop;
+  }
+
+  function minutesToY(minutes) {
+    const mh = Number(timelineState.minuteHeight) || 1;
+    return (minutes - timelineState.startHour * 60) * mh;
+  }
+
+  function getTodayIndex(days) {
+    const today = new Date().getDay(); // 0=Sun..6=Sat
+    const mondayBased = today === 0 ? 6 : today - 1;
+    return (days || []).findIndex((d) => Number(d.value) === Number(mondayBased));
+  }
+
+  function ensureHoverRow() {
+    if (!timelineState.cols) return;
+    if (timelineState.hoverRowEl && timelineState.cols.contains(timelineState.hoverRowEl)) return;
+    const el = document.createElement("div");
+    el.className = "tt-hover-row";
+    timelineState.hoverRowEl = el;
+    timelineState.cols.appendChild(el);
+  }
+
+  function clearHover() {
+    timelineState.cols?.querySelectorAll(".timeline-day.tt-hover-col").forEach((el) => {
+      el.classList.remove("tt-hover-col");
+    });
+    if (timelineState.hoverRowEl) timelineState.hoverRowEl.classList.remove("is-visible");
+  }
+
+  function ensureNowIndicators() {
+    if (!timelineState.cols || !timelineState.rail) return;
+    const hasLine = timelineState.nowLineEl && timelineState.cols.contains(timelineState.nowLineEl);
+    const hasLabel = timelineState.nowLabelEl && timelineState.rail.contains(timelineState.nowLabelEl);
+    if (hasLine && hasLabel) return;
+    const line = document.createElement("div");
+    line.className = "tt-now-line";
+    const label = document.createElement("div");
+    label.className = "tt-now-label";
+    label.textContent = "Now";
+    timelineState.nowLineEl = line;
+    timelineState.nowLabelEl = label;
+    timelineState.cols.appendChild(line);
+    timelineState.rail.appendChild(label);
+  }
+
+  function updateNowIndicators() {
+    const line = timelineState.nowLineEl;
+    const label = timelineState.nowLabelEl;
+    if (!line || !label) return;
+    const now = new Date();
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    const y = minutesToY(minutes);
+    if (!Number.isFinite(y)) return;
+    line.style.top = `${y}px`;
+    label.style.top = `${y}px`;
+  }
+
+  function startNowTimer() {
+    if (timelineState.nowTimer) clearInterval(timelineState.nowTimer);
+    timelineState.nowTimer = setInterval(() => updateNowIndicators(), 60 * 1000);
+    updateNowIndicators();
+  }
+
+  function stopNowTimer() {
+    if (!timelineState.nowTimer) return;
+    clearInterval(timelineState.nowTimer);
+    timelineState.nowTimer = null;
+  }
+
+  function scrollToNow() {
+    if (!timetableGrid) return;
+    const now = new Date();
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    const y = minutesToY(minutes);
+    if (!Number.isFinite(y)) return;
+    timetableGrid.scrollTop = Math.max(0, y - 140);
+  }
+
+  function overlaps(a, b) {
+    if (!a || !b) return false;
+    if (Number(a.day) !== Number(b.day)) return false;
+    const as = timeToMinutes(a.start);
+    const ae = timeToMinutes(a.end);
+    const bs = timeToMinutes(b.start);
+    const be = timeToMinutes(b.end);
+    if (as === null || ae === null || bs === null || be === null) return false;
+    return as < be && bs < ae;
+  }
+
+  function computeConflictIds(lessons) {
+    const ids = new Set();
+    const list = Array.isArray(lessons) ? lessons : [];
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        if (overlaps(list[i], list[j])) {
+          if (list[i]?.id) ids.add(list[i].id);
+          if (list[j]?.id) ids.add(list[j].id);
+        }
+      }
+    }
+    return ids;
+  }
+
+  function wouldOverlap(candidate, ignoreId = null) {
+    const working = getWorkingLessons();
+    return working.some((l) => l && l.id !== ignoreId && overlaps(l, candidate));
+  }
+
   function addMinutesToTime(timeStr, minutesToAdd) {
     const base = timeToMinutes(timeStr);
     if (base === null) return "";
@@ -651,8 +783,10 @@
     timetableGrid.innerHTML = "";
     const days = getVisibleDays();
     timetableGrid.style.setProperty("--tt-days", String(days.length));
+    timelineState.days = days;
 
     const lessons = getWorkingLessons();
+    const conflictIds = computeConflictIds(lessons);
     let minStart = Infinity;
     let maxEnd = -Infinity;
 
@@ -696,10 +830,12 @@
     colsHead.className = "timeline-cols-head";
     colsHead.style.gridColumn = "2";
     colsHead.style.gridRow = "1";
+    const todayIdx = getTodayIndex(days);
     days.forEach((day) => {
       const h = document.createElement("div");
       h.className = "timeline-day-head";
       h.textContent = day.label;
+      if (todayIdx >= 0 && Number(day.value) === Number(days[todayIdx]?.value)) h.classList.add("tt-today");
       colsHead.appendChild(h);
     });
 
@@ -712,7 +848,9 @@
       const label = document.createElement("div");
       label.className = "timeline-rail-label";
       label.textContent = `${String(h).padStart(2, "0")}:00`;
-      label.style.top = (h * 60 - startHour * 60) * minuteHeight + "px";
+      // Prevent top-most label from being clipped by translateY(-50%).
+      const top = (h * 60 - startHour * 60) * minuteHeight;
+      label.style.top = Math.max(10, top) + "px";
       rail.appendChild(label);
     }
 
@@ -725,6 +863,7 @@
     days.forEach((day) => {
       const col = document.createElement("div");
       col.className = "timeline-day";
+      col.dataset.day = String(day.value);
       col.style.height = timelineHeight + "px";
       col.style.setProperty("--timeline-hour-start", `${startHour}`);
 
@@ -747,6 +886,11 @@
           const top = (start - startHour * 60) * minuteHeight;
           const height = Math.max((end - start) * minuteHeight, 30);
           const block = buildLessonBlock(lesson, height, "timeline");
+          block.dataset.lessonId = lesson.id;
+          if (conflictIds.has(lesson.id)) {
+            block.classList.add("tt-conflict");
+            block.title = "Overlaps with another lesson";
+          }
           block.style.top = `${top}px`;
           col.appendChild(block);
         });
@@ -761,6 +905,16 @@
     wrap.appendChild(cols);
     timetableGrid.appendChild(wrap);
     applyPhoneDayView();
+
+    timelineState.minuteHeight = minuteHeight;
+    timelineState.startHour = startHour;
+    timelineState.endHour = endHour;
+    timelineState.wrap = wrap;
+    timelineState.cols = cols;
+    timelineState.rail = rail;
+    ensureHoverRow();
+    ensureNowIndicators();
+    startNowTimer();
   }
   function buildLessonBlock(lesson, heightPx, mode = "timeline") {
     const color = mode === "timeline" ? getLessonColor(lesson) : "#4b5563";
@@ -828,6 +982,17 @@
       closeAllSlotMenus();
       copyLessonToAnotherTable(lesson);
     });
+    const duplicateBtn = document.createElement("button");
+    duplicateBtn.type = "button";
+    duplicateBtn.textContent = "Duplicate";
+    duplicateBtn.addEventListener("click", () => {
+      closeAllSlotMenus();
+      const working = getWorkingLessons();
+      working.push({ ...lesson, id: createId() });
+      saveTimetableState();
+      renderTimetable();
+      setStatus("Lesson duplicated.", "success");
+    });
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
     deleteBtn.textContent = "Delete";
@@ -846,6 +1011,7 @@
     });
     menu.appendChild(editBtn);
     menu.appendChild(copyBtn);
+    menu.appendChild(duplicateBtn);
     menu.appendChild(deleteBtn);
     menuToggle.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -863,7 +1029,281 @@
     if (meta.textContent) wrap.appendChild(meta);
     if (notes.textContent) wrap.appendChild(notes);
     wrap.appendChild(actions);
+    if (mode === "timeline") {
+      const handle = document.createElement("div");
+      handle.className = "tt-resize-handle";
+      handle.setAttribute("aria-hidden", "true");
+      wrap.appendChild(handle);
+
+      wrap.addEventListener("click", (event) => {
+        if (event.target.closest(".timetable-slot-actions")) return;
+        if (event.target.closest(".tt-resize-handle")) return;
+        if (Date.now() - (interaction.lastDragEndMs || 0) < 260) return;
+        fillForm(lesson);
+      });
+    }
     return wrap;
+  }
+
+  const interaction = {
+    bound: false,
+    selecting: false,
+    selectDay: null,
+    selectStartMin: null,
+    selectLastMin: null,
+    selectEl: null,
+    drag: null, // { mode, lessonId, origin, durationMin }
+    lastDragEndMs: 0
+  };
+
+  function lessonById(id) {
+    const lessons = getWorkingLessons();
+    return lessons.find((l) => l && l.id === id) || null;
+  }
+
+  function updateLesson(id, patch) {
+    const lessons = getWorkingLessons();
+    const idx = lessons.findIndex((l) => l && l.id === id);
+    if (idx < 0) return false;
+    lessons[idx] = { ...lessons[idx], ...(patch || {}) };
+    return true;
+  }
+
+  function dayFromClientX(clientX) {
+    const cols = timelineState.cols;
+    if (!cols) return null;
+    const rect = cols.getBoundingClientRect();
+    const x = clientX - rect.left;
+    if (x < 0 || x > rect.width) return null;
+    const dayWidth = rect.width / Math.max(1, timelineState.days.length);
+    const idx = Math.min(timelineState.days.length - 1, Math.max(0, Math.floor(x / dayWidth)));
+    const dayObj = timelineState.days[idx];
+    return dayObj ? Number(dayObj.value) : null;
+  }
+
+  function minutesFromClientY(clientY) {
+    const cols = timelineState.cols;
+    if (!cols) return null;
+    const rect = cols.getBoundingClientRect();
+    const y = clientY - rect.top + (timetableGrid?.scrollTop || 0);
+    const mins = yToMinutes(y);
+    return snapMinutes(mins, 15);
+  }
+
+  function ensureSelectEl(dayValue) {
+    if (!timelineState.cols) return null;
+    const dayIdx = timelineState.days.findIndex((d) => Number(d.value) === Number(dayValue));
+    const col = timelineState.cols.children[dayIdx];
+    if (!col) return null;
+    if (!interaction.selectEl) {
+      interaction.selectEl = document.createElement("div");
+      interaction.selectEl.className = "tt-select-preview";
+      col.appendChild(interaction.selectEl);
+    } else if (interaction.selectEl.parentElement !== col) {
+      interaction.selectEl.parentElement?.removeChild(interaction.selectEl);
+      col.appendChild(interaction.selectEl);
+    }
+    return interaction.selectEl;
+  }
+
+  function clearSelectEl() {
+    interaction.selectEl?.parentElement?.removeChild(interaction.selectEl);
+    interaction.selectEl = null;
+  }
+
+  function updateSelectPreview(dayValue, startMin, endMin) {
+    const el = ensureSelectEl(dayValue);
+    if (!el) return;
+    const top = minutesToY(startMin);
+    const height = Math.max(30, minutesToY(endMin) - top);
+    el.style.top = `${top}px`;
+    el.style.height = `${height}px`;
+  }
+
+  function openModalForRange(dayValue, startMin, endMin) {
+    openLessonModal(dayValue, minutesToTime(startMin), minutesToTime(endMin));
+  }
+
+  function bindTimelineInteractions() {
+    if (interaction.bound || !timetableGrid) return;
+    interaction.bound = true;
+
+    timetableGrid.addEventListener("pointermove", (event) => {
+      if (!timelineState.cols) return;
+
+      if (interaction.selecting) {
+        const currentMin = minutesFromClientY(event.clientY);
+        if (currentMin === null || interaction.selectDay === null || interaction.selectStartMin === null) return;
+        interaction.selectLastMin = currentMin;
+        const a = Math.min(interaction.selectStartMin, currentMin);
+        const b = Math.max(interaction.selectStartMin + 15, currentMin);
+        updateSelectPreview(interaction.selectDay, a, b);
+        return;
+      }
+
+      const colsRect = timelineState.cols.getBoundingClientRect();
+      const inside =
+        event.clientX >= colsRect.left &&
+        event.clientX <= colsRect.right &&
+        event.clientY >= colsRect.top &&
+        event.clientY <= colsRect.bottom;
+      if (!inside) {
+        clearHover();
+        return;
+      }
+
+      const day = dayFromClientX(event.clientX);
+      const mins = minutesFromClientY(event.clientY);
+      if (day === null || mins === null) {
+        clearHover();
+        return;
+      }
+
+      ensureHoverRow();
+      const dayIdx = timelineState.days.findIndex((d) => Number(d.value) === Number(day));
+      timelineState.cols.querySelectorAll(".timeline-day").forEach((el, idx) => {
+        el.classList.toggle("tt-hover-col", idx === dayIdx);
+      });
+      if (timelineState.hoverRowEl) {
+        timelineState.hoverRowEl.style.top = `${minutesToY(mins)}px`;
+        timelineState.hoverRowEl.classList.add("is-visible");
+      }
+    });
+
+    timetableGrid.addEventListener("pointerleave", () => clearHover());
+
+    timetableGrid.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      if (!timelineState.cols) return;
+
+      const block = event.target.closest(".timetable-slot-lesson.timeline-lesson-block");
+      if (block) {
+        const menuToggle = event.target.closest(".timetable-slot-menu-toggle");
+        if (menuToggle) return;
+        const lessonId = block.dataset.lessonId;
+        const lesson = lessonId ? lessonById(lessonId) : null;
+        if (!lesson) return;
+
+        const isResize = !!event.target.closest(".tt-resize-handle");
+        const start = timeToMinutes(lesson.start) ?? 0;
+        const end = timeToMinutes(lesson.end) ?? start + 60;
+        interaction.drag = {
+          mode: isResize ? "resize" : "move",
+          lessonId: lesson.id,
+          origin: { ...lesson },
+          durationMin: Math.max(15, end - start)
+        };
+        block.classList.add("is-dragging");
+        timetableGrid.setPointerCapture(event.pointerId);
+        return;
+      }
+
+      // Selection on empty grid.
+      const colsRect = timelineState.cols.getBoundingClientRect();
+      const inside =
+        event.clientX >= colsRect.left &&
+        event.clientX <= colsRect.right &&
+        event.clientY >= colsRect.top &&
+        event.clientY <= colsRect.bottom;
+      if (!inside) return;
+
+      const day = dayFromClientX(event.clientX);
+      const startMin = minutesFromClientY(event.clientY);
+      if (day === null || startMin === null) return;
+
+      interaction.selecting = true;
+      interaction.selectDay = day;
+      interaction.selectStartMin = startMin;
+      interaction.selectLastMin = startMin;
+      updateSelectPreview(day, startMin, startMin + 60);
+      timetableGrid.setPointerCapture(event.pointerId);
+    });
+
+    timetableGrid.addEventListener("pointermove", (event) => {
+      if (!interaction.drag || !timelineState.cols) return;
+      const day = dayFromClientX(event.clientX);
+      const mins = minutesFromClientY(event.clientY);
+      if (day === null || mins === null) return;
+
+      const origin = interaction.drag.origin;
+      const start0 = timeToMinutes(origin.start) ?? mins;
+      const nextStart = interaction.drag.mode === "move" ? mins : start0;
+      const nextEnd =
+        interaction.drag.mode === "resize"
+          ? Math.max(nextStart + 15, mins)
+          : nextStart + interaction.drag.durationMin;
+
+      const dayIdx = timelineState.days.findIndex((d) => Number(d.value) === Number(day));
+      const col = timelineState.cols.children[dayIdx];
+      if (!col) return;
+
+      let preview = col.querySelector(".tt-drag-preview");
+      if (!preview) {
+        preview = document.createElement("div");
+        preview.className = "tt-drag-preview";
+        col.appendChild(preview);
+      }
+      preview.style.top = `${minutesToY(nextStart)}px`;
+      preview.style.height = `${Math.max(30, minutesToY(nextEnd) - minutesToY(nextStart))}px`;
+    });
+
+    timetableGrid.addEventListener("pointerup", (event) => {
+      // Finish selection
+      if (interaction.selecting) {
+        const day = interaction.selectDay;
+        const startMin = interaction.selectStartMin;
+        const endMin = interaction.selectLastMin ?? minutesFromClientY(event.clientY);
+        interaction.selecting = false;
+        interaction.selectDay = null;
+        interaction.selectStartMin = null;
+        interaction.selectLastMin = null;
+        clearSelectEl();
+
+        if (day !== null && startMin !== null && endMin !== null) {
+          const delta = Math.abs(endMin - startMin);
+          if (delta < 10) {
+            openModalForRange(day, startMin, startMin + 60);
+          } else {
+            const a = Math.min(startMin, endMin);
+            const b = Math.max(startMin + 15, endMin);
+            openModalForRange(day, a, b);
+          }
+        }
+      }
+
+      // Finish drag/resize
+      if (interaction.drag) {
+        const drag = interaction.drag;
+        const origin = drag.origin;
+        const day = dayFromClientX(event.clientX);
+        const mins = minutesFromClientY(event.clientY);
+        interaction.drag = null;
+        interaction.lastDragEndMs = Date.now();
+
+        timetableGrid.querySelectorAll(".tt-drag-preview").forEach((el) => el.remove());
+        timetableGrid.querySelectorAll(".timeline-lesson-block.is-dragging").forEach((el) => el.classList.remove("is-dragging"));
+
+        if (day === null || mins === null) {
+          renderTimetable();
+          return;
+        }
+
+        const start0 = timeToMinutes(origin.start) ?? mins;
+        const nextStart = drag.mode === "move" ? mins : start0;
+        const nextEnd = drag.mode === "resize" ? Math.max(nextStart + 15, mins) : nextStart + drag.durationMin;
+        const candidate = { ...origin, day, start: minutesToTime(nextStart), end: minutesToTime(nextEnd) };
+
+        if (wouldOverlap(candidate, origin.id)) {
+          alert("That time range overlaps with another lesson.");
+          renderTimetable();
+          return;
+        }
+
+        updateLesson(origin.id, { day, start: candidate.start, end: candidate.end });
+        saveTimetableState();
+        renderTimetable();
+      }
+    });
   }
 
   function handleSubmit(event) {
@@ -908,6 +1348,10 @@
     };
 
     const working = getWorkingLessons();
+    if (wouldOverlap(newLesson, newLesson.id)) {
+      setStatus("This lesson overlaps with another one. Adjust the time or day.", "error");
+      return;
+    }
     const existingIndex = working.findIndex((l) => l.id === newLesson.id);
     if (existingIndex >= 0) {
       working[existingIndex] = newLesson;
@@ -996,6 +1440,12 @@
       setPhoneDayIndex(getPhoneDayIndex());
       renderTimetable();
     });
+
+    ttNowBtn?.addEventListener("click", () => {
+      scrollToNow();
+    });
+
+    bindTimelineInteractions();
   }
 
   function init() {
