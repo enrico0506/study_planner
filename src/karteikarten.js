@@ -27,6 +27,8 @@
     activeDeckMeta: document.getElementById("activeDeckMeta"),
     deckStats: document.getElementById("deckStats"),
     cardList: document.getElementById("cardList"),
+    cardSearchInput: document.getElementById("cardSearchInput"),
+    bulkDeleteBtn: document.getElementById("bulkDeleteBtn"),
     modeNormalBtn: document.getElementById("modeNormalBtn"),
     modeIntervalBtn: document.getElementById("modeIntervalBtn"),
     reviewModeLabel: document.getElementById("reviewModeLabel"),
@@ -41,10 +43,24 @@
     markRepeatBtn: document.getElementById("markRepeatBtn"),
     rebuildQueueBtn: document.getElementById("rebuildQueueBtn"),
     showUpcomingBtn: document.getElementById("showUpcomingBtn"),
+    startReviewBtn: document.getElementById("startReviewBtn"),
+    reviewProgress: document.getElementById("reviewProgress"),
     openCsvModalBtn: document.getElementById("openCsvModalBtn"),
     closeCsvModalBtn: document.getElementById("closeCsvModalBtn"),
     csvModal: document.getElementById("csvModal"),
     csvModalBackdrop: document.getElementById("csvModalBackdrop"),
+    csvForm: document.getElementById("csvForm"),
+    csvPreview: document.getElementById("csvPreview"),
+    csvError: document.getElementById("csvError"),
+    csvStatus: document.getElementById("csvStatus"),
+    exportDeckBtn: document.getElementById("exportDeckBtn"),
+    quickAddForm: document.getElementById("quickAddForm"),
+    quickFrontInput: document.getElementById("quickFrontInput"),
+    quickBackInput: document.getElementById("quickBackInput"),
+    quickHintInput: document.getElementById("quickHintInput"),
+    quickAddStatus: document.getElementById("quickAddStatus"),
+    cardHintInput: document.getElementById("cardHintInput"),
+    cardFormStatus: document.getElementById("cardFormStatus"),
   };
 
   const defaultDeck = () => ({
@@ -61,7 +77,30 @@
     reviewQueue: [],
     currentCard: null,
     showAnswer: false,
+    reviewDone: 0,
+    editingCardId: null,
+    selectedCardIds: new Set(),
+    cardSearch: "",
+    csvCandidate: null,
+    lastCsvText: "",
+    searchTimer: null,
   };
+
+  function isInteractiveTarget(target) {
+    const el = target && target.nodeType === 1 ? target : null;
+    if (!el) return false;
+    if (el.isContentEditable) return true;
+    const tag = el.tagName;
+    return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON";
+  }
+
+  function setStatus(el, message, { tone = "neutral" } = {}) {
+    if (!el) return;
+    el.textContent = message ? String(message) : "";
+    if (tone === "danger") el.style.color = "rgba(185, 28, 28, 0.95)";
+    else if (tone === "good") el.style.color = "rgba(15, 118, 110, 0.95)";
+    else el.style.color = "";
+  }
 
   function setModalState(modalEl, open) {
     if (!modalEl) return;
@@ -69,12 +108,48 @@
     modalEl.setAttribute("aria-hidden", open ? "false" : "true");
   }
 
+  function focusFirstField(containerEl) {
+    if (!containerEl) return;
+    const candidate = containerEl.querySelector("textarea, input, select, button");
+    if (candidate) candidate.focus();
+  }
+
+  function normalizeCard(raw, deckId) {
+    const now = Date.now();
+    const card = raw && typeof raw === "object" ? { ...raw } : {};
+    if (!card.id) card.id = `card-${now}-${Math.random().toString(16).slice(2)}`;
+    card.deckId = card.deckId || deckId || null;
+    card.front = String(card.front || "");
+    card.back = String(card.back || "");
+    if (card.hint != null) card.hint = String(card.hint);
+    else card.hint = "";
+    card.createdAt = Number(card.createdAt || now) || now;
+    if (card.due != null) card.due = Number(card.due) || 0;
+    if (card.lastReviewed != null) card.lastReviewed = Number(card.lastReviewed) || 0;
+    if (card.reviewCount != null) card.reviewCount = Number(card.reviewCount) || 0;
+    if (card.intervalDays != null) card.intervalDays = Number(card.intervalDays) || 0;
+    if (card.easeFactor != null) card.easeFactor = Number(card.easeFactor) || 2.5;
+    if (card.lapses != null) card.lapses = Number(card.lapses) || 0;
+    return card;
+  }
+
+  function normalizeDeck(raw) {
+    const deck = raw && typeof raw === "object" ? { ...raw } : {};
+    if (!deck.id) deck.id = `deck-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    deck.name = String(deck.name || "Deck");
+    deck.description = String(deck.description || "");
+    const cards = Array.isArray(deck.cards) ? deck.cards : [];
+    deck.cards = cards.map((c) => normalizeCard(c, deck.id));
+    return deck;
+  }
+
   function loadState() {
     try {
       const saved = Storage ? Storage.getRaw(storageKey, null) : localStorage.getItem(storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
-        state.decks = parsed.decks || [];
+        const decks = Array.isArray(parsed.decks) ? parsed.decks.map(normalizeDeck) : [];
+        state.decks = decks.length ? decks : [];
         state.activeDeckId = parsed.activeDeckId || (state.decks[0] && state.decks[0].id);
         state.mode = parsed.mode || "normal";
         return;
@@ -105,7 +180,12 @@
 
   function setActiveDeck(deckId) {
     state.activeDeckId = deckId;
+    state.editingCardId = null;
+    state.selectedCardIds.clear();
+    state.cardSearch = "";
+    if (elements.cardSearchInput) elements.cardSearchInput.value = "";
     buildQueue();
+    state.reviewDone = 0;
     saveState();
     render();
   }
@@ -125,12 +205,13 @@
 
   function renderDeckList() {
     const deck = getActiveDeck();
-    elements.deckList.innerHTML = "";
+    elements.deckList.replaceChildren();
     state.decks.forEach((d) => {
       const stats = summarizeDeck(d);
       const btn = document.createElement("button");
       btn.className = `deck-list-item ${deck && deck.id === d.id ? "deck-list-item-active" : ""}`;
       btn.type = "button";
+      btn.dataset.deckId = d.id;
       const title = document.createElement("div");
       title.className = "deck-list-title";
       title.textContent = d.name || "Deck";
@@ -146,7 +227,6 @@
       btn.appendChild(title);
       btn.appendChild(subtitle);
       btn.appendChild(meta);
-      btn.addEventListener("click", () => setActiveDeck(d.id));
       elements.deckList.appendChild(btn);
     });
   }
@@ -183,54 +263,145 @@
 
   function renderCardList() {
     const deck = getActiveDeck();
-    elements.cardList.innerHTML = "";
+    elements.cardList.replaceChildren();
     if (!deck || deck.cards.length === 0) {
+      const wrap = document.createElement("div");
+      wrap.className = "cards-empty-cta";
+
+      const headline = document.createElement("div");
+      headline.style.fontWeight = "800";
+      headline.textContent = "Noch keine Karten in diesem Stapel.";
+
+      const hint = document.createElement("div");
+      hint.style.color = "var(--ink-muted)";
+      hint.textContent = "Starte mit einer Karte oder importiere CSV (Spalten: Vorderseite, Rückseite, optional Hinweis).";
+
+      const actions = document.createElement("div");
+      actions.className = "cards-empty-actions";
+
+      const createBtn = document.createElement("button");
+      createBtn.className = "btn";
+      createBtn.type = "button";
+      createBtn.textContent = "Erste Karte anlegen";
+      createBtn.addEventListener("click", () => {
+        state.editingCardId = null;
+        elements.cardForm.reset();
+        if (elements.cardDeckSelect && state.activeDeckId) elements.cardDeckSelect.value = state.activeDeckId;
+        setStatus(elements.cardFormStatus, "");
+        setModalState(elements.cardModal, true);
+        focusFirstField(elements.cardModal);
+      });
+
+      const importBtn = document.createElement("button");
+      importBtn.className = "btn btn-secondary";
+      importBtn.type = "button";
+      importBtn.textContent = "CSV importieren";
+      importBtn.addEventListener("click", () => {
+        setStatus(elements.csvStatus, "");
+        elements.csvPreview.hidden = true;
+        elements.csvError.hidden = true;
+        setModalState(elements.csvModal, true);
+        focusFirstField(elements.csvModal);
+      });
+
+      actions.appendChild(createBtn);
+      actions.appendChild(importBtn);
+
+      wrap.appendChild(headline);
+      wrap.appendChild(hint);
+      wrap.appendChild(actions);
+      elements.cardList.appendChild(wrap);
+      return;
+    }
+
+    const query = String(state.cardSearch || "").trim().toLowerCase();
+    const now = Date.now();
+    const cards = deck.cards.slice().reverse().filter((card) => {
+      if (!query) return true;
+      const hay = `${card.front || ""}\n${card.back || ""}\n${card.hint || ""}`.toLowerCase();
+      return hay.includes(query);
+    });
+
+    if (!cards.length) {
       const empty = document.createElement("div");
       empty.className = "card-list-empty";
-      empty.textContent = "Noch keine Karten im Stapel. Füge oben eine hinzu oder importiere eine CSV.";
+      empty.textContent = "Keine Treffer. Passe die Suche an oder lösche den Filter.";
       elements.cardList.appendChild(empty);
       return;
     }
 
-    deck.cards
-      .slice()
-      .reverse()
-      .forEach((card) => {
-        const item = document.createElement("div");
-        item.className = "card-list-item";
-        const nextReview = card.due ? `Fällig: ${formatDateTime(card.due)}` : "Noch kein Intervall";
-        const front = document.createElement("div");
-        front.className = "card-list-front";
-        front.textContent = card.front || "";
+    cards.forEach((card) => {
+      const item = document.createElement("div");
+      item.className = "card-list-item";
+      item.dataset.cardId = card.id;
 
-        const back = document.createElement("div");
-        back.className = "card-list-back";
-        back.textContent = card.back || "";
+      if (state.selectedCardIds.has(card.id)) item.classList.add("card-selected");
 
-        const meta = document.createElement("div");
-        meta.className = "card-list-meta";
-        meta.textContent = nextReview;
+      const isNew = !card.reviewCount;
+      const isDue = !card.due || card.due <= now;
+      const badge = document.createElement("div");
+      badge.className = "card-badge";
+      if (isNew) {
+        badge.classList.add("new");
+        badge.textContent = "Neu";
+      } else if (isDue) {
+        badge.classList.add("due");
+        badge.textContent = "Fällig";
+      } else {
+        badge.classList.add("learning");
+        badge.textContent = "Lernen";
+      }
 
-        const deleteBtn = document.createElement("button");
-        deleteBtn.className = "icon-btn icon-btn-ghost card-delete-btn";
-        deleteBtn.type = "button";
-        deleteBtn.title = "Karte löschen";
-        deleteBtn.setAttribute("aria-label", "Karte löschen");
-        deleteBtn.textContent = "✕";
+      const meta = document.createElement("div");
+      meta.className = "card-list-meta";
+      meta.textContent = card.due ? `Fällig: ${formatDateTime(card.due)}` : "Noch kein Intervall";
 
-        item.appendChild(front);
-        item.appendChild(back);
-        item.appendChild(meta);
-        item.appendChild(deleteBtn);
+      const front = document.createElement("div");
+      front.className = "card-list-front";
+      front.textContent = card.front || "";
 
-        deleteBtn.addEventListener("click", () => {
-          deck.cards = deck.cards.filter((c) => c.id !== card.id);
-          buildQueue();
-          saveState();
-          render();
-        });
-        elements.cardList.appendChild(item);
-      });
+      const back = document.createElement("div");
+      back.className = "card-list-back";
+      back.textContent = card.back || "";
+
+      const hint = document.createElement("div");
+      hint.className = "card-list-meta";
+      hint.textContent = card.hint ? `Hinweis: ${card.hint}` : "";
+
+      const select = document.createElement("input");
+      select.type = "checkbox";
+      select.className = "card-select";
+      select.checked = state.selectedCardIds.has(card.id);
+      select.setAttribute("aria-label", "Karte auswählen");
+      select.dataset.action = "select";
+
+      const editBtn = document.createElement("button");
+      editBtn.className = "icon-btn icon-btn-ghost card-edit-btn";
+      editBtn.type = "button";
+      editBtn.title = "Karte bearbeiten";
+      editBtn.setAttribute("aria-label", "Karte bearbeiten");
+      editBtn.textContent = "✎";
+      editBtn.dataset.action = "edit";
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "icon-btn icon-btn-ghost card-delete-btn";
+      deleteBtn.type = "button";
+      deleteBtn.title = "Karte löschen";
+      deleteBtn.setAttribute("aria-label", "Karte löschen");
+      deleteBtn.textContent = "✕";
+      deleteBtn.dataset.action = "delete";
+
+      item.appendChild(badge);
+      item.appendChild(front);
+      item.appendChild(back);
+      if (card.hint) item.appendChild(hint);
+      item.appendChild(meta);
+      item.appendChild(select);
+      item.appendChild(editBtn);
+      item.appendChild(deleteBtn);
+
+      elements.cardList.appendChild(item);
+    });
   }
 
   function setMode(mode) {
@@ -239,6 +410,7 @@
     elements.modeIntervalBtn.classList.toggle("mode-btn-active", mode === "interval");
     elements.reviewModeLabel.textContent = mode === "interval" ? "Intervall (Anki-ähnlich)" : "Normaler Durchgang";
     state.showAnswer = false;
+    state.reviewDone = 0;
     buildQueue();
     saveState();
     renderReview();
@@ -324,6 +496,8 @@
       elements.reviewFront.textContent = "Lege Karten an, um zu starten.";
       elements.reviewBack.textContent = "";
       elements.reviewStats.textContent = "Keine Karten vorhanden.";
+      if (elements.startReviewBtn) elements.startReviewBtn.disabled = true;
+      if (elements.reviewProgress) elements.reviewProgress.textContent = "";
       elements.reviewBack.classList.remove("review-back-visible");
       elements.showAnswerBtn.disabled = true;
       toggleActionButtons(false);
@@ -333,6 +507,14 @@
     const { due } = summarizeDeck(deck);
     elements.reviewStats.textContent =
       state.mode === "interval" ? `${due} fällig • alle Zeiten nach Feedback` : `${deck.cards.length} Karten bereit`;
+    if (elements.startReviewBtn) {
+      const canStart = deck.cards.length > 0;
+      elements.startReviewBtn.disabled = !canStart;
+    }
+    if (elements.reviewProgress) {
+      const remaining = (state.currentCard ? 1 : 0) + (state.reviewQueue ? state.reviewQueue.length : 0);
+      elements.reviewProgress.textContent = remaining ? `${state.reviewDone + 1} / ${state.reviewDone + remaining}` : "";
+    }
 
     if (!state.currentCard) {
       elements.reviewFront.textContent = due === 0 && state.mode === "interval"
@@ -341,6 +523,7 @@
       elements.reviewBack.textContent = "";
       elements.reviewBack.classList.remove("review-back-visible");
       elements.showAnswerBtn.disabled = true;
+      if (elements.reviewProgress) elements.reviewProgress.textContent = "";
       toggleActionButtons(false);
       return;
     }
@@ -390,6 +573,7 @@
     if (!known) {
       state.reviewQueue.push(card);
     }
+    state.reviewDone += 1;
     saveState();
     moveToNextCard();
   }
@@ -397,6 +581,7 @@
   function handleIntervalReview(rating) {
     if (!state.currentCard) return;
     scheduleCardInterval(state.currentCard, rating);
+    state.reviewDone += 1;
     saveState();
     moveToNextCard();
   }
@@ -406,15 +591,16 @@
     const chosen = elements.csvDelimiterSelect ? elements.csvDelimiterSelect.value : "auto";
     const delimiter = chosen === "auto" ? detectDelimiter(lines) : chosen === "tab" ? "\t" : chosen;
     const rows = [];
+    let invalid = 0;
     lines.forEach((line) => {
-      const cells = splitCsvLine(line, delimiter)
-        .map((part) => part.trim().replace(/^"|"$/g, ""))
-        .filter((value) => value !== "");
-      if (cells.length >= 2) {
-        rows.push({ front: cells[0], back: cells[1] });
+      const cells = splitCsvLine(line, delimiter).map((part) => part.trim().replace(/^"|"$/g, ""));
+      if (cells.length >= 2 && (cells[0].trim() || cells[1].trim())) {
+        rows.push({ front: cells[0], back: cells[1], hint: cells[2] || "" });
+      } else {
+        invalid += 1;
       }
     });
-    return { rows, delimiter };
+    return { rows, delimiter, invalid, totalLines: lines.length };
   }
 
   function detectDelimiter(lines) {
@@ -453,46 +639,248 @@
   }
 
   function handleImportCsv() {
+    const candidate = state.csvCandidate;
+    if (!candidate || !Array.isArray(candidate.rows)) {
+      setStatus(elements.csvStatus, "Bitte zuerst eine CSV-Datei auswählen.", { tone: "danger" });
+      return;
+    }
     const file = elements.csvFileInput.files && elements.csvFileInput.files[0];
     if (!file) {
-      elements.importStatus.textContent = "Bitte eine CSV-Datei wählen.";
+      setStatus(elements.csvStatus, "Bitte eine CSV-Datei wählen.", { tone: "danger" });
       return;
     }
     const targetDeck = state.decks.find((d) => d.id === elements.csvDeckSelect.value);
     if (!targetDeck) {
-      elements.importStatus.textContent = "Kein Ziel-Stapel ausgewählt.";
+      setStatus(elements.csvStatus, "Kein Ziel-Stapel ausgewählt.", { tone: "danger" });
+      return;
+    }
+    if (!candidate.rows.length) {
+      setStatus(elements.csvStatus, "Keine gültigen Zeilen gefunden (erwarte mindestens 2 Spalten).", { tone: "danger" });
+      return;
+    }
+    const delimiterLabel = candidate.delimiter === "\t" ? "Tab" : candidate.delimiter;
+    const confirmText = `Importiere ${candidate.rows.length} Karten in „${targetDeck.name}“? (Trennung: ${delimiterLabel})`;
+    if (!window.confirm(confirmText)) return;
+
+    candidate.rows.forEach((row) => {
+      targetDeck.cards.push(
+        normalizeCard(
+          {
+            id: `card-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            front: row.front,
+            back: row.back,
+            hint: row.hint || "",
+            deckId: targetDeck.id,
+            createdAt: Date.now(),
+            due: Date.now(),
+            easeFactor: 2.5,
+            intervalDays: 0,
+            reviewCount: 0,
+          },
+          targetDeck.id
+        )
+      );
+    });
+
+    setStatus(elements.importStatus, `${candidate.rows.length} Karten importiert (Trennung: ${delimiterLabel}).`, { tone: "good" });
+    setStatus(elements.csvStatus, `Import abgeschlossen: ${candidate.rows.length} Karten.`, { tone: "good" });
+    state.activeDeckId = targetDeck.id;
+    state.reviewDone = 0;
+    setModalState(elements.csvModal, false);
+    buildQueue(true);
+    saveState();
+    render();
+    elements.csvFileInput.value = "";
+    state.csvCandidate = null;
+    state.lastCsvText = "";
+  }
+
+  function renderCsvPreview(candidate) {
+    if (!elements.csvPreview || !elements.csvError) return;
+    if (!candidate) {
+      elements.csvPreview.hidden = true;
+      elements.csvError.hidden = true;
+      elements.csvPreview.replaceChildren();
+      setStatus(elements.csvStatus, "");
+      return;
+    }
+
+    elements.csvPreview.replaceChildren();
+    const previewWrap = document.createElement("div");
+    const table = document.createElement("table");
+    const thead = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    ["Vorderseite", "Rückseite", "Hinweis"].forEach((label) => {
+      const th = document.createElement("th");
+      th.textContent = label;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+    candidate.rows.slice(0, 6).forEach((row) => {
+      const tr = document.createElement("tr");
+      const cells = [row.front, row.back, row.hint || ""];
+      cells.forEach((value) => {
+        const td = document.createElement("td");
+        td.textContent = String(value || "");
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    previewWrap.appendChild(table);
+    elements.csvPreview.appendChild(previewWrap);
+    elements.csvPreview.hidden = false;
+
+    const delimiterLabel = candidate.delimiter === "\t" ? "Tab" : candidate.delimiter;
+    setStatus(elements.csvStatus, `${candidate.rows.length} gültige Zeilen • Trennung: ${delimiterLabel}`, {
+      tone: candidate.rows.length ? "neutral" : "danger",
+    });
+
+    if (candidate.invalid) {
+      elements.csvError.textContent = `${candidate.invalid} Zeilen ignoriert (brauchen mindestens 2 Spalten).`;
+      elements.csvError.hidden = false;
+    } else {
+      elements.csvError.textContent = "";
+      elements.csvError.hidden = true;
+    }
+  }
+
+  function updateCsvCandidate() {
+    const file = elements.csvFileInput.files && elements.csvFileInput.files[0];
+    if (!file) {
+      state.csvCandidate = null;
+      state.lastCsvText = "";
+      renderCsvPreview(null);
       return;
     }
     const reader = new FileReader();
     reader.onload = (event) => {
-      const { rows, delimiter } = parseCsv(event.target.result);
-      if (rows.length === 0) {
-        elements.importStatus.textContent = "Keine gültigen Zeilen gefunden (erwarte mindestens 2 Spalten).";
-        return;
-      }
-      rows.forEach((row) => {
-        targetDeck.cards.push({
-          id: `card-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-          front: row.front,
-          back: row.back,
-          deckId: targetDeck.id,
-          createdAt: Date.now(),
-          due: Date.now(),
-          easeFactor: 2.5,
-          intervalDays: 0,
-          reviewCount: 0,
-        });
-      });
-      const delimiterLabel = delimiter === "\t" ? "Tab" : delimiter;
-      elements.importStatus.textContent = `${rows.length} Karten importiert (Trennung: ${delimiterLabel}).`;
-      state.activeDeckId = targetDeck.id;
-      setModalState(elements.csvModal, false);
-      buildQueue(true);
-      saveState();
-      render();
-      elements.csvFileInput.value = "";
+      const text = String(event.target.result || "");
+      state.lastCsvText = text;
+      const candidate = parseCsv(text);
+      state.csvCandidate = candidate;
+      renderCsvPreview(candidate);
+    };
+    reader.onerror = () => {
+      state.csvCandidate = null;
+      renderCsvPreview(null);
+      setStatus(elements.csvStatus, "CSV konnte nicht gelesen werden.", { tone: "danger" });
     };
     reader.readAsText(file);
+  }
+
+  function exportActiveDeckCsv() {
+    const deck = getActiveDeck();
+    if (!deck) {
+      setStatus(elements.importStatus, "Kein Stapel ausgewählt.", { tone: "danger" });
+      return;
+    }
+    if (!deck.cards || !deck.cards.length) {
+      setStatus(elements.importStatus, "Dieser Stapel enthält keine Karten zum Export.", { tone: "danger" });
+      return;
+    }
+    const escapeCell = (value) => {
+      const raw = String(value == null ? "" : value);
+      const needsQuotes = /[",\n\r]/.test(raw);
+      const escaped = raw.replace(/"/g, '""');
+      return needsQuotes ? `"${escaped}"` : escaped;
+    };
+    const header = ["front", "back", "hint"];
+    const lines = [header.join(",")];
+    deck.cards.forEach((card) => {
+      lines.push([escapeCell(card.front), escapeCell(card.back), escapeCell(card.hint || "")].join(","));
+    });
+    const csv = lines.join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const safeName = String(deck.name || "deck").replace(/[^\w\d-_]+/g, "_").slice(0, 40) || "deck";
+    a.download = `studyplanner_${safeName}_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    setStatus(elements.importStatus, `CSV exportiert: ${deck.cards.length} Karten.`, { tone: "good" });
+  }
+
+  function openEditCard(cardId) {
+    const deck = getActiveDeck();
+    if (!deck) return;
+    const card = deck.cards.find((c) => c.id === cardId);
+    if (!card) return;
+    state.editingCardId = card.id;
+    elements.cardForm.reset();
+    if (elements.cardDeckSelect) elements.cardDeckSelect.value = deck.id;
+    elements.cardFrontInput.value = card.front || "";
+    elements.cardBackInput.value = card.back || "";
+    if (elements.cardHintInput) elements.cardHintInput.value = card.hint || "";
+    setStatus(elements.cardFormStatus, "Bearbeiten: Änderungen speichern, um zu übernehmen.");
+    setModalState(elements.cardModal, true);
+    focusFirstField(elements.cardModal);
+  }
+
+  function deleteCardById(cardId) {
+    const deck = getActiveDeck();
+    if (!deck) return false;
+    const before = deck.cards.length;
+    deck.cards = deck.cards.filter((c) => c.id !== cardId);
+    if (deck.cards.length === before) return false;
+    state.selectedCardIds.delete(cardId);
+    buildQueue(true);
+    saveState();
+    render();
+    return true;
+  }
+
+  function deleteSelectedCards() {
+    const deck = getActiveDeck();
+    if (!deck) return;
+    const ids = Array.from(state.selectedCardIds || []);
+    if (!ids.length) return;
+    if (!window.confirm(`${ids.length} ausgewählte Karten löschen?`)) return;
+    const keep = new Set(ids);
+    deck.cards = deck.cards.filter((c) => !keep.has(c.id));
+    state.selectedCardIds.clear();
+    buildQueue(true);
+    saveState();
+    render();
+  }
+
+  function toggleSelected(cardId, selected) {
+    if (!cardId) return;
+    if (selected) state.selectedCardIds.add(cardId);
+    else state.selectedCardIds.delete(cardId);
+    if (elements.bulkDeleteBtn) elements.bulkDeleteBtn.disabled = state.selectedCardIds.size === 0;
+  }
+
+  function refreshSelectionFromDom() {
+    if (!elements.cardList) return;
+    elements.cardList.querySelectorAll(".card-list-item").forEach((el) => {
+      const id = el.dataset.cardId;
+      const selected = id && state.selectedCardIds.has(id);
+      el.classList.toggle("card-selected", !!selected);
+      const checkbox = el.querySelector("input.card-select");
+      if (checkbox) checkbox.checked = !!selected;
+    });
+  }
+
+  function startReview() {
+    state.reviewDone = 0;
+    buildQueue(true);
+    renderReview();
+    if (elements.showAnswerBtn) elements.showAnswerBtn.focus();
+  }
+
+  function exitReview() {
+    state.showAnswer = false;
+    state.currentCard = null;
+    state.reviewQueue = [];
+    state.reviewDone = 0;
+    renderReview();
   }
 
   function showUpcoming() {
@@ -518,12 +906,21 @@
     renderCardList();
     renderReview();
     applyKatex();
+    if (elements.bulkDeleteBtn) elements.bulkDeleteBtn.disabled = state.selectedCardIds.size === 0;
   }
 
   function init() {
     loadState();
     buildQueue(true);
     render();
+
+    elements.deckList.addEventListener("click", (event) => {
+      const btn = event.target && event.target.closest ? event.target.closest("[data-deck-id]") : null;
+      if (!btn) return;
+      const id = btn.dataset.deckId;
+      if (!id) return;
+      setActiveDeck(id);
+    });
 
     elements.deckForm.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -556,22 +953,58 @@
       const front = elements.cardFrontInput.value.trim();
       const back = elements.cardBackInput.value.trim();
       if (!front || !back) return;
-      const card = {
-        id: `card-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        deckId,
-        front,
-        back,
-        createdAt: Date.now(),
-        due: Date.now(),
-        intervalDays: 0,
-        easeFactor: 2.5,
-        reviewCount: 0,
-      };
-      deck.cards.push(card);
+      const hint = elements.cardHintInput ? elements.cardHintInput.value.trim() : "";
+
+      if (state.editingCardId) {
+        let sourceDeck = null;
+        let existing = null;
+        for (const candidateDeck of state.decks) {
+          const found = candidateDeck.cards.find((c) => c.id === state.editingCardId);
+          if (found) {
+            sourceDeck = candidateDeck;
+            existing = found;
+            break;
+          }
+        }
+        if (existing) {
+          existing.front = front;
+          existing.back = back;
+          existing.hint = hint;
+          if (sourceDeck && sourceDeck.id !== deck.id) {
+            sourceDeck.cards = sourceDeck.cards.filter((c) => c.id !== existing.id);
+            existing.deckId = deck.id;
+            deck.cards.push(existing);
+          }
+          setStatus(elements.cardFormStatus, "Karte aktualisiert.", { tone: "good" });
+        } else state.editingCardId = null;
+      }
+
+      if (!state.editingCardId) {
+        const card = normalizeCard(
+          {
+            id: `card-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            deckId,
+            front,
+            back,
+            hint,
+            createdAt: Date.now(),
+            due: Date.now(),
+            intervalDays: 0,
+            easeFactor: 2.5,
+            reviewCount: 0,
+          },
+          deckId
+        );
+        deck.cards.push(card);
+        setStatus(elements.cardFormStatus, "Karte gespeichert.", { tone: "good" });
+      }
+
       state.activeDeckId = deckId;
       elements.cardForm.reset();
+      state.editingCardId = null;
       setModalState(elements.cardModal, false);
       buildQueue(true);
+      state.reviewDone = 0;
       saveState();
       render();
     });
@@ -588,19 +1021,51 @@
     const openCsvModal = () => setModalState(elements.csvModal, true);
     const closeCsvModal = () => setModalState(elements.csvModal, false);
 
-    elements.openCardModalBtn.addEventListener("click", openCardModal);
-    elements.closeCardModalBtn.addEventListener("click", closeCardModal);
+    elements.openCardModalBtn.addEventListener("click", () => {
+      state.editingCardId = null;
+      elements.cardForm.reset();
+      if (elements.cardDeckSelect && state.activeDeckId) elements.cardDeckSelect.value = state.activeDeckId;
+      setStatus(elements.cardFormStatus, "");
+      openCardModal();
+      focusFirstField(elements.cardModal);
+    });
+    elements.closeCardModalBtn.addEventListener("click", () => {
+      state.editingCardId = null;
+      closeCardModal();
+    });
     elements.cardModalBackdrop.addEventListener("click", closeCardModal);
 
-    elements.openCsvModalBtn.addEventListener("click", openCsvModal);
+    elements.openCsvModalBtn.addEventListener("click", () => {
+      setStatus(elements.csvStatus, "");
+      elements.csvError.hidden = true;
+      elements.csvPreview.hidden = true;
+      openCsvModal();
+      focusFirstField(elements.csvModal);
+    });
     elements.closeCsvModalBtn.addEventListener("click", closeCsvModal);
     elements.csvModalBackdrop.addEventListener("click", closeCsvModal);
 
     elements.importCsvBtn.addEventListener("click", handleImportCsv);
     elements.clearCsvBtn.addEventListener("click", () => {
       elements.csvFileInput.value = "";
-      elements.importStatus.textContent = "";
+      setStatus(elements.csvStatus, "");
+      state.csvCandidate = null;
+      state.lastCsvText = "";
+      renderCsvPreview(null);
     });
+
+    if (elements.csvFileInput) {
+      elements.csvFileInput.addEventListener("change", () => updateCsvCandidate());
+    }
+    if (elements.csvDelimiterSelect) {
+      elements.csvDelimiterSelect.addEventListener("change", () => {
+        if (!state.lastCsvText) return updateCsvCandidate();
+        state.csvCandidate = parseCsv(state.lastCsvText);
+        renderCsvPreview(state.csvCandidate);
+      });
+    }
+
+    if (elements.exportDeckBtn) elements.exportDeckBtn.addEventListener("click", exportActiveDeckCsv);
 
     elements.modeNormalBtn.addEventListener("click", () => setMode("normal"));
     elements.modeIntervalBtn.addEventListener("click", () => setMode("interval"));
@@ -617,19 +1082,144 @@
       btn.addEventListener("click", () => handleIntervalReview(btn.dataset.rating));
     });
 
+    if (elements.startReviewBtn) elements.startReviewBtn.addEventListener("click", startReview);
+
     elements.rebuildQueueBtn.addEventListener("click", () => {
+      state.reviewDone = 0;
       buildQueue(true);
       render();
     });
 
     elements.showUpcomingBtn.addEventListener("click", () => showUpcoming());
 
+    if (elements.quickAddForm) {
+      elements.quickAddForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const deck = getActiveDeck();
+        if (!deck) return;
+        const front = String(elements.quickFrontInput.value || "").trim();
+        const back = String(elements.quickBackInput.value || "").trim();
+        const hint = String(elements.quickHintInput.value || "").trim();
+        if (!front || !back) {
+          setStatus(elements.quickAddStatus, "Bitte Vorder- und Rückseite ausfüllen.", { tone: "danger" });
+          return;
+        }
+        deck.cards.push(
+          normalizeCard(
+            {
+              id: `card-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+              deckId: deck.id,
+              front,
+              back,
+              hint,
+              createdAt: Date.now(),
+              due: Date.now(),
+              intervalDays: 0,
+              easeFactor: 2.5,
+              reviewCount: 0,
+            },
+            deck.id
+          )
+        );
+        elements.quickAddForm.reset();
+        setStatus(elements.quickAddStatus, "Hinzugefügt.", { tone: "good" });
+        state.reviewDone = 0;
+        buildQueue(true);
+        saveState();
+        render();
+        elements.quickFrontInput.focus();
+      });
+    }
+
+    if (elements.cardSearchInput) {
+      elements.cardSearchInput.addEventListener("input", () => {
+        if (state.searchTimer) clearTimeout(state.searchTimer);
+        state.searchTimer = setTimeout(() => {
+          state.cardSearch = elements.cardSearchInput.value || "";
+          renderCardList();
+          refreshSelectionFromDom();
+          applyKatex();
+        }, 120);
+      });
+    }
+
+    if (elements.bulkDeleteBtn) {
+      elements.bulkDeleteBtn.addEventListener("click", () => deleteSelectedCards());
+    }
+
+    if (elements.cardList) {
+      elements.cardList.addEventListener("click", (event) => {
+        const actionEl = event.target && event.target.closest ? event.target.closest("[data-action]") : null;
+        const item = event.target && event.target.closest ? event.target.closest(".card-list-item") : null;
+        const cardId = item ? item.dataset.cardId : null;
+        if (!cardId) return;
+
+        if (actionEl && actionEl.dataset.action === "edit") {
+          openEditCard(cardId);
+          return;
+        }
+        if (actionEl && actionEl.dataset.action === "delete") {
+          if (!window.confirm("Diese Karte löschen?")) return;
+          deleteCardById(cardId);
+          return;
+        }
+      });
+
+      elements.cardList.addEventListener("change", (event) => {
+        const checkbox = event.target && event.target.matches ? (event.target.matches("input.card-select") ? event.target : null) : null;
+        if (!checkbox) return;
+        const item = checkbox.closest(".card-list-item");
+        const cardId = item ? item.dataset.cardId : null;
+        if (!cardId) return;
+        toggleSelected(cardId, checkbox.checked);
+        refreshSelectionFromDom();
+      });
+    }
+
     window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        if (elements.cardModal && elements.cardModal.classList.contains("is-open")) {
+          event.preventDefault();
+          state.editingCardId = null;
+          closeCardModal();
+          return;
+        }
+        if (elements.csvModal && elements.csvModal.classList.contains("is-open")) {
+          event.preventDefault();
+          closeCsvModal();
+          return;
+        }
+        if (state.currentCard) {
+          event.preventDefault();
+          exitReview();
+          return;
+        }
+      }
+
+      if (isInteractiveTarget(event.target)) return;
+      if (!state.currentCard) return;
+
       if (event.key === " ") {
         event.preventDefault();
         if (!state.showAnswer) {
           state.showAnswer = true;
           renderReview();
+        }
+        return;
+      }
+
+      if (!state.showAnswer) return;
+
+      if (state.mode === "interval") {
+        const rating = event.key === "1" ? "again" : event.key === "2" ? "hard" : event.key === "3" ? "good" : event.key === "4" ? "easy" : null;
+        if (rating) {
+          event.preventDefault();
+          handleIntervalReview(rating);
+        }
+      } else {
+        if (event.key === "1" || event.key === "2") {
+          event.preventDefault();
+          handleNormalReview(event.key === "1");
         }
       }
     });

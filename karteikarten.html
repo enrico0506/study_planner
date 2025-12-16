@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="./src/styles/phone-modals.css" />
   <link rel="stylesheet" href="./src/styles/a11y.css" />
   <link rel="stylesheet" href="./src/styles/enhancements.css" />
+  <link rel="stylesheet" href="./src/styles/karteikarten.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
@@ -68,7 +69,7 @@
 
     <div class="flashcards-layout">
       <aside class="deck-column">
-        <div class="deck-card">
+        <div class="deck-card deck-card-decks">
           <div class="deck-card-head">
             <div>
               <div class="deck-card-label">Stapel</div>
@@ -76,7 +77,9 @@
             </div>
             <button class="chip-btn chip-btn-primary" id="focusDeckNameBtn" type="button">+ Neuer Stapel</button>
           </div>
-          <div class="deck-list" id="deckList"></div>
+          <div class="deck-list-scroll">
+            <div class="deck-list" id="deckList"></div>
+          </div>
           <form class="deck-form" id="deckForm">
             <label>
               Name des Stapels
@@ -93,11 +96,23 @@
           </form>
         </div>
 
-        <div class="deck-card">
-          <div class="deck-card-title">CSV importieren</div>
-          <p class="deck-card-subtitle">Erwarte Spalten: Vorderseite, Rückseite, optionaler Hinweis.</p>
-          <button class="btn" id="openCsvModalBtn" type="button">CSV Import öffnen</button>
-          <div class="import-status" id="importStatus"></div>
+        <div class="deck-card deck-card-import">
+          <details class="import-collapsible" open>
+            <summary>
+              <div class="import-collapsible-summary">
+                <div>
+                  <div class="deck-card-title">Import / Export</div>
+                  <p class="deck-card-subtitle">CSV: Vorderseite, Rückseite, optional Hinweis.</p>
+                </div>
+                <span class="import-caret" aria-hidden="true">⌄</span>
+              </div>
+            </summary>
+            <div class="import-actions">
+              <button class="btn" id="openCsvModalBtn" type="button">CSV importieren…</button>
+              <button class="btn btn-secondary" id="exportDeckBtn" type="button">Deck exportieren (CSV)</button>
+            </div>
+            <div class="import-status" id="importStatus"></div>
+          </details>
         </div>
       </aside>
 
@@ -126,18 +141,39 @@
                 <button class="btn" id="openCardModalBtn" type="button">Karte anlegen</button>
               </div>
             </div>
-            <p class="flashcards-meta">
-              Öffne den Dialog, um eine Karte zu erstellen. Das Formular erscheint als Pop-up.
-            </p>
+            <form class="quick-add" id="quickAddForm">
+              <div class="quick-add-grid">
+                <label>
+                  Vorderseite
+                  <textarea id="quickFrontInput" rows="2" placeholder="Frage / Begriff" required></textarea>
+                </label>
+                <label>
+                  Rückseite
+                  <textarea id="quickBackInput" rows="3" placeholder="Antwort / Erklärung" required></textarea>
+                </label>
+                <label>
+                  Hinweis (optional)
+                  <input id="quickHintInput" type="text" placeholder="z. B. Kontext, Merksatz" />
+                </label>
+              </div>
+              <div class="quick-add-actions">
+                <div class="quick-add-status" id="quickAddStatus" role="status" aria-live="polite"></div>
+                <button class="btn" type="submit">Hinzufügen</button>
+              </div>
+            </form>
           </div>
 
           <div class="card-editor-list">
             <div class="card-editor-list-head">
               <div>
                 <div class="deck-card-label">Karten im Stapel</div>
-                <div class="deck-card-title">Kurzer Überblick</div>
+                <div class="deck-card-title">Übersicht</div>
               </div>
               <div class="flashcards-meta" id="deckStats"></div>
+            </div>
+            <div class="card-browser-tools">
+              <input class="card-search" id="cardSearchInput" type="search" placeholder="Suchen (Vorder-/Rückseite/Hinweis)..." />
+              <button class="btn btn-secondary" id="bulkDeleteBtn" type="button" disabled>Löschen</button>
             </div>
             <div class="card-list" id="cardList"></div>
           </div>
@@ -151,9 +187,13 @@
               <div class="flashcards-meta" id="reviewStats">Bereit, sobald Karten vorhanden sind.</div>
             </div>
             <div class="review-actions-compact">
+              <button class="chip-btn chip-btn-primary" id="startReviewBtn" type="button">Start review</button>
               <button class="chip-btn" id="rebuildQueueBtn" type="button">Neu mischen</button>
               <button class="chip-btn" id="showUpcomingBtn" type="button">Fällige Karten</button>
             </div>
+          </div>
+          <div class="review-start-row">
+            <div class="review-progress" id="reviewProgress"></div>
           </div>
           <div class="review-card" id="reviewCard">
             <div class="review-card-body">
@@ -212,8 +252,14 @@
             <textarea id="cardBackInput" rows="4" placeholder="Antwort, Definition, Beispiel" required></textarea>
           </label>
         </div>
+        <div class="form-row">
+          <label>
+            Hinweis (optional)
+            <input id="cardHintInput" type="text" placeholder="Kontext, Merksatz, Quelle" />
+          </label>
+        </div>
         <div class="calendar-form-actions">
-          <div class="calendar-form-status"></div>
+          <div class="calendar-form-status" id="cardFormStatus"></div>
           <div class="calendar-form-buttons">
             <button class="btn btn-secondary" type="reset">Reset</button>
             <button class="btn" type="submit">Karte speichern</button>
@@ -237,7 +283,7 @@
           <button class="btn btn-secondary" id="closeCsvModalBtn" type="button">Schließen</button>
         </div>
       </div>
-      <form class="calendar-form">
+      <form class="calendar-form" id="csvForm">
         <div class="form-row">
           <label>
             Datei
@@ -262,8 +308,12 @@
             </select>
           </label>
         </div>
+        <div class="form-row">
+          <div class="csv-preview" id="csvPreview" hidden></div>
+          <div class="csv-error" id="csvError" hidden></div>
+        </div>
         <div class="calendar-form-actions">
-          <div class="calendar-form-status"></div>
+          <div class="calendar-form-status" id="csvStatus"></div>
           <div class="calendar-form-buttons">
             <button class="btn btn-secondary" id="clearCsvBtn" type="button">Reset</button>
             <button class="btn" id="importCsvBtn" type="button">CSV importieren</button>

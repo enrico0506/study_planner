@@ -1,0 +1,239 @@
+/* Karteikarten-only refinements (scoped; no redesign). */
+
+body.flashcards-page .flashcards-shell {
+  /* Match the Board/Stundenplan “window” feel via shared CSS variables. */
+  width: min(var(--app-desktop-max), 92vw);
+  min-width: min(var(--app-desktop-min), 92vw);
+  margin: 28px auto 36px;
+  padding: 20px 22px 36px;
+}
+
+body.flashcards-page .flashcards-layout {
+  align-items: start;
+}
+
+/* Sticky sidebar + internal scrolling for large deck lists */
+body.flashcards-page .deck-column {
+  position: sticky;
+  top: 14px;
+  align-self: start;
+  max-height: calc(100vh - 140px);
+  overflow: hidden;
+}
+
+body.flashcards-page .deck-card.deck-card-decks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100vh - 220px);
+  overflow: hidden;
+}
+
+body.flashcards-page .deck-list-scroll {
+  overflow: auto;
+  padding-right: 2px;
+}
+
+body.flashcards-page .deck-card.deck-card-import {
+  overflow: hidden;
+}
+
+body.flashcards-page .import-collapsible summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+body.flashcards-page .import-collapsible summary::-webkit-details-marker {
+  display: none;
+}
+
+body.flashcards-page .import-collapsible-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+body.flashcards-page .import-caret {
+  opacity: 0.7;
+}
+
+body.flashcards-page .import-collapsible[open] .import-caret {
+  transform: rotate(180deg);
+}
+
+body.flashcards-page .import-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+/* Inline quick-add */
+body.flashcards-page .quick-add {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+body.flashcards-page .quick-add-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+body.flashcards-page .quick-add-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+body.flashcards-page .quick-add-status {
+  min-height: 18px;
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+
+/* Better empty state CTA */
+body.flashcards-page .cards-empty-cta {
+  border: 1px dashed rgba(148, 163, 184, 0.75);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.65);
+  display: grid;
+  gap: 10px;
+}
+
+body.flashcards-page .cards-empty-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Card browser header */
+body.flashcards-page .card-browser-tools {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+body.flashcards-page .card-search {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(223, 228, 240, 1);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+body.flashcards-page .card-list-item {
+  position: relative;
+}
+
+body.flashcards-page .card-select {
+  position: absolute;
+  top: 12px;
+  right: 78px;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+body.flashcards-page .card-edit-btn {
+  position: absolute;
+  top: 10px;
+  right: 44px;
+}
+
+body.flashcards-page .card-list-item.card-selected {
+  box-shadow: 0 0 0 2px rgba(47, 98, 244, 0.28);
+}
+
+body.flashcards-page .card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-muted);
+}
+
+body.flashcards-page .card-badge.due {
+  color: rgba(185, 28, 28, 0.95);
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(254, 226, 226, 0.6);
+}
+
+body.flashcards-page .card-badge.new {
+  color: rgba(29, 78, 216, 0.95);
+  border-color: rgba(59, 130, 246, 0.30);
+  background: rgba(219, 234, 254, 0.55);
+}
+
+body.flashcards-page .card-badge.learning {
+  color: rgba(15, 118, 110, 0.95);
+  border-color: rgba(20, 184, 166, 0.25);
+  background: rgba(204, 251, 241, 0.55);
+}
+
+body.flashcards-page .card-row-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Review: stronger affordances */
+body.flashcards-page .review-start-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+body.flashcards-page .review-progress {
+  color: var(--ink-muted);
+  font-weight: 700;
+}
+
+/* CSV preview */
+body.flashcards-page .csv-preview {
+  margin-top: 10px;
+  border: 1px solid rgba(228, 232, 239, 0.9);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.75);
+  overflow: hidden;
+}
+
+body.flashcards-page .csv-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+body.flashcards-page .csv-preview th,
+body.flashcards-page .csv-preview td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  vertical-align: top;
+}
+
+body.flashcards-page .csv-preview th {
+  background: rgba(243, 246, 255, 0.9);
+  color: var(--accent-ink);
+  font-weight: 800;
+}
+
+body.flashcards-page .csv-error {
+  margin-top: 10px;
+  color: rgba(185, 28, 28, 0.95);
+  font-weight: 700;
+}
