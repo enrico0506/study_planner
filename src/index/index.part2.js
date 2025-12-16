@@ -1255,9 +1255,9 @@
       window.addEventListener("study:calendar-changed", refreshUnifiedReviewIfOpen);
       window.addEventListener("study:state-replaced", refreshUnifiedReviewIfOpen);
 
-		    function addTodoForFile(subjectId, fileId, subtaskTexts) {
-		      const { subj, file } = resolveFileRef(subjectId, fileId);
-		      if (!subj || !file) return false;
+    function addTodoForFile(subjectId, fileId, subtaskTexts) {
+      const { subj, file } = resolveFileRef(subjectId, fileId);
+      if (!subj || !file) return false;
 
       const already = todayTodos.some(
         (t) => t.subjectId === subjectId && t.fileId === fileId
@@ -1271,7 +1271,7 @@
             .map((txt) => ({ id: createId(), label: txt, done: false }))
         : [];
 
-      todayTodos.unshift({
+      const todo = {
         id: createId(),
         subjectId,
         fileId,
@@ -1279,7 +1279,15 @@
         subjectName: subj.name || "Subject",
         done: false,
         subtasks
-      });
+      };
+
+      if (file.nextTimeNotePending) {
+        todo.handoffNote = file.nextTimeNotePending;
+        file.nextTimeNotePending = "";
+        saveToStorage();
+      }
+
+      todayTodos.unshift(todo);
       saveTodayTodos();
       renderTodayTodos();
       return true;

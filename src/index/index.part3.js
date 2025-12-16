@@ -126,9 +126,33 @@
         const textWrap = document.createElement("div");
         textWrap.className = "today-text";
 
-	        const title = document.createElement("div");
-	        title.className = "today-title";
-	        title.textContent = (file && file.name) || todo.label || "Untitled";
+        if (todo.handoffNote) {
+          const noteBox = document.createElement("div");
+          noteBox.className = "today-note-box";
+          const noteTitle = document.createElement("div");
+          noteTitle.className = "today-note-title";
+          noteTitle.textContent = "Note from last time";
+          const noteBody = document.createElement("div");
+          noteBody.className = "today-note-body";
+          noteBody.textContent = todo.handoffNote;
+          const noteDismiss = document.createElement("button");
+          noteDismiss.type = "button";
+          noteDismiss.className = "today-note-dismiss";
+          noteDismiss.textContent = "Dismiss";
+          noteDismiss.addEventListener("click", () => {
+            todo.handoffNote = "";
+            saveTodayTodos();
+            renderTodayTodos();
+          });
+          noteBox.appendChild(noteTitle);
+          noteBox.appendChild(noteBody);
+          noteBox.appendChild(noteDismiss);
+          item.appendChild(noteBox);
+        }
+
+        const title = document.createElement("div");
+        title.className = "today-title";
+        title.textContent = (file && file.name) || todo.label || "Untitled";
 
 	        const subs = Array.isArray(todo.subtasks) ? todo.subtasks : [];
 	        const collapsedHint = document.createElement("span");
@@ -142,8 +166,28 @@
         left.appendChild(colorDot);
         left.appendChild(textWrap);
 
-	        const actions = document.createElement("div");
-	        actions.className = "today-actions";
+        const actions = document.createElement("div");
+        actions.className = "today-actions";
+
+          const noteNextBtn = document.createElement("button");
+          noteNextBtn.type = "button";
+          noteNextBtn.className = "chip-btn chip-btn-ghost";
+          noteNextBtn.textContent = "Note for next time";
+          noteNextBtn.addEventListener("click", () => {
+            if (!file) return;
+            openNoticePrompt("Note for next time", file.nextTimeNotePending || "", (val) => {
+              const trimmed = String(val || "").trim();
+              if (trimmed) {
+                file.nextTimeNotePending = trimmed;
+                saveToStorage();
+                showToast("Saved for next time.", "success");
+              } else {
+                file.nextTimeNotePending = "";
+                saveToStorage();
+              }
+              renderTodayTodos();
+            });
+          });
 
           const reorderActions = document.createElement("div");
           reorderActions.className = "today-reorder-actions";
@@ -188,6 +232,7 @@
           reorderActions.appendChild(upBtn);
           reorderActions.appendChild(downBtn);
           actions.appendChild(reorderActions);
+          actions.appendChild(noteNextBtn);
 
 	        const collapseBtn = document.createElement("button");
 	        collapseBtn.type = "button";

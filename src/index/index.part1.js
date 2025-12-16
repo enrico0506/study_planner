@@ -1456,6 +1456,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
         label: t.label || "",
         subjectName: t.subjectName || "",
         done: !!t.done,
+        handoffNote: typeof t.handoffNote === "string" ? t.handoffNote : "",
         subtasks: Array.isArray(t.subtasks)
           ? t.subtasks
               .filter((s) => s && s.id && s.label !== undefined)
