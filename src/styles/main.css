@@ -2806,6 +2806,25 @@ body::-webkit-scrollbar,
       outline: none;
     }
 
+    /* Keep native pickers usable for time/datetime-local */
+    input[type="time"],
+    input[type="datetime-local"] {
+      appearance: auto;
+      -webkit-appearance: auto;
+      -moz-appearance: auto;
+      pointer-events: auto;
+      color: inherit;
+      background: #ffffff;
+    }
+
+    input[type="time"]::-webkit-calendar-picker-indicator,
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+      opacity: 1;
+      display: block;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
     input[type="text"]:focus,
     input[type="number"]:focus {
       border-color: #2563eb;

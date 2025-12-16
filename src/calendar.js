@@ -162,7 +162,7 @@
       case "reminder":
         return "reminder";
       case "exam":
-        return "deadline";
+        return "exam";
       default:
         return "deadline";
     }
@@ -185,6 +185,28 @@
     const d = new Date(item.dueAt);
     if (Number.isNaN(d.getTime())) return "";
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function normalizeTimeInput(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return { ok: true, value: "" };
+    const pad = (n) => String(n).padStart(2, "0");
+    const asParts = raw.split(":");
+    if (asParts.length === 2) {
+      const h = Number(asParts[0]);
+      const m = Number(asParts[1]);
+      if (Number.isInteger(h) && Number.isInteger(m) && h >= 0 && h < 24 && m >= 0 && m < 60) {
+        return { ok: true, value: `${pad(h)}:${pad(m)}` };
+      }
+    }
+    if (/^\\d{3,4}$/.test(raw)) {
+      const h = Number(raw.slice(0, raw.length - 2));
+      const m = Number(raw.slice(-2));
+      if (Number.isInteger(h) && Number.isInteger(m) && h >= 0 && h < 24 && m >= 0 && m < 60) {
+        return { ok: true, value: `${pad(h)}:${pad(m)}` };
+      }
+    }
+    return { ok: false, value: "" };
   }
 
   function assignmentsForDate(dateString) {
@@ -725,6 +747,13 @@
     formTitleInput.value = evt.title;
     formDateInput.value = evt.date;
     formTimeInput.value = evt.time || "";
+    const norm = normalizeTimeInput(formTimeInput.value);
+    if (!norm.ok) {
+      formTimeInput.value = "";
+      setStatus("Time was invalid and has been cleared. Please re-enter as HH:MM.", "error");
+    } else {
+      formTimeInput.value = norm.value;
+    }
     formTypeSelect.value = evt.type || "deadline";
     formPrioritySelect.value = evt.priority || "normal";
     formNotesInput.value = evt.notes || "";
@@ -759,11 +788,17 @@
       setStatus("Title and date are required.", "error");
       return;
     }
+    const normalizedTime = normalizeTimeInput(formTimeInput.value);
+    if (!normalizedTime.ok) {
+      setStatus("Please enter time as HH:MM (24h).", "error");
+      formTimeInput.focus();
+      return;
+    }
     const payload = {
       id: editingId || (crypto.randomUUID ? crypto.randomUUID() : `evt-${Date.now()}`),
       title,
       date,
-      time: formTimeInput.value,
+      time: normalizedTime.value,
       type: formTypeSelect.value || "deadline",
       priority: formPrioritySelect.value || "normal",
       notes: formNotesInput.value.trim(),
