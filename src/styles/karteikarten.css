@@ -18,10 +18,6 @@ body.flashcards-page .flashcards-layout {
   grid-template-columns: 280px 1fr;
 }
 
-.card-editor-list-hidden {
-  display: none;
-}
-
 /* Sticky sidebar + internal scrolling for large deck lists */
 body.flashcards-page .deck-column {
   position: sticky;

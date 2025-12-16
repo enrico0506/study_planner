@@ -384,16 +384,17 @@
     if (!deck) {
       elements.activeDeckTitle.textContent = "Kein Stapel";
       elements.activeDeckMeta.textContent = "0 Karten • 0 fällig";
-      elements.deckStats.textContent = "";
+      if (elements.deckStats) elements.deckStats.textContent = "";
       return;
     }
     const { total, due, newCards } = summarizeDeck(deck);
     elements.activeDeckTitle.textContent = deck.name;
     elements.activeDeckMeta.textContent = `${total} Karten • ${due} fällig • ${newCards} neu`;
-    elements.deckStats.textContent = `${total} Karten insgesamt`;
+    if (elements.deckStats) elements.deckStats.textContent = `${total} Karten insgesamt`;
   }
 
   function renderCardList() {
+    if (!elements.cardList) return;
     const deck = getActiveDeck();
     elements.cardList.replaceChildren();
     if (!deck || deck.cards.length === 0) {
@@ -678,7 +679,9 @@
       { left: "\\[", right: "\\]", display: true },
     ];
     renderMathInElement(elements.reviewCard, { delimiters, throwOnError: false });
-    renderMathInElement(elements.cardList, { delimiters, throwOnError: false });
+    if (elements.cardList) {
+      renderMathInElement(elements.cardList, { delimiters, throwOnError: false });
+    }
   }
 
   function toggleActionButtons(show) {
