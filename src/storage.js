@@ -6,7 +6,8 @@
   const SCHEMA_KEY = "study_schema_version";
   const SNAPSHOT_KEY = "studyLocalSnapshots_v1";
   const SNAPSHOT_LIMIT = 12;
-  const SNAPSHOT_EXCLUDE_KEYS = new Set([SNAPSHOT_KEY, SCHEMA_KEY, "sync_cloud_updated_ms_v1"]);
+  const INTERNAL_KEYS = new Set([SNAPSHOT_KEY, SCHEMA_KEY]);
+  const SNAPSHOT_EXCLUDE_KEYS = new Set([...INTERNAL_KEYS, "sync_cloud_updated_ms_v1"]);
 
   const DEBOUNCE_DEFAULT_MS = 250;
   const writeTimers = new Map();
@@ -19,13 +20,13 @@
     }
   }
 
-  function listStudyKeys({ includeSyncMeta = true, excludeKeys = null } = {}) {
+  function listStudyKeys({ includeSyncMeta = true, excludeKeys = [] } = {}) {
     const keys = [];
-    const omit = excludeKeys instanceof Set ? excludeKeys : excludeKeys ? new Set(excludeKeys) : null;
+    const exclude = new Set(excludeKeys || []);
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (!key) continue;
-      if (omit && omit.has(key)) continue;
+      if (exclude.has(key)) continue;
       if (key.startsWith("study")) keys.push(key);
       if (includeSyncMeta && key === "sync_cloud_updated_ms_v1") keys.push(key);
     }
@@ -159,7 +160,7 @@
     const data = {};
     const keys = listStudyKeys({
       includeSyncMeta: true,
-      excludeKeys: SNAPSHOT_EXCLUDE_KEYS
+      excludeKeys: [SNAPSHOT_KEY, SCHEMA_KEY]
     });
     for (const k of keys) data[k] = getRaw(k, null);
 
@@ -229,7 +230,7 @@
 
   function exportAll() {
     const data = {};
-    const keys = listStudyKeys({ includeSyncMeta: true });
+    const keys = listStudyKeys({ includeSyncMeta: true, excludeKeys: [SNAPSHOT_KEY, SCHEMA_KEY] });
     for (const k of keys) data[k] = getRaw(k, null);
     return {
       app: "StudyPlanner",
@@ -417,6 +418,54 @@
     return { totalBytes, largest: entries.slice(0, limit) };
   }
 
+  function sanitizeSnapshotsOnBoot({ force = false } = {}) {
+    const raw = getRaw(SNAPSHOT_KEY, "");
+    if (!raw) return;
+    if (raw.length > 500000 && force === false) {
+      setJSON(SNAPSHOT_KEY, [], { debounceMs: 0 });
+      return;
+    }
+
+    const list = getJSON(SNAPSHOT_KEY, []);
+    if (!Array.isArray(list)) {
+      setJSON(SNAPSHOT_KEY, [], { debounceMs: 0 });
+      return;
+    }
+
+    const cleaned = [];
+    let changed = false;
+    for (const entry of list) {
+      if (!entry || typeof entry !== "object") {
+        changed = true;
+        continue;
+      }
+      const next = { ...entry };
+      if (next.data && typeof next.data === "object") {
+        const data = { ...next.data };
+        for (const key of INTERNAL_KEYS) {
+          if (key in data) {
+            delete data[key];
+            changed = true;
+          }
+        }
+        next.data = data;
+      }
+      cleaned.push(next);
+      if (cleaned.length >= SNAPSHOT_LIMIT) break;
+    }
+
+    if (cleaned.length > SNAPSHOT_LIMIT) {
+      cleaned.length = SNAPSHOT_LIMIT;
+      changed = true;
+    }
+
+    if (changed || cleaned.length !== list.length) {
+      setJSON(SNAPSHOT_KEY, cleaned, { debounceMs: 0 });
+    }
+  }
+
+  sanitizeSnapshotsOnBoot();
+
   StudyPlanner.Storage = Object.assign(StudyPlanner.Storage || {}, {
     APP_SCHEMA_VERSION,
     SCHEMA_KEY,
@@ -438,7 +487,9 @@
     compactSnapshots,
     repairSnapshotsIfNeeded,
     estimateLocalStorageBytes,
-    estimateLocalStorageUsage
+    estimateLocalStorageUsage,
+    clearSnapshots: () => setJSON(SNAPSHOT_KEY, [], { debounceMs: 0 }),
+    repairSnapshots: () => sanitizeSnapshotsOnBoot({ force: true })
   });
 
   repairSnapshotsIfNeeded();

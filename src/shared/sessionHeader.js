@@ -179,6 +179,9 @@
 
   function mountSessionHeader({ mountEl, variant = "full", context = {} } = {}) {
     if (!mountEl) return null;
+    if (mountEl.__sessionHeaderInstance && typeof mountEl.__sessionHeaderInstance.destroy === "function") {
+      mountEl.__sessionHeaderInstance.destroy();
+    }
     const ui = buildHeaderDOM(variant);
     mountEl.innerHTML = "";
     mountEl.appendChild(ui.root);
@@ -187,6 +190,7 @@
     let sessionsCache = loadSessions();
     if (!Array.isArray(sessionsCache)) sessionsCache = [];
     let cachedTotals = computeTotals(sessionsCache);
+    let lastSessionsRefreshMs = 0;
 
     function updateStats() {
       const baseTotals = cachedTotals || { today: 0, week: 0, month: 0 };
@@ -211,13 +215,6 @@
       ui.startBtn.disabled = !!(active && active.running);
       ui.pauseBtn.disabled = !active || !active.running;
       ui.stopBtn.disabled = !active || (!active.running && !active.accumulatedMs);
-    }
-
-    function refreshSessionsFromStorage() {
-      const next = loadSessions();
-      sessionsCache = Array.isArray(next) ? next : [];
-      cachedTotals = computeTotals(sessionsCache);
-      updateStats();
     }
 
     function persist() {
@@ -283,36 +280,57 @@
       updateStats();
     }
 
-    ui.startBtn.addEventListener("click", startOrResume);
-    ui.pauseBtn.addEventListener("click", () => pause("manual"));
-    ui.stopBtn.addEventListener("click", stop);
+    const handleStartClick = () => startOrResume();
+    const handlePauseClick = () => pause("manual");
+    const handleStopClick = () => stop();
 
-    document.addEventListener("visibilitychange", () => {
+    ui.startBtn.addEventListener("click", handleStartClick);
+    ui.pauseBtn.addEventListener("click", handlePauseClick);
+    ui.stopBtn.addEventListener("click", handleStopClick);
+
+    const handleVisibilityChange = () => {
       if (document.hidden) pause("hidden");
-    });
-    window.addEventListener("beforeunload", () => pause("nav"));
+    };
+    const handleBeforeUnload = () => pause("nav");
 
-    const handleSessionsChanged = () => refreshSessionsFromStorage();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    const handleSessionsUpdated = () => refreshSessionsFromStorage();
     const handleStorage = (event) => {
       if (event && event.key && event.key !== SESSIONS_KEY) return;
       refreshSessionsFromStorage();
     };
     const handleStateReplaced = () => refreshSessionsFromStorage();
 
-    window.addEventListener("study:sessions-changed", handleSessionsChanged);
+    window.addEventListener("study:sessions-updated", handleSessionsUpdated);
+    window.addEventListener("study:sessions-changed", handleSessionsUpdated);
     window.addEventListener("storage", handleStorage);
     window.addEventListener("study:state-replaced", handleStateReplaced);
 
     let tickHandle = null;
     function tick() {
       renderState();
-      updateStats();
+      const now = Date.now();
+      if (now - lastSessionsRefreshMs > 60000) {
+        refreshSessionsFromStorage();
+      } else {
+        updateStats();
+      }
     }
     tickHandle = setInterval(tick, 1000);
 
+    function refreshSessionsFromStorage() {
+      const next = loadSessions();
+      sessionsCache = Array.isArray(next) ? next : [];
+      cachedTotals = computeTotals(sessionsCache);
+      lastSessionsRefreshMs = Date.now();
+      updateStats();
+    }
+
     refreshSessionsFromStorage();
     tick();
-    return {
+    const instance = {
       start: startOrResume,
       pause,
       stop,
@@ -323,11 +341,21 @@
       },
       destroy() {
         if (tickHandle) clearInterval(tickHandle);
-        window.removeEventListener("study:sessions-changed", handleSessionsChanged);
+        ui.startBtn.removeEventListener("click", handleStartClick);
+        ui.pauseBtn.removeEventListener("click", handlePauseClick);
+        ui.stopBtn.removeEventListener("click", handleStopClick);
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        window.removeEventListener("beforeunload", handleBeforeUnload);
+        window.removeEventListener("study:sessions-updated", handleSessionsUpdated);
+        window.removeEventListener("study:sessions-changed", handleSessionsUpdated);
         window.removeEventListener("storage", handleStorage);
         window.removeEventListener("study:state-replaced", handleStateReplaced);
+        mountEl.__sessionHeaderInstance = null;
       },
     };
+
+    mountEl.__sessionHeaderInstance = instance;
+    return instance;
   }
 
   StudyPlanner.mountSessionHeader = mountSessionHeader;

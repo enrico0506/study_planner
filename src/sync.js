@@ -3,6 +3,7 @@
   const SYNC_META_KEY = "sync_cloud_updated_ms_v1";
   const SCHEMA_KEY = "study_schema_version";
   const SNAPSHOT_KEY = "studyLocalSnapshots_v1";
+  const EXCLUDED_SYNC_KEYS = new Set([SNAPSHOT_KEY, SCHEMA_KEY]);
   const CLOUD_POLL_MS = 15000;
   const SYNC_APPLIED_EVENT = "study:state-replaced";
 
@@ -93,26 +94,38 @@
     return false;
   }
 
+  function normalizeSnapshot(snapshot) {
+    const src = snapshot && typeof snapshot === "object" ? snapshot : {};
+    const out = {};
+    for (const [k, v] of Object.entries(src)) {
+      if (!k.startsWith("study")) continue;
+      if (EXCLUDED_SYNC_KEYS.has(k)) continue;
+      out[k] = typeof v === "string" || v === null ? v : String(v);
+    }
+    return out;
+  }
+
   function snapshotLocalState() {
     const out = {};
-    for (const key of SYNC_KEYS) {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith("study")) continue;
+      if (EXCLUDED_SYNC_KEYS.has(key)) continue;
       try {
         const value = localStorage.getItem(key);
         if (value == null) continue;
         out[key] = value;
       } catch {}
     }
-    return out;
+    return normalizeSnapshot(out);
   }
 
   function filterSnapshot(snapshot) {
-    const source = snapshot && typeof snapshot === "object" ? snapshot : {};
+    const source = normalizeSnapshot(snapshot);
     const out = {};
     for (const key of SYNC_KEYS) {
       if (key in source) out[key] = source[key];
     }
-    delete out[SNAPSHOT_KEY];
-    delete out[SCHEMA_KEY];
     return out;
   }
 
@@ -175,11 +188,12 @@
 
   let suppressPush = false;
   function applyCloudSnapshot(snapshot, cloudUpdatedMs) {
-    const filtered = filterSnapshot(snapshot);
-    const signature = stableHashSnapshot(filtered);
+    const normalized = normalizeSnapshot(snapshot || {});
+    const signature = stableHashSnapshot(normalized);
     suppressPush = true;
     try {
-      replaceLocalStateFromSnapshot(filtered);
+      replaceLocalStateFromSnapshot(normalized);
+      for (const k of EXCLUDED_SYNC_KEYS) localStorage.removeItem(k);
     } finally {
       suppressPush = false;
     }
@@ -201,7 +215,8 @@
 
     const local = snapshotLocalState();
     const cloud = await pullCloudState();
-    const cloudData = filterSnapshot((cloud && cloud.data) || {});
+    const cloudDataRaw = (cloud && cloud.data) || {};
+    const cloudData = normalizeSnapshot(cloudDataRaw);
     const localHasData = hasAnySyncedState(local) || hasPlannerData(local);
     const cloudHasData = hasAnySyncedState(cloudData) || hasPlannerData(cloudData);
 
@@ -275,7 +290,8 @@
     const cloudUpdatedMs = cloud?.updatedAt ? Date.parse(cloud.updatedAt) : 0;
     if (!cloudUpdatedMs || cloudUpdatedMs <= lastSeenCloudMs) return;
 
-    const cloudData = filterSnapshot((cloud && cloud.data) || {});
+    const cloudDataRaw = (cloud && cloud.data) || {};
+    const cloudData = normalizeSnapshot(cloudDataRaw);
     applyCloudSnapshot(cloudData, cloudUpdatedMs);
   }
 

@@ -40,6 +40,7 @@
     setJSON(SESSIONS_KEY, next, { debounceMs: 0 });
     try {
       window.dispatchEvent(new CustomEvent("study:sessions-changed"));
+      window.dispatchEvent(new CustomEvent("study:sessions-updated"));
     } catch {}
   }
 
@@ -197,4 +198,3 @@
     openRecap
   });
 })();
-
