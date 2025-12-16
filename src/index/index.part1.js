@@ -728,6 +728,17 @@ const CVD_SAFE_SUBJECT_COLORS = [
       }, 2200);
     }
 
+    function announceLive(message) {
+      const el = document.getElementById("studyAriaLive");
+      if (!el) return;
+      const text = String(message || "").trim();
+      if (!text) return;
+      el.textContent = "";
+      requestAnimationFrame(() => {
+        el.textContent = text;
+      });
+    }
+
     function showNotice(message, tone = "info", onConfirm = null) {
       if (!noticeModalBackdrop || !noticeModalMessage || !noticeModalTitle) {
         showToast(message, tone);

@@ -1463,10 +1463,42 @@
       renderTable();
     }
 
+    function moveTodoByDelta(todoId, delta) {
+      const idx = todayTodos.findIndex((t) => t.id === todoId);
+      if (idx === -1) return false;
+      const nextIdx = idx + (delta < 0 ? -1 : 1);
+      if (nextIdx < 0 || nextIdx >= todayTodos.length) return false;
+      const [moved] = todayTodos.splice(idx, 1);
+      todayTodos.splice(nextIdx, 0, moved);
+      saveTodayTodos();
+      renderTodayTodos();
+      renderTable();
+      return true;
+    }
+
     function removeTodo(todoId) {
       todayTodos = todayTodos.filter((t) => t.id !== todoId);
       saveTodayTodos();
       renderTodayTodos();
+    }
+
+    function flashTodayTodoElement(todoId) {
+      if (!todayList || !todoId) return;
+      const raw = String(todoId);
+      const safe = window.CSS && typeof CSS.escape === "function" ? CSS.escape(raw) : raw;
+      const el = todayList.querySelector(`[data-todo-id="${safe}"]`);
+      if (!el) return;
+      el.classList.remove("study-flash");
+      void el.offsetWidth;
+      el.classList.add("study-flash");
+      el.scrollIntoView({ block: "nearest" });
+      setTimeout(() => el.classList.remove("study-flash"), 900);
+    }
+
+    function flashTodayTodoByFile(subjectId, fileId) {
+      const t = todayTodos.find((x) => x && x.subjectId === subjectId && x.fileId === fileId);
+      if (!t) return;
+      flashTodayTodoElement(t.id);
     }
 
     function addSubtask(todoId, label) {

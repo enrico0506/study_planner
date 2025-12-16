@@ -2522,6 +2522,50 @@ body::-webkit-scrollbar,
       flex: 0 0 auto;
     }
 
+.today-reorder-actions {
+  display: inline-flex;
+  gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+  max-width: 0;
+  max-height: 0;
+  overflow: hidden;
+  transform: translateY(-2px);
+  transition: opacity 0.12s ease, transform 0.12s ease, max-width 0.12s ease, max-height 0.12s ease;
+}
+
+.today-item:hover .today-reorder-actions,
+.today-item:focus-within .today-reorder-actions {
+  opacity: 1;
+  pointer-events: auto;
+  max-width: 200px;
+  max-height: 44px;
+  transform: translateY(0);
+}
+
+.today-reorder-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+@keyframes studyFlash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(47, 98, 244, 0.0);
+  }
+  10% {
+    box-shadow: 0 0 0 4px rgba(47, 98, 244, 0.28);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(47, 98, 244, 0.0);
+  }
+}
+
+.study-flash {
+  animation: studyFlash 0.9s ease-out;
+}
+
 @media (max-width: 1100px) {
   .today-item-top {
     grid-template-columns: minmax(0, 1fr);
@@ -3572,6 +3616,33 @@ body::-webkit-scrollbar,
       flex-direction: column;
       align-items: stretch;
       gap: 6px;
+    }
+
+    .file-actions-row {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+      opacity: 0;
+      pointer-events: none;
+      max-height: 0;
+      overflow: hidden;
+      transform: translateY(-2px);
+      transition: opacity 0.12s ease, transform 0.12s ease, max-height 0.12s ease;
+    }
+
+    .file-row:hover .file-actions-row,
+    .file-row:focus-within .file-actions-row {
+      opacity: 1;
+      pointer-events: auto;
+      max-height: 44px;
+      transform: translateY(0);
+    }
+
+    .file-action-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      box-shadow: none;
     }
 
     .add-file-slot {
@@ -4627,6 +4698,23 @@ body::-webkit-scrollbar,
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
   color: #1f2937;
   transition: background 0.12s ease, border-color 0.12s ease, transform 0.08s ease;
+}
+
+.icon-btn:focus-visible {
+  outline: 2px solid var(--accent, #2f62f4);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 
 .icon-btn:hover {

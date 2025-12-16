@@ -50,12 +50,13 @@
       const activeItems = [];
       const completedItems = [];
 
-	      sortedTodos.forEach((todo) => {
-	        const { subj, file } = resolveFileRef(todo.subjectId, todo.fileId);
-	        const subjColor = getSubjectColorById(todo.subjectId);
-	        const tintAlpha = getSubjectTintAlphaById(todo.subjectId);
-	        const item = document.createElement("div");
-	        item.className = "today-item";
+      sortedTodos.forEach((todo) => {
+        const { subj, file } = resolveFileRef(todo.subjectId, todo.fileId);
+        const subjColor = getSubjectColorById(todo.subjectId);
+        const tintAlpha = getSubjectTintAlphaById(todo.subjectId);
+        const item = document.createElement("div");
+        item.className = "today-item";
+        item.dataset.todoId = todo.id;
         const tinted = hexToRgba(subjColor, tintAlpha);
         const borderTint = hexToRgba(subjColor, Math.max(0.2, Math.min(0.7, tintAlpha * 2.25)));
         item.style.setProperty("--todo-accent", subjColor);
@@ -67,7 +68,6 @@
 	        if (isCollapsed) item.classList.add("today-item-collapsed");
         if (isDragMode) {
           item.setAttribute("draggable", "true");
-          item.dataset.todoId = todo.id;
           item.addEventListener("dragstart", (event) => {
             event.dataTransfer?.setData("text/plain", todo.id);
             item.classList.add("dragging");
@@ -134,6 +134,50 @@
 	        const actions = document.createElement("div");
 	        actions.className = "today-actions";
 
+          const reorderActions = document.createElement("div");
+          reorderActions.className = "today-reorder-actions";
+
+          const idx = todayTodos.findIndex((t) => t.id === todo.id);
+          const upBtn = document.createElement("button");
+          upBtn.type = "button";
+          upBtn.className = "icon-btn icon-btn-ghost today-reorder-btn";
+          upBtn.textContent = "↑";
+          upBtn.title = "Move up";
+          upBtn.setAttribute("aria-label", "Move up");
+          upBtn.disabled = idx <= 0;
+          upBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const moved = moveTodoByDelta(todo.id, -1);
+            if (moved) {
+              const nextIdx = todayTodos.findIndex((t) => t.id === todo.id);
+              showToast("Moved in Today's focus.", "success");
+              announceLive(`Moved “${(file && file.name) || todo.label || "Untitled"}” to position ${nextIdx + 1}.`);
+              flashTodayTodoElement(todo.id);
+            }
+          });
+
+          const downBtn = document.createElement("button");
+          downBtn.type = "button";
+          downBtn.className = "icon-btn icon-btn-ghost today-reorder-btn";
+          downBtn.textContent = "↓";
+          downBtn.title = "Move down";
+          downBtn.setAttribute("aria-label", "Move down");
+          downBtn.disabled = idx === -1 || idx >= todayTodos.length - 1;
+          downBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const moved = moveTodoByDelta(todo.id, 1);
+            if (moved) {
+              const nextIdx = todayTodos.findIndex((t) => t.id === todo.id);
+              showToast("Moved in Today's focus.", "success");
+              announceLive(`Moved “${(file && file.name) || todo.label || "Untitled"}” to position ${nextIdx + 1}.`);
+              flashTodayTodoElement(todo.id);
+            }
+          });
+
+          reorderActions.appendChild(upBtn);
+          reorderActions.appendChild(downBtn);
+          actions.appendChild(reorderActions);
+
 	        const collapseBtn = document.createElement("button");
 	        collapseBtn.type = "button";
 	        collapseBtn.className = "today-collapse-btn icon-btn icon-btn-ghost";
@@ -159,6 +203,30 @@
         const isThisActive = isActiveStudy(todo.subjectId, todo.fileId);
         const isPaused = isThisActive && activeStudy && activeStudy.paused;
 
+        item.addEventListener("keydown", (event) => {
+          if (event.altKey && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
+            event.preventDefault();
+            event.stopPropagation();
+            const moved = moveTodoByDelta(todo.id, event.key === "ArrowUp" ? -1 : 1);
+            if (moved) {
+              const nextIdx = todayTodos.findIndex((t) => t.id === todo.id);
+              showToast("Moved in Today's focus.", "success");
+              announceLive(`Moved “${(file && file.name) || todo.label || "Untitled"}” to position ${nextIdx + 1}.`);
+              flashTodayTodoElement(todo.id);
+            }
+            return;
+          }
+          if (event.key === "Delete" && !isThisActive) {
+            event.preventDefault();
+            event.stopPropagation();
+            showNotice("Remove this item from Today's focus?", "warn", () => {
+              removeTodo(todo.id);
+              renderTable();
+              announceLive(`Removed “${(file && file.name) || todo.label || "Untitled"}” from Today’s focus.`);
+            });
+          }
+        });
+
         if (!todo.done) {
           if (!isThisActive) {
             const studyBtn = document.createElement("button");
@@ -172,16 +240,6 @@
             });
             actions.appendChild(timerSpan);
             actions.appendChild(studyBtn);
-          const removeBtn = document.createElement("button");
-          removeBtn.type = "button";
-          removeBtn.className = "today-remove-btn";
-          removeBtn.textContent = "Remove";
-          removeBtn.addEventListener("click", () => {
-            showNotice("Remove this item from Today's focus?", "warn", () => {
-              removeTodo(todo.id);
-            });
-          });
-          actions.appendChild(removeBtn);
           } else {
             const primaryBtn = document.createElement("button");
             primaryBtn.type = "button";
@@ -214,6 +272,21 @@
             actions.appendChild(primaryBtn);
             actions.appendChild(stopBtn);
           }
+        }
+
+        if (!isThisActive) {
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "today-remove-btn";
+          removeBtn.textContent = "Remove";
+          removeBtn.addEventListener("click", () => {
+            showNotice("Remove this item from Today's focus?", "warn", () => {
+              removeTodo(todo.id);
+              renderTable();
+              announceLive(`Removed “${(file && file.name) || todo.label || "Untitled"}” from Today’s focus.`);
+            });
+          });
+          actions.appendChild(removeBtn);
         }
 
         topRow.appendChild(left);
@@ -1479,6 +1552,8 @@
             const row = document.createElement("div");
             row.className = "file-row";
             row.setAttribute("draggable", "true");
+            row.dataset.subjectId = subj.id;
+            row.dataset.fileId = file.id;
 
             const inToday = todayTodos.some(
               (t) => t.subjectId === subj.id && t.fileId === file.id
@@ -1617,6 +1692,98 @@
 
             const rightMeta = document.createElement("div");
             rightMeta.className = "file-actions";
+
+            const actionsRow = document.createElement("div");
+            actionsRow.className = "file-actions-row";
+            actionsRow.addEventListener("click", (event) => event.stopPropagation());
+
+            const addTodayActionBtn = document.createElement("button");
+            addTodayActionBtn.type = "button";
+            addTodayActionBtn.className = "icon-btn icon-btn-ghost file-action-btn";
+            addTodayActionBtn.textContent = "+";
+            addTodayActionBtn.title = "Add to Today's focus";
+            addTodayActionBtn.setAttribute("aria-label", "Add to Today's focus");
+            addTodayActionBtn.addEventListener("click", (event) => {
+              event.stopPropagation();
+              const added = addTodoForFile(subj.id, file.id);
+              if (added) {
+                showToast("Added to Today's focus.", "success");
+                announceLive(`Added “${file.name || "Untitled"}” to Today’s focus.`);
+                renderTable();
+                flashTodayTodoByFile(subj.id, file.id);
+              } else {
+                showToast("Already in Today's focus.", "info");
+                announceLive(`Already in Today’s focus: “${file.name || "Untitled"}”.`);
+                flashTodayTodoByFile(subj.id, file.id);
+              }
+            });
+
+            const moveUpBtn = document.createElement("button");
+            moveUpBtn.type = "button";
+            moveUpBtn.className = "icon-btn icon-btn-ghost file-action-btn";
+            moveUpBtn.textContent = "↑";
+            moveUpBtn.title = "Move up";
+            moveUpBtn.setAttribute("aria-label", "Move up");
+
+            const moveDownBtn = document.createElement("button");
+            moveDownBtn.type = "button";
+            moveDownBtn.className = "icon-btn icon-btn-ghost file-action-btn";
+            moveDownBtn.textContent = "↓";
+            moveDownBtn.title = "Move down";
+            moveDownBtn.setAttribute("aria-label", "Move down");
+
+            const ensureManualAndMove = (delta) => {
+              const fileIndex = subj.files.findIndex((f) => f.id === file.id);
+              if (fileIndex === -1) return;
+
+              if (subj.sortMode && subj.sortMode !== "manual") {
+                subj.sortMode = "manual";
+                applySortToSubject(subj);
+                showToast("Switched to manual order to reorder.", "info");
+              }
+
+              const idx = subj.files.findIndex((f) => f.id === file.id);
+              const nextIdx = idx + delta;
+              if (nextIdx < 0 || nextIdx >= subj.files.length) return;
+              const [moved] = subj.files.splice(idx, 1);
+              subj.files.splice(nextIdx, 0, moved);
+              updateManualOrder(subj);
+              saveToStorage();
+              renderTable();
+              announceLive(
+                `Moved “${file.name || "Untitled"}” to position ${nextIdx + 1} in ${subj.name || "subject"}.`
+              );
+            };
+
+            if (!subj.sortMode || subj.sortMode === "manual") {
+              const fileIndex = subj.files.findIndex((f) => f.id === file.id);
+              if (fileIndex <= 0) moveUpBtn.disabled = true;
+              if (fileIndex === -1 || fileIndex >= subj.files.length - 1) moveDownBtn.disabled = true;
+            }
+
+            moveUpBtn.addEventListener("click", (event) => {
+              event.stopPropagation();
+              ensureManualAndMove(-1);
+            });
+            moveDownBtn.addEventListener("click", (event) => {
+              event.stopPropagation();
+              ensureManualAndMove(1);
+            });
+
+            actionsRow.appendChild(addTodayActionBtn);
+            actionsRow.appendChild(moveUpBtn);
+            actionsRow.appendChild(moveDownBtn);
+            rightMeta.appendChild(actionsRow);
+
+            row.addEventListener("keydown", (event) => {
+              if (!event.altKey) return;
+              if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+              const target = event.target;
+              if (target && target.tagName && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+              event.preventDefault();
+              event.stopPropagation();
+              ensureManualAndMove(event.key === "ArrowUp" ? -1 : 1);
+            });
 
             const isThisActive = isActiveStudy(subj.id, file.id);
             const isPaused =
