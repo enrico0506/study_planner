@@ -2544,6 +2544,13 @@ body::-webkit-scrollbar,
   word-break: break-word;
 }
 
+.today-note-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+
 .today-note-dismiss {
   align-self: start;
   border: none;

@@ -134,7 +134,22 @@
           noteTitle.textContent = "Note from last time";
           const noteBody = document.createElement("div");
           noteBody.className = "today-note-body";
-          noteBody.textContent = todo.handoffNote;
+          const parts = String(todo.handoffNote || "")
+            .split(/\r?\n+/)
+            .map((s) => s.trim())
+            .filter(Boolean);
+          if (parts.length > 1) {
+            const list = document.createElement("ul");
+            list.className = "today-note-list";
+            parts.forEach((line) => {
+              const li = document.createElement("li");
+              li.textContent = line;
+              list.appendChild(li);
+            });
+            noteBody.appendChild(list);
+          } else {
+            noteBody.textContent = todo.handoffNote;
+          }
           const noteDismiss = document.createElement("button");
           noteDismiss.type = "button";
           noteDismiss.className = "today-note-dismiss";

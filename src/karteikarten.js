@@ -1098,30 +1098,54 @@
 
     if (elements.exportDeckBtn) elements.exportDeckBtn.addEventListener("click", exportActiveDeckCsv);
 
-    elements.modeNormalBtn.addEventListener("click", () => setMode("normal"));
-    elements.modeIntervalBtn.addEventListener("click", () => setMode("interval"));
+    elements.modeNormalBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      setMode("normal");
+    });
+    elements.modeIntervalBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      setMode("interval");
+    });
 
-    elements.showAnswerBtn.addEventListener("click", () => {
+    elements.showAnswerBtn.addEventListener("click", (event) => {
+      event.preventDefault();
       state.showAnswer = true;
       renderReview();
     });
 
-    elements.markKnownBtn.addEventListener("click", () => handleNormalReview(true));
-    elements.markRepeatBtn.addEventListener("click", () => handleNormalReview(false));
-
-    elements.intervalActions.querySelectorAll("[data-rating]").forEach((btn) => {
-      btn.addEventListener("click", () => handleIntervalReview(btn.dataset.rating));
+    elements.markKnownBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      handleNormalReview(true);
+    });
+    elements.markRepeatBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      handleNormalReview(false);
     });
 
-    if (elements.startReviewBtn) elements.startReviewBtn.addEventListener("click", startReview);
+    elements.intervalActions.querySelectorAll("[data-rating]").forEach((btn) => {
+      btn.addEventListener("click", (event) => {
+        event.preventDefault();
+        handleIntervalReview(btn.dataset.rating);
+      });
+    });
 
-    elements.rebuildQueueBtn.addEventListener("click", () => {
+    if (elements.startReviewBtn)
+      elements.startReviewBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        startReview();
+      });
+
+    elements.rebuildQueueBtn.addEventListener("click", (event) => {
+      event.preventDefault();
       state.reviewDone = 0;
       buildQueue(true);
       render();
     });
 
-    elements.showUpcomingBtn.addEventListener("click", () => showUpcoming());
+    elements.showUpcomingBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      showUpcoming();
+    });
 
     if (elements.quickAddForm) {
       elements.quickAddForm.addEventListener("submit", (event) => {
