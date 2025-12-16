@@ -1640,6 +1640,15 @@
       }
     } catch {}
 
+    if (sessionHeaderMount && window.StudyPlanner?.mountSessionHeader) {
+      document.body.classList.add("session-header-mounted");
+      window.StudyPlanner.mountSessionHeader({
+        mountEl: sessionHeaderMount,
+        variant: "full",
+        context: { source: "board" },
+      });
+    }
+
     // If the user navigates away (calendar, schedule, etc.), pause the timer and
     // auto-resume when coming back to the main page.
     window.addEventListener("pagehide", () => {

@@ -29,8 +29,10 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <script defer src="./src/shared/sessionHeader.js"></script>
 </head>
 <body class="flashcards-page">
+  <div id="sessionHeaderMount"></div>
   <div class="flashcards-shell">
     <div class="header-row flashcards-header">
       <div class="header-main">
@@ -329,6 +331,7 @@
     </div>
   </div>
   <script src="./src/storage.js" defer></script>
+  <script src="./src/session-journal.js" defer></script>
   <script src="./src/pwa.js" defer></script>
   <script src="./src/a11y-utils.js" defer></script>
   <script src="./src/sync.js" defer></script>

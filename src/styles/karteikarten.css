@@ -152,6 +152,56 @@ body.flashcards-page .card-list-item.card-selected {
   box-shadow: 0 0 0 2px rgba(47, 98, 244, 0.28);
 }
 
+body.is-review-maximized .flashcards-layout {
+  grid-template-columns: 1fr;
+}
+
+body.is-review-maximized .deck-column,
+body.is-review-maximized .card-editor-form,
+body.is-review-maximized .card-editor-list {
+  display: none;
+}
+
+body.is-review-maximized .review-panel {
+  min-height: calc(100vh - 220px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+body.is-review-maximized .review-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+}
+
+body.is-review-maximized .review-face {
+  font-size: 1.15rem;
+  line-height: 1.5;
+}
+
+body.is-review-maximized .review-foot {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), #ffffff);
+  width: 100%;
+  padding: 14px 10px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+body.is-review-maximized .review-actions {
+  justify-content: center;
+}
+
+body.is-review-maximized .flashcards-shell {
+  max-width: 1200px;
+}
+
 @media (min-width: 900px) {
   /* Keep the Übersicht list from pushing the page height */
   body.flashcards-page .card-editor-list {

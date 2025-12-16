@@ -63,6 +63,7 @@
     quickAddStatus: document.getElementById("quickAddStatus"),
     cardHintInput: document.getElementById("cardHintInput"),
     cardFormStatus: document.getElementById("cardFormStatus"),
+    sessionHeaderMount: document.getElementById("sessionHeaderMount"),
   };
 
   const defaultDeck = () => ({
@@ -86,7 +87,52 @@
     csvCandidate: null,
     lastCsvText: "",
     searchTimer: null,
+    sessionHeader: null,
   };
+
+  function updateSessionHeaderContext() {
+    if (!state.sessionHeader) return;
+    const deck = getActiveDeck();
+    state.sessionHeader.setContext?.({
+      source: "flashcards",
+      deckId: deck ? deck.id : null,
+      mode: state.mode,
+    });
+  }
+
+  function ensureSessionHeader() {
+    if (state.sessionHeader || !elements.sessionHeaderMount) return;
+    const mount = window.StudyPlanner && window.StudyPlanner.mountSessionHeader ? window.StudyPlanner.mountSessionHeader : null;
+    if (!mount) return;
+    state.sessionHeader = mount({
+      mountEl: elements.sessionHeaderMount,
+      variant: "compact",
+      context: { source: "flashcards", mode: state.mode },
+    });
+    updateSessionHeaderContext();
+  }
+
+  function startFlashcardsTimer() {
+    ensureSessionHeader();
+    updateSessionHeaderContext();
+    state.sessionHeader?.start?.();
+  }
+
+  function pauseFlashcardsTimer(reason = "manual") {
+    state.sessionHeader?.pause?.(reason);
+  }
+
+  function toggleReviewMaximize(force) {
+    const next = typeof force === "boolean" ? force : !document.body.classList.contains("is-review-maximized");
+    document.body.classList.toggle("is-review-maximized", next);
+    if (elements.fullReviewBtn) {
+      elements.fullReviewBtn.setAttribute("aria-pressed", next ? "true" : "false");
+      elements.fullReviewBtn.textContent = next ? "Vollbild beenden" : "Vollbild-Abfrage";
+    }
+    if (next) {
+      (elements.showAnswerBtn || elements.reviewCard || elements.reviewPanel)?.focus?.();
+    }
+  }
 
   function isInteractiveTarget(target) {
     const el = target && target.nodeType === 1 ? target : null;
@@ -190,6 +236,7 @@
     state.reviewDone = 0;
     saveState();
     render();
+    updateSessionHeaderContext();
   }
 
   function formatDateTime(timestamp) {
@@ -444,6 +491,7 @@
     buildQueue();
     saveState();
     renderReview();
+    updateSessionHeaderContext();
   }
 
   function scheduleCardInterval(card, rating) {
@@ -903,6 +951,7 @@
     buildQueue(true);
     renderReview();
     if (elements.showAnswerBtn) elements.showAnswerBtn.focus();
+    startFlashcardsTimer();
   }
 
   function exitReview() {
@@ -911,6 +960,8 @@
     state.reviewQueue = [];
     state.reviewDone = 0;
     renderReview();
+    pauseFlashcardsTimer("exit");
+    toggleReviewMaximize(false);
   }
 
   function showUpcoming() {
@@ -943,6 +994,8 @@
     loadState();
     buildQueue(true);
     render();
+    ensureSessionHeader();
+    updateSessionHeaderContext();
 
     // Deep links: open a deck and optionally start review.
     try {
@@ -1200,7 +1253,7 @@
       event.preventDefault();
       const id = elements.reviewDeckSelect?.value || state.activeDeckId;
       if (id) setActiveDeck(id);
-      document.body.classList.add("flashcards-full-review");
+      toggleReviewMaximize();
       startReview();
       setTimeout(() => {
         elements.reviewCard?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1291,8 +1344,24 @@
       });
     }
 
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) pauseFlashcardsTimer("hidden");
+    });
+    window.addEventListener("beforeunload", () => {
+      if (state.currentCard) {
+        state.sessionHeader?.stop?.();
+      } else {
+        pauseFlashcardsTimer("nav");
+      }
+    });
+
     window.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
+        if (document.body.classList.contains("is-review-maximized")) {
+          event.preventDefault();
+          toggleReviewMaximize(false);
+          return;
+        }
         if (elements.cardModal && elements.cardModal.classList.contains("is-open")) {
           event.preventDefault();
           state.editingCardId = null;
@@ -1312,6 +1381,11 @@
       }
 
       if (isInteractiveTarget(event.target)) return;
+
+      if (event.key && (event.key === "f" || event.key === "F")) {
+        toggleReviewMaximize();
+        return;
+      }
       if (!state.currentCard) return;
 
       if (event.key === " ") {

@@ -203,6 +203,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
     const headerMenuToggle = document.getElementById("headerMenuToggle");
     const headerProfileBtn = document.getElementById("headerProfileBtn");
     const headerSettingsBtn = document.getElementById("headerSettingsBtn");
+    const sessionHeaderMount = document.getElementById("sessionHeaderMount");
     const quickJumpDropdown = document.getElementById("quickJumpDropdown");
     const quickJumpTrigger = document.getElementById("quickJumpTrigger");
     const quickJumpPanel = document.getElementById("quickJumpPanel");
