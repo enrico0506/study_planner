@@ -6500,6 +6500,7 @@ body.timetable-page {
   flex-direction: column;
   gap: 18px;
   box-sizing: border-box;
+  overflow: auto;
 }
 
 .flashcards-layout {
