@@ -985,7 +985,39 @@
     });
 
     elements.focusDeckNameBtn.addEventListener("click", () => {
-      elements.deckNameInput.focus();
+      const nameInput = window.prompt("Neuen Stapel erstellen\nName des Stapels:");
+      const trimmedName = nameInput ? nameInput.trim() : "";
+      if (!trimmedName) return;
+
+      let deckName = trimmedName;
+      let suffix = 2;
+      while (state.decks.some((deck) => deck.name === deckName)) {
+        deckName = `${trimmedName} (${suffix})`;
+        suffix += 1;
+      }
+
+      const descInput = window.prompt("Notiz (optional):", "");
+      const description = descInput == null ? "" : descInput.trim();
+
+      const newDeck = {
+        id: `deck-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        name: deckName,
+        description,
+        cards: [],
+      };
+      state.decks.push(newDeck);
+      state.activeDeckId = newDeck.id;
+      state.editingCardId = null;
+      state.selectedCardIds.clear();
+      state.cardSearch = "";
+      if (elements.cardSearchInput) elements.cardSearchInput.value = "";
+      state.reviewDone = 0;
+      buildQueue(true);
+      saveState();
+      render();
+      if (elements.quickFrontInput) elements.quickFrontInput.focus();
+      else if (elements.showAnswerBtn) elements.showAnswerBtn.focus();
+      else if (elements.deckNameInput) elements.deckNameInput.focus();
     });
 
     elements.cardForm.addEventListener("submit", (event) => {
