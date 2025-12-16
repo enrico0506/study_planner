@@ -273,11 +273,19 @@
   function generatePlan(prefs) {
     const sessionLen = Math.max(15, Number(prefs.sessionLen) || 50);
     const buffer = Math.max(0, Number(prefs.breakBuffer) || 0);
-    const dailyMax = Math.max(0, Number(prefs.dailyMax) || 180);
+    let dailyMax = Math.max(0, Number(prefs.dailyMax) || 180);
     const earliestMin = parseTimeToMinutes(prefs.earliest, 8 * 60);
     const latestMin = parseTimeToMinutes(prefs.latest, 20 * 60);
     const includeWeekend = !!prefs.includeWeekend;
     const focusPriority = prefs.priority === "confidence" ? "confidence" : "deadlines";
+    const budget = window.StudyPlanner?.TimeBudget?.load ? window.StudyPlanner.TimeBudget.load() : null;
+    const weeklyMax = budget && budget.weeklyMaxMinutes ? Math.max(0, Number(budget.weeklyMaxMinutes) || 0) : 0;
+    const budgetDaily = budget && budget.dailyMaxMinutes ? Math.max(0, Number(budget.dailyMaxMinutes) || 0) : 0;
+    const budgetNote = { dailyClamped: false, weeklyClamped: false };
+    if (budgetDaily && dailyMax > budgetDaily) {
+      dailyMax = budgetDaily;
+      budgetNote.dailyClamped = true;
+    }
 
     const weekDates = computeWeekDates(includeWeekend);
     const busyMap = buildBusyMap(weekDates, earliestMin, latestMin);
@@ -288,6 +296,7 @@
 
     const dayBudgets = new Map();
     weekDates.forEach((d) => dayBudgets.set(dateKey(d), 0));
+    let weekUsed = 0;
 
     const freeMap = new Map();
     weekDates.forEach((d) => {
@@ -307,10 +316,15 @@
       for (const slot of free) {
         let cursor = slot.start;
         while (cursor + 15 <= slot.end && used < dailyMax) {
+          if (weeklyMax && weekUsed >= weeklyMax) {
+            budgetNote.weeklyClamped = true;
+            break;
+          }
           const task = pickNextTask();
           if (!task) break;
           const remainingBudget = dailyMax - used;
-          const minutes = Math.min(sessionLen, remainingBudget, task.remainingMinutes || sessionLen);
+          const remainingWeek = weeklyMax ? Math.max(0, weeklyMax - weekUsed) : Infinity;
+          const minutes = Math.min(sessionLen, remainingBudget, remainingWeek, task.remainingMinutes || sessionLen);
           if (cursor + minutes > slot.end) break;
           plan.push({
             id: `plan_${Date.now()}_${Math.random().toString(16).slice(2, 7)}`,
@@ -325,9 +339,11 @@
           });
           task.remainingMinutes = Math.max(0, (task.remainingMinutes || 0) - minutes);
           used += minutes;
+          weekUsed += minutes;
           cursor += minutes + buffer;
         }
         if (used >= dailyMax) break;
+        if (weeklyMax && weekUsed >= weeklyMax) break;
       }
 
       dayBudgets.set(key, used);
@@ -337,7 +353,7 @@
       .filter((t) => t.kind === "assignment" && (t.remainingMinutes || 0) > 0)
       .forEach((t) => unscheduled.push(t));
 
-    return { plan, unscheduled, weekStart: dateKey(startOfWeek(new Date())) };
+    return { plan, unscheduled, weekStart: dateKey(startOfWeek(new Date())), budgetNote, budget };
   }
 
   function renderPreview(planResult) {
@@ -346,9 +362,11 @@
     state.plan = planResult.plan.map((p) => ({ ...p, enabled: true }));
 
     const uns = planResult.unscheduled || [];
-    els.previewMeta.textContent = uns.length
-      ? `${state.plan.length} blocks proposed. Not enough time for ${uns.length} deadline item(s).`
-      : `${state.plan.length} blocks proposed.`;
+    const notes = [];
+    if (planResult.budgetNote?.dailyClamped) notes.push("Daily max clamped to your time budget.");
+    if (planResult.budgetNote?.weeklyClamped) notes.push("Weekly max reached (time budget).");
+    if (uns.length) notes.push(`Not enough time for ${uns.length} deadline item(s).`);
+    els.previewMeta.textContent = notes.length ? `${state.plan.length} blocks proposed. ${notes.join(" ")}` : `${state.plan.length} blocks proposed.`;
 
     if (!state.plan.length) {
       const empty = document.createElement("div");
@@ -487,9 +505,12 @@
   function loadSettingsIntoForm() {
     const s = state.settings || loadSettings();
     state.settings = s;
+    const budget = window.StudyPlanner?.TimeBudget?.load ? window.StudyPlanner.TimeBudget.load() : null;
+    const budgetDaily = budget && budget.dailyMaxMinutes ? Math.max(0, Number(budget.dailyMaxMinutes) || 0) : 0;
+    const effectiveDailyMax = budgetDaily && Number(s.dailyMax) > budgetDaily ? budgetDaily : s.dailyMax;
     if (els.sessionLen) els.sessionLen.value = String(s.sessionLen);
     if (els.breakBuffer) els.breakBuffer.value = String(s.breakBuffer);
-    if (els.dailyMax) els.dailyMax.value = String(s.dailyMax);
+    if (els.dailyMax) els.dailyMax.value = String(effectiveDailyMax);
     if (els.includeWeekend) els.includeWeekend.checked = !!s.includeWeekend;
     if (els.earliest) els.earliest.value = s.earliest;
     if (els.latest) els.latest.value = s.latest;
@@ -523,4 +544,3 @@
     closeModal();
   });
 })();
-

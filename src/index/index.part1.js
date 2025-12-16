@@ -166,6 +166,8 @@ const CVD_SAFE_SUBJECT_COLORS = [
     const suggestionsCapNote = document.getElementById("suggestionsCapNote");
 	    const dueSoonList = document.getElementById("dueSoonList");
 	    const dueSoonHint = document.getElementById("dueSoonHint");
+	    const unifiedReviewList = document.getElementById("unifiedReviewList");
+	    const unifiedReviewHint = document.getElementById("unifiedReviewHint");
 	    const openSuggestionsBtn = document.getElementById("openSuggestionsBtn");
 	    const suggestionModalBackdrop = document.getElementById("suggestionModalBackdrop");
 	    const suggestionModalCloseBtn = document.getElementById("suggestionModalCloseBtn");
@@ -991,6 +993,30 @@ const CVD_SAFE_SUBJECT_COLORS = [
       if (study) study.value = pomoConfig.study;
       if (short) short.value = pomoConfig.short;
       if (long) long.value = pomoConfig.long;
+
+      const budget = window.StudyPlanner?.TimeBudget?.load ? window.StudyPlanner.TimeBudget.load() : null;
+      if (budget) {
+        const daily = document.getElementById("budgetDailyMax");
+        const weekly = document.getElementById("budgetWeeklyMax");
+        const mode = document.getElementById("budgetMode");
+        if (daily) daily.value = String(budget.dailyMaxMinutes || 0);
+        if (weekly) weekly.value = String(budget.weeklyMaxMinutes || 0);
+        if (mode) mode.value = budget.mode || "warn";
+      }
+
+      const notif = window.StudyPlanner?.Notifications?.loadSettings ? window.StudyPlanner.Notifications.loadSettings() : null;
+      if (notif) {
+        const enableToasts = document.getElementById("notifEnableToasts");
+        const enableSystem = document.getElementById("notifEnableSystem");
+        const leadTime = document.getElementById("notifLeadTime");
+        const quietStart = document.getElementById("notifQuietStart");
+        const quietEnd = document.getElementById("notifQuietEnd");
+        if (enableToasts) enableToasts.checked = notif.enableToasts !== false;
+        if (enableSystem) enableSystem.checked = !!notif.enableSystem;
+        if (leadTime) leadTime.value = String(notif.leadMinutes || 10);
+        if (quietStart) quietStart.value = notif.quietStart || "22:00";
+        if (quietEnd) quietEnd.value = notif.quietEnd || "07:00";
+      }
     }
 
     function populateSettingsColorsControls() {

@@ -1006,6 +1006,104 @@
       });
     }
 
+    function renderUnifiedReviewQueue() {
+      if (!unifiedReviewList) return;
+      const engine = window.StudyPlanner && window.StudyPlanner.ReviewEngine ? window.StudyPlanner.ReviewEngine : null;
+      unifiedReviewList.innerHTML = "";
+      if (!engine || typeof engine.getQueue !== "function") {
+        const empty = document.createElement("div");
+        empty.className = "suggestion-empty";
+        empty.textContent = "Review queue unavailable.";
+        unifiedReviewList.appendChild(empty);
+        return;
+      }
+
+      const items = engine.getQueue({ limit: 8 }) || [];
+      if (unifiedReviewHint) {
+        const settings = engine.loadSettings ? engine.loadSettings() : null;
+        unifiedReviewHint.textContent = settings ? `Target: ${settings.dailyTargetMinutes} min (capped by time budget).` : "";
+      }
+
+      if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "suggestion-empty";
+        empty.textContent = "Nothing due right now.";
+        unifiedReviewList.appendChild(empty);
+        return;
+      }
+
+      items.forEach((item) => {
+        const card = document.createElement("div");
+        card.className = "suggestion-card";
+
+        const left = document.createElement("div");
+        left.className = "suggestion-left";
+
+        const dot = document.createElement("span");
+        dot.className = "suggestion-dot";
+        dot.style.backgroundColor =
+          item.kind === "file" ? getSubjectColorById(item.subjectId) : "rgba(148, 163, 184, 0.9)";
+
+        const text = document.createElement("div");
+        text.className = "suggestion-text";
+
+        const title = document.createElement("div");
+        title.className = "suggestion-title";
+        title.textContent = item.title || "Review";
+
+        const meta = document.createElement("div");
+        meta.className = "suggestion-meta";
+        if (item.kind === "file") {
+          meta.textContent = `${Math.round(item.confidence || 0)}% conf · ${Math.round(item.ageDays || 0)}d since review · ~${item.estMinutes || 25} min`;
+        } else if (item.kind === "flashcards") {
+          meta.textContent = `${item.dueCount || 0} due · ~${item.estMinutes || 15} min`;
+        } else if (item.kind === "exam_item") {
+          meta.textContent = `${item.daysLeft}d to exam · ~${item.estMinutes || 20} min`;
+        } else if (item.kind === "assignment") {
+          meta.textContent = `${item.daysLeft}d left · ~${item.estMinutes || 30} min`;
+        } else {
+          meta.textContent = "";
+        }
+
+        text.appendChild(title);
+        text.appendChild(meta);
+        left.appendChild(dot);
+        left.appendChild(text);
+
+        const actions = document.createElement("div");
+        actions.className = "suggestion-actions";
+
+        const badge = document.createElement("div");
+        badge.className = "suggestion-badge";
+        badge.textContent =
+          item.kind === "flashcards"
+            ? "Flashcards"
+            : item.kind === "exam_item"
+            ? "Exam"
+            : item.kind === "assignment"
+            ? "Assignment"
+            : "File";
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "chip-btn chip-btn-primary";
+        btn.textContent = item.kind === "file" ? "Study" : item.kind === "flashcards" ? "Review" : "Open";
+        btn.addEventListener("click", () => {
+          const action = engine.actionFor ? engine.actionFor(item) : null;
+          if (action && action.type === "navigate" && action.href) {
+            window.location.href = action.href;
+            return;
+          }
+        });
+
+        actions.appendChild(badge);
+        actions.appendChild(btn);
+        card.appendChild(left);
+        card.appendChild(actions);
+        unifiedReviewList.appendChild(card);
+      });
+    }
+
     function renderDueSoonLane() {
       if (!dueSoonList) return;
 
@@ -1091,6 +1189,7 @@
       loadCalendarEvents();
       renderSmartSuggestions();
       renderDueSoonLane();
+      renderUnifiedReviewQueue();
       suggestionModalBackdrop.hidden = false;
       suggestionModalBackdrop.style.display = "flex";
     }
@@ -1100,6 +1199,16 @@
 	      suggestionModalBackdrop.hidden = true;
 	      suggestionModalBackdrop.style.display = "none";
 	    }
+
+      function refreshUnifiedReviewIfOpen() {
+        if (!suggestionModalBackdrop || suggestionModalBackdrop.hidden) return;
+        renderUnifiedReviewQueue();
+      }
+
+      window.addEventListener("study:sessions-changed", refreshUnifiedReviewIfOpen);
+      window.addEventListener("study:assignments-changed", refreshUnifiedReviewIfOpen);
+      window.addEventListener("study:calendar-changed", refreshUnifiedReviewIfOpen);
+      window.addEventListener("study:state-replaced", refreshUnifiedReviewIfOpen);
 
 		    function addTodoForFile(subjectId, fileId, subtaskTexts) {
 		      const { subj, file } = resolveFileRef(subjectId, fileId);

@@ -26,6 +26,8 @@
   <link rel="stylesheet" href="./src/styles/enhancements.css" />
   <link rel="stylesheet" href="./src/styles/calendar-extras.css" />
   <link rel="stylesheet" href="./src/styles/notes.css" />
+  <link rel="stylesheet" href="./src/styles/exam-mode.css" />
+  <link rel="stylesheet" href="./src/styles/insights.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
@@ -115,6 +117,7 @@
             <div class="side-subtitle">Assignments & exams</div>
             <div class="assignments-actions">
               <button class="chip-btn chip-btn-primary" id="assignmentsAddBtn" type="button">Add</button>
+              <button class="chip-btn" id="examModeBtn" type="button" hidden>Exam mode</button>
               <button class="chip-btn" id="autoPlanWeekBtn" type="button">Auto-plan week</button>
             </div>
             <div class="assignments-filters">
@@ -132,6 +135,8 @@
             </div>
             <div class="calendar-form-status" id="assignmentsStatus"></div>
             <div class="calendar-upcoming" id="assignmentsList"></div>
+            <div class="side-subtitle" style="margin-top:12px;">Review today</div>
+            <div class="calendar-upcoming" id="calendarReviewList"></div>
           </div>
         </aside>
       </div>
@@ -313,6 +318,7 @@
             <button class="btn btn-secondary" id="notesSearchBtn" type="button">Find</button>
           </div>
           <div class="notes-toolbar-right">
+            <button class="btn btn-secondary" id="notesToFlashcardsBtn" type="button">Create flashcards…</button>
             <label class="sr-only" for="notesInsertSelect">Insert link</label>
             <select id="notesInsertSelect"></select>
             <button class="btn btn-secondary" id="notesInsertBtn" type="button">Insert link</button>
@@ -329,6 +335,24 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Exam Mode Modal -->
+  <div class="calendar-modal" id="examModeModal" aria-hidden="true">
+    <div class="calendar-modal-backdrop" id="examModeModalBackdrop"></div>
+    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="examModeTitle">
+      <div class="calendar-modal-head">
+        <div>
+          <div class="modal-label">Exam mode</div>
+          <div class="modal-title" id="examModeTitle">Exam mode</div>
+          <div class="modal-subtitle" id="examModeSubtitle">Countdown, syllabus, and reviews before the exam.</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="closeExamModeBtn" type="button">Close</button>
+        </div>
+      </div>
+      <div class="calendar-form" id="examModeBody"></div>
     </div>
   </div>
 
@@ -406,10 +430,52 @@
     </div>
   </div>
 
+  <!-- Flashcards generator preview (Notes → Flashcards) -->
+  <div class="calendar-modal" id="flashcardGenModal" aria-hidden="true">
+    <div class="calendar-modal-backdrop" id="flashcardGenModalBackdrop"></div>
+    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="flashcardGenTitle">
+      <div class="calendar-modal-head">
+        <div>
+          <div class="modal-label">Flashcards</div>
+          <div class="modal-title" id="flashcardGenTitle">Create flashcards</div>
+          <div class="modal-subtitle">Preview and import into Karteikarten.</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="closeFlashcardGenBtn" type="button">Close</button>
+        </div>
+      </div>
+      <div class="calendar-form">
+        <div class="form-row">
+          <label>
+            Target deck
+            <select id="flashcardGenDeckSelect"></select>
+          </label>
+          <label>
+            Or create new
+            <input id="flashcardGenNewDeck" type="text" placeholder="New deck name (optional)" />
+          </label>
+        </div>
+        <div class="calendar-form-status" id="flashcardGenStatus"></div>
+        <div class="calendar-upcoming" id="flashcardGenList"></div>
+        <div class="calendar-form-actions">
+          <div class="calendar-form-buttons">
+            <button class="btn btn-secondary" id="flashcardGenCancelBtn" type="button">Cancel</button>
+            <button class="btn" id="flashcardGenImportBtn" type="button">Import cards</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="./src/storage.js" defer></script>
   <script src="./src/assignments.js" defer></script>
   <script src="./src/notes.js" defer></script>
   <script src="./src/autoplan.js" defer></script>
+  <script src="./src/time-budget.js" defer></script>
+  <script src="./src/review-engine.js" defer></script>
+  <script src="./src/exam-mode.js" defer></script>
+  <script src="./src/notes-to-flashcards.js" defer></script>
+  <script src="./src/notifications.js" defer></script>
   <script src="./src/pwa.js" defer></script>
   <script src="./src/sync.js" defer></script>
   <script src="./src/page-menu.js" defer></script>

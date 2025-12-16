@@ -14,7 +14,15 @@
     "studyFlashcards_v1",
     "studyAssignments",
     "studyAssignmentsSettings",
-    "studyNotes_v1"
+    "studyNotes_v1",
+    "studySessions_v1",
+    "studyReviewSettings_v1",
+    "studyNotificationSettings_v1",
+    "studyNotificationState_v1",
+    "studyTimeBudgetSettings_v1",
+    "studyExamMode_v1",
+    "studyFlashcardImports_v1",
+    "studyAutoPlanSettings_v1"
   ]);
 
   function stableStringifyObject(obj) {

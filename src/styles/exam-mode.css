@@ -1,0 +1,40 @@
+/* Exam mode modal: scoped via Calendar page. */
+
+body.calendar-page .exam-mode-row {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+body.calendar-page .exam-syllabus-item {
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.75);
+  display: grid;
+  gap: 6px;
+}
+
+body.calendar-page .exam-syllabus-top {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+body.calendar-page .exam-syllabus-title {
+  font-weight: 800;
+}
+
+body.calendar-page .exam-syllabus-meta {
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+}
+
+body.calendar-page .exam-syllabus-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+

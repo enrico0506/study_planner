@@ -928,6 +928,32 @@
       if (!Number.isNaN(studyVal) && studyVal > 0) pomoConfig.study = studyVal;
       if (!Number.isNaN(shortVal) && shortVal > 0) pomoConfig.short = shortVal;
       if (!Number.isNaN(longVal) && longVal > 0) pomoConfig.long = longVal;
+
+      const dailyMax = document.getElementById("budgetDailyMax");
+      const weeklyMax = document.getElementById("budgetWeeklyMax");
+      const budgetMode = document.getElementById("budgetMode");
+      if (window.StudyPlanner?.TimeBudget?.save && (dailyMax || weeklyMax || budgetMode)) {
+        window.StudyPlanner.TimeBudget.save({
+          dailyMaxMinutes: Number(dailyMax?.value || 0) || 0,
+          weeklyMaxMinutes: Number(weeklyMax?.value || 0) || 0,
+          mode: budgetMode?.value === "hard" ? "hard" : "warn"
+        });
+      }
+
+      const notifEnableToasts = document.getElementById("notifEnableToasts");
+      const notifEnableSystem = document.getElementById("notifEnableSystem");
+      const notifLeadTime = document.getElementById("notifLeadTime");
+      const notifQuietStart = document.getElementById("notifQuietStart");
+      const notifQuietEnd = document.getElementById("notifQuietEnd");
+      if (window.StudyPlanner?.Notifications?.saveSettings && (notifEnableToasts || notifEnableSystem || notifLeadTime)) {
+        window.StudyPlanner.Notifications.saveSettings({
+          enableToasts: notifEnableToasts?.checked !== false,
+          enableSystem: !!notifEnableSystem?.checked,
+          leadMinutes: Number(notifLeadTime?.value || 10) || 10,
+          quietStart: notifQuietStart?.value || "22:00",
+          quietEnd: notifQuietEnd?.value || "07:00"
+        });
+      }
       saveFocusConfig();
       showNotice("Preferences saved.", "success");
     });
@@ -1545,6 +1571,7 @@
     // URL deep-links (from Notes links or other pages).
     try {
       const params = new URLSearchParams(window.location.search || "");
+      const startStudy = params.get("startStudy");
       const startAssignment = params.get("startAssignment");
       const assignmentId = params.get("assignmentId");
       const subjectId = params.get("subjectId");
@@ -1558,6 +1585,12 @@
           startStudyForAssignment(assignmentId, subjectId, ref.file);
         }
       }
+      if (startStudy && subjectId && fileId && !activeStudy) {
+        const ref = resolveFileRef(subjectId, fileId);
+        if (ref && ref.subj && ref.file) {
+          startStudy(subjectId, ref.file);
+        }
+      }
       if (openSubjectId) {
         openSubjectSettingsModal(openSubjectId);
       } else if (openFileSubjectId && openFileId) {
@@ -1565,7 +1598,8 @@
         const file = subj && Array.isArray(subj.files) ? subj.files.find((f) => f.id === openFileId) : null;
         if (subj && file) openFileModalEdit(subj.id, file);
       }
-      if (startAssignment || openSubjectId || (openFileSubjectId && openFileId)) {
+      if (startStudy || startAssignment || openSubjectId || (openFileSubjectId && openFileId)) {
+        params.delete("startStudy");
         params.delete("startAssignment");
         params.delete("assignmentId");
         params.delete("subjectId");

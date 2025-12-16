@@ -9,6 +9,7 @@
   const selectedDateMeta = document.getElementById("selectedDateMeta");
   const selectedEventList = document.getElementById("selectedEventList");
   const upcomingList = document.getElementById("upcomingList");
+  const calendarReviewList = document.getElementById("calendarReviewList");
 
   const eventForm = document.getElementById("calendarForm");
   const calendarModal = document.getElementById("calendarModal");
@@ -580,6 +581,78 @@
     });
   }
 
+  function renderReviewToday() {
+    if (!calendarReviewList) return;
+    const engine = window.StudyPlanner && window.StudyPlanner.ReviewEngine ? window.StudyPlanner.ReviewEngine : null;
+    calendarReviewList.innerHTML = "";
+    if (!engine || typeof engine.getQueue !== "function") {
+      const empty = document.createElement("div");
+      empty.className = "calendar-empty";
+      empty.textContent = "Review queue unavailable.";
+      calendarReviewList.appendChild(empty);
+      return;
+    }
+    const items = engine.getQueue({ limit: 5 }) || [];
+    if (!items.length) {
+      const empty = document.createElement("div");
+      empty.className = "calendar-empty";
+      empty.textContent = "Nothing due right now.";
+      calendarReviewList.appendChild(empty);
+      return;
+    }
+
+    items.forEach((item) => {
+      const row = document.createElement("div");
+      row.className = "calendar-upcoming-row";
+      const chip = document.createElement("span");
+      chip.className = "calendar-chip calendar-chip-more";
+      chip.textContent =
+        item.kind === "flashcards"
+          ? "Flashcards"
+          : item.kind === "exam_item"
+          ? "Exam"
+          : item.kind === "assignment"
+          ? "Assignment"
+          : "File";
+
+      const title = document.createElement("div");
+      title.className = "calendar-upcoming-title";
+      title.textContent = item.title || "Review";
+
+      const meta = document.createElement("div");
+      meta.className = "calendar-upcoming-meta";
+      if (item.kind === "file") meta.textContent = `${Math.round(item.confidence || 0)}% conf · ~${item.estMinutes || 25} min`;
+      else if (item.kind === "flashcards") meta.textContent = `${item.dueCount || 0} due · ~${item.estMinutes || 15} min`;
+      else if (item.kind === "exam_item") meta.textContent = `${item.daysLeft}d left · ~${item.estMinutes || 20} min`;
+      else if (item.kind === "assignment") meta.textContent = `${item.daysLeft}d left · ~${item.estMinutes || 30} min`;
+      else meta.textContent = "";
+
+      const actions = document.createElement("div");
+      actions.className = "assignments-row-actions";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "chip-btn chip-btn-primary";
+      btn.textContent = item.kind === "file" ? "Study" : item.kind === "flashcards" ? "Review" : "Open";
+      btn.addEventListener("click", () => {
+        if (item.kind === "exam_item") {
+          try {
+            window.dispatchEvent(new CustomEvent("study:open-exam-mode", { detail: { examId: item.examId, itemId: item.itemId } }));
+          } catch {}
+          return;
+        }
+        const action = engine.actionFor ? engine.actionFor(item) : null;
+        if (action && action.type === "navigate" && action.href) window.location.href = action.href;
+      });
+      actions.appendChild(btn);
+
+      row.appendChild(chip);
+      row.appendChild(title);
+      row.appendChild(meta);
+      row.appendChild(actions);
+      calendarReviewList.appendChild(row);
+    });
+  }
+
   function selectDate(dateString, openForm = false) {
     selectedDate = dateString;
     const target = parseDateString(dateString);
@@ -747,6 +820,7 @@
     renderCalendar();
     renderSelectedDay();
     renderUpcoming();
+    renderReviewToday();
   });
 
   window.addEventListener("study:assignments-changed", () => {
@@ -754,6 +828,7 @@
     renderCalendar();
     renderSelectedDay();
     renderUpcoming();
+    renderReviewToday();
   });
 
   window.addEventListener("study:calendar-changed", () => {
@@ -761,10 +836,12 @@
     renderCalendar();
     renderSelectedDay();
     renderUpcoming();
+    renderReviewToday();
   });
 
   renderCalendar();
   renderSelectedDay();
   renderUpcoming();
+  renderReviewToday();
   resetForm();
 })();

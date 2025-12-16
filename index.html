@@ -25,6 +25,7 @@
   <link rel="stylesheet" href="./src/styles/a11y.css" />
   <link rel="stylesheet" href="./src/styles/enhancements.css" />
   <link rel="stylesheet" href="./src/styles/notes.css" />
+  <link rel="stylesheet" href="./src/styles/insights.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
@@ -219,6 +220,50 @@
                 <label>
                   Long break (minutes)
                   <input type="number" id="settingsLongMinutes" min="1" />
+                </label>
+              </div>
+              <div class="settings-panel-title" style="font-size:14px; margin-top:12px;">Time budget</div>
+              <p class="settings-panel-text">Optional guardrails: warn or stop when exceeding your limits.</p>
+              <div class="settings-pref-row settings-pref-grid">
+                <label>
+                  Daily max (minutes, 0 = off)
+                  <input type="number" id="budgetDailyMax" min="0" step="15" value="0" />
+                </label>
+                <label>
+                  Weekly max (minutes, 0 = off)
+                  <input type="number" id="budgetWeeklyMax" min="0" step="30" value="0" />
+                </label>
+                <label>
+                  Mode
+                  <select id="budgetMode">
+                    <option value="warn">Warn only</option>
+                    <option value="hard">Hard stop (no new sessions)</option>
+                  </select>
+                </label>
+              </div>
+              <div class="settings-panel-title" style="font-size:14px; margin-top:12px;">Notifications</div>
+              <p class="settings-panel-text">In-app toasts always work; system notifications require permission (https/localhost).</p>
+              <div class="settings-pref-row settings-pref-grid">
+                <label>
+                  <input id="notifEnableToasts" type="checkbox" checked />
+                  Enable in-app toasts
+                </label>
+                <label>
+                  <input id="notifEnableSystem" type="checkbox" />
+                  Enable system notifications
+                </label>
+                <label>
+                  Reminder lead time
+                  <select id="notifLeadTime">
+                    <option value="10">10 min</option>
+                    <option value="30">30 min</option>
+                    <option value="60">60 min</option>
+                  </select>
+                </label>
+                <label>
+                  Quiet hours
+                  <input id="notifQuietStart" type="time" value="22:00" /> to
+                  <input id="notifQuietEnd" type="time" value="07:00" />
                 </label>
               </div>
               <div class="settings-colors-actions">
@@ -604,6 +649,7 @@
       </div>
       <div class="modal-body" id="statsModalBody"></div>
       <div class="modal-footer">
+        <button class="btn btn-secondary" id="openInsightsBtn" type="button">Insights</button>
         <div class="spacer"></div>
         <button class="btn btn-secondary" id="statsModalCloseBtn2" type="button">Close</button>
       </div>
@@ -691,6 +737,13 @@
           </div>
           <div class="today-suggestions-list" id="suggestionsList"></div>
         </div>
+        <div class="suggestion-modal-section">
+          <div class="suggestion-modal-head">
+            <div class="modal-title-sm">Due for review</div>
+            <div class="modal-subtle" id="unifiedReviewHint"></div>
+          </div>
+          <div class="today-suggestions-list" id="unifiedReviewList"></div>
+        </div>
       </div>
       <div class="modal-footer">
         <div class="spacer"></div>
@@ -721,6 +774,7 @@
             <button class="btn btn-secondary" id="notesSearchBtn" type="button">Find</button>
           </div>
           <div class="notes-toolbar-right">
+            <button class="btn btn-secondary" id="notesToFlashcardsBtn" type="button">Create flashcards…</button>
             <label class="sr-only" for="notesInsertSelect">Insert link</label>
             <select id="notesInsertSelect"></select>
             <button class="btn btn-secondary" id="notesInsertBtn" type="button">Insert link</button>
@@ -740,10 +794,127 @@
     </div>
   </div>
 
+  <!-- Session Recap Modal -->
+  <div class="modal-backdrop" id="sessionRecapBackdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sessionRecapTitle">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="sessionRecapTitle">Session recap</div>
+          <div class="modal-subtitle" id="sessionRecapSubtitle">A quick note helps your future self.</div>
+        </div>
+        <button class="modal-close-btn" id="sessionRecapCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field-row">
+          <label for="sessionRecapText">What did you do?</label>
+          <textarea id="sessionRecapText" rows="3" placeholder="Key steps, what worked, what got stuck…"></textarea>
+        </div>
+        <div class="modal-field-row">
+          <label for="sessionRecapRating">Was it effective?</label>
+          <select id="sessionRecapRating">
+            <option value="">Skip</option>
+            <option value="1">1 – Bad</option>
+            <option value="2">2</option>
+            <option value="3">3 – OK</option>
+            <option value="4">4</option>
+            <option value="5">5 – Great</option>
+          </select>
+        </div>
+        <div class="modal-field-row modal-row-inline">
+          <div>
+            <label for="sessionRecapConfidence">Adjust confidence (optional)</label>
+            <div class="range-row">
+              <input type="range" id="sessionRecapConfidence" min="0" max="100" step="5" value="50" />
+              <div class="range-value" id="sessionRecapConfidenceValue">50%</div>
+            </div>
+          </div>
+          <div>
+            <label for="sessionRecapTags">Tag (optional)</label>
+            <select id="sessionRecapTags">
+              <option value="">None</option>
+              <option value="hard_topic">Hard topic</option>
+              <option value="distraction">Distraction</option>
+              <option value="good_flow">Good flow</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-field-row">
+          <div class="modal-subtle" id="sessionRecapMeta"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="sessionRecapSkipBtn" type="button">Skip</button>
+        <div class="spacer"></div>
+        <button class="btn" id="sessionRecapSaveBtn" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Insights Modal -->
+  <div class="modal-backdrop" id="insightsBackdrop" hidden>
+    <div class="modal insights-modal" role="dialog" aria-modal="true" aria-labelledby="insightsTitle">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="insightsTitle">Insights</div>
+          <div class="modal-subtitle">Useful signals from your sessions and plans.</div>
+        </div>
+        <button class="modal-close-btn" id="insightsCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="insightsBody"></div>
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="insightsCloseBtn2" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flashcards generator preview (Notes → Flashcards) -->
+  <div class="calendar-modal" id="flashcardGenModal" aria-hidden="true">
+    <div class="calendar-modal-backdrop" id="flashcardGenModalBackdrop"></div>
+    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="flashcardGenTitle">
+      <div class="calendar-modal-head">
+        <div>
+          <div class="modal-label">Flashcards</div>
+          <div class="modal-title" id="flashcardGenTitle">Create flashcards</div>
+          <div class="modal-subtitle">Preview and import into Karteikarten.</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="closeFlashcardGenBtn" type="button">Close</button>
+        </div>
+      </div>
+      <div class="calendar-form">
+        <div class="form-row">
+          <label>
+            Target deck
+            <select id="flashcardGenDeckSelect"></select>
+          </label>
+          <label>
+            Or create new
+            <input id="flashcardGenNewDeck" type="text" placeholder="New deck name (optional)" />
+          </label>
+        </div>
+        <div class="calendar-form-status" id="flashcardGenStatus"></div>
+        <div class="calendar-upcoming" id="flashcardGenList"></div>
+        <div class="calendar-form-actions">
+          <div class="calendar-form-buttons">
+            <button class="btn btn-secondary" id="flashcardGenCancelBtn" type="button">Cancel</button>
+            <button class="btn" id="flashcardGenImportBtn" type="button">Import cards</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 	  <button class="expand-btn" id="expandPageBtn" type="button" aria-label="Toggle expand">⤢</button>
 	  <script src="./src/storage.js"></script>
 	  <script src="./src/assignments.js"></script>
 	  <script src="./src/notes.js"></script>
+	  <script src="./src/time-budget.js"></script>
+	  <script src="./src/session-journal.js"></script>
+	  <script src="./src/insights.js"></script>
+	  <script src="./src/review-engine.js"></script>
+	  <script src="./src/notes-to-flashcards.js"></script>
+	  <script src="./src/notifications.js"></script>
 	  <script src="./src/data-tools.js"></script>
 	  <script src="./src/pwa.js"></script>
 	  <script src="./src/sync.js"></script>

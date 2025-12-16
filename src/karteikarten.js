@@ -914,6 +914,19 @@
     buildQueue(true);
     render();
 
+    // Deep links: open a deck and optionally start review.
+    try {
+      const params = new URLSearchParams(window.location.search || "");
+      const deckId = params.get("deckId");
+      const start = params.get("startReview");
+      if (deckId && state.decks.some((d) => d.id === deckId)) {
+        setActiveDeck(deckId);
+      }
+      if (start && (start === "1" || start === "true")) {
+        startReview();
+      }
+    } catch {}
+
     elements.deckList.addEventListener("click", (event) => {
       const btn = event.target && event.target.closest ? event.target.closest("[data-deck-id]") : null;
       if (!btn) return;

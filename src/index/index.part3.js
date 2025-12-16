@@ -703,6 +703,7 @@
         typeof session.targetMs === "number"
           ? Math.min(rawElapsed, session.targetMs)
           : rawElapsed;
+      let recapPayload = null;
 
       if (
         session.kind === "study" &&
@@ -725,6 +726,7 @@
         if (subj) {
           const file = subj.files.find((f) => f.id === session.fileId);
           if (file) {
+            const confidenceBefore = typeof file.confidence === "number" ? file.confidence : Number(file.confidence) || null;
             file.totalMs = (file.totalMs || 0) + elapsed;
             file.sessions = (file.sessions || 0) + 1;
             file.lastSessionMs = elapsed;
@@ -733,6 +735,18 @@
             addDailySessionForFile(file);
             if (markComplete) {
               markTodoDoneByFile(session.subjectId, session.fileId);
+            }
+            if (autoFinished && window.StudyPlanner?.SessionJournal?.openRecap) {
+              recapPayload = {
+                kind: "study",
+                subjectId: session.subjectId,
+                fileId: session.fileId,
+                assignmentId: session.assignmentId || null,
+                elapsedMs: elapsed,
+                endedAtMs: Date.now(),
+                startedAtMs: Date.now() - elapsed,
+                confidenceBefore
+              };
             }
           }
         }
@@ -757,9 +771,40 @@
       if (autoFinished) {
         showNotice("Session finished.", "success");
       }
+      if (recapPayload && window.StudyPlanner?.SessionJournal?.openRecap) {
+        window.StudyPlanner.SessionJournal.openRecap(recapPayload);
+      }
     }
 
     function startStudy(subjectId, file) {
+      // Time budget guardrails (hard stop only).
+      try {
+        const TB = window.StudyPlanner && window.StudyPlanner.TimeBudget ? window.StudyPlanner.TimeBudget : null;
+        if (TB && typeof TB.canStartSession === "function" && TB.load) {
+          const sessions = (window.StudyPlanner?.Storage?.getJSON
+            ? window.StudyPlanner.Storage.getJSON("studySessions_v1", [])
+            : (() => {
+                try {
+                  const raw = localStorage.getItem("studySessions_v1");
+                  const parsed = raw ? JSON.parse(raw) : [];
+                  return Array.isArray(parsed) ? parsed : [];
+                } catch {
+                  return [];
+                }
+              })());
+          const verdict = TB.canStartSession({ sessions, now: Date.now() });
+          if (!verdict.ok) {
+            showNotice(
+              verdict.reason === "daily"
+                ? "Daily time budget reached. (Hard stop enabled)"
+                : "Weekly time budget reached. (Hard stop enabled)",
+              "warn"
+            );
+            return;
+          }
+        }
+      } catch {}
+
       // Resume if same file paused
       if (
         activeStudy &&

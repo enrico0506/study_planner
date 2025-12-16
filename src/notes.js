@@ -539,7 +539,7 @@
     getNote,
     setNote,
     renderMarkdownTo,
-    open
+    open,
+    getOpenContext: () => ({ scope: openState.scope, scopeId: openState.scopeId, label: openState.label })
   });
 })();
-
