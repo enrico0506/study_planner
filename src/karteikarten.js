@@ -2,74 +2,106 @@
   const storageKey = "studyFlashcards_v1";
   const Storage = window.StudyPlanner && window.StudyPlanner.Storage ? window.StudyPlanner.Storage : null;
 
-  const elements = {
-    deckList: document.getElementById("deckList"),
-    deckForm: document.getElementById("deckForm"),
-    deckNameInput: document.getElementById("deckNameInput"),
-    deckDescriptionInput: document.getElementById("deckDescriptionInput"),
-    focusDeckNameBtn: document.getElementById("focusDeckNameBtn"),
-    csvFileInput: document.getElementById("csvFileInput"),
-    csvDeckSelect: document.getElementById("csvDeckSelect"),
-    csvDelimiterSelect: document.getElementById("csvDelimiterSelect"),
-    importCsvBtn: document.getElementById("importCsvBtn"),
-    clearCsvBtn: document.getElementById("clearCsvBtn"),
-    importStatus: document.getElementById("importStatus"),
-    cardForm: document.getElementById("cardForm"),
-    cardDeckSelect: document.getElementById("cardDeckSelect"),
-    cardFrontInput: document.getElementById("cardFrontInput"),
-    cardBackInput: document.getElementById("cardBackInput"),
-    prefillActiveFrontBtn: document.getElementById("prefillActiveFrontBtn"),
-    openCardModalBtn: document.getElementById("openCardModalBtn"),
-    openCardModalBtnSecondary: document.getElementById("openCardModalBtnSecondary"),
-    closeCardModalBtn: document.getElementById("closeCardModalBtn"),
-    cardModal: document.getElementById("cardModal"),
-    cardModalBackdrop: document.getElementById("cardModalBackdrop"),
-    activeDeckTitle: document.getElementById("activeDeckTitle"),
-    activeDeckMeta: document.getElementById("activeDeckMeta"),
-    deckStats: document.getElementById("deckStats"),
-    cardList: document.getElementById("cardList"),
-    cardSearchInput: document.getElementById("cardSearchInput"),
-    bulkDeleteBtn: document.getElementById("bulkDeleteBtn"),
-    modeNormalBtn: document.getElementById("modeNormalBtn"),
-    modeIntervalBtn: document.getElementById("modeIntervalBtn"),
-    reviewDeckSelect: document.getElementById("reviewDeckSelect"),
-    fullReviewBtn: document.getElementById("fullReviewBtn"),
-    reviewModeLabel: document.getElementById("reviewModeLabel"),
-    reviewStats: document.getElementById("reviewStats"),
-    reviewCard: document.getElementById("reviewCard"),
-    reviewFront: document.getElementById("reviewFront"),
-    reviewBack: document.getElementById("reviewBack"),
-    showAnswerBtn: document.getElementById("showAnswerBtn"),
-    normalActions: document.getElementById("normalActions"),
-    intervalActions: document.getElementById("intervalActions"),
-    markKnownBtn: document.getElementById("markKnownBtn"),
-    markRepeatBtn: document.getElementById("markRepeatBtn"),
-    rebuildQueueBtn: document.getElementById("rebuildQueueBtn"),
-    showUpcomingBtn: document.getElementById("showUpcomingBtn"),
-    startReviewBtn: document.getElementById("startReviewBtn"),
-    reviewProgress: document.getElementById("reviewProgress"),
-    openCsvModalBtn: document.getElementById("openCsvModalBtn"),
-    closeCsvModalBtn: document.getElementById("closeCsvModalBtn"),
-    csvModal: document.getElementById("csvModal"),
-    csvModalBackdrop: document.getElementById("csvModalBackdrop"),
-    csvForm: document.getElementById("csvForm"),
-    csvPreview: document.getElementById("csvPreview"),
-    csvError: document.getElementById("csvError"),
-    csvStatus: document.getElementById("csvStatus"),
-    exportDeckBtn: document.getElementById("exportDeckBtn"),
-    cardHintInput: document.getElementById("cardHintInput"),
-    cardFormStatus: document.getElementById("cardFormStatus"),
-    sessionHeaderMount: document.getElementById("sessionHeaderMount"),
-    deckModal: document.getElementById("deckModal"),
-    deckModalBackdrop: document.getElementById("deckModalBackdrop"),
-    closeDeckModalBtn: document.getElementById("closeDeckModalBtn"),
-    deckFormStatus: document.getElementById("deckFormStatus"),
-    viewDecksBtn: document.getElementById("viewDecksBtn"),
-    deckListModal: document.getElementById("deckListModal"),
-    deckListModalBackdrop: document.getElementById("deckListModalBackdrop"),
-    closeDeckListModalBtn: document.getElementById("closeDeckListModalBtn"),
-    deckModalList: document.getElementById("deckModalList"),
-  };
+  const elementKeys = [
+    "deckList",
+    "deckForm",
+    "deckNameInput",
+    "deckDescriptionInput",
+    "focusDeckNameBtn",
+    "csvFileInput",
+    "csvDeckSelect",
+    "csvDelimiterSelect",
+    "importCsvBtn",
+    "clearCsvBtn",
+    "importStatus",
+    "cardForm",
+    "cardDeckSelect",
+    "cardFrontInput",
+    "cardBackInput",
+    "prefillActiveFrontBtn",
+    "openCardModalBtn",
+    "openCardModalBtnSecondary",
+    "closeCardModalBtn",
+    "cardModal",
+    "cardModalBackdrop",
+    "activeDeckTitle",
+    "activeDeckMeta",
+    "deckStats",
+    "cardList",
+    "cardSearchInput",
+    "bulkDeleteBtn",
+    "modeNormalBtn",
+    "modeIntervalBtn",
+    "reviewDeckSelect",
+    "fullReviewBtn",
+    "reviewModeLabel",
+    "reviewStats",
+    "reviewCard",
+    "reviewFront",
+    "reviewBack",
+    "showAnswerBtn",
+    "normalActions",
+    "intervalActions",
+    "markKnownBtn",
+    "markRepeatBtn",
+    "rebuildQueueBtn",
+    "showUpcomingBtn",
+    "startReviewBtn",
+    "reviewProgress",
+    "openCsvModalBtn",
+    "closeCsvModalBtn",
+    "csvModal",
+    "csvModalBackdrop",
+    "csvForm",
+    "csvPreview",
+    "csvError",
+    "csvStatus",
+    "exportDeckBtn",
+    "cardHintInput",
+    "cardFormStatus",
+    "sessionHeaderMount",
+    "deckModal",
+    "deckModalBackdrop",
+    "closeDeckModalBtn",
+    "deckFormStatus",
+    "viewDecksBtn",
+    "deckListModal",
+    "deckListModalBackdrop",
+    "closeDeckListModalBtn",
+    "deckModalList",
+  ];
+
+  const elements = {};
+  const missingElements = [];
+
+  function cacheElements() {
+    missingElements.length = 0;
+    elementKeys.forEach((key) => {
+      elements[key] = document.getElementById(key);
+      if (!elements[key]) missingElements.push(key);
+    });
+  }
+
+  function on(el, event, handler) {
+    if (!el || !el.addEventListener) return () => {};
+    el.addEventListener(event, handler);
+    return () => el.removeEventListener(event, handler);
+  }
+
+  function setText(el, text) {
+    if (!el) return;
+    el.textContent = text == null ? "" : String(text);
+  }
+
+  function setHTML(el, html) {
+    if (!el) return;
+    el.innerHTML = html == null ? "" : String(html);
+  }
+
+  function toggleClass(el, className, force) {
+    if (!el) return;
+    el.classList.toggle(className, force);
+  }
 
   const defaultDeck = () => ({
     id: `deck-${Date.now()}`,
@@ -129,10 +161,10 @@
 
   function toggleReviewMaximize(force) {
     const next = typeof force === "boolean" ? force : !document.body.classList.contains("is-review-maximized");
-    document.body.classList.toggle("is-review-maximized", next);
+    toggleClass(document.body, "is-review-maximized", next);
     if (elements.fullReviewBtn) {
       elements.fullReviewBtn.setAttribute("aria-pressed", next ? "true" : "false");
-      elements.fullReviewBtn.textContent = next ? "Vollbild beenden" : "Vollbild-Abfrage";
+      setText(elements.fullReviewBtn, next ? "Vollbild beenden" : "Vollbild-Abfrage");
     }
     if (next) {
       (elements.showAnswerBtn || elements.reviewCard || elements.reviewPanel)?.focus?.();
@@ -149,7 +181,7 @@
 
   function setStatus(el, message, { tone = "neutral" } = {}) {
     if (!el) return;
-    el.textContent = message ? String(message) : "";
+    setText(el, message ? String(message) : "");
     if (tone === "danger") el.style.color = "rgba(185, 28, 28, 0.95)";
     else if (tone === "good") el.style.color = "rgba(15, 118, 110, 0.95)";
     else el.style.color = "";
@@ -157,7 +189,7 @@
 
   function setModalState(modalEl, open) {
     if (!modalEl) return;
-    modalEl.classList.toggle("is-open", open);
+    toggleClass(modalEl, "is-open", open);
     modalEl.setAttribute("aria-hidden", open ? "false" : "true");
   }
 
@@ -277,10 +309,11 @@
   }
 
   function renderDeckList() {
+    if (!elements.deckList) return;
     const deck = getActiveDeck();
     elements.deckList.replaceChildren();
     if (elements.reviewDeckSelect) {
-      elements.reviewDeckSelect.innerHTML = "";
+      setHTML(elements.reviewDeckSelect, "");
       state.decks.forEach((d) => {
         const opt = document.createElement("option");
         opt.value = d.id;
@@ -355,18 +388,15 @@
       meta.className = "deck-modal-meta";
       meta.textContent = `${stats.total} Karten • ${stats.due} fällig • ${stats.newCards} neu`;
       row.append(title, meta);
-      row.addEventListener("click", () => {
-        setActiveDeck(deck.id);
-        setModalState(elements.deckListModal, false);
-      });
       elements.deckModalList.appendChild(row);
     });
   }
 
   function renderSelects() {
-    const selectTargets = [elements.cardDeckSelect, elements.csvDeckSelect];
+    const selectTargets = [elements.cardDeckSelect, elements.csvDeckSelect].filter(Boolean);
+    if (!selectTargets.length) return;
     selectTargets.forEach((select) => {
-      select.innerHTML = "";
+      setHTML(select, "");
       state.decks.forEach((deck) => {
         const option = document.createElement("option");
         option.value = deck.id;
@@ -382,15 +412,15 @@
   function renderActiveDeckMeta() {
     const deck = getActiveDeck();
     if (!deck) {
-      elements.activeDeckTitle.textContent = "Kein Stapel";
-      elements.activeDeckMeta.textContent = "0 Karten • 0 fällig";
-      if (elements.deckStats) elements.deckStats.textContent = "";
+      setText(elements.activeDeckTitle, "Kein Stapel");
+      setText(elements.activeDeckMeta, "0 Karten • 0 fällig");
+      if (elements.deckStats) setText(elements.deckStats, "");
       return;
     }
     const { total, due, newCards } = summarizeDeck(deck);
-    elements.activeDeckTitle.textContent = deck.name;
-    elements.activeDeckMeta.textContent = `${total} Karten • ${due} fällig • ${newCards} neu`;
-    if (elements.deckStats) elements.deckStats.textContent = `${total} Karten insgesamt`;
+    setText(elements.activeDeckTitle, deck.name);
+    setText(elements.activeDeckMeta, `${total} Karten • ${due} fällig • ${newCards} neu`);
+    if (elements.deckStats) setText(elements.deckStats, `${total} Karten insgesamt`);
   }
 
   function renderCardList() {
@@ -624,47 +654,53 @@
   }
 
   function renderReview() {
+    if (!elements.reviewFront || !elements.reviewBack || !elements.reviewStats) return;
     const deck = getActiveDeck();
     const now = Date.now();
     if (!deck || deck.cards.length === 0) {
-      elements.reviewFront.textContent = "Lege Karten an, um zu starten.";
-      elements.reviewBack.textContent = "";
-      elements.reviewStats.textContent = "Keine Karten vorhanden.";
+      setText(elements.reviewFront, "Lege Karten an, um zu starten.");
+      setText(elements.reviewBack, "");
+      setText(elements.reviewStats, "Keine Karten vorhanden.");
       if (elements.startReviewBtn) elements.startReviewBtn.disabled = true;
       if (elements.reviewProgress) elements.reviewProgress.textContent = "";
-      elements.reviewBack.classList.remove("review-back-visible");
-      elements.showAnswerBtn.disabled = true;
+      elements.reviewBack?.classList.remove("review-back-visible");
+      if (elements.showAnswerBtn) elements.showAnswerBtn.disabled = true;
       toggleActionButtons(false);
       return;
     }
 
     const { due } = summarizeDeck(deck);
-    elements.reviewStats.textContent =
-      state.mode === "interval" ? `${due} fällig • alle Zeiten nach Feedback` : `${deck.cards.length} Karten bereit`;
+    setText(
+      elements.reviewStats,
+      state.mode === "interval" ? `${due} fällig • alle Zeiten nach Feedback` : `${deck.cards.length} Karten bereit`
+    );
     if (elements.startReviewBtn) {
       const canStart = deck.cards.length > 0;
       elements.startReviewBtn.disabled = !canStart;
     }
     if (elements.reviewProgress) {
       const remaining = (state.currentCard ? 1 : 0) + (state.reviewQueue ? state.reviewQueue.length : 0);
-      elements.reviewProgress.textContent = remaining ? `${state.reviewDone + 1} / ${state.reviewDone + remaining}` : "";
+      setText(elements.reviewProgress, remaining ? `${state.reviewDone + 1} / ${state.reviewDone + remaining}` : "");
     }
 
     if (!state.currentCard) {
-      elements.reviewFront.textContent = due === 0 && state.mode === "interval"
-        ? "Gerade nichts fällig. Schau dir die nächsten Karten an oder ändere den Modus."
-        : "Keine Karte geladen. Mische neu, um zu starten.";
-      elements.reviewBack.textContent = "";
+      setText(
+        elements.reviewFront,
+        due === 0 && state.mode === "interval"
+          ? "Gerade nichts fällig. Schau dir die nächsten Karten an oder ändere den Modus."
+          : "Keine Karte geladen. Mische neu, um zu starten."
+      );
+      setText(elements.reviewBack, "");
       elements.reviewBack.classList.remove("review-back-visible");
-      elements.showAnswerBtn.disabled = true;
-      if (elements.reviewProgress) elements.reviewProgress.textContent = "";
+      if (elements.showAnswerBtn) elements.showAnswerBtn.disabled = true;
+      if (elements.reviewProgress) setText(elements.reviewProgress, "");
       toggleActionButtons(false);
       return;
     }
 
     elements.showAnswerBtn.disabled = false;
-    elements.reviewFront.textContent = state.currentCard.front;
-    elements.reviewBack.textContent = state.currentCard.back;
+    setText(elements.reviewFront, state.currentCard.front);
+    setText(elements.reviewBack, state.currentCard.back);
     elements.reviewBack.classList.toggle("review-back-visible", state.showAnswer);
     toggleActionButtons(state.showAnswer);
     applyKatex();
@@ -678,13 +714,14 @@
       { left: "\\(", right: "\\)", display: false },
       { left: "\\[", right: "\\]", display: true },
     ];
-    renderMathInElement(elements.reviewCard, { delimiters, throwOnError: false });
+    if (elements.reviewCard) renderMathInElement(elements.reviewCard, { delimiters, throwOnError: false });
     if (elements.cardList) {
       renderMathInElement(elements.cardList, { delimiters, throwOnError: false });
     }
   }
 
   function toggleActionButtons(show) {
+    if (!elements.normalActions || !elements.intervalActions) return;
     elements.normalActions.style.display = state.mode === "normal" && show ? "flex" : "none";
     elements.intervalActions.style.display = state.mode === "interval" && show ? "flex" : "none";
   }
@@ -1050,6 +1087,10 @@
   }
 
   function init() {
+    cacheElements();
+    if (missingElements.length) {
+      console.warn("[karteikarten] Missing elements (non-blocking):", missingElements);
+    }
     loadState();
     buildQueue(true);
     render();
@@ -1069,7 +1110,7 @@
       }
     } catch {}
 
-    elements.deckList.addEventListener("click", (event) => {
+    on(elements.deckList, "click", (event) => {
       const btn = event.target && event.target.closest ? event.target.closest("[data-deck-id]") : null;
       if (!btn) return;
       const id = btn.dataset.deckId;
@@ -1077,7 +1118,7 @@
       setActiveDeck(id);
     });
 
-    elements.deckForm.addEventListener("submit", (event) => {
+    on(elements.deckForm, "submit", (event) => {
       event.preventDefault();
       const nameInput = elements.deckNameInput.value.trim();
       const desc = elements.deckDescriptionInput.value.trim();
@@ -1107,11 +1148,11 @@
       render();
     });
 
-    elements.focusDeckNameBtn.addEventListener("click", () => {
+    on(elements.focusDeckNameBtn, "click", () => {
       openDeckModal();
     });
 
-    elements.cardForm.addEventListener("submit", (event) => {
+    on(elements.cardForm, "submit", (event) => {
       event.preventDefault();
       const deckId = elements.cardDeckSelect.value;
       const deck = state.decks.find((d) => d.id === deckId);
@@ -1175,7 +1216,7 @@
       render();
     });
 
-    elements.prefillActiveFrontBtn.addEventListener("click", () => {
+    on(elements.prefillActiveFrontBtn, "click", () => {
       const deck = getActiveDeck();
       if (!deck) return;
       elements.cardFrontInput.value = deck.name + " – ";
@@ -1196,32 +1237,40 @@
       focusFirstField(elements.cardModal);
     };
 
-    elements.openCardModalBtn?.addEventListener("click", openCardForm);
-    elements.openCardModalBtnSecondary?.addEventListener("click", openCardForm);
-    elements.closeCardModalBtn.addEventListener("click", () => {
+    on(elements.openCardModalBtn, "click", openCardForm);
+    on(elements.openCardModalBtnSecondary, "click", openCardForm);
+    on(elements.closeCardModalBtn, "click", () => {
       state.editingCardId = null;
       closeCardModal();
     });
-    elements.cardModalBackdrop.addEventListener("click", closeCardModal);
+    on(elements.cardModalBackdrop, "click", closeCardModal);
 
-    elements.closeDeckModalBtn?.addEventListener("click", closeDeckModal);
-    elements.deckModalBackdrop?.addEventListener("click", closeDeckModal);
-    elements.viewDecksBtn?.addEventListener("click", openDeckListModal);
-    elements.deckListModalBackdrop?.addEventListener("click", closeDeckListModal);
-    elements.closeDeckListModalBtn?.addEventListener("click", closeDeckListModal);
+    on(elements.closeDeckModalBtn, "click", closeDeckModal);
+    on(elements.deckModalBackdrop, "click", closeDeckModal);
+    on(elements.viewDecksBtn, "click", openDeckListModal);
+    on(elements.deckListModalBackdrop, "click", closeDeckListModal);
+    on(elements.closeDeckListModalBtn, "click", closeDeckListModal);
+    on(elements.deckModalList, "click", (event) => {
+      const row = event.target && event.target.closest ? event.target.closest(".deck-modal-row") : null;
+      if (!row) return;
+      const deckId = row.dataset.deckId;
+      if (!deckId) return;
+      setActiveDeck(deckId);
+      closeDeckListModal();
+    });
 
-    elements.openCsvModalBtn.addEventListener("click", () => {
+    on(elements.openCsvModalBtn, "click", () => {
       setStatus(elements.csvStatus, "");
       elements.csvError.hidden = true;
       elements.csvPreview.hidden = true;
       openCsvModal();
       focusFirstField(elements.csvModal);
     });
-    elements.closeCsvModalBtn.addEventListener("click", closeCsvModal);
-    elements.csvModalBackdrop.addEventListener("click", closeCsvModal);
+    on(elements.closeCsvModalBtn, "click", closeCsvModal);
+    on(elements.csvModalBackdrop, "click", closeCsvModal);
 
-    elements.importCsvBtn.addEventListener("click", handleImportCsv);
-    elements.clearCsvBtn.addEventListener("click", () => {
+    on(elements.importCsvBtn, "click", handleImportCsv);
+    on(elements.clearCsvBtn, "click", () => {
       elements.csvFileInput.value = "";
       setStatus(elements.csvStatus, "");
       state.csvCandidate = null;
@@ -1229,74 +1278,72 @@
       renderCsvPreview(null);
     });
 
-    if (elements.csvFileInput) {
-      elements.csvFileInput.addEventListener("change", () => updateCsvCandidate());
-    }
-    if (elements.csvDelimiterSelect) {
-      elements.csvDelimiterSelect.addEventListener("change", () => {
-        if (!state.lastCsvText) return updateCsvCandidate();
-        state.csvCandidate = parseCsv(state.lastCsvText);
-        renderCsvPreview(state.csvCandidate);
-      });
-    }
+    on(elements.csvFileInput, "change", () => updateCsvCandidate());
+    on(elements.csvDelimiterSelect, "change", () => {
+      if (!state.lastCsvText) return updateCsvCandidate();
+      state.csvCandidate = parseCsv(state.lastCsvText);
+      renderCsvPreview(state.csvCandidate);
+    });
 
-    if (elements.exportDeckBtn) elements.exportDeckBtn.addEventListener("click", exportActiveDeckCsv);
+    if (elements.exportDeckBtn) on(elements.exportDeckBtn, "click", exportActiveDeckCsv);
 
-    elements.modeNormalBtn.addEventListener("click", (event) => {
+    on(elements.modeNormalBtn, "click", (event) => {
       event.preventDefault();
       setMode("normal");
     });
-    elements.modeIntervalBtn.addEventListener("click", (event) => {
+    on(elements.modeIntervalBtn, "click", (event) => {
       event.preventDefault();
       setMode("interval");
     });
 
-    elements.showAnswerBtn.addEventListener("click", (event) => {
+    on(elements.showAnswerBtn, "click", (event) => {
       event.preventDefault();
       state.showAnswer = true;
       renderReview();
     });
 
-    elements.markKnownBtn.addEventListener("click", (event) => {
+    on(elements.markKnownBtn, "click", (event) => {
       event.preventDefault();
       handleNormalReview(true);
     });
-    elements.markRepeatBtn.addEventListener("click", (event) => {
+    on(elements.markRepeatBtn, "click", (event) => {
       event.preventDefault();
       handleNormalReview(false);
     });
 
-    elements.intervalActions.querySelectorAll("[data-rating]").forEach((btn) => {
-      btn.addEventListener("click", (event) => {
-        event.preventDefault();
-        handleIntervalReview(btn.dataset.rating);
+    if (elements.intervalActions) {
+      elements.intervalActions.querySelectorAll("[data-rating]").forEach((btn) => {
+        btn.addEventListener("click", (event) => {
+          event.preventDefault();
+          handleIntervalReview(btn.dataset.rating);
+        });
       });
-    });
+    }
 
     if (elements.startReviewBtn)
-      elements.startReviewBtn.addEventListener("click", (event) => {
+      on(elements.startReviewBtn, "click", (event) => {
         event.preventDefault();
         startReview();
       });
 
-    elements.rebuildQueueBtn.addEventListener("click", (event) => {
+    on(elements.rebuildQueueBtn, "click", (event) => {
       event.preventDefault();
       state.reviewDone = 0;
       buildQueue(true);
       render();
     });
 
-    elements.showUpcomingBtn.addEventListener("click", (event) => {
+    on(elements.showUpcomingBtn, "click", (event) => {
       event.preventDefault();
       showUpcoming();
     });
 
-    elements.reviewDeckSelect?.addEventListener("change", (event) => {
+    on(elements.reviewDeckSelect, "change", (event) => {
       const id = event.target.value;
       if (id) setActiveDeck(id);
     });
 
-    elements.fullReviewBtn?.addEventListener("click", (event) => {
+    on(elements.fullReviewBtn, "click", (event) => {
       event.preventDefault();
       const id = elements.reviewDeckSelect?.value || state.activeDeckId;
       if (id) setActiveDeck(id);
@@ -1308,7 +1355,7 @@
     });
 
     if (elements.quickAddForm) {
-      elements.quickAddForm.addEventListener("submit", (event) => {
+      on(elements.quickAddForm, "submit", (event) => {
         event.preventDefault();
         const deck = getActiveDeck();
         if (!deck) return;
@@ -1347,7 +1394,7 @@
     }
 
     if (elements.cardSearchInput) {
-      elements.cardSearchInput.addEventListener("input", () => {
+      on(elements.cardSearchInput, "input", () => {
         if (state.searchTimer) clearTimeout(state.searchTimer);
         state.searchTimer = setTimeout(() => {
           state.cardSearch = elements.cardSearchInput.value || "";
@@ -1359,11 +1406,11 @@
     }
 
     if (elements.bulkDeleteBtn) {
-      elements.bulkDeleteBtn.addEventListener("click", () => deleteSelectedCards());
+      on(elements.bulkDeleteBtn, "click", () => deleteSelectedCards());
     }
 
     if (elements.cardList) {
-      elements.cardList.addEventListener("click", (event) => {
+      on(elements.cardList, "click", (event) => {
         const actionEl = event.target && event.target.closest ? event.target.closest("[data-action]") : null;
         const item = event.target && event.target.closest ? event.target.closest(".card-list-item") : null;
         const cardId = item ? item.dataset.cardId : null;
@@ -1380,7 +1427,7 @@
         }
       });
 
-      elements.cardList.addEventListener("change", (event) => {
+      on(elements.cardList, "change", (event) => {
         const checkbox = event.target && event.target.matches ? (event.target.matches("input.card-select") ? event.target : null) : null;
         if (!checkbox) return;
         const item = checkbox.closest(".card-list-item");
@@ -1459,13 +1506,17 @@
         }
       }
     });
+
+    on(window, "study:state-replaced", () => {
+      loadState();
+      buildQueue(true);
+      render();
+    });
   }
 
-  window.addEventListener("study:state-replaced", () => {
-    loadState();
-    buildQueue(true);
-    render();
-  });
-
-  init();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  } else {
+    init();
+  }
 })();
