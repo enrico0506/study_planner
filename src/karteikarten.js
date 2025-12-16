@@ -31,6 +31,8 @@
     bulkDeleteBtn: document.getElementById("bulkDeleteBtn"),
     modeNormalBtn: document.getElementById("modeNormalBtn"),
     modeIntervalBtn: document.getElementById("modeIntervalBtn"),
+    reviewDeckSelect: document.getElementById("reviewDeckSelect"),
+    fullReviewBtn: document.getElementById("fullReviewBtn"),
     reviewModeLabel: document.getElementById("reviewModeLabel"),
     reviewStats: document.getElementById("reviewStats"),
     reviewCard: document.getElementById("reviewCard"),
@@ -206,6 +208,16 @@
   function renderDeckList() {
     const deck = getActiveDeck();
     elements.deckList.replaceChildren();
+    if (elements.reviewDeckSelect) {
+      elements.reviewDeckSelect.innerHTML = "";
+      state.decks.forEach((d) => {
+        const opt = document.createElement("option");
+        opt.value = d.id;
+        opt.textContent = d.name;
+        if (deck && deck.id === d.id) opt.selected = true;
+        elements.reviewDeckSelect.appendChild(opt);
+      });
+    }
     if (!state.decks.length) {
       const empty = document.createElement("div");
       empty.className = "cards-empty-cta";
@@ -1145,6 +1157,22 @@
     elements.showUpcomingBtn.addEventListener("click", (event) => {
       event.preventDefault();
       showUpcoming();
+    });
+
+    elements.reviewDeckSelect?.addEventListener("change", (event) => {
+      const id = event.target.value;
+      if (id) setActiveDeck(id);
+    });
+
+    elements.fullReviewBtn?.addEventListener("click", (event) => {
+      event.preventDefault();
+      const id = elements.reviewDeckSelect?.value || state.activeDeckId;
+      if (id) setActiveDeck(id);
+      document.body.classList.add("flashcards-full-review");
+      startReview();
+      setTimeout(() => {
+        elements.reviewCard?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
     });
 
     if (elements.quickAddForm) {

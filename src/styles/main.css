@@ -6510,6 +6510,28 @@ body.timetable-page {
   align-items: start;
 }
 
+.flashcards-full-review .flashcards-layout {
+  grid-template-columns: 1fr;
+}
+
+.flashcards-full-review .deck-column,
+.flashcards-full-review .cards-grid,
+.flashcards-full-review .review-head > .deck-card-label,
+.flashcards-full-review .review-head > .flashcards-meta {
+  display: none;
+}
+
+.flashcards-full-review .review-panel {
+  grid-column: 1 / -1;
+}
+
+.review-quick-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .deck-column {
   display: flex;
   flex-direction: column;
