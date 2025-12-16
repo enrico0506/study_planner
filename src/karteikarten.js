@@ -1196,7 +1196,7 @@
       focusFirstField(elements.cardModal);
     };
 
-    elements.openCardModalBtn.addEventListener("click", openCardForm);
+    elements.openCardModalBtn?.addEventListener("click", openCardForm);
     elements.openCardModalBtnSecondary?.addEventListener("click", openCardForm);
     elements.closeCardModalBtn.addEventListener("click", () => {
       state.editingCardId = null;
