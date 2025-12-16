@@ -20,6 +20,7 @@
     cardBackInput: document.getElementById("cardBackInput"),
     prefillActiveFrontBtn: document.getElementById("prefillActiveFrontBtn"),
     openCardModalBtn: document.getElementById("openCardModalBtn"),
+    openCardModalBtnSecondary: document.getElementById("openCardModalBtnSecondary"),
     closeCardModalBtn: document.getElementById("closeCardModalBtn"),
     cardModal: document.getElementById("cardModal"),
     cardModalBackdrop: document.getElementById("cardModalBackdrop"),
@@ -56,14 +57,18 @@
     csvError: document.getElementById("csvError"),
     csvStatus: document.getElementById("csvStatus"),
     exportDeckBtn: document.getElementById("exportDeckBtn"),
-    quickAddForm: document.getElementById("quickAddForm"),
-    quickFrontInput: document.getElementById("quickFrontInput"),
-    quickBackInput: document.getElementById("quickBackInput"),
-    quickHintInput: document.getElementById("quickHintInput"),
-    quickAddStatus: document.getElementById("quickAddStatus"),
     cardHintInput: document.getElementById("cardHintInput"),
     cardFormStatus: document.getElementById("cardFormStatus"),
     sessionHeaderMount: document.getElementById("sessionHeaderMount"),
+    deckModal: document.getElementById("deckModal"),
+    deckModalBackdrop: document.getElementById("deckModalBackdrop"),
+    closeDeckModalBtn: document.getElementById("closeDeckModalBtn"),
+    deckFormStatus: document.getElementById("deckFormStatus"),
+    viewDecksBtn: document.getElementById("viewDecksBtn"),
+    deckListModal: document.getElementById("deckListModal"),
+    deckListModalBackdrop: document.getElementById("deckListModalBackdrop"),
+    closeDeckListModalBtn: document.getElementById("closeDeckListModalBtn"),
+    deckModalList: document.getElementById("deckModalList"),
   };
 
   const defaultDeck = () => ({
@@ -154,6 +159,25 @@
     if (!modalEl) return;
     modalEl.classList.toggle("is-open", open);
     modalEl.setAttribute("aria-hidden", open ? "false" : "true");
+  }
+
+  function openDeckModal() {
+    setStatus(elements.deckFormStatus, "");
+    setModalState(elements.deckModal, true);
+    focusFirstField(elements.deckModal);
+  }
+
+  function closeDeckModal() {
+    setModalState(elements.deckModal, false);
+  }
+
+  function openDeckListModal() {
+    renderDeckModalList();
+    setModalState(elements.deckListModal, true);
+  }
+
+  function closeDeckListModal() {
+    setModalState(elements.deckListModal, false);
   }
 
   function focusFirstField(containerEl) {
@@ -276,7 +300,7 @@
       btn.className = "btn";
       btn.textContent = "+ Neuer Stapel";
       btn.addEventListener("click", () => {
-        elements.deckNameInput?.focus();
+        openDeckModal();
       });
       actions.appendChild(btn);
       empty.appendChild(actions);
@@ -305,6 +329,37 @@
       btn.appendChild(subtitle);
       btn.appendChild(meta);
       elements.deckList.appendChild(btn);
+    });
+  }
+
+  function renderDeckModalList() {
+    if (!elements.deckModalList) return;
+    elements.deckModalList.replaceChildren();
+    if (!state.decks.length) {
+      const empty = document.createElement("div");
+      empty.className = "deck-list-empty";
+      empty.textContent = "Keine Stapel vorhanden.";
+      elements.deckModalList.appendChild(empty);
+      return;
+    }
+    state.decks.forEach((deck) => {
+      const stats = summarizeDeck(deck);
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "deck-modal-row";
+      row.dataset.deckId = deck.id;
+      const title = document.createElement("div");
+      title.className = "deck-modal-title";
+      title.textContent = deck.name || "Deck";
+      const meta = document.createElement("div");
+      meta.className = "deck-modal-meta";
+      meta.textContent = `${stats.total} Karten • ${stats.due} fällig • ${stats.newCards} neu`;
+      row.append(title, meta);
+      row.addEventListener("click", () => {
+        setActiveDeck(deck.id);
+        setModalState(elements.deckListModal, false);
+      });
+      elements.deckModalList.appendChild(row);
     });
   }
 
@@ -983,6 +1038,7 @@
   function render() {
     renderDeckList();
     renderSelects();
+    renderDeckModalList();
     renderActiveDeckMeta();
     renderCardList();
     renderReview();
@@ -1020,9 +1076,18 @@
 
     elements.deckForm.addEventListener("submit", (event) => {
       event.preventDefault();
-      const name = elements.deckNameInput.value.trim();
+      const nameInput = elements.deckNameInput.value.trim();
       const desc = elements.deckDescriptionInput.value.trim();
-      if (!name) return;
+      if (!nameInput) {
+        setStatus(elements.deckFormStatus, "Bitte Namen angeben.", { tone: "danger" });
+        return;
+      }
+      let name = nameInput;
+      let suffix = 2;
+      while (state.decks.some((d) => d.name === name)) {
+        name = `${nameInput} (${suffix})`;
+        suffix += 1;
+      }
       const newDeck = {
         id: `deck-${Date.now()}-${Math.random().toString(16).slice(2)}`,
         name,
@@ -1032,45 +1097,15 @@
       state.decks.push(newDeck);
       state.activeDeckId = newDeck.id;
       elements.deckForm.reset();
+      setStatus(elements.deckFormStatus, "Stapel gespeichert.", { tone: "good" });
+      setModalState(elements.deckModal, false);
       buildQueue(true);
       saveState();
       render();
     });
 
     elements.focusDeckNameBtn.addEventListener("click", () => {
-      const nameInput = window.prompt("Neuen Stapel erstellen\nName des Stapels:");
-      const trimmedName = nameInput ? nameInput.trim() : "";
-      if (!trimmedName) return;
-
-      let deckName = trimmedName;
-      let suffix = 2;
-      while (state.decks.some((deck) => deck.name === deckName)) {
-        deckName = `${trimmedName} (${suffix})`;
-        suffix += 1;
-      }
-
-      const descInput = window.prompt("Notiz (optional):", "");
-      const description = descInput == null ? "" : descInput.trim();
-
-      const newDeck = {
-        id: `deck-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        name: deckName,
-        description,
-        cards: [],
-      };
-      state.decks.push(newDeck);
-      state.activeDeckId = newDeck.id;
-      state.editingCardId = null;
-      state.selectedCardIds.clear();
-      state.cardSearch = "";
-      if (elements.cardSearchInput) elements.cardSearchInput.value = "";
-      state.reviewDone = 0;
-      buildQueue(true);
-      saveState();
-      render();
-      if (elements.quickFrontInput) elements.quickFrontInput.focus();
-      else if (elements.showAnswerBtn) elements.showAnswerBtn.focus();
-      else if (elements.deckNameInput) elements.deckNameInput.focus();
+      openDeckModal();
     });
 
     elements.cardForm.addEventListener("submit", (event) => {
@@ -1149,19 +1184,28 @@
     const openCsvModal = () => setModalState(elements.csvModal, true);
     const closeCsvModal = () => setModalState(elements.csvModal, false);
 
-    elements.openCardModalBtn.addEventListener("click", () => {
+    const openCardForm = () => {
       state.editingCardId = null;
       elements.cardForm.reset();
       if (elements.cardDeckSelect && state.activeDeckId) elements.cardDeckSelect.value = state.activeDeckId;
       setStatus(elements.cardFormStatus, "");
       openCardModal();
       focusFirstField(elements.cardModal);
-    });
+    };
+
+    elements.openCardModalBtn.addEventListener("click", openCardForm);
+    elements.openCardModalBtnSecondary?.addEventListener("click", openCardForm);
     elements.closeCardModalBtn.addEventListener("click", () => {
       state.editingCardId = null;
       closeCardModal();
     });
     elements.cardModalBackdrop.addEventListener("click", closeCardModal);
+
+    elements.closeDeckModalBtn?.addEventListener("click", closeDeckModal);
+    elements.deckModalBackdrop?.addEventListener("click", closeDeckModal);
+    elements.viewDecksBtn?.addEventListener("click", openDeckListModal);
+    elements.deckListModalBackdrop?.addEventListener("click", closeDeckListModal);
+    elements.closeDeckListModalBtn?.addEventListener("click", closeDeckListModal);
 
     elements.openCsvModalBtn.addEventListener("click", () => {
       setStatus(elements.csvStatus, "");

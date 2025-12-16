@@ -6747,6 +6747,50 @@ body.timetable-page {
   font-weight: 600;
 }
 
+.deck-modal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.deck-modal-row {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: #fdfdfc;
+  cursor: pointer;
+  display: grid;
+  gap: 4px;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.deck-modal-row:hover {
+  border-color: rgba(79, 139, 255, 0.5);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+}
+
+.deck-modal-title {
+  font-weight: 700;
+}
+
+.deck-modal-meta {
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.deck-list-empty {
+  border: 1px dashed var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px;
+  color: var(--ink-muted);
+  text-align: center;
+  background: #fdfdfc;
+}
+
 .deck-form {
   display: flex;
   flex-direction: column;
@@ -6771,6 +6815,13 @@ body.timetable-page {
 .deck-form-actions {
   display: flex;
   gap: 8px;
+  justify-content: flex-end;
+}
+
+.deck-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
   justify-content: flex-end;
 }
 
@@ -6848,6 +6899,23 @@ body.timetable-page {
   display: grid;
   grid-template-columns: minmax(320px, 420px) 1fr;
   gap: 12px;
+}
+
+.card-editor-inline-note {
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px dashed var(--border-subtle);
+  border-radius: 12px;
+  background: #f8fbff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-editor-inline-note p {
+  margin: 0;
+  color: var(--ink-muted);
 }
 
 .card-editor-form,

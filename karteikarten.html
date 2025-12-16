@@ -33,7 +33,6 @@
 </head>
 <body class="flashcards-page">
   <div class="flashcards-shell">
-    <div class="flashcards-session" id="sessionHeaderMount"></div>
     <div class="header-row flashcards-header">
       <div class="header-main">
         <p class="eyebrow">Retention</p>
@@ -69,6 +68,7 @@
         </div>
       </div>
     </div>
+    <div class="flashcards-session" id="sessionHeaderMount"></div>
 
     <div class="flashcards-layout">
       <aside class="deck-column">
@@ -78,25 +78,14 @@
               <div class="deck-card-label">Stapel</div>
               <div class="deck-card-title">Wähle oder lege an</div>
             </div>
-            <button class="chip-btn chip-btn-primary" id="focusDeckNameBtn" type="button">+ Neuer Stapel…</button>
+            <div class="deck-card-actions">
+              <button class="chip-btn chip-btn-primary" id="focusDeckNameBtn" type="button">+ Neuer Stapel…</button>
+              <button class="chip-btn" id="viewDecksBtn" type="button">Stapel ansehen</button>
+            </div>
           </div>
           <div class="deck-list-scroll">
             <div class="deck-list" id="deckList"></div>
           </div>
-          <form class="deck-form" id="deckForm">
-            <label>
-              Name des Stapels
-              <input type="text" id="deckNameInput" placeholder="z. B. Anatomie, Vokabeln" required />
-            </label>
-            <label>
-              Notiz (optional)
-              <input type="text" id="deckDescriptionInput" placeholder="Kurzbeschreibung für dich" />
-            </label>
-            <div class="deck-form-actions">
-              <button class="btn btn-secondary" type="reset">Reset</button>
-              <button class="btn" type="submit">Stapel speichern</button>
-            </div>
-          </form>
         </div>
 
         <div class="deck-card deck-card-import">
@@ -137,33 +126,17 @@
             <div class="card-editor-head">
               <div>
                 <div class="deck-card-label">Neue Karte</div>
-                <div class="deck-card-title">Schnell hinzufügen</div>
+                <div class="deck-card-title">Per Popup hinzufügen</div>
               </div>
               <div class="card-editor-actions">
                 <button class="chip-btn" id="prefillActiveFrontBtn" type="button">Aktiven Titel übernehmen</button>
-                <button class="btn" id="openCardModalBtn" type="button">Karte anlegen</button>
+                <button class="btn" id="openCardModalBtn" type="button">Neue Karte…</button>
               </div>
             </div>
-            <form class="quick-add" id="quickAddForm">
-              <div class="quick-add-grid">
-                <label>
-                  Vorderseite
-                  <textarea id="quickFrontInput" rows="2" placeholder="Frage / Begriff" required></textarea>
-                </label>
-                <label>
-                  Rückseite
-                  <textarea id="quickBackInput" rows="3" placeholder="Antwort / Erklärung" required></textarea>
-                </label>
-                <label>
-                  Hinweis (optional)
-                  <input id="quickHintInput" type="text" placeholder="z. B. Kontext, Merksatz" />
-                </label>
-              </div>
-              <div class="quick-add-actions">
-                <div class="quick-add-status" id="quickAddStatus" role="status" aria-live="polite"></div>
-                <button class="btn" type="submit">Hinzufügen</button>
-              </div>
-            </form>
+            <div class="card-editor-inline-note">
+              <p>Erstelle Karten jetzt im Popup – wähle zuerst den Stapel, dann Vorder- und Rückseite.</p>
+              <button class="chip-btn chip-btn-primary" id="openCardModalBtnSecondary" type="button">Karte hinzufügen</button>
+            </div>
           </div>
 
           <div class="card-editor-list">
@@ -224,6 +197,62 @@
           </div>
         </div>
       </section>
+    </div>
+  </div>
+
+  <!-- Neuer Stapel Modal -->
+  <div class="calendar-modal" id="deckModal" aria-hidden="true">
+    <div class="calendar-modal-backdrop" id="deckModalBackdrop"></div>
+    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="deckModalTitle">
+      <div class="calendar-modal-head">
+        <div>
+          <div class="modal-label">Karteikarten</div>
+          <div class="modal-title" id="deckModalTitle">Neuen Stapel anlegen</div>
+          <div class="modal-subtitle">Name und Notiz eingeben, dann speichern.</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="closeDeckModalBtn" type="button">Schließen</button>
+        </div>
+      </div>
+      <form class="calendar-form" id="deckForm">
+        <div class="form-row">
+          <label>
+            Name des Stapels
+            <input type="text" id="deckNameInput" placeholder="z. B. Anatomie, Vokabeln" required />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Notiz (optional)
+            <input type="text" id="deckDescriptionInput" placeholder="Kurzbeschreibung für dich" />
+          </label>
+        </div>
+        <div class="calendar-form-actions">
+          <div class="calendar-form-status" id="deckFormStatus"></div>
+          <div class="calendar-form-buttons">
+            <button class="btn btn-secondary" type="reset">Reset</button>
+            <button class="btn" type="submit">Stapel speichern</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Stapel ansehen Modal -->
+  <div class="calendar-modal" id="deckListModal" aria-hidden="true">
+    <div class="calendar-modal-backdrop" id="deckListModalBackdrop"></div>
+    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="deckListModalTitle">
+      <div class="calendar-modal-head">
+        <div>
+          <div class="modal-label">Karteikarten</div>
+          <div class="modal-title" id="deckListModalTitle">Alle Stapel</div>
+          <div class="modal-subtitle">Wähle einen Stapel aus der Übersicht.</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="closeDeckListModalBtn" type="button">Schließen</button>
+        </div>
+      </div>
+      <div class="deck-modal-list" id="deckModalList"></div>
     </div>
   </div>
 
