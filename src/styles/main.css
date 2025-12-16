@@ -2525,22 +2525,12 @@ body::-webkit-scrollbar,
 .today-reorder-actions {
   display: inline-flex;
   gap: 6px;
-  opacity: 0;
-  pointer-events: none;
-  max-width: 0;
-  max-height: 0;
-  overflow: hidden;
-  transform: translateY(-2px);
-  transition: opacity 0.12s ease, transform 0.12s ease, max-width 0.12s ease, max-height 0.12s ease;
-}
-
-.today-item:hover .today-reorder-actions,
-.today-item:focus-within .today-reorder-actions {
   opacity: 1;
   pointer-events: auto;
-  max-width: 200px;
-  max-height: 44px;
-  transform: translateY(0);
+  max-width: none;
+  max-height: none;
+  overflow: visible;
+  transform: none;
 }
 
 .today-reorder-btn {
@@ -3618,24 +3608,15 @@ body::-webkit-scrollbar,
       gap: 6px;
     }
 
-    .file-actions-row {
+.file-actions-row {
       display: flex;
       gap: 6px;
       justify-content: flex-end;
-      opacity: 0;
-      pointer-events: none;
-      max-height: 0;
-      overflow: hidden;
-      transform: translateY(-2px);
-      transition: opacity 0.12s ease, transform 0.12s ease, max-height 0.12s ease;
-    }
-
-    .file-row:hover .file-actions-row,
-    .file-row:focus-within .file-actions-row {
       opacity: 1;
       pointer-events: auto;
-      max-height: 44px;
-      transform: translateY(0);
+      max-height: none;
+      overflow: visible;
+      transform: none;
     }
 
     .file-action-btn {
