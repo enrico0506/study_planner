@@ -23,16 +23,14 @@ body.flashcards-page .deck-column {
   position: sticky;
   top: 14px;
   align-self: start;
-  max-height: calc(100vh - 140px);
-  overflow: hidden;
+  max-height: none;
+  overflow: visible;
 }
 
 body.flashcards-page .deck-card.deck-card-decks {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-height: calc(100vh - 220px);
-  overflow: hidden;
   padding: 10px 12px;
 }
 
