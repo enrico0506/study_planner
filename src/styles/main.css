@@ -6598,6 +6598,16 @@ body.timetable-page {
   overflow: visible;
 }
 
+.flashcards-session {
+  width: 100%;
+}
+
+.flashcards-shell .session-header {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+}
+
 .flashcards-layout {
   display: grid;
   grid-template-columns: 320px 1fr;
