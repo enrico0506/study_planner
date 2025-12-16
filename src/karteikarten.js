@@ -125,6 +125,7 @@
     lastCsvText: "",
     searchTimer: null,
     sessionHeader: null,
+    sessionStartedHere: false,
   };
 
   function updateSessionHeaderContext() {
@@ -152,11 +153,21 @@
   function startFlashcardsTimer() {
     ensureSessionHeader();
     updateSessionHeaderContext();
+    state.sessionStartedHere = true;
     state.sessionHeader?.start?.();
   }
 
   function pauseFlashcardsTimer(reason = "manual") {
+    state.sessionStartedHere = false;
     state.sessionHeader?.pause?.(reason);
+  }
+
+  function stopFlashcardsTimer(reason = "manual") {
+    if (!state.sessionHeader) return;
+    state.sessionStartedHere = false;
+    // Pause first to capture elapsed, then stop to persist session to journal.
+    state.sessionHeader.pause?.(reason);
+    state.sessionHeader.stop?.();
   }
 
   function toggleReviewMaximize(force) {
@@ -1055,7 +1066,7 @@
     state.reviewQueue = [];
     state.reviewDone = 0;
     renderReview();
-    pauseFlashcardsTimer("exit");
+    stopFlashcardsTimer("exit-review");
     toggleReviewMaximize(false);
   }
 
@@ -1442,11 +1453,7 @@
       if (document.hidden) pauseFlashcardsTimer("hidden");
     });
     window.addEventListener("beforeunload", () => {
-      if (state.currentCard) {
-        state.sessionHeader?.stop?.();
-      } else {
-        pauseFlashcardsTimer("nav");
-      }
+      stopFlashcardsTimer("nav");
     });
 
     window.addEventListener("keydown", (event) => {
