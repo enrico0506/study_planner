@@ -6,6 +6,7 @@
   const SCHEMA_KEY = "study_schema_version";
   const SNAPSHOT_KEY = "studyLocalSnapshots_v1";
   const SNAPSHOT_LIMIT = 12;
+  const SNAPSHOT_EXCLUDE_KEYS = new Set([SNAPSHOT_KEY, SCHEMA_KEY, "sync_cloud_updated_ms_v1"]);
 
   const DEBOUNCE_DEFAULT_MS = 250;
   const writeTimers = new Map();
@@ -18,11 +19,13 @@
     }
   }
 
-  function listStudyKeys({ includeSyncMeta = true } = {}) {
+  function listStudyKeys({ includeSyncMeta = true, excludeKeys = null } = {}) {
     const keys = [];
+    const omit = excludeKeys instanceof Set ? excludeKeys : excludeKeys ? new Set(excludeKeys) : null;
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (!key) continue;
+      if (omit && omit.has(key)) continue;
       if (key.startsWith("study")) keys.push(key);
       if (includeSyncMeta && key === "sync_cloud_updated_ms_v1") keys.push(key);
     }
@@ -65,42 +68,99 @@
     setRaw(key, JSON.stringify(value), { debounceMs });
   }
 
-  function compactSnapshots() {
-    const raw = getRaw(SNAPSHOT_KEY, null);
-    if (raw == null) return;
+  function normalizeSnapshotEntries(entries) {
+    const cleaned = [];
+    let changed = false;
+    for (const entry of Array.isArray(entries) ? entries : []) {
+      if (!entry || typeof entry !== "object") {
+        changed = true;
+        continue;
+      }
+      const next = { ...entry };
+      if (next.data && typeof next.data === "object") {
+        const data = { ...next.data };
+        let removed = false;
+        for (const key of SNAPSHOT_EXCLUDE_KEYS) {
+          if (key in data) {
+            delete data[key];
+            removed = true;
+          }
+        }
+        if (removed) changed = true;
+        next.data = data;
+      }
+      cleaned.push(next);
+      if (cleaned.length >= SNAPSHOT_LIMIT) {
+        if (entries.length > SNAPSHOT_LIMIT) changed = true;
+        break;
+      }
+    }
+    return { cleaned, changed };
+  }
 
-    const MAX_BYTES = 1_000_000;
-    if (String(raw).length > MAX_BYTES) {
-      setJSON(SNAPSHOT_KEY, [], { debounceMs: 0 });
-      return;
+  function getSnapshotStoreRaw() {
+    let raw = null;
+    try {
+      raw = localStorage.getItem(SNAPSHOT_KEY);
+    } catch {
+      return { ok: false, raw: null, action: "none", reason: "read_failed" };
+    }
+    if (raw == null) return { ok: true, raw: null, action: "none", reason: "missing" };
+
+    const MAX_CHARS = 1_500_000;
+    if (String(raw).length > MAX_CHARS) {
+      try {
+        localStorage.removeItem(SNAPSHOT_KEY);
+      } catch {}
+      return { ok: false, raw: null, action: "purged", reason: "snapshot_store_too_large" };
+    }
+
+    if (!String(raw).includes(`"${SNAPSHOT_KEY}"`)) {
+      return { ok: true, raw, action: "none", reason: null };
     }
 
     const parsed = safeJsonParse(raw);
     if (!Array.isArray(parsed)) {
-      setJSON(SNAPSHOT_KEY, [], { debounceMs: 0 });
-      return;
+      try {
+        localStorage.removeItem(SNAPSHOT_KEY);
+      } catch {}
+      return { ok: false, raw: null, action: "purged", reason: "invalid_snapshot_store" };
     }
 
-    const cleaned = [];
-    for (const entry of parsed) {
-      if (!entry || typeof entry !== "object") continue;
-      const next = { ...entry };
-      if (next.data && typeof next.data === "object") {
-        const data = { ...next.data };
-        delete data[SNAPSHOT_KEY];
-        delete data.sync_cloud_updated_ms_v1;
-        next.data = data;
-      }
-      cleaned.push(next);
-      if (cleaned.length >= SNAPSHOT_LIMIT) break;
-    }
-
+    const { cleaned } = normalizeSnapshotEntries(parsed);
     setJSON(SNAPSHOT_KEY, cleaned, { debounceMs: 0 });
+    try {
+      raw = localStorage.getItem(SNAPSHOT_KEY);
+    } catch {}
+    return { ok: true, raw, action: "compacted", reason: "removed_recursive_snapshots" };
+  }
+
+  function compactSnapshots() {
+    const guard = getSnapshotStoreRaw();
+    if (guard.action === "purged") return guard;
+    const raw = guard.raw;
+    if (raw == null) return guard;
+
+    const parsed = safeJsonParse(raw);
+    if (!Array.isArray(parsed)) {
+      setJSON(SNAPSHOT_KEY, [], { debounceMs: 0 });
+      return { ok: false, raw: null, action: "purged", reason: "invalid_snapshot_store" };
+    }
+
+    const { cleaned, changed } = normalizeSnapshotEntries(parsed);
+    if (changed || guard.action === "compacted") {
+      setJSON(SNAPSHOT_KEY, cleaned, { debounceMs: 0 });
+      return { ok: true, raw: null, action: "compacted", reason: guard.reason || "normalized_snapshot_store" };
+    }
+    return guard;
   }
 
   function snapshotNow({ label = "Snapshot" } = {}) {
     const data = {};
-    const keys = listStudyKeys({ includeSyncMeta: true }).filter((k) => k !== SNAPSHOT_KEY);
+    const keys = listStudyKeys({
+      includeSyncMeta: true,
+      excludeKeys: SNAPSHOT_EXCLUDE_KEYS
+    });
     for (const k of keys) data[k] = getRaw(k, null);
 
     const entry = {
@@ -110,7 +170,7 @@
       data
     };
 
-    const list = getJSON(SNAPSHOT_KEY, []);
+    const list = listSnapshots();
     const next = Array.isArray(list) ? list : [];
     next.unshift(entry);
     while (next.length > SNAPSHOT_LIMIT) next.pop();
@@ -119,8 +179,18 @@
   }
 
   function listSnapshots() {
+    const status = compactSnapshots();
+    if (status && status.action === "purged") return [];
     const list = getJSON(SNAPSHOT_KEY, []);
-    return Array.isArray(list) ? list : [];
+    if (!Array.isArray(list)) {
+      setJSON(SNAPSHOT_KEY, [], { debounceMs: 0 });
+      return [];
+    }
+    return list;
+  }
+
+  function repairSnapshotsIfNeeded() {
+    return compactSnapshots();
   }
 
   function restoreSnapshot(snapshotId, { mode = "replace" } = {}) {
@@ -339,6 +409,14 @@
     return { totalBytes, entries };
   }
 
+  function estimateLocalStorageUsage({ topN = 5 } = {}) {
+    const { totalBytes, entries } = estimateLocalStorageBytes();
+    const isFiniteTopN = Number.isFinite(topN);
+    const take = isFiniteTopN ? Math.max(0, Math.floor(topN)) : 5;
+    const limit = isFiniteTopN ? take : take || 5;
+    return { totalBytes, largest: entries.slice(0, limit) };
+  }
+
   StudyPlanner.Storage = Object.assign(StudyPlanner.Storage || {}, {
     APP_SCHEMA_VERSION,
     SCHEMA_KEY,
@@ -358,9 +436,11 @@
     restoreSnapshot,
     downloadJson,
     compactSnapshots,
-    estimateLocalStorageBytes
+    repairSnapshotsIfNeeded,
+    estimateLocalStorageBytes,
+    estimateLocalStorageUsage
   });
 
-  compactSnapshots();
+  repairSnapshotsIfNeeded();
   migrateLocal();
 })();

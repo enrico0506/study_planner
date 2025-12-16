@@ -1,6 +1,8 @@
 (() => {
   const STATE_PUSH_DEBOUNCE_MS = 1500;
   const SYNC_META_KEY = "sync_cloud_updated_ms_v1";
+  const SCHEMA_KEY = "study_schema_version";
+  const SNAPSHOT_KEY = "studyLocalSnapshots_v1";
   const CLOUD_POLL_MS = 15000;
   const SYNC_APPLIED_EVENT = "study:state-replaced";
 
@@ -24,26 +26,38 @@
     "studyAutoPlanSettings_v1"
   ]);
 
+  const PREF_KEYS = new Set([
+    "studyTheme_v1",
+    "studyLanguage_v1",
+    "studyStylePrefs_v1",
+    "studyConfidenceMode_v1",
+    "studyFocusConfig_v1",
+    "studyColorPalette_v1"
+  ]);
+
+  const SYNC_KEYS = new Set([...DATA_KEYS, ...PREF_KEYS]);
+
   function isSyncedKey(key) {
-    return DATA_KEYS.has(String(key));
+    return SYNC_KEYS.has(String(key));
   }
 
-  function hashString(input, seed) {
-    let hash = seed >>> 0;
-    for (let i = 0; i < input.length; i++) {
-      hash ^= input.charCodeAt(i);
-      hash = Math.imul(hash, 0x01000193) >>> 0;
+  function stableStringifyObject(obj) {
+    if (!obj || typeof obj !== "object") return "";
+    const keys = Object.keys(obj || {}).sort();
+    let out = "";
+    for (const key of keys) {
+      const value = obj[key];
+      out += `${key}\u0000${value == null ? "" : String(value)}\u0001`;
     }
-    return hash >>> 0;
+    return out;
   }
 
   function stableHashSnapshot(obj) {
-    const keys = Object.keys(obj || {}).sort();
+    const signature = stableStringifyObject(obj);
     let hash = 0x811c9dc5;
-    for (const key of keys) {
-      hash = hashString(key, hash);
-      const value = obj[key];
-      hash = hashString(value == null ? "" : String(value), hash);
+    for (let i = 0; i < signature.length; i++) {
+      hash ^= signature.charCodeAt(i);
+      hash = Math.imul(hash, 0x01000193) >>> 0;
     }
     return `h${hash.toString(16)}`;
   }
@@ -72,7 +86,7 @@
 
   function hasAnySyncedState(snapshot) {
     if (!snapshot || typeof snapshot !== "object") return false;
-    for (const key of DATA_KEYS) {
+    for (const key of SYNC_KEYS) {
       if (!(key in snapshot)) continue;
       if (!isEmptyJsonString(snapshot[key])) return true;
     }
@@ -81,7 +95,7 @@
 
   function snapshotLocalState() {
     const out = {};
-    for (const key of DATA_KEYS) {
+    for (const key of SYNC_KEYS) {
       try {
         const value = localStorage.getItem(key);
         if (value == null) continue;
@@ -94,9 +108,11 @@
   function filterSnapshot(snapshot) {
     const source = snapshot && typeof snapshot === "object" ? snapshot : {};
     const out = {};
-    for (const key of DATA_KEYS) {
+    for (const key of SYNC_KEYS) {
       if (key in source) out[key] = source[key];
     }
+    delete out[SNAPSHOT_KEY];
+    delete out[SCHEMA_KEY];
     return out;
   }
 
