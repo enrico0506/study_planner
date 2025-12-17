@@ -440,10 +440,12 @@
     function openStatsModal() {
       renderStatsModalContent();
       statsBackdrop.style.display = "flex";
+      syncBodyModalState();
     }
 
     function closeStatsModal() {
       statsBackdrop.style.display = "none";
+      syncBodyModalState();
     }
 
     // Timer settings modal helpers
@@ -499,6 +501,76 @@
       requestAnimationFrame(() => enforceTodayHeight());
     }
 
+    function updateNavState(mode) {
+      const current = mode || document.body.dataset.mode || "board";
+      const pairs = [
+        { btn: navBoardBtn, mode: "board" },
+        { btn: navSubjectsBtn, mode: "subjects" },
+        { btn: navTodayBtn, mode: "today" },
+        { btn: navScheduleBtn, mode: "schedule" }
+      ];
+      pairs.forEach(({ btn, mode: m }) => {
+        if (!btn) return;
+        const active = current === m || (current === "board" && m === "board");
+        btn.classList.toggle("primary-nav__btn--active", active);
+        btn.setAttribute("aria-current", active ? "page" : "false");
+        btn.setAttribute("aria-selected", active ? "true" : "false");
+      });
+      document.querySelectorAll(".phone-bottom-nav__btn").forEach((btn) => {
+        const active = btn.dataset.mode === current;
+        btn.classList.toggle("active", active);
+        btn.setAttribute("aria-current", active ? "page" : "false");
+      });
+    }
+
+    function applyTranslations() {
+      if (navBoardBtn) navBoardBtn.textContent = t("navBoard");
+      if (navSubjectsBtn) navSubjectsBtn.textContent = t("navSubjects");
+      if (navTodayBtn) navTodayBtn.textContent = t("navToday");
+      if (navScheduleBtn) navScheduleBtn.textContent = t("navSchedule");
+
+      document.querySelectorAll(".phone-bottom-nav__btn").forEach((btn) => {
+        const map = {
+          board: t("navBoard"),
+          subjects: t("navSubjects"),
+          today: t("navToday"),
+          schedule: t("navSchedule")
+        };
+        const label = map[btn.dataset.mode] || t("navBoard");
+        btn.setAttribute("aria-label", label);
+        const text = btn.querySelector(".phone-bottom-nav__label");
+        if (text) text.textContent = label;
+      });
+
+      const quickLabel = quickJumpTrigger?.querySelector(".header-quick-label");
+      if (quickLabel) quickLabel.textContent = t("studyHubs");
+      if (headerProfileBtn) headerProfileBtn.textContent = t("login");
+      if (headerSettingsBtn) headerSettingsBtn.textContent = t("settings");
+    }
+
+    function isElementVisible(el) {
+      if (!el) return false;
+      if (el.hasAttribute("hidden")) return false;
+      const style = window.getComputedStyle(el);
+      return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0";
+    }
+
+    function syncBodyModalState() {
+      const calendarOpen = document.querySelector(".calendar-modal.is-open");
+      const anyOpen =
+        (settingsModal && settingsModal.classList.contains("is-open")) ||
+        isElementVisible(settingsModalBackdrop) ||
+        isElementVisible(addTodoModalBackdrop) ||
+        isElementVisible(subjectSettingsBackdrop) ||
+        isElementVisible(suggestionModalBackdrop) ||
+        isElementVisible(timerModalBackdrop) ||
+        isElementVisible(statsBackdrop) ||
+        isElementVisible(noticeModalBackdrop) ||
+        isElementVisible(sessionRecapBackdrop) ||
+        calendarOpen;
+      document.body.classList.toggle("modal-open", !!anyOpen);
+    }
+
     function setActiveView(view) {
       activeView = view;
       if (layoutRow) {
@@ -515,15 +587,6 @@
         appRoot.classList.toggle("view-schedule", view === "schedule");
       }
 
-      if (viewBoardBtn) {
-        viewBoardBtn.classList.toggle("view-toggle-active", view === "board");
-        viewBoardBtn.setAttribute("aria-selected", view === "board" ? "true" : "false");
-      }
-      if (viewScheduleBtn) {
-        viewScheduleBtn.classList.toggle("view-toggle-active", view === "schedule");
-        viewScheduleBtn.setAttribute("aria-selected", view === "schedule" ? "true" : "false");
-      }
-
       if (view === "schedule") {
         renderScheduleView();
         if (scheduleView) {
@@ -532,6 +595,7 @@
       } else {
         applyTodayExpandedLayout();
       }
+      updateNavState(view === "schedule" ? "schedule" : document.body.dataset.mode);
     }
 
     // Events
@@ -931,6 +995,7 @@
       const study = document.getElementById("settingsStudyMinutes");
       const short = document.getElementById("settingsShortMinutes");
       const long = document.getElementById("settingsLongMinutes");
+      const prevLang = currentLanguage;
       if (langSelect) {
         saveLanguagePreference(langSelect.value);
       }
@@ -982,6 +1047,13 @@
           quietEnd: notifQuietEnd?.value || "07:00"
         });
       }
+      if (langSelect && prevLang !== currentLanguage) {
+        applyTranslations();
+        renderTable();
+        renderTodayTodos();
+        renderScheduleView();
+        renderFocusState();
+      }
       saveFocusConfig();
       showNotice("Preferences saved.", "success");
     });
@@ -1012,13 +1084,64 @@
       }
     });
 
-    if (viewBoardBtn) {
-      viewBoardBtn.addEventListener("click", () => setActiveView("board"));
-    }
+    if (navBoardBtn) navBoardBtn.addEventListener("click", () => setPageMode("board"));
+    if (navSubjectsBtn) navSubjectsBtn.addEventListener("click", () => setPageMode("subjects"));
+    if (navTodayBtn) navTodayBtn.addEventListener("click", () => setPageMode("today"));
+    if (navScheduleBtn) navScheduleBtn.addEventListener("click", () => setPageMode("schedule"));
 
-    if (viewScheduleBtn) {
-      viewScheduleBtn.addEventListener("click", () => setActiveView("schedule"));
-    }
+    const modalObserverTargets = [
+      settingsModalBackdrop,
+      settingsModal,
+      addTodoModalBackdrop,
+      subjectSettingsBackdrop,
+      suggestionModalBackdrop,
+      timerModalBackdrop,
+      statsBackdrop,
+      noticeModalBackdrop,
+      sessionRecapBackdrop,
+      document.getElementById("notesModal"),
+      document.getElementById("flashcardGenModal")
+    ].filter(Boolean);
+    const modalObserver = new MutationObserver(() => syncBodyModalState());
+    modalObserverTargets.forEach((el) =>
+      modalObserver.observe(el, { attributes: true, attributeFilter: ["class", "style", "hidden"] })
+    );
+    syncBodyModalState();
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      if (isElementVisible(addTodoModalBackdrop)) {
+        closeAddTodoModal();
+        return;
+      }
+      if (settingsModal && settingsModal.classList.contains("is-open")) {
+        closeSettingsModal();
+        return;
+      }
+      const openCalendarModal = document.querySelector(".calendar-modal.is-open");
+      if (openCalendarModal) {
+        const closeBtn =
+          openCalendarModal.querySelector("[id$='CloseBtn']") ||
+          openCalendarModal.querySelector(".btn-secondary");
+        closeBtn?.click();
+        return;
+      }
+      if (isElementVisible(subjectSettingsBackdrop)) {
+        closeSubjectSettingsModal();
+        return;
+      }
+      if (isElementVisible(suggestionModalBackdrop)) {
+        closeSuggestionModal();
+        return;
+      }
+      if (isElementVisible(statsBackdrop)) {
+        closeStatsModal();
+        return;
+      }
+      if (isElementVisible(noticeModalBackdrop)) {
+        handleNoticeCancel();
+      }
+    });
 
     // Filter removed
 
@@ -1485,10 +1608,27 @@
       return "board";
     }
 
+    function setPageMode(mode, { updateUrl = true, render = true } = {}) {
+      const target = mode === "subjects" || mode === "today" || mode === "schedule" ? mode : "board";
+      document.body.dataset.mode = target;
+      updateNavState(target);
+      applySubjectPaging();
+      if (target === "schedule") {
+        setActiveView("schedule");
+      } else {
+        setActiveView("board");
+        if (render && typeof renderTable === "function") renderTable();
+      }
+      if (updateUrl) {
+        const url = new URL(window.location.href);
+        url.searchParams.set("mode", target);
+        window.history.replaceState({}, "", url.toString());
+      }
+    }
+
 	    function applyPageMode() {
 	      const mode = getPageMode();
-	      document.body.dataset.mode = mode;
-	      applySubjectPaging();
+	      setPageMode(mode, { updateUrl: false, render: false });
 	    }
 
 		    function applySyncedStateFromStorage() {
@@ -1507,7 +1647,8 @@
 	        perceivedConfBtn?.classList.remove("confidence-toggle-active");
 	      }
 
-	      saveLanguagePreference(loadLanguagePreference());
+	      setLanguage(loadLanguagePreference());
+	      applyTranslations();
 	      loadFromStorage();
 	      loadDailyFocusMap();
 	      loadTodayTodos();
@@ -1525,9 +1666,9 @@
 	      renderSubjectOptions();
 	      renderFocusState();
 	      renderTodayTodos();
-	      applyPageMode();
+	      setPageMode(getPageMode(), { updateUrl: false, render: false });
 	      renderTable();
-	      if (activeView === "schedule") {
+	      if (document.body.dataset.mode === "schedule") {
 	        renderScheduleView();
 	      } else {
 	        applyTodayExpandedLayout();
@@ -1561,7 +1702,8 @@
       perceivedConfBtn?.classList.add("confidence-toggle-active");
       manualConfBtn?.classList.remove("confidence-toggle-active");
     }
-    saveLanguagePreference(loadLanguagePreference());
+    setLanguage(loadLanguagePreference());
+    applyTranslations();
     loadFromStorage();
     activeStudy = loadActiveSession();
     maybeAutoResumeNavPausedSession();
@@ -1575,8 +1717,7 @@
     renderFocusState();
     renderTodayTodos();
     renderTable();
-    applyPageMode();
-    setActiveView(getPageMode() === "schedule" ? "schedule" : "board");
+    setPageMode(getPageMode(), { updateUrl: false, render: false });
     updateHeaderProfileLabel();
 
     function handleOpenEntity(detail) {

@@ -380,6 +380,7 @@
     ui.modal.classList.add("is-open");
     ui.modal.setAttribute("aria-hidden", "false");
     ui.editor.focus();
+    if (typeof syncBodyModalState === "function") syncBodyModalState();
   }
 
   function closeModal() {
@@ -387,6 +388,7 @@
     flushSave(true);
     ui.modal.classList.remove("is-open");
     ui.modal.setAttribute("aria-hidden", "true");
+    if (typeof syncBodyModalState === "function") syncBodyModalState();
   }
 
   function setSaveHint(text) {
@@ -459,7 +461,7 @@
       ui.insertSelect.appendChild(opt);
     };
 
-    addOpt("Insert link…", "", true);
+    addOpt("Choose link…", "", true);
 
     const subjects = loadSubjectsForInsert();
     if (subjects.length) {

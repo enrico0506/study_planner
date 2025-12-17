@@ -2,7 +2,7 @@
   display: none;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .phone-bottom-nav {
     position: fixed;
     inset: auto 0 0 0;

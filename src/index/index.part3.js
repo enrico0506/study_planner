@@ -40,9 +40,10 @@
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "btn";
-        btn.textContent = "Add from subjects";
+        btn.textContent = t("navSubjects");
         btn.addEventListener("click", () => {
-          window.location.href = "index.html?mode=subjects";
+          if (typeof setPageMode === "function") setPageMode("subjects");
+          else window.location.href = "index.html?mode=subjects";
         });
         ctaRow.appendChild(btn);
         empty.appendChild(ctaRow);
@@ -1207,6 +1208,26 @@
       updateGoalsAndStreaks();
     }, 1000);
 
+    function startDefaultSession() {
+      if (Array.isArray(todayTodos) && todayTodos.length) {
+        const first = todayTodos[0];
+        const { subj, file } = resolveFileRef(first.subjectId, first.fileId);
+        if (subj && file) {
+          startStudy(subj.id, file);
+          return true;
+        }
+      }
+      const firstSubject = subjects.find((s) => Array.isArray(s.files) && s.files.length);
+      if (firstSubject) {
+        startStudy(firstSubject.id, firstSubject.files[0]);
+        return true;
+      }
+      const addBtn = document.getElementById("addSubjectBtn");
+      addBtn?.focus();
+      addBtn?.click();
+      return false;
+    }
+
     function renderFocusState() {
       focusCard.classList.remove(
         "focus-study-active",
@@ -1217,9 +1238,13 @@
       if (!activeStudy) {
         focusSessionTitle.textContent = "No active session";
         focusSessionSubtitle.textContent =
-          "Click “Study” on a file or start a break below.";
-        focusSessionControls.innerHTML =
-          '<span style="font-size:0.75rem;color:#9ca3af;">No controls – start a session.</span>';
+          t("timerIdleSubtitle");
+        focusSessionControls.innerHTML = "";
+        const startBtn = document.createElement("button");
+        startBtn.className = "chip-btn chip-btn-primary";
+        startBtn.textContent = t("timerIdleCta");
+        startBtn.addEventListener("click", () => startDefaultSession());
+        focusSessionControls.appendChild(startBtn);
         focusTimerDisplay.textContent = "00:00:00";
         updateTimerModeButtons(timerModePref);
         return;
@@ -1397,18 +1422,211 @@
       }
     }
 
+    function moveFileForMobile(subjectId, fileId, delta) {
+      const subj = subjects.find((s) => s.id === subjectId);
+      if (!subj || !Array.isArray(subj.files)) return;
+      if (subj.sortMode && subj.sortMode !== "manual") {
+        subj.sortMode = "manual";
+        applySortToSubject(subj);
+        showToast("Switched to manual order to reorder.", "info");
+      }
+      const idx = subj.files.findIndex((f) => f.id === fileId);
+      const nextIdx = idx + delta;
+      if (idx === -1 || nextIdx < 0 || nextIdx >= subj.files.length) return;
+      const [moved] = subj.files.splice(idx, 1);
+      subj.files.splice(nextIdx, 0, moved);
+      updateManualOrder(subj);
+      saveToStorage();
+      renderTable();
+      announceLive(`Moved “${moved.name || "Untitled"}”`);
+    }
+
+    function renderMobileBoard() {
+      if (!mobileBoard || !mobileBoardList || !mobileBoardSubjectSelect) return;
+      const shouldShow = isPhoneLayout() && document.body.dataset.mode === "board";
+      mobileBoard.hidden = !shouldShow;
+      if (!shouldShow) return;
+
+      mobileBoardList.innerHTML = "";
+      mobileBoardSubjectSelect.innerHTML = "";
+
+      const addOpt = (value, label) => {
+        const opt = document.createElement("option");
+        opt.value = value;
+        opt.textContent = label;
+        mobileBoardSubjectSelect.appendChild(opt);
+      };
+
+      addOpt("all", t("mobileAllSubjects"));
+      subjects.forEach((subj) => addOpt(subj.id, subj.name || t("navSubjects")));
+
+      if (!mobileBoardSubjectSelect.dataset.bound) {
+        mobileBoardSubjectSelect.dataset.bound = "1";
+        mobileBoardSubjectSelect.addEventListener("change", () => {
+          mobileBoardFilter = mobileBoardSubjectSelect.value || "all";
+          renderTable();
+        });
+      }
+
+      if (!subjects.find((s) => s.id === mobileBoardFilter)) {
+        mobileBoardFilter = "all";
+      }
+      mobileBoardSubjectSelect.value = mobileBoardFilter;
+
+      if (!subjects.length) {
+        const wrap = document.createElement("div");
+        wrap.className = "empty-hint";
+        const msg = document.createElement("div");
+        msg.textContent = t("emptySubjects");
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn";
+        btn.textContent = t("emptyAddSubject");
+        btn.addEventListener("click", () => document.getElementById("addSubjectBtn")?.click());
+        wrap.appendChild(msg);
+        wrap.appendChild(btn);
+        mobileBoardList.appendChild(wrap);
+        return;
+      }
+
+      const filteredSubjects =
+        mobileBoardFilter === "all"
+          ? subjects
+          : subjects.filter((s) => s.id === mobileBoardFilter);
+
+      let anyFile = false;
+      filteredSubjects.forEach((subj, subjIndex) => {
+        const visibleFiles = currentSearch
+          ? subj.files.filter((f) =>
+              (f.name || "").toLowerCase().includes(currentSearch.toLowerCase())
+            )
+          : subj.files;
+        if (!visibleFiles.length) {
+          const empty = document.createElement("div");
+          empty.className = "mobile-file-card";
+          empty.textContent = subj.files.length ? "No files match this filter." : t("emptyNoFiles");
+          mobileBoardList.appendChild(empty);
+          return;
+        }
+        visibleFiles.forEach((file) => {
+          anyFile = true;
+          const card = document.createElement("article");
+          card.className = "mobile-file-card";
+          const header = document.createElement("div");
+          header.className = "mobile-file-card__header";
+
+          const subjectLabel = document.createElement("div");
+          subjectLabel.className = "mobile-file-card__subject";
+          const dot = document.createElement("span");
+          dot.className = "mobile-file-card__dot";
+          dot.style.background = isHexColor(subj.color) ? subj.color : getSubjectColor(subjIndex);
+          subjectLabel.appendChild(dot);
+          const subjectName = document.createElement("span");
+          subjectName.textContent = subj.name || t("navSubjects");
+          subjectLabel.appendChild(subjectName);
+
+          const badge = document.createElement("span");
+          const confValue = displayConfidence(file);
+          badge.className = "confidence-badge " + confidenceClass(confValue);
+          badge.textContent = confValue + "%";
+
+          header.appendChild(subjectLabel);
+          header.appendChild(badge);
+
+          const body = document.createElement("div");
+          body.className = "mobile-file-card__body";
+          const title = document.createElement("div");
+          title.className = "mobile-file-card__title";
+          title.textContent = file.name || "Untitled file";
+          body.appendChild(title);
+
+          if (file.notes) {
+            const note = document.createElement("div");
+            note.className = "file-notes";
+            note.textContent = file.notes;
+            body.appendChild(note);
+          }
+
+          const meta = document.createElement("div");
+          meta.className = "mobile-file-card__meta";
+          meta.textContent = file.lastReviewed
+            ? "Revised " + formatTimeAgo(file.lastReviewed)
+            : "Never revised";
+          body.appendChild(meta);
+
+          const actions = document.createElement("div");
+          actions.className = "mobile-file-card__actions";
+
+          const studyBtn = document.createElement("button");
+          studyBtn.className = "chip-btn chip-btn-primary";
+          studyBtn.textContent = t("startStudy");
+          studyBtn.addEventListener("click", () => startStudy(subj.id, file));
+
+          const todayBtn = document.createElement("button");
+          todayBtn.className = "chip-btn chip-btn-ghost";
+          const inToday = todayTodos.some((t) => t.subjectId === subj.id && t.fileId === file.id);
+          todayBtn.textContent = inToday ? t("today") : t("addToToday");
+          todayBtn.disabled = inToday;
+          todayBtn.addEventListener("click", () => {
+            openAddTodoModal(subj.id, file);
+          });
+
+          const upBtn = document.createElement("button");
+          upBtn.type = "button";
+          upBtn.className = "icon-btn icon-btn-ghost";
+          upBtn.textContent = "↑";
+          upBtn.title = "Move up";
+          upBtn.setAttribute("aria-label", "Move up");
+          const downBtn = document.createElement("button");
+          downBtn.type = "button";
+          downBtn.className = "icon-btn icon-btn-ghost";
+          downBtn.textContent = "↓";
+          downBtn.title = "Move down";
+          downBtn.setAttribute("aria-label", "Move down");
+          const fileIndex = subj.files.findIndex((f) => f.id === file.id);
+          if (fileIndex <= 0) upBtn.disabled = true;
+          if (fileIndex === -1 || fileIndex >= subj.files.length - 1) downBtn.disabled = true;
+          upBtn.addEventListener("click", () => moveFileForMobile(subj.id, file.id, -1));
+          downBtn.addEventListener("click", () => moveFileForMobile(subj.id, file.id, 1));
+
+          actions.appendChild(studyBtn);
+          actions.appendChild(todayBtn);
+
+          const orderRow = document.createElement("div");
+          orderRow.className = "mobile-file-card__actions";
+          orderRow.appendChild(upBtn);
+          orderRow.appendChild(downBtn);
+
+          card.appendChild(header);
+          card.appendChild(body);
+          card.appendChild(actions);
+          card.appendChild(orderRow);
+
+          mobileBoardList.appendChild(card);
+        });
+      });
+
+      if (!anyFile) {
+        const empty = document.createElement("div");
+        empty.className = "mobile-file-card";
+        empty.textContent = t("emptySubjects");
+        mobileBoardList.appendChild(empty);
+      }
+    }
+
     function renderTable() {
+      renderMobileBoard();
       subjectTable.innerHTML = "";
 
       if (!subjects.length) {
         emptyHint.innerHTML = "";
         emptyHint.style.display = "block";
         const msg = document.createElement("div");
-        msg.textContent = "No subjects yet. Create your first subject to start tracking.";
+        msg.textContent = t("emptySubjects");
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "btn";
-        btn.textContent = "+ Add first subject";
+        btn.textContent = t("emptyAddSubject");
         btn.addEventListener("click", () => {
           const addBtn = document.getElementById("addSubjectBtn");
           if (addBtn) addBtn.click();
@@ -1627,7 +1845,7 @@
           hint.className = "empty-hint";
           hint.textContent = subj.files.length
             ? "No files match filter in this subject."
-            : "Add a file to this subject.";
+            : t("emptyNoFiles");
           fileList.appendChild(hint);
         } else {
           for (const file of visibleFiles) {

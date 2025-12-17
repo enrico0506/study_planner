@@ -68,12 +68,14 @@
   function openModal() {
     ui.modal.classList.add("is-open");
     ui.modal.setAttribute("aria-hidden", "false");
+    if (typeof syncBodyModalState === "function") syncBodyModalState();
   }
 
   function closeModal() {
     if (!ui.modal.classList.contains("is-open")) return;
     ui.modal.classList.remove("is-open");
     ui.modal.setAttribute("aria-hidden", "true");
+    if (typeof syncBodyModalState === "function") syncBodyModalState();
   }
 
   function createId(prefix) {
@@ -361,4 +363,3 @@
     }
   });
 })();
-
