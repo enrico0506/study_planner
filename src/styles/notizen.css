@@ -122,6 +122,13 @@
   padding: 2px 6px;
 }
 
+.notes-doc-item .notes-folder-delete {
+  color: #1d4ed8;
+  border: 1px solid rgba(29, 78, 216, 0.25);
+  border-radius: 8px;
+  background: #eef3ff;
+}
+
 .notes-folder-new {
   display: flex;
   flex-direction: column;

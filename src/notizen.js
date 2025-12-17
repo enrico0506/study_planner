@@ -243,10 +243,35 @@
     if (!folder) return;
     editingFolderId = folder.id;
     if (newFolderForm) newFolderForm.hidden = false;
+    renderFolderSubjectSelect();
     if (newFolderInput) newFolderInput.value = folder.name || "";
     if (folderSubjectSelect) folderSubjectSelect.value = folder.subjectId || "";
     const hint = document.getElementById("folderFormHint");
     if (hint) hint.textContent = "Ordner bearbeiten";
+    newFolderInput?.focus();
+  }
+
+  function seedDocsForFolder(folder) {
+    if (!folder || !folder.subjectId) return;
+    const subj = subjectsCache.find((s) => s.id === folder.subjectId);
+    if (!subj || !Array.isArray(subj.files)) return;
+    const existingIds = new Set(
+      docs.filter((d) => d.folderId === folder.id && d.subjectId === folder.subjectId).map((d) => d.fileId)
+    );
+    const newDocs = [];
+    subj.files.forEach((file) => {
+      if (existingIds.has(file.id)) return;
+      const doc = createDefaultDoc(file.name || "Task");
+      doc.folderId = folder.id;
+      doc.subjectId = folder.subjectId;
+      doc.fileId = file.id;
+      doc.title = file.name || doc.title;
+      newDocs.push(doc);
+    });
+    if (newDocs.length) {
+      docs = [...newDocs, ...docs];
+      persistDocs();
+    }
   }
 
   function markdownToHtml(md) {
@@ -408,15 +433,15 @@
     docListEl.innerHTML = "";
     const list = filteredDocs();
     list.forEach((doc) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "notes-doc-item" + (doc.id === activeId ? " notes-doc-item-active" : "");
-      btn.dataset.id = doc.id;
+      const row = document.createElement("div");
+      row.className = "notes-doc-item" + (doc.id === activeId ? " notes-doc-item-active" : "");
+      row.dataset.id = doc.id;
 
+      const textWrap = document.createElement("div");
+      textWrap.style.flex = "1";
       const title = document.createElement("div");
       title.className = "notes-doc-title";
       title.textContent = doc.title || "Untitled";
-
       const meta = document.createElement("div");
       meta.className = "notes-doc-meta";
       const subjName = doc.subjectId ? resolveNames(doc.subjectId, doc.fileId).subject : null;
@@ -425,17 +450,37 @@
       const fName = folderName(doc.folderId);
       if (fName) parts.push(fName);
       meta.textContent = parts.join(" - ");
+      textWrap.append(title, meta);
 
-      btn.append(title, meta);
-      btn.addEventListener("click", () => {
-        if (doc.id === activeId) return;
-        flushPendingSave();
-        activeId = doc.id;
-        persistActiveId();
-        loadActiveDoc();
-        renderDocList();
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "notes-folder-delete";
+      editBtn.textContent = "Edit";
+      editBtn.title = "Umbenennen";
+      editBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        selectDoc(doc);
+        titleInput?.focus();
+        setStatus("Titel hier bearbeiten und speichern lassen.", "info");
       });
-      docListEl.appendChild(btn);
+
+      const linkBtn = document.createElement("button");
+      linkBtn.type = "button";
+      linkBtn.className = "notes-folder-delete";
+      linkBtn.textContent = "Link";
+      linkBtn.title = "Dieses Dokument mit Fach/Datei verknüpfen";
+      linkBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        selectDoc(doc);
+        docSubjectSelect?.focus();
+        setStatus("Dokument ausgewählt. Wähle Fach/Datei zum Verknüpfen.", "info");
+      });
+
+      row.append(textWrap, editBtn, linkBtn);
+      row.addEventListener("click", () => {
+        selectDoc(doc);
+      });
+      docListEl.appendChild(row);
     });
   }
 
@@ -1127,7 +1172,6 @@
         if (folder) {
           folder.name = name;
           folder.subjectId = subjectIdVal;
-          // apply subject to docs in folder only when doc has no subject
           docs = docs.map((d) => {
             if (d.folderId === folder.id && !d.subjectId && subjectIdVal) {
               return { ...d, subjectId: subjectIdVal };
@@ -1144,6 +1188,7 @@
         };
         folders.push(folder);
         selectedFolderId = folder.id;
+        if (subjectIdVal) seedDocsForFolder(folder);
       }
       persistFolders();
       renderFolders();
