@@ -1,6 +1,6 @@
 /* Study Planner service worker: offline-first cache for static assets. */
 (() => {
-  const CACHE_VERSION = "v2";
+  const CACHE_VERSION = "v3";
   const STATIC_CACHE = `studyplanner-static-${CACHE_VERSION}`;
 
   const PRECACHE_URLS = [
@@ -12,12 +12,14 @@
     "./account.html",
     "./notizen.html",
     "./manifest.webmanifest",
+    "./public/vendor/jszip.min.js",
     "./src/page-menu.js",
     "./src/sync.js",
     "./src/storage.js",
     "./src/data-tools.js",
     "./src/pwa.js",
     "./src/a11y-utils.js",
+    "./src/notes.js",
     "./src/index/index.part1.js",
     "./src/index/index.part2.js",
     "./src/index/index.part3.js",
@@ -33,6 +35,8 @@
     "./src/styles/phone-menu.css",
     "./src/styles/phone-modals.css",
     "./src/styles/phone-pages.css",
+    "./src/styles/a11y.css",
+    "./src/styles/enhancements.css",
     "./src/styles/notizen.css",
     "./public/icons/app-icon.svg"
   ];

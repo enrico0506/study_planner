@@ -74,6 +74,27 @@
             <button class="chip-btn chip-btn-primary" id="newDocBtn" type="button">Neues Dokument</button>
           </div>
         </div>
+        <div class="notes-search-block">
+          <label class="sr-only" for="docSearchInput">Suche</label>
+          <input id="docSearchInput" type="search" placeholder="Titel oder Inhalt durchsuchen" aria-label="Suche in Dokumenten" />
+          <div class="notes-filter-row">
+            <label>
+              Fach
+              <select id="subjectFilterSelect"></select>
+            </label>
+            <label>
+              Sortierung
+              <select id="sortModeSelect">
+                <option value="recent">Zuletzt geändert</option>
+                <option value="title">Titel A–Z</option>
+                <option value="oldest">Älteste zuerst</option>
+              </select>
+            </label>
+          </div>
+          <div class="notes-filter-chips">
+            <button class="chip-btn" id="pinnedOnlyToggle" type="button" aria-pressed="false">Nur Favoriten</button>
+          </div>
+        </div>
         <div class="notes-folder-block">
           <div class="notes-folder-head">
             <div class="notes-folder-label">Ordner</div>
@@ -100,7 +121,8 @@
           <div class="notes-title-block">
             <input id="docTitleInput" class="notes-title-input" type="text" placeholder="Dokumenttitel" aria-label="Dokumenttitel" />
             <div class="notes-save-row">
-              <span class="notes-save-status" id="saveStatus">Saved</span>
+              <span class="notes-save-status" id="saveStatus" aria-live="polite">Saved</span>
+              <span class="notes-word-count" id="wordCount"></span>
               <div class="notes-delete-inline" id="deleteConfirm" hidden>
                 <span>Sicher löschen?</span>
                 <button class="chip-btn" id="cancelDeleteBtn" type="button">Abbrechen</button>
@@ -136,8 +158,18 @@
         </div>
 
         <div class="notes-toolbar" id="notesToolbar" aria-label="Format toolbar">
-          <label class="notes-import-btn" for="importInput">Import</label>
-          <input id="importInput" type="file" accept=".md,.markdown,.ipynb,.docx,.pdf" hidden />
+          <div class="notes-export-group" aria-label="Import/Export">
+            <label class="notes-import-btn" for="importInput">Import</label>
+            <input
+              id="importInput"
+              type="file"
+              accept=".zip,.html,.htm,.md,.markdown,.txt,.ipynb,.docx,.pdf"
+              hidden
+            />
+            <button class="notes-tool-btn" type="button" id="exportHtmlBtn" aria-label="Als HTML exportieren">HTML</button>
+            <button class="notes-tool-btn" type="button" id="exportMdBtn" aria-label="Als Markdown exportieren">MD</button>
+            <button class="notes-tool-btn" type="button" id="exportZipBtn" aria-label="Alle Dokumente als ZIP exportieren">ZIP</button>
+          </div>
           <button class="notes-tool-btn" type="button" data-cmd="bold" aria-label="Fett"><strong>B</strong></button>
           <button class="notes-tool-btn" type="button" data-cmd="italic" aria-label="Kursiv"><em>I</em></button>
           <button class="notes-tool-btn" type="button" data-cmd="underline" aria-label="Unterstreichen"><u>U</u></button>

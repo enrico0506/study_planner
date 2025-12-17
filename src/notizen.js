@@ -4,10 +4,13 @@
   const ACTIVE_SESSION_KEY = "studyActiveSession_v1";
   const SUBJECTS_KEY = "studySubjects_v1";
   const FOLDERS_KEY = "studyDocsRichFolders_v1";
+  const UI_STATE_KEY = "studyDocsRichUI_v1";
   const CONFIG_KEY = "studyFocusConfig_v1";
   const AUTOSAVE_MS = 300;
   const FOLDER_ALL = "__all__";
-  const JSZIP_SRC = "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
+  const JSZIP_LOCAL_SRC = "./public/vendor/jszip.min.js";
+  const JSZIP_CDN_SRC = "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
+  const RECENT_LIMIT = 5;
 
   const docListEl = document.getElementById("docList");
   const folderListEl = document.getElementById("folderList");
@@ -37,6 +40,14 @@
   const pauseStudyBtn = document.getElementById("pauseStudyBtn");
   const statusEl = document.getElementById("notesStatus");
   const importInput = document.getElementById("importInput");
+  const exportHtmlBtn = document.getElementById("exportHtmlBtn");
+  const exportMdBtn = document.getElementById("exportMdBtn");
+  const exportZipBtn = document.getElementById("exportZipBtn");
+  const docSearchInput = document.getElementById("docSearchInput");
+  const subjectFilterSelect = document.getElementById("subjectFilterSelect");
+  const pinnedOnlyToggle = document.getElementById("pinnedOnlyToggle");
+  const sortModeSelect = document.getElementById("sortModeSelect");
+  const wordCountEl = document.getElementById("wordCount");
 
   const linkModal = document.getElementById("linkModal");
   const linkInput = document.getElementById("linkInput");
@@ -57,6 +68,11 @@
   let storedRange = null;
   let subjectsCache = [];
   let subjectsDirty = true;
+  let uiState = { searchQuery: "", subjectFilter: "", pinnedOnly: false, sortMode: "recent" };
+  let linkModalA11y = null;
+  let saveState = "saved";
+  let plainTextCache = new Map();
+  let savingSoonTimer = null;
 
   function safeParse(raw) {
     try {
@@ -66,25 +82,92 @@
     }
   }
 
+  const ALLOWED_TAGS = new Set([
+    "p",
+    "br",
+    "strong",
+    "em",
+    "u",
+    "h1",
+    "h2",
+    "h3",
+    "ul",
+    "ol",
+    "li",
+    "blockquote",
+    "code",
+    "pre",
+    "hr",
+    "a"
+  ]);
+
+  function isSafeHref(href) {
+    const raw = String(href || "").trim();
+    if (!raw) return null;
+    if (raw.startsWith("#")) return raw;
+    const lower = raw.toLowerCase();
+    if (lower.startsWith("http://") || lower.startsWith("https://") || lower.startsWith("mailto:")) {
+      return raw;
+    }
+    return null;
+  }
+
   function sanitizeHtml(html) {
     const wrapper = document.createElement("div");
     wrapper.innerHTML = html || "";
-    wrapper.querySelectorAll("script").forEach((el) => el.remove());
-    wrapper.querySelectorAll("*").forEach((el) => {
-      Array.from(el.attributes).forEach((attr) => {
-        const name = attr.name.toLowerCase();
-        if (name.startsWith("on")) {
-          el.removeAttribute(attr.name);
+
+    const walk = (node) => {
+      Array.from(node.childNodes).forEach((child) => {
+        if (child.nodeType !== Node.ELEMENT_NODE) return;
+        const tag = child.tagName.toLowerCase();
+        if (!ALLOWED_TAGS.has(tag)) {
+          const fragment = document.createDocumentFragment();
+          while (child.firstChild) fragment.appendChild(child.firstChild);
+          child.replaceWith(fragment);
+          walk(fragment);
           return;
         }
-        if (name === "href") {
-          const val = String(attr.value || "");
-          if (/^\s*javascript:/i.test(val)) {
-            el.removeAttribute(attr.name);
+        Array.from(child.attributes).forEach((attr) => {
+          const name = attr.name.toLowerCase();
+          if (name.startsWith("on")) {
+            child.removeAttribute(attr.name);
+            return;
           }
+          if (tag === "a") {
+            if (name === "href") {
+              const safe = isSafeHref(attr.value);
+              if (!safe) {
+                child.removeAttribute(attr.name);
+              } else {
+                child.setAttribute("href", safe);
+              }
+              return;
+            }
+            if (name === "target") {
+              const target = attr.value === "_self" ? "_self" : "_blank";
+              child.setAttribute("target", target);
+              return;
+            }
+            if (name === "rel") {
+              const relParts = new Set(String(attr.value || "").split(/\s+/));
+              relParts.add("noopener");
+              relParts.add("noreferrer");
+              child.setAttribute("rel", Array.from(relParts).join(" ").trim());
+              return;
+            }
+          }
+          if (!(tag === "a" && (name === "href" || name === "target" || name === "rel"))) {
+            child.removeAttribute(attr.name);
+          }
+        });
+        if (tag === "a" && child.hasAttribute("href") && !child.getAttribute("rel")) {
+          child.setAttribute("rel", "noopener noreferrer");
         }
+        walk(child);
       });
-    });
+    };
+
+    walk(wrapper);
     return wrapper.innerHTML;
   }
 
@@ -115,9 +198,11 @@
       html: "<p></p>",
       createdAt: now,
       updatedAt: now,
+      lastOpenedAt: now,
       folderId: null,
       subjectId: null,
-      fileId: null
+      fileId: null,
+      pinned: false
     };
   }
 
@@ -138,14 +223,22 @@
 
   function loadState() {
     const rawDocs = safeParse(localStorage.getItem(DOCS_KEY));
+    let needsPersist = false;
     docs = Array.isArray(rawDocs)
       ? rawDocs
           .filter((d) => d && d.id)
-          .map((d) => ({
-            ...d,
-            folderId: d.folderId || null,
-            subjectId: d.subjectId || null,
-            fileId: d.fileId || null
+          .map((d) => {
+            const withDefaults = {
+              ...d,
+              folderId: d.folderId || null,
+              subjectId: d.subjectId || null,
+              fileId: d.fileId || null,
+              pinned: !!d.pinned,
+              lastOpenedAt: d.lastOpenedAt || d.updatedAt || d.createdAt || null
+            };
+            if (!("pinned" in d)) needsPersist = true;
+            if (!d.lastOpenedAt) needsPersist = true;
+            return withDefaults;
           }))
       : [];
     const savedActive = localStorage.getItem(ACTIVE_ID_KEY);
@@ -161,6 +254,8 @@
       activeId = first ? first.id : null;
       persistActiveId();
     }
+    if (needsPersist) persistDocs();
+    plainTextCache.clear();
     loadFolders();
     if (selectedFolderId !== FOLDER_ALL && !folders.find((f) => f.id === selectedFolderId)) {
       selectedFolderId = FOLDER_ALL;
@@ -185,21 +280,68 @@
     persistActiveId();
   }
 
+  function loadUiState() {
+    const raw = safeParse(localStorage.getItem(UI_STATE_KEY));
+    if (raw && typeof raw === "object") {
+      uiState = {
+        searchQuery: String(raw.searchQuery || ""),
+        subjectFilter: raw.subjectFilter || "",
+        pinnedOnly: !!raw.pinnedOnly,
+        sortMode: raw.sortMode === "title" || raw.sortMode === "oldest" ? raw.sortMode : "recent"
+      };
+    } else {
+      uiState = { searchQuery: "", subjectFilter: "", pinnedOnly: false, sortMode: "recent" };
+    }
+  }
+
+  function persistUiState() {
+    try {
+      localStorage.setItem(UI_STATE_KEY, JSON.stringify(uiState));
+    } catch {}
+  }
+
   function getActiveDoc() {
     return docs.find((d) => d.id === activeId) || null;
   }
 
-  function getSortedDocs() {
-    return [...docs].sort((a, b) => {
+  function sortDocs(list) {
+    const mode = uiState.sortMode || "recent";
+    return [...list].sort((a, b) => {
       const aTime = new Date(a.updatedAt || a.createdAt || 0).getTime();
       const bTime = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      if (mode === "recent") {
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+        return bTime - aTime;
+      }
+      if (mode === "oldest") return aTime - bTime;
+      if (mode === "title") return (a.title || "").localeCompare(b.title || "", undefined, { sensitivity: "base" });
       return bTime - aTime;
     });
   }
 
+  function getSortedDocs() {
+    return sortDocs(docs);
+  }
+
+  function docMatchesFilters(doc) {
+    if (selectedFolderId !== FOLDER_ALL && (doc.folderId || null) !== selectedFolderId) return false;
+    if (uiState.subjectFilter && doc.subjectId !== uiState.subjectFilter) return false;
+    if (uiState.pinnedOnly && !doc.pinned) return false;
+    const q = uiState.searchQuery.trim().toLowerCase();
+    if (q) {
+      let text = getPlainText(doc);
+      if (doc.id === activeId && editorEl) {
+        const live = (editorEl.textContent || "").trim();
+        if (live) text = live;
+      }
+      const haystack = ((doc.title || "") + " " + text).toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  }
+
   function filteredDocs() {
-    if (selectedFolderId === FOLDER_ALL) return getSortedDocs();
-    return getSortedDocs().filter((d) => (d.folderId || null) === selectedFolderId);
+    return sortDocs(docs.filter((d) => docMatchesFilters(d)));
   }
 
   function folderName(folderId) {
@@ -229,6 +371,32 @@
       opt.textContent = s.name || "Unbenannt";
       folderSubjectSelect.appendChild(opt);
     });
+  }
+
+  function renderSubjectFilterOptions() {
+    if (!subjectFilterSelect) return;
+    subjectFilterSelect.innerHTML = "";
+    const optAll = document.createElement("option");
+    optAll.value = "";
+    optAll.textContent = "Alle Fächer";
+    subjectFilterSelect.appendChild(optAll);
+    subjectsCache.forEach((s) => {
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = s.name || "Unbenannt";
+      subjectFilterSelect.appendChild(opt);
+    });
+    subjectFilterSelect.value = uiState.subjectFilter || "";
+  }
+
+  function applyUiStateToControls() {
+    if (docSearchInput) docSearchInput.value = uiState.searchQuery || "";
+    if (subjectFilterSelect) subjectFilterSelect.value = uiState.subjectFilter || "";
+    if (sortModeSelect) sortModeSelect.value = uiState.sortMode || "recent";
+    if (pinnedOnlyToggle) {
+      pinnedOnlyToggle.setAttribute("aria-pressed", uiState.pinnedOnly ? "true" : "false");
+      pinnedOnlyToggle.classList.toggle("chip-btn-active", uiState.pinnedOnly);
+    }
   }
 
   function resetFolderForm() {
@@ -304,6 +472,17 @@
       .replace(/'/g, "&#39;");
   }
 
+  function getPlainText(doc) {
+    if (!doc) return "";
+    const cached = plainTextCache.get(doc.id);
+    if (cached && cached.source === doc.html) return cached.text;
+    const div = document.createElement("div");
+    div.innerHTML = doc.html || "";
+    const text = (div.textContent || "").replace(/\s+/g, " ").trim();
+    plainTextCache.set(doc.id, { source: doc.html, text });
+    return text;
+  }
+
   function ipynbToHtml(json) {
     const cells = Array.isArray(json?.cells) ? json.cells : [];
     const parts = [];
@@ -346,13 +525,133 @@
     });
   }
 
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  function safeFilename(title, ext) {
+    const base = (title || "note").replace(/[^a-z0-9_\-]+/gi, "_").replace(/^_+|_+$/g, "") || "note";
+    return `${base}.${ext}`;
+  }
+
+  function buildDocHtmlExport(doc) {
+    const content = sanitizeHtml(doc?.html || "<p></p>");
+    const title = escapeHtml(doc?.title || "Notiz");
+    return `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title></head><body>${content}</body></html>`;
+  }
+
+  function htmlToMarkdown(html) {
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = sanitizeHtml(html || "");
+    const serialize = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) return node.textContent || "";
+      if (node.nodeType !== Node.ELEMENT_NODE) return "";
+      const tag = node.tagName.toLowerCase();
+      const content = Array.from(node.childNodes)
+        .map((child) => serialize(child))
+        .join("");
+      switch (tag) {
+        case "strong":
+          return `**${content}**`;
+        case "em":
+          return `*${content}*`;
+        case "u":
+          return `__${content}__`;
+        case "code":
+          return "`" + content + "`";
+        case "a": {
+          const href = node.getAttribute("href");
+          return href ? `[${content || href}](${href})` : content;
+        }
+        case "br":
+          return "\n";
+        case "h1":
+          return `# ${content}\n\n`;
+        case "h2":
+          return `## ${content}\n\n`;
+        case "h3":
+          return `### ${content}\n\n`;
+        case "p":
+          return `${content}\n\n`;
+        case "blockquote":
+          return (
+            content
+              .split(/\n/)
+              .map((line) => (line ? `> ${line}` : ">"))
+              .join("\n") + "\n\n"
+          );
+        case "ul":
+          return (
+            Array.from(node.children)
+              .map((li) => `- ${serialize(li).trim()}`)
+              .join("\n") + "\n\n"
+          );
+        case "ol":
+          return (
+            Array.from(node.children)
+              .map((li, idx) => `${idx + 1}. ${serialize(li).trim()}`)
+              .join("\n") + "\n\n"
+          );
+        case "li":
+          return content;
+        case "pre":
+          return "\n```\n" + node.textContent + "\n```\n\n";
+        case "hr":
+          return "\n---\n\n";
+        default:
+          return content;
+      }
+    };
+    const out = Array.from(wrapper.childNodes)
+      .map((node) => serialize(node))
+      .join("");
+    return out.trim();
+  }
+
+  function makeCopyTitle(baseTitle, taken) {
+    const clean = baseTitle && typeof baseTitle === "string" ? baseTitle.trim() : "Notiz";
+    let candidate = clean || "Notiz";
+    let counter = 1;
+    while (taken.has(candidate.toLowerCase())) {
+      candidate = `${clean} (copy${counter > 1 ? " " + counter : ""})`;
+      counter += 1;
+    }
+    taken.add(candidate.toLowerCase());
+    return candidate;
+  }
+
+  function makeCopyFolderName(baseName, taken) {
+    const clean = baseName && typeof baseName === "string" ? baseName.trim() : "Ordner";
+    let candidate = clean || "Ordner";
+    let counter = 1;
+    while (taken.has(candidate.toLowerCase())) {
+      candidate = `${clean} (copy${counter > 1 ? " " + counter : ""})`;
+      counter += 1;
+    }
+    taken.add(candidate.toLowerCase());
+    return candidate;
+  }
+
   function loadJSZip() {
     if (window.JSZip) return Promise.resolve(window.JSZip);
     return new Promise((resolve) => {
       const script = document.createElement("script");
-      script.src = JSZIP_SRC;
+      script.src = JSZIP_LOCAL_SRC;
       script.onload = () => resolve(window.JSZip || null);
-      script.onerror = () => resolve(null);
+      script.onerror = () => {
+        const fallback = document.createElement("script");
+        fallback.src = JSZIP_CDN_SRC;
+        fallback.onload = () => resolve(window.JSZip || null);
+        fallback.onerror = () => resolve(null);
+        document.head.appendChild(fallback);
+      };
       document.head.appendChild(script);
     });
   }
@@ -384,42 +683,142 @@
     }
   }
 
+  function insertImportedHtml(html, successMessage) {
+    editorEl.innerHTML = sanitizeHtml(html || "<p></p>");
+    updateWordCount();
+    scheduleSave();
+    if (successMessage) setStatus(successMessage, "success");
+  }
+
+  async function importZipFile(file) {
+    const JSZipLib = await loadJSZip();
+    if (!JSZipLib) {
+      setStatus("ZIP Import fehlgeschlagen (JSZip fehlt).", "error");
+      return;
+    }
+    try {
+      const buf = await readFileAsArrayBuffer(file);
+      const zip = await JSZipLib.loadAsync(buf);
+      const manifestEntry = zip.file("manifest.json");
+      if (!manifestEntry) {
+        setStatus("ZIP ohne manifest.json.", "error");
+        return;
+      }
+      const manifest = safeParse(await manifestEntry.async("string")) || {};
+      const incomingFolders = Array.isArray(manifest.folders) ? manifest.folders : [];
+      const folderMap = new Map();
+      const takenFolderNames = new Set(folders.map((f) => (f.name || "").toLowerCase()));
+      incomingFolders.forEach((f) => {
+        if (!f || !f.id) return;
+        const existing = folders.find((x) => x.id === f.id) || folders.find((x) => x.name === f.name);
+        if (existing) {
+          folderMap.set(f.id, existing.id);
+          return;
+        }
+        const name = makeCopyFolderName(f.name || "Ordner", takenFolderNames);
+        const newFolder = {
+          id: "folder_" + Math.random().toString(36).slice(2, 8),
+          name,
+          subjectId: f.subjectId || null
+        };
+        folders.push(newFolder);
+        folderMap.set(f.id, newFolder.id);
+      });
+
+      const incomingDocs = Array.isArray(manifest.docs) ? manifest.docs : [];
+      const takenTitles = new Set(docs.map((d) => (d.title || "").toLowerCase()));
+      const imported = [];
+      for (const entry of incomingDocs) {
+        if (!entry) continue;
+        const filePath = entry.file || (entry.id ? `docs/${entry.id}.html` : null);
+        let html = entry.html || "";
+        if (filePath && zip.file(filePath)) {
+          html = await zip.file(filePath).async("string");
+        }
+        const sanitized = sanitizeHtml(html || "<p></p>");
+        const title = makeCopyTitle(entry.title || "Notiz", takenTitles);
+        const now = new Date().toISOString();
+        const doc = {
+          id: generateId(),
+          title,
+          html: sanitized || "<p></p>",
+          createdAt: entry.createdAt || now,
+          updatedAt: entry.updatedAt || entry.createdAt || now,
+          lastOpenedAt: entry.lastOpenedAt || null,
+          folderId: entry.folderId ? folderMap.get(entry.folderId) || null : null,
+          subjectId: entry.subjectId || null,
+          fileId: entry.fileId || null,
+          pinned: !!entry.pinned
+        };
+        imported.push(doc);
+      }
+
+      if (!imported.length) {
+        setStatus("Keine Dokumente im ZIP gefunden.", "error");
+        return;
+      }
+
+      docs = [...imported, ...docs];
+      plainTextCache.clear();
+      persistFolders();
+      if (imported.length) {
+        selectDoc(imported[0]);
+      } else {
+        persistDocs();
+        renderFolders();
+        renderDocList();
+        loadActiveDoc();
+      }
+      setStatus("ZIP importiert.", "success");
+    } catch (err) {
+      setStatus("ZIP Import fehlgeschlagen.", "error");
+    }
+  }
+
   async function handleImport(file) {
     if (!file) return;
     const name = (file.name || "").toLowerCase();
     const ext = name.split(".").pop() || "";
     try {
+      if (ext === "zip") {
+        await importZipFile(file);
+        return;
+      }
+      if (ext === "html" || ext === "htm") {
+        const text = await readFileAsText(file);
+        insertImportedHtml(text, "HTML importiert.");
+        return;
+      }
+      if (ext === "txt") {
+        const text = await readFileAsText(file);
+        const html = `<p>${escapeHtml(text).replace(/\n/g, "<br>")}</p>`;
+        insertImportedHtml(html, "Text importiert.");
+        return;
+      }
       if (ext === "md" || ext === "markdown") {
         const text = await readFileAsText(file);
         const html = markdownToHtml(text);
-        editorEl.innerHTML = sanitizeHtml(html);
-        scheduleSave();
-        setStatus("Markdown importiert.", "success");
+        insertImportedHtml(html, "Markdown importiert.");
         return;
       }
       if (ext === "ipynb") {
         const text = await readFileAsText(file);
         const parsed = safeParse(text);
         const html = ipynbToHtml(parsed || {});
-        editorEl.innerHTML = sanitizeHtml(html || "<p></p>");
-        scheduleSave();
-        setStatus("Notebook importiert.", "success");
+        insertImportedHtml(html, "Notebook importiert.");
         return;
       }
       if (ext === "pdf") {
         const dataUrl = await readFileAsDataUrl(file);
-        const html = `<object class="notes-embed" data="${dataUrl}" type="application/pdf"></object>`;
-        editorEl.innerHTML = html;
-        scheduleSave();
-        setStatus("PDF eingebettet (nur Ansicht).", "success");
+        const label = escapeHtml(file.name || "PDF");
+        const html = `<p>PDF: <a href="${dataUrl}" target="_blank" rel="noopener noreferrer">${label}</a></p>`;
+        insertImportedHtml(html, "PDF-Link hinzugefügt.");
         return;
       }
       if (ext === "docx") {
         const html = await parseDocxToHtml(file);
         if (html) {
-          editorEl.innerHTML = sanitizeHtml(html);
-          scheduleSave();
-          setStatus("Docx importiert.", "success");
+          insertImportedHtml(html, "Docx importiert.");
         }
         return;
       }
@@ -429,59 +828,202 @@
     }
   }
 
+  function exportCurrentDoc(format = "html") {
+    const doc = getActiveDoc();
+    if (!doc) return;
+    const title = doc.title || "Notiz";
+    if (format === "md") {
+      const md = htmlToMarkdown(doc.html || "");
+      const blob = new Blob([md], { type: "text/markdown" });
+      downloadBlob(blob, safeFilename(title, "md"));
+      setStatus("Markdown exportiert.", "success");
+      return;
+    }
+    const htmlContent = buildDocHtmlExport(doc);
+    const blob = new Blob([htmlContent], { type: "text/html" });
+    downloadBlob(blob, safeFilename(title, "html"));
+    setStatus("HTML exportiert.", "success");
+  }
+
+  async function exportAllDocsAsZip() {
+    const JSZipLib = await loadJSZip();
+    if (!JSZipLib) {
+      setStatus("ZIP Export fehlgeschlagen (JSZip fehlt).", "error");
+      return;
+    }
+    const zip = new JSZipLib();
+    const manifest = {
+      kind: "study-docs-export-v1",
+      exportedAt: new Date().toISOString(),
+      docs: docs.map((doc) => ({
+        id: doc.id,
+        title: doc.title,
+        file: `docs/${doc.id}.html`,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+        lastOpenedAt: doc.lastOpenedAt || null,
+        folderId: doc.folderId || null,
+        subjectId: doc.subjectId || null,
+        fileId: doc.fileId || null,
+        pinned: !!doc.pinned
+      })),
+      folders: folders.map((f) => ({ ...f })),
+      activeId
+    };
+    zip.file("manifest.json", JSON.stringify(manifest, null, 2));
+    const docsFolder = zip.folder("docs") || zip;
+    docs.forEach((doc) => {
+      docsFolder.file(`${doc.id}.html`, buildDocHtmlExport(doc));
+    });
+    const blob = await zip.generateAsync({ type: "blob" });
+    const filename = `study-notizen_${new Date().toISOString().slice(0, 10)}.zip`;
+    downloadBlob(blob, filename);
+    setStatus("ZIP exportiert.", "success");
+  }
+
+  function handlePaste(event) {
+    if (!event || !event.clipboardData) return;
+    event.preventDefault();
+    const html = event.clipboardData.getData("text/html");
+    const text = event.clipboardData.getData("text/plain");
+    let sanitized = "";
+    if (html) sanitized = sanitizeHtml(html);
+    else if (text) sanitized = escapeHtml(text).replace(/\n/g, "<br>");
+    if (!sanitized) return;
+    document.execCommand("insertHTML", false, sanitized);
+    updateWordCount();
+    scheduleSave();
+  }
+
+  function selectDoc(doc) {
+    if (!doc || !doc.id) return;
+    flushPendingSave();
+    activeId = doc.id;
+    doc.lastOpenedAt = new Date().toISOString();
+    if (selectedFolderId !== FOLDER_ALL && (doc.folderId || null) !== selectedFolderId) {
+      selectedFolderId = doc.folderId || FOLDER_ALL;
+      renderFolders();
+    }
+    persistState();
+    renderDocList();
+    renderFolders();
+    persistActiveId();
+    loadActiveDoc();
+  }
+
   function renderDocList() {
     docListEl.innerHTML = "";
     const list = filteredDocs();
-    list.forEach((doc) => {
-      const row = document.createElement("div");
-      row.className = "notes-doc-item" + (doc.id === activeId ? " notes-doc-item-active" : "");
-      row.dataset.id = doc.id;
+    const recents = !uiState.searchQuery.trim()
+      ? list
+          .filter((d) => d.lastOpenedAt)
+          .sort(
+            (a, b) =>
+              new Date(b.lastOpenedAt || 0).getTime() - new Date(a.lastOpenedAt || 0).getTime()
+          )
+          .slice(0, RECENT_LIMIT)
+      : [];
+    const recentIds = new Set(recents.map((d) => d.id));
+    const remaining = list.filter((d) => !recentIds.has(d.id));
 
-      const textWrap = document.createElement("div");
-      textWrap.style.flex = "1";
-      const title = document.createElement("div");
-      title.className = "notes-doc-title";
-      title.textContent = doc.title || "Untitled";
-      const meta = document.createElement("div");
-      meta.className = "notes-doc-meta";
-      const subjName = doc.subjectId ? resolveNames(doc.subjectId, doc.fileId).subject : null;
-      const parts = ["Updated " + formatUpdated(doc.updatedAt)];
-      if (subjName) parts.push(subjName);
-      const fName = folderName(doc.folderId);
-      if (fName) parts.push(fName);
-      meta.textContent = parts.join(" - ");
-      textWrap.append(title, meta);
+    const renderGroup = (label, items) => {
+      if (!items.length) return;
+      if (label) {
+        const group = document.createElement("div");
+        group.className = "notes-doc-group";
+        group.textContent = label;
+        docListEl.appendChild(group);
+      }
+      items.forEach((doc) => {
+        const row = document.createElement("div");
+        row.className = "notes-doc-item" + (doc.id === activeId ? " notes-doc-item-active" : "");
+        row.dataset.id = doc.id;
 
-      const editBtn = document.createElement("button");
-      editBtn.type = "button";
-      editBtn.className = "notes-folder-delete";
-      editBtn.textContent = "Edit";
-      editBtn.title = "Umbenennen";
-      editBtn.addEventListener("click", (event) => {
-        event.stopPropagation();
-        selectDoc(doc);
-        titleInput?.focus();
-        setStatus("Titel hier bearbeiten und speichern lassen.", "info");
+        const textWrap = document.createElement("div");
+        textWrap.className = "notes-doc-text";
+        const title = document.createElement("div");
+        title.className = "notes-doc-title";
+        title.textContent = doc.title || "Untitled";
+        const meta = document.createElement("div");
+        meta.className = "notes-doc-meta";
+        const subjName = doc.subjectId ? resolveNames(doc.subjectId, doc.fileId).subject : null;
+        const parts = ["Aktualisiert " + formatUpdated(doc.updatedAt)];
+        if (doc.pinned) parts.push("Favorit");
+        if (subjName) parts.push(subjName);
+        const fName = folderName(doc.folderId);
+        if (fName) parts.push(fName);
+        meta.textContent = parts.join(" · ");
+        textWrap.append(title, meta);
+
+        const actions = document.createElement("div");
+        actions.className = "notes-doc-actions";
+
+        const pinBtn = document.createElement("button");
+        pinBtn.type = "button";
+        pinBtn.className = "notes-pin-btn";
+        pinBtn.setAttribute("aria-pressed", doc.pinned ? "true" : "false");
+        pinBtn.setAttribute("aria-label", doc.pinned ? "Favorit entfernen" : "Als Favorit merken");
+        pinBtn.title = doc.pinned ? "Unpin" : "Pin";
+        pinBtn.textContent = doc.pinned ? "★" : "☆";
+        pinBtn.addEventListener(
+          "click",
+          (event) => {
+            event.stopPropagation();
+            doc.pinned = !doc.pinned;
+            doc.updatedAt = new Date().toISOString();
+            pinBtn.setAttribute("aria-pressed", doc.pinned ? "true" : "false");
+            pinBtn.setAttribute("aria-label", doc.pinned ? "Favorit entfernen" : "Als Favorit merken");
+            persistDocs();
+            renderDocList();
+          },
+          { passive: true }
+        );
+
+        const editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.className = "notes-folder-delete";
+        editBtn.textContent = "Edit";
+        editBtn.title = "Umbenennen";
+        editBtn.setAttribute("aria-label", "Titel bearbeiten");
+        editBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          selectDoc(doc);
+          titleInput?.focus();
+          setStatus("Titel hier bearbeiten und speichern lassen.", "info");
+        });
+
+        const linkBtn = document.createElement("button");
+        linkBtn.type = "button";
+        linkBtn.className = "notes-folder-delete";
+        linkBtn.textContent = "Link";
+        linkBtn.title = "Dieses Dokument mit Fach/Datei verknüpfen";
+        linkBtn.setAttribute("aria-label", "Dokument mit Fach/Datei verknüpfen");
+        linkBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          selectDoc(doc);
+          docSubjectSelect?.focus();
+          setStatus("Dokument ausgewählt. Wähle Fach/Datei zum Verknüpfen.", "info");
+        });
+
+        actions.append(pinBtn, editBtn, linkBtn);
+        row.append(textWrap, actions);
+        row.addEventListener("click", () => {
+          selectDoc(doc);
+        });
+        docListEl.appendChild(row);
       });
+    };
 
-      const linkBtn = document.createElement("button");
-      linkBtn.type = "button";
-      linkBtn.className = "notes-folder-delete";
-      linkBtn.textContent = "Link";
-      linkBtn.title = "Dieses Dokument mit Fach/Datei verknüpfen";
-      linkBtn.addEventListener("click", (event) => {
-        event.stopPropagation();
-        selectDoc(doc);
-        docSubjectSelect?.focus();
-        setStatus("Dokument ausgewählt. Wähle Fach/Datei zum Verknüpfen.", "info");
-      });
+    if (!list.length) {
+      const empty = document.createElement("div");
+      empty.className = "notes-doc-empty";
+      empty.textContent = "Keine Dokumente gefunden.";
+      docListEl.appendChild(empty);
+      return;
+    }
 
-      row.append(textWrap, editBtn, linkBtn);
-      row.addEventListener("click", () => {
-        selectDoc(doc);
-      });
-      docListEl.appendChild(row);
-    });
+    renderGroup(recents.length ? "Zuletzt geöffnet" : null, recents);
+    renderGroup(recents.length && remaining.length ? "Alle Dokumente" : null, remaining);
   }
 
   function renderFolders() {
@@ -531,6 +1073,7 @@
       editBtn.type = "button";
       editBtn.textContent = "✎";
       editBtn.title = "Bearbeiten";
+      editBtn.setAttribute("aria-label", "Ordner bearbeiten");
       editBtn.addEventListener("click", (event) => {
         event.stopPropagation();
         startEditFolder(folder);
@@ -539,6 +1082,7 @@
       deleteBtn.className = "notes-folder-delete";
       deleteBtn.type = "button";
       deleteBtn.textContent = "x";
+      deleteBtn.setAttribute("aria-label", "Ordner löschen");
       deleteBtn.addEventListener("click", (event) => {
         event.stopPropagation();
         folders = folders.filter((f) => f.id !== folder.id);
@@ -635,7 +1179,12 @@
     titleInput.value = doc.title || "Untitled";
     const sanitized = sanitizeHtml(doc.html || "");
     editorEl.innerHTML = sanitized || "<p></p>";
-    setSavedStatus("Saved");
+    if (!doc.lastOpenedAt) {
+      doc.lastOpenedAt = new Date().toISOString();
+      persistDocs();
+    }
+    setSaveState("saved");
+    updateWordCount();
     hideDeleteConfirm();
     renderFolderSelect(doc);
     renderSubjectSelect(doc);
@@ -643,21 +1192,48 @@
     renderFolderSubjectSelect();
   }
 
-  function setSavedStatus(text, { saving = false } = {}) {
+  function setSaveState(state, { hold = false } = {}) {
+    saveState = state;
+    if (!saveStatusEl) return;
+    const textMap = {
+      saved: "Saved",
+      saving: "Saving...",
+      dirty: "Unsaved changes"
+    };
+    const text = textMap[state] || "Saved";
     saveStatusEl.textContent = text;
-    saveStatusEl.classList.toggle("saving", !!saving);
+    saveStatusEl.classList.toggle("saving", state === "saving");
+    saveStatusEl.classList.toggle("dirty", state === "dirty");
     if (savedStatusTimer) clearTimeout(savedStatusTimer);
-    if (!saving) {
+    if (state === "saved" && hold) {
       savedStatusTimer = setTimeout(() => {
         saveStatusEl.textContent = "Saved";
-        saveStatusEl.classList.remove("saving");
-      }, 1200);
+      }, 1600);
     }
+  }
+
+  function updateWordCount() {
+    if (!wordCountEl || !editorEl) return;
+    const text = (editorEl.textContent || "").trim();
+    const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+    const minutes = words ? Math.max(1, Math.round(words / 180)) : 0;
+    if (!words) {
+      wordCountEl.textContent = "";
+      return;
+    }
+    const label = words === 1 ? "word" : "words";
+    const minuteLabel = minutes === 1 ? "min" : "min";
+    wordCountEl.textContent = `${words} ${label} · ~${minutes} ${minuteLabel}`;
   }
 
   function saveActiveDoc() {
     const doc = getActiveDoc();
     if (!doc) return;
+    if (savingSoonTimer) {
+      clearTimeout(savingSoonTimer);
+      savingSoonTimer = null;
+    }
+    setSaveState("saving");
     const title = titleInput.value.trim() || "Untitled";
     const cleanHtml = sanitizeHtml(editorEl.innerHTML);
     doc.title = title;
@@ -670,8 +1246,9 @@
       renderFileSelect(doc);
     }
     persistState();
+    plainTextCache.set(doc.id, { source: doc.html, text: getPlainText(doc) });
     renderDocList();
-    setSavedStatus("Saved");
+    setSaveState("saved", { hold: true });
   }
 
   function flushPendingSave() {
@@ -679,16 +1256,32 @@
       clearTimeout(saveTimer);
       saveTimer = null;
     }
+    if (savingSoonTimer) {
+      clearTimeout(savingSoonTimer);
+      savingSoonTimer = null;
+    }
     saveActiveDoc();
   }
 
   function scheduleSave() {
-    setSavedStatus("Saving...", { saving: true });
+    setSaveState("dirty");
+    if (savingSoonTimer) clearTimeout(savingSoonTimer);
+    savingSoonTimer = setTimeout(() => {
+      setSaveState("saving");
+    }, 150);
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       saveTimer = null;
       saveActiveDoc();
     }, AUTOSAVE_MS);
+  }
+
+  function handleDocChange() {
+    updateWordCount();
+    scheduleSave();
+    if (uiState.searchQuery) {
+      renderDocList();
+    }
   }
 
   function addDoc() {
@@ -749,24 +1342,34 @@
     sel.addRange(range);
   }
 
+  function ensureLinkModalA11y() {
+    if (linkModalA11y || !(window.StudyA11y && StudyA11y.withModalA11y)) return;
+    linkModalA11y = StudyA11y.withModalA11y(linkModal, closeLinkModal, () => linkInput);
+  }
+
   function openLinkModal() {
-    linkModal.classList.add("open");
-    linkModal.setAttribute("aria-hidden", "false");
+    ensureLinkModalA11y();
     linkInput.value = "";
-    setTimeout(() => linkInput.focus(), 20);
+    linkModal?.setAttribute("aria-hidden", "false");
+    if (linkModalA11y) {
+      linkModalA11y.open();
+    } else {
+      linkModal.classList.add("open");
+      setTimeout(() => linkInput.focus(), 20);
+    }
   }
 
   function closeLinkModal() {
-    linkModal.classList.remove("open");
-    linkModal.setAttribute("aria-hidden", "true");
+    linkModal?.setAttribute("aria-hidden", "true");
+    if (linkModalA11y) {
+      linkModalA11y.close();
+    } else {
+      linkModal.classList.remove("open");
+    }
   }
 
   function sanitizeUrl(url) {
-    if (!url) return null;
-    const trimmed = url.trim();
-    if (!trimmed) return null;
-    if (/^\s*javascript:/i.test(trimmed)) return null;
-    return trimmed;
+    return isSafeHref(url);
   }
 
   function insertLink() {
@@ -779,6 +1382,18 @@
     restoreSelection(storedRange);
     editorEl.focus();
     document.execCommand("createLink", false, url);
+    const sel = window.getSelection();
+    if (sel && sel.anchorNode) {
+      const anchor =
+        sel.anchorNode.nodeType === Node.ELEMENT_NODE
+          ? sel.anchorNode.closest("a")
+          : sel.anchorNode.parentElement?.closest("a");
+      if (anchor) {
+        anchor.setAttribute("href", url);
+        anchor.setAttribute("target", "_blank");
+        anchor.setAttribute("rel", "noopener noreferrer");
+      }
+    }
     scheduleSave();
   }
 
@@ -786,6 +1401,7 @@
     editorEl.focus();
     document.execCommand("removeFormat");
     document.execCommand("unlink");
+    updateWordCount();
     scheduleSave();
   }
 
@@ -807,6 +1423,7 @@
     editorEl.focus();
     const value = btn.dataset.value || null;
     document.execCommand(cmd, false, value);
+    updateWordCount();
     scheduleSave();
   }
 
@@ -815,6 +1432,7 @@
     subjectsCache = Array.isArray(raw) ? raw : [];
     subjectsDirty = false;
     renderFolderSubjectSelect();
+    renderSubjectFilterOptions();
   }
 
   function resolveNames(subjectId, fileId) {
@@ -1072,6 +1690,11 @@
       renderFolders();
       updateStudyButtons();
     }
+    if (event.key === UI_STATE_KEY) {
+      loadUiState();
+      applyUiStateToControls();
+      renderDocList();
+    }
     if (event.key === FOLDERS_KEY) {
       loadFolders();
       if (selectedFolderId !== FOLDER_ALL && !folders.find((f) => f.id === selectedFolderId)) {
@@ -1087,8 +1710,8 @@
 
   function bindEvents() {
     newDocBtn?.addEventListener("click", addDoc);
-    titleInput?.addEventListener("input", scheduleSave);
-    editorEl?.addEventListener("input", scheduleSave);
+    titleInput?.addEventListener("input", handleDocChange);
+    editorEl?.addEventListener("input", handleDocChange);
     deleteBtn?.addEventListener("click", showDeleteConfirm);
     cancelDeleteBtn?.addEventListener("click", hideDeleteConfirm);
     confirmDeleteBtn?.addEventListener("click", deleteActiveDoc);
@@ -1212,10 +1835,44 @@
       importInput.value = "";
     });
 
+    docSearchInput?.addEventListener("input", (event) => {
+      uiState.searchQuery = event.target.value || "";
+      persistUiState();
+      renderDocList();
+    });
+
+    subjectFilterSelect?.addEventListener("change", (event) => {
+      uiState.subjectFilter = event.target.value || "";
+      persistUiState();
+      renderDocList();
+    });
+
+    sortModeSelect?.addEventListener("change", (event) => {
+      const val = event.target.value;
+      uiState.sortMode = val === "title" || val === "oldest" ? val : "recent";
+      persistUiState();
+      renderDocList();
+    });
+
+    pinnedOnlyToggle?.addEventListener("click", () => {
+      uiState.pinnedOnly = !uiState.pinnedOnly;
+      applyUiStateToControls();
+      persistUiState();
+      renderDocList();
+    });
+
+    exportHtmlBtn?.addEventListener("click", () => exportCurrentDoc("html"));
+    exportMdBtn?.addEventListener("click", () => exportCurrentDoc("md"));
+    exportZipBtn?.addEventListener("click", exportAllDocsAsZip);
+
+    editorEl?.addEventListener("paste", handlePaste);
+
     window.addEventListener("storage", handleStorageEvent);
     window.addEventListener("study:state-replaced", () => {
       subjectsDirty = true;
+      loadUiState();
       loadState();
+      applyUiStateToControls();
       renderDocList();
       loadActiveDoc();
       renderFolders();
@@ -1225,8 +1882,10 @@
   }
 
   function init() {
+    loadUiState();
     loadState();
     loadSubjects();
+    applyUiStateToControls();
     renderDocList();
     renderFolders();
     loadActiveDoc();
