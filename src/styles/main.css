@@ -3997,8 +3997,7 @@ body.phone-has-bottom-nav .app {
   justify-content: center;
 }
 
-.modal-backdrop.is-open,
-.modal-backdrop:not([hidden]) {
+.modal-backdrop.is-open {
   display: grid;
 }
 
