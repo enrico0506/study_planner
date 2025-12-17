@@ -239,7 +239,7 @@
             if (!("pinned" in d)) needsPersist = true;
             if (!d.lastOpenedAt) needsPersist = true;
             return withDefaults;
-          }))
+          })
       : [];
     const savedActive = localStorage.getItem(ACTIVE_ID_KEY);
     activeId = savedActive || null;
@@ -1343,8 +1343,9 @@
   }
 
   function ensureLinkModalA11y() {
-    if (linkModalA11y || !(window.StudyA11y && StudyA11y.withModalA11y)) return;
-    linkModalA11y = StudyA11y.withModalA11y(linkModal, closeLinkModal, () => linkInput);
+    const a11y = window.StudyA11y;
+    if (linkModalA11y || !(a11y && a11y.withModalA11y)) return;
+    linkModalA11y = a11y.withModalA11y(linkModal, closeLinkModal, () => linkInput);
   }
 
   function openLinkModal() {
