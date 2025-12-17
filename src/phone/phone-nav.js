@@ -2,7 +2,7 @@
   const nav = document.querySelector(".phone-bottom-nav");
   if (!nav) return;
 
-  const media = window.matchMedia("(max-width: 768px)");
+  const media = window.matchMedia("(max-width: 720px)");
   function isPhone() {
     return media.matches;
   }
@@ -35,10 +35,6 @@
 
   function navigateToMode(mode) {
     if (!mode) return;
-    if (typeof setPageMode === "function") {
-      setPageMode(mode);
-      return;
-    }
     const url = new URL(window.location.href);
     url.searchParams.set("mode", mode);
     window.location.href = url.toString();

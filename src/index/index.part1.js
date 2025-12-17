@@ -118,58 +118,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
     let dragState = null; // { subjectId, fileId }
     let fileModalState = null; // { mode: "add"|"edit", subjectId, fileId? }
     let todayExpanded = false;
-    let mobileBoardFilter = "all";
-    const COPY = {
-      en: {
-        navBoard: "Board",
-        navSubjects: "Subjects",
-        navToday: "Today's focus",
-        navSchedule: "Daily schedule",
-        studyHubs: "Study hubs",
-        login: "Login",
-        settings: "Settings",
-        emptySubjects: "No subjects yet. Create your first subject to start tracking.",
-        emptyAddSubject: "+ Add subject",
-        emptyNoFiles: "No files yet in this subject.",
-        timerIdleSubtitle: "Click \"Study\" on a file or start a break below.",
-        timerIdleCta: "Start session",
-        mobileAllSubjects: "All subjects",
-        addToToday: "Add to Today",
-        today: "Today",
-        startStudy: "Study",
-        sessionStart: "Start session",
-        schedule: "Schedule"
-      },
-      de: {
-        navBoard: "Board",
-        navSubjects: "F\u00e4cher",
-        navToday: "Heutiger Fokus",
-        navSchedule: "Tagesplan",
-        studyHubs: "Lernbereiche",
-        login: "Anmelden",
-        settings: "Einstellungen",
-        emptySubjects: "Keine F\u00e4cher vorhanden. Lege dein erstes Fach an, um zu starten.",
-        emptyAddSubject: "+ Fach hinzuf\u00fcgen",
-        emptyNoFiles: "Noch keine Dateien in diesem Fach.",
-        timerIdleSubtitle: "Tippe auf \"Lernen\" bei einer Datei oder starte eine Pause.",
-        timerIdleCta: "Session starten",
-        mobileAllSubjects: "Alle F\u00e4cher",
-        addToToday: "Zu Heute",
-        today: "Heute",
-        startStudy: "Lernen",
-        sessionStart: "Session starten",
-        schedule: "Plan"
-      }
-    };
-    let currentLanguage = "en";
-    function t(key) {
-      const dict = COPY[currentLanguage] || COPY.en;
-      return dict && dict[key] ? dict[key] : COPY.en[key] || key;
-    }
-    function setLanguage(lang) {
-      currentLanguage = COPY[lang] ? lang : "en";
-      document.documentElement.setAttribute("lang", currentLanguage);
-    }
 
     // activeStudy session:
     // { kind: 'study'|'break', breakKind?, subjectId?, fileId?,
@@ -209,9 +157,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
     const subjectTable = document.getElementById("subjectTable");
     const tableWrapper = document.querySelector(".table-wrapper");
     const mainArea = document.querySelector("#layoutRow .main-area");
-    const mobileBoard = document.getElementById("mobileBoard");
-    const mobileBoardList = document.getElementById("mobileBoardList");
-    const mobileBoardSubjectSelect = document.getElementById("mobileBoardSubjectSelect");
     const expandPageBtn = document.getElementById("expandPageBtn");
     const emptyHint = document.getElementById("emptyHint");
     const openStatsBtn = document.getElementById("openStatsBtn");
@@ -295,10 +240,8 @@ const CVD_SAFE_SUBJECT_COLORS = [
     }
 
     // View / schedule refs
-    const navBoardBtn = document.getElementById("navBoardBtn");
-    const navSubjectsBtn = document.getElementById("navSubjectsBtn");
-    const navTodayBtn = document.getElementById("navTodayBtn");
-    const navScheduleBtn = document.getElementById("navScheduleBtn");
+    const viewBoardBtn = document.getElementById("viewBoardBtn");
+    const viewScheduleBtn = document.getElementById("viewScheduleBtn");
     const scheduleView = document.getElementById("scheduleView");
     const scheduleGrid = document.getElementById("scheduleGrid");
     const scheduleRangeLabel = document.getElementById("scheduleRangeLabel");
@@ -393,7 +336,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
     const statsBody = document.getElementById("statsModalBody");
     const statsCloseBtn = document.getElementById("statsModalCloseBtn");
     const statsCloseBtn2 = document.getElementById("statsModalCloseBtn2");
-    const sessionRecapBackdrop = document.getElementById("sessionRecapBackdrop");
 
     let statsRange = "week"; // "day" | "week" | "month" | "all"
     let activeView = "board"; // "board" | "schedule"
@@ -405,7 +347,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
     // Helpers
     function isPhoneLayout() {
-      return window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
+      return window.matchMedia && window.matchMedia("(max-width: 720px)").matches;
     }
 
     function isPhoneTodayPicker() {
@@ -722,7 +664,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
           subjectSettingsBackdrop.style.display = "none";
         }
       }
-      syncBodyModalState();
     }
 
     function renderSubjectSettingsSwatches(selectedColor) {
@@ -784,7 +725,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
         subjectSettingsBackdrop.hidden = false;
         subjectSettingsBackdrop.style.display = "flex";
       }
-      syncBodyModalState();
     }
 
     function showToast(message, tone = "info") {
@@ -847,7 +787,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
       noticeModalBackdrop.addEventListener("keydown", noticeKeydownHandler);
       noticeModalBackdrop.hidden = false;
       noticeModalBackdrop.style.display = "flex";
-      syncBodyModalState();
       const focusTarget = initialFocusEl || noticeModalConfirmBtn;
       if (focusTarget && typeof focusTarget.focus === "function") {
         focusTarget.focus();
@@ -929,7 +868,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
       if (returnTarget && document.contains(returnTarget)) {
         returnTarget.focus();
       }
-      syncBodyModalState();
     }
 
     function openHeaderMenu() {
@@ -968,14 +906,12 @@ const CVD_SAFE_SUBJECT_COLORS = [
       populateSettingsColorsControls();
       populateSettingsPreferences();
       renderSettingsPreview();
-      syncBodyModalState();
     }
 
     function closeSettingsModal() {
       if (!settingsModal) return;
       settingsModal.classList.remove("is-open");
       settingsModal.setAttribute("aria-hidden", "true");
-      syncBodyModalState();
     }
 
     function setActiveSettingsPanel(panelId) {

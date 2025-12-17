@@ -35,68 +35,75 @@
 <body>
   <div class="app" id="appRoot">
     <div id="sessionHeaderMount"></div>
-    <header class="page-header">
-      <div class="header-row">
-        <div class="header-main">
-          <h1>Study Planner</h1>
-          <p class="subtitle">
-            Columns = subjects · Rows = files with confidence · Drag files to reorder · Track time per file.
-          </p>
-        </div>
-        <div class="header-actions">
-          <div class="header-quick-dropdown" id="quickJumpDropdown">
-            <button class="header-quick-trigger" id="quickJumpTrigger" type="button" aria-haspopup="true" aria-expanded="false">
-              <span class="header-quick-label">Study hubs</span>
-              <span class="header-quick-caret" aria-hidden="true">⌄</span>
-            </button>
-            <div class="header-quick-panel" id="quickJumpPanel">
-              <a class="header-quick-item" href="./calendar.html">Calendar</a>
-              <a class="header-quick-item" href="./stundenplan.html">Stundenplan</a>
-              <a class="header-quick-item" href="./notizen.html">Notizen</a>
-              <a class="header-quick-item" href="./karteikarten.html">Karteikarten</a>
-            </div>
-          </div>
-          <div class="confidence-toggle" role="group" aria-label="Confidence mode">
-            <button class="confidence-toggle-btn confidence-toggle-active" id="manualConfBtn" type="button" data-mode="manual">
-              Your confidence
-            </button>
-            <button class="confidence-toggle-btn" id="perceivedConfBtn" type="button" data-mode="perceived">
-              Calculated
-            </button>
-          </div>
-          <div class="header-menu" id="headerMenu" aria-label="Menu">
-            <button class="header-menu-toggle" id="headerMenuToggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Open menu">
-              ...
-            </button>
-            <div class="header-menu-panel" id="headerMenuPanel">
-              <div class="header-menu-group">
-                <button class="header-menu-item" id="headerProfileBtn" type="button">Login</button>
-                <button class="header-menu-item" id="headerSettingsBtn" type="button">Settings</button>
-              </div>
-              <div class="header-menu-divider"></div>
-              <div class="header-menu-group">
-                <button class="header-menu-link" id="openSuggestionsBtn" type="button">Suggestions</button>
-                <button class="header-menu-link" id="openStatsBtn" type="button">Study stats</button>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div class="header-row">
+      <div class="header-main">
+        <h1>Study Planner</h1>
+        <p class="subtitle">
+          Columns = subjects · Rows = files with confidence · Drag files to reorder · Track time per file.
+        </p>
       </div>
-      <nav class="primary-nav" id="primaryNav" role="tablist" aria-label="Primary navigation">
-        <button class="primary-nav__btn" id="navBoardBtn" type="button" data-mode="board" aria-selected="true" aria-current="page">
-          Board
-        </button>
-        <button class="primary-nav__btn" id="navSubjectsBtn" type="button" data-mode="subjects" aria-selected="false">
-          Subjects
-        </button>
-        <button class="primary-nav__btn" id="navTodayBtn" type="button" data-mode="today" aria-selected="false">
-          Today’s focus
-        </button>
-        <button class="primary-nav__btn" id="navScheduleBtn" type="button" data-mode="schedule" aria-selected="false">
-          Daily schedule
-        </button>
-      </nav>
-    </header>
+      <div class="header-actions">
+        <div class="view-toggle" role="tablist" aria-label="Choose view">
+          <button class="view-toggle-btn view-toggle-active" id="viewBoardBtn" type="button" aria-selected="true">
+            Board
+          </button>
+          <button class="view-toggle-btn" id="viewScheduleBtn" type="button" aria-selected="false">
+            Daily schedule
+          </button>
+        </div>
+        <div class="header-quick-dropdown" id="quickJumpDropdown">
+          <button class="header-quick-trigger" id="quickJumpTrigger" type="button" aria-haspopup="true" aria-expanded="false">
+            <span class="header-quick-label">Study hubs</span>
+            <span class="header-quick-caret" aria-hidden="true">⌄</span>
+          </button>
+	          <div class="header-quick-panel" id="quickJumpPanel">
+	            <a class="header-quick-item" href="./calendar.html">Calendar</a>
+	            <a class="header-quick-item" href="./stundenplan.html">Stundenplan</a>
+	            <a class="header-quick-item" href="./notizen.html">Notizen</a>
+	            <a class="header-quick-item" href="./karteikarten.html">Karteikarten</a>
+	          </div>
+	        </div>
+        <div class="confidence-toggle" role="group" aria-label="Confidence mode">
+          <button class="confidence-toggle-btn confidence-toggle-active" id="manualConfBtn" type="button" data-mode="manual">
+            Your confidence
+          </button>
+          <button class="confidence-toggle-btn" id="perceivedConfBtn" type="button" data-mode="perceived">
+            Calculated
+          </button>
+        </div>
+        <div class="header-menu" id="headerMenu" aria-label="Menu">
+          <button class="header-menu-toggle" id="headerMenuToggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Open menu">
+            ...
+          </button>
+          <div class="header-menu-panel" id="headerMenuPanel">
+            <div class="header-menu-group mobile-menu-only">
+              <a class="header-menu-link" href="./index.html?mode=board">Board</a>
+              <a class="header-menu-link" href="./index.html?mode=subjects">Subjects</a>
+              <a class="header-menu-link" href="./index.html?mode=today">Today's focus</a>
+              <a class="header-menu-link" href="./index.html?mode=schedule">Daily schedule</a>
+            </div>
+            <div class="header-menu-divider mobile-menu-only"></div>
+	            <div class="header-menu-group mobile-menu-only">
+	              <div class="header-menu-subtitle">Study hubs</div>
+	              <a class="header-menu-link" href="./calendar.html">Calendar</a>
+	              <a class="header-menu-link" href="./stundenplan.html">Stundenplan</a>
+	              <a class="header-menu-link" href="./notizen.html">Notizen</a>
+	              <a class="header-menu-link" href="./karteikarten.html">Karteikarten</a>
+	            </div>
+            <div class="header-menu-divider mobile-menu-only"></div>
+            <div class="header-menu-group">
+              <button class="header-menu-item" id="headerProfileBtn" type="button">Login</button>
+              <button class="header-menu-item" id="headerSettingsBtn" type="button">Settings</button>
+            </div>
+	            <div class="header-menu-divider"></div>
+	            <div class="header-menu-group">
+	              <button class="header-menu-link" id="openSuggestionsBtn" type="button">Suggestions</button>
+	              <button class="header-menu-link" id="openStatsBtn" type="button">Study stats</button>
+	            </div>
+	          </div>
+	        </div>
+	      </div>
+	    </div>
 
     <div class="settings-modal" id="settingsModal" aria-hidden="true">
       <div class="settings-backdrop" id="settingsModalBackdrop"></div>
@@ -308,7 +315,6 @@
       </div>
     </div>
 
-    <main class="page-main">
     <!-- Top row: Summary + Focus -->
     <div class="top-row">
       <!-- Summary -->
@@ -387,7 +393,9 @@
             <div class="focus-subtitle" id="focusSessionSubtitle">
               Click “Study” on a file or start a break below.
             </div>
-            <div class="focus-session-controls" id="focusSessionControls"></div>
+            <div class="focus-session-controls" id="focusSessionControls">
+              <span style="font-size:0.75rem;color:#9ca3af;">No controls – start a session.</span>
+            </div>
           </div>
           <div class="focus-right">
             <div class="focus-timer-toggle" role="group" aria-label="Timer mode">
@@ -438,13 +446,6 @@
 
     <div class="layout-row" id="layoutRow">
       <div class="main-area">
-        <div class="mobile-board" id="mobileBoard" hidden>
-          <div class="mobile-board__filters">
-            <label class="sr-only" for="mobileBoardSubjectSelect">Filter by subject</label>
-            <select id="mobileBoardSubjectSelect"></select>
-          </div>
-          <div class="mobile-board__list" id="mobileBoardList"></div>
-        </div>
         <!-- Table -->
         <div class="table-wrapper">
           <div class="subject-scroll">
@@ -467,7 +468,7 @@
           </div>
         </div>
         <div class="empty-hint" id="emptyHint">
-          No subjects yet. Use “Add subject” to create your first subject.
+          No subjects yet. Use “Add subject” on the right to create your first subject.
         </div>
       </div>
 
@@ -506,8 +507,6 @@
       </div>
       <div class="schedule-grid" id="scheduleGrid"></div>
     </div>
-
-    </main>
 
     <!-- Add-to-Today Modal -->
     <div class="modal-backdrop" id="addTodoModalBackdrop" hidden>
@@ -781,9 +780,9 @@
           </div>
           <div class="notes-toolbar-right">
             <button class="btn btn-secondary" id="notesToFlashcardsBtn" type="button">Create flashcards…</button>
-            <label class="sr-only" for="notesInsertSelect">Saved links</label>
+            <label class="sr-only" for="notesInsertSelect">Insert link</label>
             <select id="notesInsertSelect"></select>
-            <button class="btn btn-secondary" id="notesInsertBtn" type="button">Insert</button>
+            <button class="btn btn-secondary" id="notesInsertBtn" type="button">Insert link</button>
           </div>
         </div>
         <div class="calendar-form-status" id="notesSaveHint" role="status" aria-live="polite"></div>
@@ -914,7 +913,7 @@
 	  <button class="expand-btn" id="expandPageBtn" type="button" aria-label="Toggle expand">⤢</button>
 	  <div id="studyAriaLive" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
-	  <nav class="phone-bottom-nav" aria-label="Primary navigation">
+	  <nav class="phone-bottom-nav" aria-label="Hauptnavigation">
 	    <button class="phone-bottom-nav__btn" type="button" data-mode="board" aria-label="Board">
 	      <span class="phone-bottom-nav__icon" aria-hidden="true">🏠</span>
 	      <span class="phone-bottom-nav__label">Board</span>

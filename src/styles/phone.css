@@ -1,11 +1,11 @@
-/* Phone-only layout/navigation tweaks (<= 768px)
+/* Phone-only layout/navigation tweaks (<= 720px)
    Remove the `<link href="./src/styles/phone.css">` from `index.html` to revert. */
 
 .mobile-menu-only {
   display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 720px) {
   html,
   body {
     overflow-x: hidden;
@@ -38,8 +38,7 @@
 
   /* Move primary navigation into the ... menu */
   .header-actions .view-toggle,
-  .header-actions #quickJumpDropdown,
-  .primary-nav {
+  .header-actions #quickJumpDropdown {
     display: none;
   }
 

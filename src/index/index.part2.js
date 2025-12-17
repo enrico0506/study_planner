@@ -72,7 +72,7 @@
         if (SP_STORAGE) SP_STORAGE.setRaw(LANGUAGE_KEY, value, { debounceMs: 0 });
         else localStorage.setItem(LANGUAGE_KEY, value);
       } catch (e) {}
-      setLanguage(value);
+      document.documentElement.setAttribute("lang", value);
     }
 
     function loadColorPalette() {
@@ -1237,14 +1237,12 @@
       renderUnifiedReviewQueue();
       suggestionModalBackdrop.hidden = false;
       suggestionModalBackdrop.style.display = "flex";
-      syncBodyModalState();
     }
 
 	    function closeSuggestionModal() {
 	      if (!suggestionModalBackdrop) return;
 	      suggestionModalBackdrop.hidden = true;
 	      suggestionModalBackdrop.style.display = "none";
-	      syncBodyModalState();
 	    }
 
       function refreshUnifiedReviewIfOpen() {
@@ -1351,7 +1349,6 @@
           addTodoSubtaskInput?.focus();
         }
       }
-      syncBodyModalState();
     }
 
     function closeAddTodoModal() {
@@ -1364,7 +1361,6 @@
           addTodoModalBackdrop.style.display = "none";
         }
       }
-      syncBodyModalState();
     }
 
     function submitAddTodoModal() {

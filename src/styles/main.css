@@ -129,14 +129,13 @@ body::-webkit-scrollbar,
 
     body {
       margin: 0;
-      padding: 12px 0 32px;
+      padding: 12px 0 24px;
       background: var(--page-bg);
       background-attachment: fixed;
       background-repeat: no-repeat;
       background-size: cover;
       color: var(--ink);
-      overflow-x: hidden;
-      overflow-y: auto;
+      overflow: hidden;
       box-sizing: border-box;
     }
 
@@ -146,7 +145,10 @@ body::-webkit-scrollbar,
   width: min(var(--app-desktop-max), 92vw);
   min-width: min(var(--app-desktop-min), 92vw);
   max-width: var(--app-desktop-max);
-  min-height: calc(100dvh - 24px);
+  height: calc(100vh - 24px);
+  height: calc(100dvh - 24px);
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
   box-sizing: border-box;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), #fffdf8);
   border-radius: var(--radius-lg);
@@ -154,7 +156,7 @@ body::-webkit-scrollbar,
   box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
-  overflow: visible;
+  overflow: hidden;
 }
 
 
@@ -164,22 +166,12 @@ body::-webkit-scrollbar,
   overflow: visible;
 }
 
-    .page-header {
-      position: sticky;
-      top: 0;
-      z-index: 30;
-      padding-bottom: 10px;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.86));
-      backdrop-filter: blur(8px);
-    }
-
     .header-row {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
       gap: 12px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
+      margin-bottom: 16px;
     }
 
 .header-actions {
@@ -187,52 +179,12 @@ body::-webkit-scrollbar,
   align-items: center;
   gap: 10px;
   position: relative;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  overflow: visible;
 }
 
 .header-menu {
   position: relative;
   display: flex;
   align-items: center;
-}
-
-.primary-nav {
-  display: inline-flex;
-  gap: 8px;
-  padding: 8px 0 2px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  align-items: center;
-  min-height: 48px;
-}
-
-.primary-nav__btn {
-  border: 1px solid #dfe4f0;
-  background: #ffffff;
-  color: var(--accent-ink);
-  border-radius: 14px;
-  padding: 10px 14px;
-  font-weight: 700;
-  cursor: pointer;
-  min-width: 140px;
-  text-align: center;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-  white-space: nowrap;
-}
-
-.primary-nav__btn[aria-current="page"],
-.primary-nav__btn.primary-nav__btn--active {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent-ink);
-  box-shadow: 0 8px 20px rgba(47, 98, 244, 0.18);
-}
-
-.primary-nav__btn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
 
 .header-menu-toggle {
@@ -634,7 +586,6 @@ body::-webkit-scrollbar,
 .header-quick-dropdown {
   position: relative;
   margin-left: 8px;
-  z-index: 24;
 }
 
 .header-quick-trigger {
@@ -1717,20 +1668,6 @@ body.session-header-mounted #focusCard {
 
     /* Controls row placeholder */
 
-.page-main {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-height: 0;
-  padding-bottom: 12px;
-  box-sizing: border-box;
-}
-
-.phone-has-bottom-nav .page-main,
-body.phone-has-bottom-nav .app {
-  padding-bottom: calc(92px + env(safe-area-inset-bottom));
-}
-
     .controls {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
@@ -1749,8 +1686,6 @@ body.phone-has-bottom-nav .app {
   box-sizing: border-box;
   flex: 1;
   min-height: 0;
-  min-width: 0;
-  width: 100%;
 }
 
 .app.app-expanded .layout-row {
@@ -1907,8 +1842,8 @@ body.phone-has-bottom-nav .app {
       min-height: 0;
       padding-bottom: 16px;
       box-sizing: border-box;
-      max-height: none;
-      overflow: visible;
+      max-height: 100%;
+      overflow: auto;
     }
 
 .today-sidebar {
@@ -1923,7 +1858,7 @@ body.phone-has-bottom-nav .app {
   height: 100%;
   display: flex;
       flex-direction: column;
-      overflow: visible;
+      overflow: hidden;
     }
 
     .layout-row.today-full .main-area {
@@ -2098,24 +2033,6 @@ body.phone-has-bottom-nav .app {
       .layout-row.today-wide .table-wrapper {
         max-height: none;
         overflow: visible;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .primary-nav {
-        display: none;
-      }
-
-      body[data-mode="board"] .mobile-board {
-        display: flex;
-      }
-
-      body[data-mode="board"] .table-wrapper {
-        display: none;
-      }
-
-      .page-header {
-        padding-top: env(safe-area-inset-top);
       }
     }
 
@@ -3096,11 +3013,9 @@ body.phone-has-bottom-nav .app {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   overflow-x: auto;
-  overflow-y: visible;
   box-sizing: border-box;
   padding: 4px;
   width: 100%;
-  max-width: 100%;
   cursor: grab;
   position: relative;
 }
@@ -3122,8 +3037,8 @@ body.phone-has-bottom-nav .app {
 
 .subject-scroll-btn {
   pointer-events: auto;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
   border: 1px solid rgba(15, 23, 42, 0.14);
   background: rgba(255, 255, 255, 0.92);
@@ -3435,11 +3350,6 @@ body.phone-has-bottom-nav .app {
       justify-content: space-between;
       align-items: center;
       gap: 6px;
-      position: sticky;
-      top: 0;
-      background: #ffffff;
-      z-index: 5;
-      padding-top: 6px;
     }
 
     .subject-color-dot {
@@ -3989,33 +3899,21 @@ body.phone-has-bottom-nav .app {
   inset: 0;
   background: rgba(15, 23, 42, 0.35);
   display: none;
-  padding: 16px;
-  box-sizing: border-box;
-  place-items: center;
-  z-index: 500;
   align-items: center;
   justify-content: center;
-}
-
-.modal-backdrop.is-open {
-  display: grid;
+  z-index: 500;
 }
 
     .modal {
       background: #ffffff;
-      border-radius: 16px;
+      border-radius: 12px;
       border: 1px solid #e5e7eb;
       box-shadow: 0 25px 50px rgba(15, 23, 42, 0.25);
-      width: min(720px, 100%);
-      max-height: calc(100dvh - 32px);
-      overflow: auto;
-      padding: 14px 16px 16px;
+      width: 100%;
+      max-width: 420px;
+      padding: 12px 14px 12px;
       box-sizing: border-box;
     }
-
-body.modal-open {
-  overflow: hidden;
-}
 
     .suggestion-modal {
       max-width: 720px;
@@ -4942,100 +4840,9 @@ body.modal-open {
     .stats-bar-fill {
       background: #8fb3ff;
     }
-
-.mobile-board {
-  display: none;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.mobile-board__filters {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.mobile-board__filters select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid #dfe4f0;
-  background: #ffffff;
-  font-weight: 600;
-}
-
-.mobile-board__list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.mobile-file-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 12px;
-  background: #ffffff;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.mobile-file-card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.mobile-file-card__subject {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 700;
-}
-
-.mobile-file-card__title {
-  font-weight: 800;
-  font-size: 1.05rem;
-  overflow-wrap: anywhere;
-}
-
-.mobile-file-card__dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 999px;
-  display: inline-block;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.mobile-file-card__body {
-  display: grid;
-  gap: 6px;
-}
-
-.mobile-file-card__meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  color: var(--ink-muted);
-  font-size: 0.9rem;
-}
-
-.mobile-file-card__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.mobile-file-card__actions .chip-btn,
-.mobile-file-card__actions .icon-btn {
-  flex: 1 1 auto;
-}
 .icon-btn {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   border-radius: 12px;
   border: 1px solid #dfe4f0;
   background: #ffffff;
@@ -6004,8 +5811,6 @@ body.calendar-page {
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.16s ease;
-  padding: 16px;
-  box-sizing: border-box;
 }
 
 .calendar-modal.is-open {
@@ -6022,8 +5827,8 @@ body.calendar-page {
 
 .calendar-modal-dialog {
   position: relative;
-  width: min(720px, 100%);
-  max-height: calc(100dvh - 32px);
+  width: min(720px, 90vw);
+  max-height: 90vh;
   overflow: auto;
   background: #ffffff;
   border-radius: 18px;
