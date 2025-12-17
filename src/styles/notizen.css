@@ -153,6 +153,12 @@
 .notes-folder-new-actions {
   display: flex;
   gap: 8px;
+  align-items: center;
+}
+
+.notes-folder-hint {
+  font-size: 12px;
+  color: #475569;
 }
 
 .notes-doc-list {

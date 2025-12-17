@@ -34,6 +34,7 @@
   const docSubjectSelect = document.getElementById("docSubjectSelect");
   const docFileSelect = document.getElementById("docFileSelect");
   const startStudyBtn = document.getElementById("startStudyBtn");
+  const pauseStudyBtn = document.getElementById("pauseStudyBtn");
   const statusEl = document.getElementById("notesStatus");
   const importInput = document.getElementById("importInput");
 
@@ -50,6 +51,7 @@
   let folders = [];
   let selectedFolderId = FOLDER_ALL;
   let activeId = null;
+  let editingFolderId = null;
   let saveTimer = null;
   let savedStatusTimer = null;
   let storedRange = null;
@@ -227,6 +229,24 @@
       opt.textContent = s.name || "Unbenannt";
       folderSubjectSelect.appendChild(opt);
     });
+  }
+
+  function resetFolderForm() {
+    editingFolderId = null;
+    if (newFolderInput) newFolderInput.value = "";
+    if (folderSubjectSelect) folderSubjectSelect.value = "";
+    const hint = document.getElementById("folderFormHint");
+    if (hint) hint.textContent = "Optional ein Fach verknüpfen.";
+  }
+
+  function startEditFolder(folder) {
+    if (!folder) return;
+    editingFolderId = folder.id;
+    if (newFolderForm) newFolderForm.hidden = false;
+    if (newFolderInput) newFolderInput.value = folder.name || "";
+    if (folderSubjectSelect) folderSubjectSelect.value = folder.subjectId || "";
+    const hint = document.getElementById("folderFormHint");
+    if (hint) hint.textContent = "Ordner bearbeiten";
   }
 
   function markdownToHtml(md) {
@@ -458,6 +478,18 @@
       const metaEl = document.createElement("div");
       metaEl.className = "notes-folder-count";
       metaEl.textContent = subj ? `${count} · ${subj}` : String(count);
+      const actions = document.createElement("div");
+      actions.style.display = "flex";
+      actions.style.gap = "6px";
+      const editBtn = document.createElement("button");
+      editBtn.className = "notes-folder-delete";
+      editBtn.type = "button";
+      editBtn.textContent = "✎";
+      editBtn.title = "Bearbeiten";
+      editBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        startEditFolder(folder);
+      });
       const deleteBtn = document.createElement("button");
       deleteBtn.className = "notes-folder-delete";
       deleteBtn.type = "button";
@@ -474,7 +506,8 @@
         const doc = getActiveDoc();
         if (doc) renderFolderSelect(doc);
       });
-      row.append(nameEl, metaEl, deleteBtn);
+      actions.append(editBtn, deleteBtn);
+      row.append(nameEl, metaEl, actions);
       row.addEventListener("click", () => {
         selectedFolderId = folder.id;
         const list = filteredDocs();
@@ -837,6 +870,44 @@
     } catch {}
     setStatus("Study-Session gestartet. Timer gespiegelt.", "success");
     renderTimer({ forceSubjects: true });
+    updateStudyButtons();
+  }
+
+  function togglePauseSession() {
+    const session = readActiveSession();
+    if (!session) {
+      setStatus("Keine aktive Session zum Pausieren.", "error");
+      updateStudyButtons(null);
+      return;
+    }
+    if (session.paused) {
+      session.paused = false;
+      session.startTimeMs = Date.now();
+      session.pausedReason = null;
+      session.autoResume = false;
+      session.pausedAtMs = null;
+      try {
+        localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(session));
+      } catch {}
+      setStatus("Session fortgesetzt.", "success");
+      updateStudyButtons(session);
+      return;
+    }
+    const now = Date.now();
+    const delta = session.startTimeMs ? now - session.startTimeMs : 0;
+    if (Number.isFinite(delta) && delta > 0) {
+      session.baseMs = (Number(session.baseMs) || 0) + delta;
+    }
+    session.startTimeMs = null;
+    session.paused = true;
+    session.pausedReason = "manual";
+    session.autoResume = false;
+    session.pausedAtMs = now;
+    try {
+      localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(session));
+    } catch {}
+    setStatus("Session pausiert.", "success");
+    updateStudyButtons(session);
   }
 
   function readActiveSession() {
@@ -919,6 +990,19 @@
     if (timerWrapper) {
       timerWrapper.classList.toggle("notes-timer-paused", !!session.paused);
     }
+    updateStudyButtons(session);
+  }
+
+  function updateStudyButtons(sessionOverride = null) {
+    const session = sessionOverride || readActiveSession();
+    if (!pauseStudyBtn) return;
+    if (!session) {
+      pauseStudyBtn.disabled = true;
+      pauseStudyBtn.textContent = "Pause";
+      return;
+    }
+    pauseStudyBtn.disabled = false;
+    pauseStudyBtn.textContent = session.paused ? "Resume" : "Pause";
   }
 
   function handleStorageEvent(event) {
@@ -941,6 +1025,7 @@
       renderDocList();
       loadActiveDoc();
       renderFolders();
+      updateStudyButtons();
     }
     if (event.key === FOLDERS_KEY) {
       loadFolders();
@@ -951,6 +1036,7 @@
       const doc = getActiveDoc();
       if (doc) renderFolderSelect(doc);
       renderDocList();
+      updateStudyButtons();
     }
   }
 
@@ -962,6 +1048,7 @@
     cancelDeleteBtn?.addEventListener("click", hideDeleteConfirm);
     confirmDeleteBtn?.addEventListener("click", deleteActiveDoc);
     startStudyBtn?.addEventListener("click", startStudyForDoc);
+    pauseStudyBtn?.addEventListener("click", togglePauseSession);
 
     toolbar.addEventListener("click", handleToolbarClick);
 
@@ -1020,10 +1107,12 @@
       if (newFolderForm) newFolderForm.hidden = !newFolderForm.hidden;
       if (!newFolderForm.hidden) newFolderInput?.focus();
       renderFolderSubjectSelect();
+      resetFolderForm();
     });
     cancelFolderBtn?.addEventListener("click", () => {
       if (newFolderForm) newFolderForm.hidden = true;
       if (newFolderInput) newFolderInput.value = "";
+      resetFolderForm();
     });
     saveFolderBtn?.addEventListener("click", () => {
       if (!newFolderInput) return;
@@ -1032,28 +1121,43 @@
         newFolderInput.focus();
         return;
       }
-      const folder = {
-        id: "folder_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
-        name,
-        subjectId: folderSubjectSelect ? folderSubjectSelect.value || null : null
-      };
-      folders.push(folder);
+      const subjectIdVal = folderSubjectSelect ? folderSubjectSelect.value || null : null;
+      if (editingFolderId) {
+        const folder = folders.find((f) => f.id === editingFolderId);
+        if (folder) {
+          folder.name = name;
+          folder.subjectId = subjectIdVal;
+          // apply subject to docs in folder only when doc has no subject
+          docs = docs.map((d) => {
+            if (d.folderId === folder.id && !d.subjectId && subjectIdVal) {
+              return { ...d, subjectId: subjectIdVal };
+            }
+            return d;
+          });
+          persistDocs();
+        }
+      } else {
+        const folder = {
+          id: "folder_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+          name,
+          subjectId: subjectIdVal
+        };
+        folders.push(folder);
+        selectedFolderId = folder.id;
+      }
       persistFolders();
-      selectedFolderId = folder.id;
       renderFolders();
       renderDocList();
       const doc = getActiveDoc();
       if (doc) {
         renderFolderSelect(doc);
-        if (!doc.subjectId && folder.subjectId) {
-          doc.subjectId = folder.subjectId;
-          persistDocs();
-          renderSubjectSelect(doc);
-          renderFileSelect(doc);
-        }
+        persistDocs();
+        renderSubjectSelect(doc);
+        renderFileSelect(doc);
       }
       newFolderInput.value = "";
       if (newFolderForm) newFolderForm.hidden = true;
+      resetFolderForm();
     });
 
     importInput?.addEventListener("change", async (event) => {
@@ -1071,6 +1175,7 @@
       loadActiveDoc();
       renderFolders();
       renderTimer({ forceSubjects: true });
+      updateStudyButtons();
     });
   }
 
@@ -1082,6 +1187,7 @@
     loadActiveDoc();
     bindEvents();
     renderTimer({ forceSubjects: true });
+    updateStudyButtons();
     setInterval(renderTimer, 350);
   }
 
