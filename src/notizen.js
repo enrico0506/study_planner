@@ -3,9 +3,18 @@
   const ACTIVE_ID_KEY = "studyDocsRichActiveId_v1";
   const ACTIVE_SESSION_KEY = "studyActiveSession_v1";
   const SUBJECTS_KEY = "studySubjects_v1";
+  const FOLDERS_KEY = "studyDocsRichFolders_v1";
+  const CONFIG_KEY = "studyFocusConfig_v1";
   const AUTOSAVE_MS = 300;
+  const FOLDER_ALL = "__all__";
 
   const docListEl = document.getElementById("docList");
+  const folderListEl = document.getElementById("folderList");
+  const newFolderToggleBtn = document.getElementById("newFolderToggleBtn");
+  const newFolderForm = document.getElementById("newFolderForm");
+  const newFolderInput = document.getElementById("newFolderInput");
+  const saveFolderBtn = document.getElementById("saveFolderBtn");
+  const cancelFolderBtn = document.getElementById("cancelFolderBtn");
   const newDocBtn = document.getElementById("newDocBtn");
   const titleInput = document.getElementById("docTitleInput");
   const editorEl = document.getElementById("docEditor");
@@ -19,6 +28,11 @@
   const timerTimeEl = document.getElementById("timerTime");
   const timerMetaEl = document.getElementById("timerMeta");
   const timerWrapper = document.getElementById("timerMirror");
+  const docFolderSelect = document.getElementById("docFolderSelect");
+  const docSubjectSelect = document.getElementById("docSubjectSelect");
+  const docFileSelect = document.getElementById("docFileSelect");
+  const startStudyBtn = document.getElementById("startStudyBtn");
+  const statusEl = document.getElementById("notesStatus");
 
   const linkModal = document.getElementById("linkModal");
   const linkInput = document.getElementById("linkInput");
@@ -30,6 +44,8 @@
   if (!docListEl || !editorEl || !toolbar) return;
 
   let docs = [];
+  let folders = [];
+  let selectedFolderId = FOLDER_ALL;
   let activeId = null;
   let saveTimer = null;
   let savedStatusTimer = null;
@@ -93,13 +109,38 @@
       title,
       html: "<p></p>",
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      folderId: null,
+      subjectId: null,
+      fileId: null
     };
+  }
+
+  function loadFolders() {
+    const raw = safeParse(localStorage.getItem(FOLDERS_KEY));
+    folders = Array.isArray(raw)
+      ? raw.filter((f) => f && f.id && f.name).map((f) => ({ ...f }))
+      : [];
+  }
+
+  function persistFolders() {
+    try {
+      localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders));
+    } catch {}
   }
 
   function loadState() {
     const rawDocs = safeParse(localStorage.getItem(DOCS_KEY));
-    docs = Array.isArray(rawDocs) ? rawDocs.filter((d) => d && d.id) : [];
+    docs = Array.isArray(rawDocs)
+      ? rawDocs
+          .filter((d) => d && d.id)
+          .map((d) => ({
+            ...d,
+            folderId: d.folderId || null,
+            subjectId: d.subjectId || null,
+            fileId: d.fileId || null
+          }))
+      : [];
     const savedActive = localStorage.getItem(ACTIVE_ID_KEY);
     activeId = savedActive || null;
     if (!docs.length) {
@@ -112,6 +153,10 @@
       const first = getSortedDocs()[0];
       activeId = first ? first.id : null;
       persistActiveId();
+    }
+    loadFolders();
+    if (selectedFolderId !== FOLDER_ALL && !folders.find((f) => f.id === selectedFolderId)) {
+      selectedFolderId = FOLDER_ALL;
     }
   }
 
@@ -145,9 +190,28 @@
     });
   }
 
+  function filteredDocs() {
+    if (selectedFolderId === FOLDER_ALL) return getSortedDocs();
+    return getSortedDocs().filter((d) => (d.folderId || null) === selectedFolderId);
+  }
+
+  function folderName(folderId) {
+    if (!folderId) return null;
+    const f = folders.find((x) => x.id === folderId);
+    return f ? f.name : null;
+  }
+
+  function setStatus(text, kind = "info") {
+    if (!statusEl) return;
+    statusEl.textContent = text || "";
+    statusEl.className = "notes-status";
+    if (kind === "error") statusEl.classList.add("notes-status-error");
+    if (kind === "success") statusEl.classList.add("notes-status-success");
+  }
+
   function renderDocList() {
     docListEl.innerHTML = "";
-    const list = getSortedDocs();
+    const list = filteredDocs();
     list.forEach((doc) => {
       const btn = document.createElement("button");
       btn.type = "button";
@@ -160,7 +224,12 @@
 
       const meta = document.createElement("div");
       meta.className = "notes-doc-meta";
-      meta.textContent = "Updated " + formatUpdated(doc.updatedAt);
+      const subjName = doc.subjectId ? resolveNames(doc.subjectId, doc.fileId).subject : null;
+      const parts = ["Updated " + formatUpdated(doc.updatedAt)];
+      if (subjName) parts.push(subjName);
+      const fName = folderName(doc.folderId);
+      if (fName) parts.push(fName);
+      meta.textContent = parts.join(" - ");
 
       btn.append(title, meta);
       btn.addEventListener("click", () => {
@@ -175,6 +244,136 @@
     });
   }
 
+  function renderFolders() {
+    if (!folderListEl) return;
+    folderListEl.innerHTML = "";
+
+    const allItem = document.createElement("div");
+    allItem.className =
+      "notes-folder-item" + (selectedFolderId === FOLDER_ALL ? " notes-folder-item-active" : "");
+    const allLeft = document.createElement("div");
+    allLeft.className = "notes-folder-name";
+    allLeft.textContent = "Alle Dokumente";
+    const allCount = document.createElement("div");
+    allCount.className = "notes-folder-count";
+    allCount.textContent = docs.length.toString();
+    allItem.append(allLeft, allCount);
+    allItem.addEventListener("click", () => {
+      selectedFolderId = FOLDER_ALL;
+      const list = filteredDocs();
+      if (list.length && (!activeId || !list.find((d) => d.id === activeId))) {
+        activeId = list[0].id;
+        persistActiveId();
+        loadActiveDoc();
+      }
+      renderFolders();
+      renderDocList();
+    });
+    folderListEl.appendChild(allItem);
+
+    folders.forEach((folder) => {
+      const count = docs.filter((d) => (d.folderId || null) === folder.id).length;
+      const row = document.createElement("div");
+      row.className =
+        "notes-folder-item" + (selectedFolderId === folder.id ? " notes-folder-item-active" : "");
+      const nameEl = document.createElement("div");
+      nameEl.className = "notes-folder-name";
+      nameEl.textContent = folder.name;
+      const metaEl = document.createElement("div");
+      metaEl.className = "notes-folder-count";
+      metaEl.textContent = String(count);
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "notes-folder-delete";
+      deleteBtn.type = "button";
+      deleteBtn.textContent = "x";
+      deleteBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        folders = folders.filter((f) => f.id !== folder.id);
+        docs = docs.map((d) => (d.folderId === folder.id ? { ...d, folderId: null } : d));
+        if (selectedFolderId === folder.id) selectedFolderId = FOLDER_ALL;
+        persistFolders();
+        persistDocs();
+        renderFolders();
+        renderDocList();
+        const doc = getActiveDoc();
+        if (doc) renderFolderSelect(doc);
+      });
+      row.append(nameEl, metaEl, deleteBtn);
+      row.addEventListener("click", () => {
+        selectedFolderId = folder.id;
+        const list = filteredDocs();
+        if (list.length && (!activeId || !list.find((d) => d.id === activeId))) {
+          activeId = list[0].id;
+          persistActiveId();
+          loadActiveDoc();
+        }
+        renderFolders();
+        renderDocList();
+      });
+      folderListEl.appendChild(row);
+    });
+  }
+
+  function renderFolderSelect(doc) {
+    if (!docFolderSelect) return;
+    docFolderSelect.innerHTML = "";
+    const optNone = document.createElement("option");
+    optNone.value = "";
+    optNone.textContent = "Kein Ordner";
+    docFolderSelect.appendChild(optNone);
+    folders.forEach((f) => {
+      const opt = document.createElement("option");
+      opt.value = f.id;
+      opt.textContent = f.name;
+      docFolderSelect.appendChild(opt);
+    });
+    docFolderSelect.value = doc.folderId || "";
+  }
+
+  function renderSubjectSelect(doc) {
+    if (!docSubjectSelect) return;
+    docSubjectSelect.innerHTML = "";
+    const optNone = document.createElement("option");
+    optNone.value = "";
+    optNone.textContent = "Kein Fach";
+    docSubjectSelect.appendChild(optNone);
+    subjectsCache.forEach((s) => {
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = s.name || "Unbenannt";
+      docSubjectSelect.appendChild(opt);
+    });
+    docSubjectSelect.value = doc.subjectId || "";
+  }
+
+  function renderFileSelect(doc) {
+    if (!docFileSelect) return;
+    docFileSelect.innerHTML = "";
+    const optNone = document.createElement("option");
+    optNone.value = "";
+    optNone.textContent = "Keine Datei";
+    docFileSelect.appendChild(optNone);
+
+    if (!doc.subjectId) {
+      docFileSelect.disabled = true;
+      return;
+    }
+    docFileSelect.disabled = false;
+    const subj = subjectsCache.find((s) => s.id === doc.subjectId);
+    const files = subj && Array.isArray(subj.files) ? subj.files : [];
+    const createOpt = document.createElement("option");
+    createOpt.value = "__create__";
+    createOpt.textContent = "Neue Datei aus Titel";
+    docFileSelect.appendChild(createOpt);
+    files.forEach((f) => {
+      const opt = document.createElement("option");
+      opt.value = f.id;
+      opt.textContent = f.name || "Unbenannt";
+      docFileSelect.appendChild(opt);
+    });
+    docFileSelect.value = doc.fileId || "";
+  }
+
   function loadActiveDoc() {
     const doc = getActiveDoc();
     if (!doc) return;
@@ -183,6 +382,9 @@
     editorEl.innerHTML = sanitized || "<p></p>";
     setSavedStatus("Saved");
     hideDeleteConfirm();
+    renderFolderSelect(doc);
+    renderSubjectSelect(doc);
+    renderFileSelect(doc);
   }
 
   function setSavedStatus(text, { saving = false } = {}) {
@@ -231,6 +433,7 @@
     flushPendingSave();
     const count = docs.length + 1;
     const doc = createDefaultDoc("Notiz " + count);
+    doc.folderId = selectedFolderId === FOLDER_ALL ? null : selectedFolderId;
     docs.unshift(doc);
     activeId = doc.id;
     persistState();
@@ -255,7 +458,8 @@
       docs = [fallback];
       activeId = fallback.id;
     } else {
-      const next = getSortedDocs()[0];
+      const filteredNext = filteredDocs()[0];
+      const next = filteredNext || getSortedDocs()[0];
       activeId = next ? next.id : null;
     }
     persistState();
@@ -357,6 +561,95 @@
     return result;
   }
 
+  function getFocusConfig() {
+    const fallback = { pomoConfig: { study: 25, short: 5, long: 15 } };
+    const raw = safeParse(localStorage.getItem(CONFIG_KEY));
+    if (!raw || typeof raw !== "object") return fallback;
+    const base = { ...fallback, ...raw };
+    if (!base.pomoConfig) base.pomoConfig = fallback.pomoConfig;
+    return base;
+  }
+
+  function createFileForSubject(subjectId, name) {
+    const subj = subjectsCache.find((s) => s.id === subjectId);
+    if (!subj) return null;
+    const files = Array.isArray(subj.files) ? subj.files : (subj.files = []);
+    const fileId = "file_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+    const newFile = {
+      id: fileId,
+      name: name || "Note",
+      notes: "",
+      confidence: 50,
+      lastReviewed: null,
+      totalMs: 0,
+      sessions: 0,
+      lastSessionMs: 0
+    };
+    files.push(newFile);
+    if (Array.isArray(subj.manualOrder)) {
+      subj.manualOrder.push(fileId);
+    } else {
+      subj.manualOrder = files.map((f) => f.id);
+    }
+    try {
+      localStorage.setItem(SUBJECTS_KEY, JSON.stringify(subjectsCache));
+    } catch {}
+    return fileId;
+  }
+
+  function startStudyForDoc() {
+    if (subjectsDirty) loadSubjects();
+    const doc = getActiveDoc();
+    if (!doc) return;
+    if (!subjectsCache.length) {
+      setStatus("Lege zuerst ein Fach auf der Hauptseite an.", "error");
+      return;
+    }
+    if (!doc.subjectId) {
+      setStatus("Bitte wähle ein Fach für dieses Dokument.", "error");
+      return;
+    }
+    let fileId = doc.fileId || "";
+    if (!fileId || fileId === "__create__") {
+      fileId = createFileForSubject(doc.subjectId, doc.title || "Note");
+      if (!fileId) {
+        setStatus("Datei konnte nicht angelegt werden.", "error");
+        return;
+      }
+      doc.fileId = fileId;
+      doc.updatedAt = new Date().toISOString();
+      persistDocs();
+      renderDocList();
+      renderFileSelect(doc);
+    }
+
+    const { pomoConfig } = getFocusConfig();
+    const minutes = pomoConfig && typeof pomoConfig.study === "number" ? pomoConfig.study : 25;
+    const targetMs = Math.max(1, minutes) * 60 * 1000;
+    const now = Date.now();
+    const session = {
+      kind: "study",
+      subjectId: doc.subjectId,
+      fileId,
+      startTimeMs: now,
+      baseMs: 0,
+      targetMs,
+      paused: false,
+      timerMode: "countdown",
+      pausedReason: null,
+      autoResume: false,
+      pausedAtMs: null
+    };
+    doc.updatedAt = new Date().toISOString();
+    persistDocs();
+    renderDocList();
+    try {
+      localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(session));
+    } catch {}
+    setStatus("Study-Session gestartet. Timer gespiegelt.", "success");
+    renderTimer({ forceSubjects: true });
+  }
+
   function readActiveSession() {
     const data = safeParse(localStorage.getItem(ACTIVE_SESSION_KEY));
     if (!data || typeof data !== "object") return null;
@@ -443,12 +736,32 @@
     if (!event) return;
     if (event.key === ACTIVE_SESSION_KEY || event.key === SUBJECTS_KEY) {
       subjectsDirty = subjectsDirty || event.key === SUBJECTS_KEY;
+      if (event.key === SUBJECTS_KEY) {
+        loadSubjects();
+        const doc = getActiveDoc();
+        if (doc) {
+          renderSubjectSelect(doc);
+          renderFileSelect(doc);
+        }
+        renderDocList();
+      }
       renderTimer({ forceSubjects: event.key === SUBJECTS_KEY });
     }
     if (event.key === DOCS_KEY || event.key === ACTIVE_ID_KEY) {
       loadState();
       renderDocList();
       loadActiveDoc();
+      renderFolders();
+    }
+    if (event.key === FOLDERS_KEY) {
+      loadFolders();
+      if (selectedFolderId !== FOLDER_ALL && !folders.find((f) => f.id === selectedFolderId)) {
+        selectedFolderId = FOLDER_ALL;
+      }
+      renderFolders();
+      const doc = getActiveDoc();
+      if (doc) renderFolderSelect(doc);
+      renderDocList();
     }
   }
 
@@ -459,6 +772,7 @@
     deleteBtn?.addEventListener("click", showDeleteConfirm);
     cancelDeleteBtn?.addEventListener("click", hideDeleteConfirm);
     confirmDeleteBtn?.addEventListener("click", deleteActiveDoc);
+    startStudyBtn?.addEventListener("click", startStudyForDoc);
 
     toolbar.addEventListener("click", handleToolbarClick);
 
@@ -473,12 +787,74 @@
       }
     });
 
+    docFolderSelect?.addEventListener("change", () => {
+      const doc = getActiveDoc();
+      if (!doc) return;
+      const folderId = docFolderSelect.value || null;
+      doc.folderId = folderId || null;
+      doc.updatedAt = new Date().toISOString();
+      persistDocs();
+      renderFolders();
+      renderDocList();
+    });
+
+    docSubjectSelect?.addEventListener("change", () => {
+      const doc = getActiveDoc();
+      if (!doc) return;
+      const val = docSubjectSelect.value || "";
+      doc.subjectId = val || null;
+      doc.fileId = null;
+      doc.updatedAt = new Date().toISOString();
+      persistDocs();
+      renderDocList();
+      renderSubjectSelect(doc);
+      renderFileSelect(doc);
+    });
+
+    docFileSelect?.addEventListener("change", () => {
+      const doc = getActiveDoc();
+      if (!doc) return;
+      const val = docFileSelect.value || "";
+      doc.fileId = val || null;
+      doc.updatedAt = new Date().toISOString();
+      persistDocs();
+      renderDocList();
+    });
+
+    newFolderToggleBtn?.addEventListener("click", () => {
+      if (newFolderForm) newFolderForm.hidden = !newFolderForm.hidden;
+      if (!newFolderForm.hidden) newFolderInput?.focus();
+    });
+    cancelFolderBtn?.addEventListener("click", () => {
+      if (newFolderForm) newFolderForm.hidden = true;
+      if (newFolderInput) newFolderInput.value = "";
+    });
+    saveFolderBtn?.addEventListener("click", () => {
+      if (!newFolderInput) return;
+      const name = newFolderInput.value.trim();
+      if (!name) {
+        newFolderInput.focus();
+        return;
+      }
+      const folder = { id: "folder_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6), name };
+      folders.push(folder);
+      persistFolders();
+      selectedFolderId = folder.id;
+      renderFolders();
+      renderDocList();
+      const doc = getActiveDoc();
+      if (doc) renderFolderSelect(doc);
+      newFolderInput.value = "";
+      if (newFolderForm) newFolderForm.hidden = true;
+    });
+
     window.addEventListener("storage", handleStorageEvent);
     window.addEventListener("study:state-replaced", () => {
       subjectsDirty = true;
       loadState();
       renderDocList();
       loadActiveDoc();
+      renderFolders();
       renderTimer({ forceSubjects: true });
     });
   }
@@ -487,6 +863,7 @@
     loadState();
     loadSubjects();
     renderDocList();
+    renderFolders();
     loadActiveDoc();
     bindEvents();
     renderTimer({ forceSubjects: true });

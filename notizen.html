@@ -69,7 +69,23 @@
             <div class="notes-sidebar-title">Dokumente</div>
             <div class="notes-sidebar-subtitle">Titel & letzte Änderung</div>
           </div>
-          <button class="chip-btn chip-btn-primary" id="newDocBtn" type="button">Neues Dokument</button>
+          <div class="notes-sidebar-actions">
+            <button class="chip-btn" id="newFolderToggleBtn" type="button">Neuer Ordner</button>
+            <button class="chip-btn chip-btn-primary" id="newDocBtn" type="button">Neues Dokument</button>
+          </div>
+        </div>
+        <div class="notes-folder-block">
+          <div class="notes-folder-head">
+            <div class="notes-folder-label">Ordner</div>
+          </div>
+          <div class="notes-folder-new" id="newFolderForm" hidden>
+            <input id="newFolderInput" type="text" placeholder="Ordnername" />
+            <div class="notes-folder-new-actions">
+              <button class="chip-btn chip-btn-primary" id="saveFolderBtn" type="button">Speichern</button>
+              <button class="chip-btn" id="cancelFolderBtn" type="button">Abbrechen</button>
+            </div>
+          </div>
+          <div class="notes-folder-list" id="folderList"></div>
         </div>
         <div class="notes-doc-list" id="docList"></div>
       </aside>
@@ -86,6 +102,22 @@
                 <button class="chip-btn chip-btn-danger" id="confirmDeleteBtn" type="button">Löschen</button>
               </div>
             </div>
+            <div class="notes-link-row">
+              <label>
+                Ordner
+                <select id="docFolderSelect"></select>
+              </label>
+              <label>
+                Fach
+                <select id="docSubjectSelect"></select>
+              </label>
+              <label>
+                Datei
+                <select id="docFileSelect"></select>
+              </label>
+              <button class="chip-btn chip-btn-primary" id="startStudyBtn" type="button">Start study</button>
+            </div>
+            <div class="notes-status" id="notesStatus" role="status" aria-live="polite"></div>
           </div>
           <div class="notes-top-right">
             <button class="chip-btn" id="deleteDocBtn" type="button">Dokument löschen</button>
