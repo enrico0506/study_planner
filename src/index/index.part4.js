@@ -1053,22 +1053,11 @@
     }
 
     if (noticeModalCancelBtn) {
-      noticeModalCancelBtn.addEventListener("click", closeNotice);
+      noticeModalCancelBtn.addEventListener("click", () => handleNoticeCancel());
     }
 
     if (noticeModalConfirmBtn) {
-      noticeModalConfirmBtn.addEventListener("click", () => {
-        if (noticeResolver) {
-          noticeResolver(null);
-          noticeResolver = null;
-        }
-        if (noticeConfirmHandler) {
-          const handler = noticeConfirmHandler;
-          noticeConfirmHandler = null;
-          handler();
-        }
-        closeNotice();
-      });
+      noticeModalConfirmBtn.addEventListener("click", () => handleNoticeConfirm());
     }
 
     if (addTodoModalCancel) {
@@ -1100,11 +1089,11 @@
     });
 
     if (noticeModalBackdrop) {
-    noticeModalBackdrop.addEventListener("mousedown", (event) => {
-      if (event.target === noticeModalBackdrop) {
-        closeNotice();
-      }
-    });
+      noticeModalBackdrop.addEventListener("mousedown", (event) => {
+        if (event.target === noticeModalBackdrop) {
+          handleNoticeCancel();
+        }
+      });
     }
 
     if (subjectSettingsBackdrop) {

@@ -267,6 +267,9 @@ const CVD_SAFE_SUBJECT_COLORS = [
     const timerInlineCancel = document.getElementById("timerInlineCancel");
     let noticeResolver = null;
     let noticeConfirmHandler = null;
+    let noticeReturnFocusEl = null;
+    let noticeKeydownHandler = null;
+    let noticeIsSubmitting = false;
     const toastContainer =
       document.getElementById("toastContainer") ||
       (() => {
@@ -748,27 +751,123 @@ const CVD_SAFE_SUBJECT_COLORS = [
       });
     }
 
+    function teardownNoticeKeydown() {
+      if (!noticeKeydownHandler || !noticeModalBackdrop) return;
+      noticeModalBackdrop.removeEventListener("keydown", noticeKeydownHandler);
+      noticeKeydownHandler = null;
+    }
+
+    function prepareNoticeModal(initialFocusEl) {
+      if (!noticeModalBackdrop) return;
+      noticeReturnFocusEl =
+        document.activeElement && document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
+      noticeIsSubmitting = false;
+      if (noticeModalConfirmBtn) noticeModalConfirmBtn.disabled = false;
+      teardownNoticeKeydown();
+      noticeKeydownHandler = (event) => {
+        if (!noticeModalBackdrop || noticeModalBackdrop.hidden) return;
+        const key = event.key;
+        const target = event.target;
+        const isTextarea = target && target.tagName === "TEXTAREA";
+        if (key === "Enter") {
+          if (noticeIsSubmitting) {
+            event.preventDefault();
+            return;
+          }
+          if (isTextarea && !event.ctrlKey && !event.metaKey) return;
+          event.preventDefault();
+          handleNoticeConfirm();
+        } else if (key === "Escape") {
+          event.preventDefault();
+          handleNoticeCancel();
+        }
+      };
+      noticeModalBackdrop.addEventListener("keydown", noticeKeydownHandler);
+      noticeModalBackdrop.hidden = false;
+      noticeModalBackdrop.style.display = "flex";
+      const focusTarget = initialFocusEl || noticeModalConfirmBtn;
+      if (focusTarget && typeof focusTarget.focus === "function") {
+        focusTarget.focus();
+        if (typeof focusTarget.select === "function") {
+          focusTarget.select();
+        }
+      }
+    }
+
+    function handleNoticeCancel() {
+      if (noticeIsSubmitting) return;
+      closeNotice();
+    }
+
+    function handleNoticeConfirm() {
+      if (!noticeModalBackdrop || noticeModalBackdrop.hidden) return;
+      if (noticeIsSubmitting) return;
+      noticeIsSubmitting = true;
+      if (noticeModalConfirmBtn) noticeModalConfirmBtn.disabled = true;
+
+      const resolver = noticeResolver;
+      noticeResolver = null;
+      const handler = noticeConfirmHandler;
+      noticeConfirmHandler = null;
+
+      const finish = () => {
+        closeNotice({ skipResolver: true });
+      };
+
+      try {
+        const result = handler ? handler() : null;
+        if (result && typeof result.then === "function") {
+          result
+            .then((val) => {
+              if (resolver) resolver(val);
+            })
+            .catch(() => {
+              if (resolver) resolver(null);
+            })
+            .finally(() => finish());
+        } else {
+          if (resolver) resolver(result);
+          finish();
+        }
+      } catch (err) {
+        if (resolver) resolver(null);
+        noticeIsSubmitting = false;
+        if (noticeModalConfirmBtn) noticeModalConfirmBtn.disabled = false;
+        throw err;
+      }
+    }
+
     function showNotice(message, tone = "info", onConfirm = null) {
       if (!noticeModalBackdrop || !noticeModalMessage || !noticeModalTitle) {
         showToast(message, tone);
         return;
       }
+      noticeResolver = null;
       noticeConfirmHandler = typeof onConfirm === "function" ? onConfirm : null;
       noticeModalTitle.textContent = tone === "warn" ? "Heads up" : tone === "success" ? "Done" : "Notice";
       noticeModalMessage.textContent = message;
-      noticeModalBackdrop.hidden = false;
-      noticeModalBackdrop.style.display = "flex";
+      prepareNoticeModal();
     }
 
-    function closeNotice() {
+    function closeNotice(options = {}) {
       if (!noticeModalBackdrop) return;
+      teardownNoticeKeydown();
       noticeModalBackdrop.style.display = "none";
       noticeModalBackdrop.hidden = true;
-      if (noticeResolver) {
+      noticeIsSubmitting = false;
+      if (noticeModalConfirmBtn) noticeModalConfirmBtn.disabled = false;
+      if (noticeResolver && !options.skipResolver) {
         noticeResolver(null);
-        noticeResolver = null;
       }
+      noticeResolver = null;
       noticeConfirmHandler = null;
+      const returnTarget = noticeReturnFocusEl;
+      noticeReturnFocusEl = null;
+      if (returnTarget && document.contains(returnTarget)) {
+        returnTarget.focus();
+      }
     }
 
     function openHeaderMenu() {
@@ -1059,31 +1158,21 @@ const CVD_SAFE_SUBJECT_COLORS = [
         onSubmit(value);
         return;
       }
+      noticeResolver = null;
       noticeModalTitle.textContent = title || "Input";
       noticeModalMessage.innerHTML =
         '<input id="noticePromptInput" class="notice-input" type="text" placeholder="' +
         escapeHtml(placeholder || "") +
         '" />';
       const input = document.getElementById("noticePromptInput");
-      noticeModalBackdrop.hidden = false;
-      noticeModalBackdrop.style.display = "flex";
-      input.focus();
       return new Promise((resolve) => {
         noticeResolver = resolve;
-        const submit = () => {
-          const val = input.value;
-          closeNotice();
+        noticeConfirmHandler = () => {
+          const val = input ? input.value : "";
           onSubmit(val);
-          resolve(val);
+          return val;
         };
-        const listener = (event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            submit();
-          }
-        };
-        input.addEventListener("keydown", listener, { once: true });
-        noticeModalConfirmBtn.onclick = submit;
+        prepareNoticeModal(input);
       });
     }
 
