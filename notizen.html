@@ -80,6 +80,10 @@
           </div>
           <div class="notes-folder-new" id="newFolderForm" hidden>
             <input id="newFolderInput" type="text" placeholder="Ordnername" />
+            <label class="notes-folder-subject">
+              Fach (optional)
+              <select id="folderSubjectSelect"></select>
+            </label>
             <div class="notes-folder-new-actions">
               <button class="chip-btn chip-btn-primary" id="saveFolderBtn" type="button">Speichern</button>
               <button class="chip-btn" id="cancelFolderBtn" type="button">Abbrechen</button>
@@ -130,6 +134,8 @@
         </div>
 
         <div class="notes-toolbar" id="notesToolbar" aria-label="Format toolbar">
+          <label class="notes-import-btn" for="importInput">Import</label>
+          <input id="importInput" type="file" accept=".md,.markdown,.ipynb,.docx,.pdf" hidden />
           <button class="notes-tool-btn" type="button" data-cmd="bold" aria-label="Fett"><strong>B</strong></button>
           <button class="notes-tool-btn" type="button" data-cmd="italic" aria-label="Kursiv"><em>I</em></button>
           <button class="notes-tool-btn" type="button" data-cmd="underline" aria-label="Unterstreichen"><u>U</u></button>

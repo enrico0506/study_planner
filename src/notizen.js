@@ -7,6 +7,7 @@
   const CONFIG_KEY = "studyFocusConfig_v1";
   const AUTOSAVE_MS = 300;
   const FOLDER_ALL = "__all__";
+  const JSZIP_SRC = "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
 
   const docListEl = document.getElementById("docList");
   const folderListEl = document.getElementById("folderList");
@@ -15,6 +16,7 @@
   const newFolderInput = document.getElementById("newFolderInput");
   const saveFolderBtn = document.getElementById("saveFolderBtn");
   const cancelFolderBtn = document.getElementById("cancelFolderBtn");
+  const folderSubjectSelect = document.getElementById("folderSubjectSelect");
   const newDocBtn = document.getElementById("newDocBtn");
   const titleInput = document.getElementById("docTitleInput");
   const editorEl = document.getElementById("docEditor");
@@ -33,6 +35,7 @@
   const docFileSelect = document.getElementById("docFileSelect");
   const startStudyBtn = document.getElementById("startStudyBtn");
   const statusEl = document.getElementById("notesStatus");
+  const importInput = document.getElementById("importInput");
 
   const linkModal = document.getElementById("linkModal");
   const linkInput = document.getElementById("linkInput");
@@ -119,7 +122,9 @@
   function loadFolders() {
     const raw = safeParse(localStorage.getItem(FOLDERS_KEY));
     folders = Array.isArray(raw)
-      ? raw.filter((f) => f && f.id && f.name).map((f) => ({ ...f }))
+      ? raw
+          .filter((f) => f && f.id && f.name)
+          .map((f) => ({ ...f, subjectId: f.subjectId || null }))
       : [];
   }
 
@@ -209,6 +214,176 @@
     if (kind === "success") statusEl.classList.add("notes-status-success");
   }
 
+  function renderFolderSubjectSelect() {
+    if (!folderSubjectSelect) return;
+    folderSubjectSelect.innerHTML = "";
+    const optNone = document.createElement("option");
+    optNone.value = "";
+    optNone.textContent = "Kein Fach";
+    folderSubjectSelect.appendChild(optNone);
+    subjectsCache.forEach((s) => {
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = s.name || "Unbenannt";
+      folderSubjectSelect.appendChild(opt);
+    });
+  }
+
+  function markdownToHtml(md) {
+    const lines = String(md || "").split(/\r?\n/);
+    let html = "";
+    lines.forEach((line) => {
+      if (/^#{1,6}\s+/.test(line)) {
+        const level = Math.min(6, line.match(/^#+/)[0].length);
+        const text = line.replace(/^#{1,6}\s+/, "");
+        html += `<h${level}>${escapeHtml(text)}</h${level}>`;
+      } else if (/^\s*[-*+]\s+/.test(line)) {
+        html += `<ul><li>${escapeHtml(line.replace(/^\s*[-*+]\s+/, ""))}</li></ul>`;
+      } else if (/^\s*\d+\.\s+/.test(line)) {
+        html += `<ol><li>${escapeHtml(line.replace(/^\s*\d+\.\s+/, ""))}</li></ol>`;
+      } else if (line.trim() === "") {
+        html += "<p></p>";
+      } else {
+        html += `<p>${escapeHtml(line)}</p>`;
+      }
+    });
+    return html;
+  }
+
+  function escapeHtml(str) {
+    return String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function ipynbToHtml(json) {
+    const cells = Array.isArray(json?.cells) ? json.cells : [];
+    const parts = [];
+    cells.forEach((cell) => {
+      if (cell.cell_type === "markdown") {
+        const text = Array.isArray(cell.source) ? cell.source.join("") : "";
+        parts.push(markdownToHtml(text));
+      } else if (cell.cell_type === "code") {
+        const code = Array.isArray(cell.source) ? cell.source.join("") : "";
+        parts.push(`<pre><code>${escapeHtml(code)}</code></pre>`);
+      }
+    });
+    return parts.join("\n");
+  }
+
+  function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  }
+
+  function readFileAsArrayBuffer(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function loadJSZip() {
+    if (window.JSZip) return Promise.resolve(window.JSZip);
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = JSZIP_SRC;
+      script.onload = () => resolve(window.JSZip || null);
+      script.onerror = () => resolve(null);
+      document.head.appendChild(script);
+    });
+  }
+
+  async function parseDocxToHtml(file) {
+    const JSZipLib = await loadJSZip();
+    if (!JSZipLib) {
+      setStatus("Docx Import fehlgeschlagen (JSZip nicht verfügbar).", "error");
+      return null;
+    }
+    try {
+      const buf = await readFileAsArrayBuffer(file);
+      const zip = await JSZipLib.loadAsync(buf);
+      const docXml = await zip.file("word/document.xml").async("string");
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(docXml, "application/xml");
+      const paragraphs = Array.from(xml.getElementsByTagName("w:p"));
+      const out = paragraphs
+        .map((p) => {
+          const texts = Array.from(p.getElementsByTagName("w:t")).map((t) => t.textContent || "");
+          const text = texts.join("");
+          return `<p>${escapeHtml(text)}</p>`;
+        })
+        .join("\n");
+      return out || "<p></p>";
+    } catch (err) {
+      setStatus("Docx konnte nicht gelesen werden.", "error");
+      return null;
+    }
+  }
+
+  async function handleImport(file) {
+    if (!file) return;
+    const name = (file.name || "").toLowerCase();
+    const ext = name.split(".").pop() || "";
+    try {
+      if (ext === "md" || ext === "markdown") {
+        const text = await readFileAsText(file);
+        const html = markdownToHtml(text);
+        editorEl.innerHTML = sanitizeHtml(html);
+        scheduleSave();
+        setStatus("Markdown importiert.", "success");
+        return;
+      }
+      if (ext === "ipynb") {
+        const text = await readFileAsText(file);
+        const parsed = safeParse(text);
+        const html = ipynbToHtml(parsed || {});
+        editorEl.innerHTML = sanitizeHtml(html || "<p></p>");
+        scheduleSave();
+        setStatus("Notebook importiert.", "success");
+        return;
+      }
+      if (ext === "pdf") {
+        const dataUrl = await readFileAsDataUrl(file);
+        const html = `<object class="notes-embed" data="${dataUrl}" type="application/pdf"></object>`;
+        editorEl.innerHTML = html;
+        scheduleSave();
+        setStatus("PDF eingebettet (nur Ansicht).", "success");
+        return;
+      }
+      if (ext === "docx") {
+        const html = await parseDocxToHtml(file);
+        if (html) {
+          editorEl.innerHTML = sanitizeHtml(html);
+          scheduleSave();
+          setStatus("Docx importiert.", "success");
+        }
+        return;
+      }
+      setStatus("Dateityp nicht unterstützt.", "error");
+    } catch (err) {
+      setStatus("Import fehlgeschlagen.", "error");
+    }
+  }
+
   function renderDocList() {
     docListEl.innerHTML = "";
     const list = filteredDocs();
@@ -279,9 +454,10 @@
       const nameEl = document.createElement("div");
       nameEl.className = "notes-folder-name";
       nameEl.textContent = folder.name;
+      const subj = resolveNames(folder.subjectId, null).subject;
       const metaEl = document.createElement("div");
       metaEl.className = "notes-folder-count";
-      metaEl.textContent = String(count);
+      metaEl.textContent = subj ? `${count} · ${subj}` : String(count);
       const deleteBtn = document.createElement("button");
       deleteBtn.className = "notes-folder-delete";
       deleteBtn.type = "button";
@@ -324,7 +500,8 @@
     folders.forEach((f) => {
       const opt = document.createElement("option");
       opt.value = f.id;
-      opt.textContent = f.name;
+      const subj = resolveNames(f.subjectId, null).subject;
+      opt.textContent = subj ? `${f.name} (${subj})` : f.name;
       docFolderSelect.appendChild(opt);
     });
     docFolderSelect.value = doc.folderId || "";
@@ -385,6 +562,7 @@
     renderFolderSelect(doc);
     renderSubjectSelect(doc);
     renderFileSelect(doc);
+    renderFolderSubjectSelect();
   }
 
   function setSavedStatus(text, { saving = false } = {}) {
@@ -407,6 +585,12 @@
     doc.title = title;
     doc.html = cleanHtml;
     doc.updatedAt = new Date().toISOString();
+    const folder = folders.find((f) => f.id === doc.folderId);
+    if (folder && folder.subjectId && !doc.subjectId) {
+      doc.subjectId = folder.subjectId;
+      renderSubjectSelect(doc);
+      renderFileSelect(doc);
+    }
     persistState();
     renderDocList();
     setSavedStatus("Saved");
@@ -434,6 +618,10 @@
     const count = docs.length + 1;
     const doc = createDefaultDoc("Notiz " + count);
     doc.folderId = selectedFolderId === FOLDER_ALL ? null : selectedFolderId;
+    const folder = folders.find((f) => f.id === doc.folderId);
+    if (folder && folder.subjectId) {
+      doc.subjectId = folder.subjectId;
+    }
     docs.unshift(doc);
     activeId = doc.id;
     persistState();
@@ -548,6 +736,7 @@
     const raw = safeParse(localStorage.getItem(SUBJECTS_KEY));
     subjectsCache = Array.isArray(raw) ? raw : [];
     subjectsDirty = false;
+    renderFolderSubjectSelect();
   }
 
   function resolveNames(subjectId, fileId) {
@@ -792,6 +981,12 @@
       if (!doc) return;
       const folderId = docFolderSelect.value || null;
       doc.folderId = folderId || null;
+      const folder = folders.find((f) => f.id === folderId);
+      if (folder && folder.subjectId && !doc.subjectId) {
+        doc.subjectId = folder.subjectId;
+        renderSubjectSelect(doc);
+        renderFileSelect(doc);
+      }
       doc.updatedAt = new Date().toISOString();
       persistDocs();
       renderFolders();
@@ -824,6 +1019,7 @@
     newFolderToggleBtn?.addEventListener("click", () => {
       if (newFolderForm) newFolderForm.hidden = !newFolderForm.hidden;
       if (!newFolderForm.hidden) newFolderInput?.focus();
+      renderFolderSubjectSelect();
     });
     cancelFolderBtn?.addEventListener("click", () => {
       if (newFolderForm) newFolderForm.hidden = true;
@@ -836,16 +1032,35 @@
         newFolderInput.focus();
         return;
       }
-      const folder = { id: "folder_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6), name };
+      const folder = {
+        id: "folder_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+        name,
+        subjectId: folderSubjectSelect ? folderSubjectSelect.value || null : null
+      };
       folders.push(folder);
       persistFolders();
       selectedFolderId = folder.id;
       renderFolders();
       renderDocList();
       const doc = getActiveDoc();
-      if (doc) renderFolderSelect(doc);
+      if (doc) {
+        renderFolderSelect(doc);
+        if (!doc.subjectId && folder.subjectId) {
+          doc.subjectId = folder.subjectId;
+          persistDocs();
+          renderSubjectSelect(doc);
+          renderFileSelect(doc);
+        }
+      }
       newFolderInput.value = "";
       if (newFolderForm) newFolderForm.hidden = true;
+    });
+
+    importInput?.addEventListener("change", async (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      await handleImport(file);
+      importInput.value = "";
     });
 
     window.addEventListener("storage", handleStorageEvent);

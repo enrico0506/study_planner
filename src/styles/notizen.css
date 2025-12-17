@@ -135,6 +135,21 @@
   border: 1px solid rgba(15, 23, 42, 0.12);
 }
 
+.notes-folder-subject {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.notes-folder-subject select {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #fff;
+}
+
 .notes-folder-new-actions {
   display: flex;
   gap: 8px;
@@ -340,6 +355,18 @@
   box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
 }
 
+.notes-import-btn {
+  border: 1px dashed rgba(15, 23, 42, 0.18);
+  background: #fff;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #1d4ed8;
+  display: inline-flex;
+  align-items: center;
+}
+
 .notes-tool-btn {
   border: 1px solid rgba(15, 23, 42, 0.08);
   background: #fff;
@@ -417,6 +444,13 @@
   padding-left: 10px;
   color: #475569;
   margin: 12px 0;
+}
+
+.notes-embed {
+  width: 100%;
+  min-height: 480px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
 }
 
 #docEditor[data-placeholder]:empty:before {
