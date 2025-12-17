@@ -6846,25 +6846,20 @@ body.timetable-page {
   gap: 14px;
 }
 
-.flashcards-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
-  background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid var(--border-subtle);
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+.active-deck-inline {
+  margin-top: 10px;
+  display: grid;
+  gap: 3px;
 }
 
-.flashcards-label {
+.active-deck-label {
   color: var(--ink-muted);
-  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 12px;
 }
 
-.flashcards-title {
-  font-size: 22px;
+.active-deck-title {
   font-weight: 700;
 }
 
@@ -7038,6 +7033,9 @@ body.timetable-page {
 .review-actions-compact {
   display: flex;
   gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .interval-actions .chip-btn {
@@ -7066,13 +7064,12 @@ body.timetable-page {
 }
 
 @media (max-width: 720px) {
-  .flashcards-top {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
   .flashcards-header {
     flex-direction: column;
+  }
+
+  .review-actions-compact {
+    justify-content: flex-start;
   }
 }
 

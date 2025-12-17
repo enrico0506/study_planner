@@ -119,26 +119,23 @@
       </aside>
 
       <section class="flashcards-main">
-        <div class="flashcards-top">
-          <div>
-            <div class="flashcards-label">Aktiver Stapel</div>
-            <div class="flashcards-title" id="activeDeckTitle">Kein Stapel</div>
-            <div class="flashcards-meta" id="activeDeckMeta">0 Karten • 0 fällig</div>
-          </div>
-          <div class="mode-toggle" role="tablist" aria-label="Review-Modus">
-            <button class="mode-btn mode-btn-active" data-mode="normal" id="modeNormalBtn" type="button">Normal</button>
-            <button class="mode-btn" data-mode="interval" id="modeIntervalBtn" type="button">Intervall (Anki)</button>
-          </div>
-        </div>
-
         <div class="review-panel">
           <div class="review-head">
             <div>
               <div class="deck-card-label">Abfrage</div>
               <div class="deck-card-title" id="reviewModeLabel">Normaler Durchgang</div>
               <div class="flashcards-meta" id="reviewStats">Bereit, sobald Karten vorhanden sind.</div>
+              <div class="active-deck-inline">
+                <div class="active-deck-label">Aktiver Stapel</div>
+                <div class="active-deck-title" id="activeDeckTitle">Kein Stapel</div>
+                <div class="flashcards-meta" id="activeDeckMeta">0 Karten • 0 fällig</div>
+              </div>
             </div>
             <div class="review-actions-compact">
+              <div class="mode-toggle" role="tablist" aria-label="Review-Modus">
+                <button class="mode-btn mode-btn-active" data-mode="normal" id="modeNormalBtn" type="button">Normal</button>
+                <button class="mode-btn" data-mode="interval" id="modeIntervalBtn" type="button">Intervall (Anki)</button>
+              </div>
               <div class="review-quick-row">
                 <label class="sr-only" for="reviewDeckSelect">Stapel auswählen</label>
                 <select id="reviewDeckSelect"></select>
