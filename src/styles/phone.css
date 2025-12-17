@@ -56,6 +56,21 @@
     z-index: 2;
   }
 
+  .header-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-main h1 {
+    font-size: 22px;
+    margin-bottom: 2px;
+  }
+
+  .header-main .subtitle {
+    display: none;
+  }
+
   /* Hide "maximize" controls on phone */
   .section-max-btn,
   .today-maximize-btn {
@@ -66,6 +81,20 @@
   .top-row {
     display: flex;
     flex-direction: column;
+    gap: 12px;
+  }
+
+  .top-row .summary-card {
+    padding: 12px;
+  }
+
+  .top-row .summary-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 10px;
+  }
+
+  .top-row .focus-card {
+    padding: 12px;
   }
 
   .top-row .focus-card {
@@ -89,14 +118,28 @@
   }
 
   /* Mode routing (index.html?mode=...) */
-  body[data-mode="board"] #layoutRow,
+  body[data-mode="board"] #layoutRow {
+    display: flex !important;
+  }
+
+  body[data-mode="board"] #layoutRow .main-area {
+    display: block !important;
+    width: 100%;
+  }
+
+  body[data-mode="board"] #layoutRow .today-sidebar,
   body[data-mode="board"] #scheduleView {
     display: none !important;
   }
 
   body[data-mode="subjects"] .summary-card,
+  body[data-mode="subjects"] .focus-card,
   body[data-mode="subjects"] #scheduleView,
   body[data-mode="subjects"] #layoutRow .today-sidebar {
+    display: none !important;
+  }
+
+  body[data-mode="subjects"] .top-row {
     display: none !important;
   }
 
@@ -129,7 +172,11 @@
     min-width: 0;
     width: 100%;
     flex-wrap: wrap;
-    position: static;
+    position: sticky;
+    top: 8px;
+    background: #f8fafc;
+    z-index: 3;
+    padding-bottom: 6px;
   }
 
   body[data-mode="subjects"] .section-subtitle {
@@ -161,8 +208,8 @@
   }
 
   .subject-nav-btn {
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
     border-radius: 10px;
     border: 1px solid #dfe4f0;
     background: #ffffff;
@@ -197,8 +244,13 @@
   }
 
   body[data-mode="today"] .summary-card,
+  body[data-mode="today"] .focus-card,
   body[data-mode="today"] #scheduleView,
   body[data-mode="today"] #layoutRow .main-area {
+    display: none !important;
+  }
+
+  body[data-mode="today"] .top-row {
     display: none !important;
   }
 
@@ -216,6 +268,10 @@
 
   body[data-mode="today"].today-picker-open #layoutRow .main-area {
     display: block !important;
+  }
+
+  body[data-mode="today"].today-picker-open #layoutRow {
+    gap: 10px;
   }
 
   /* In picker mode, behave like Subjects paging UI */
@@ -242,7 +298,10 @@
     min-width: 0;
     width: 100%;
     flex-wrap: wrap;
-    position: static;
+    position: sticky;
+    top: 8px;
+    background: #f8fafc;
+    z-index: 3;
   }
 
   body[data-mode="today"].today-picker-open .section-subtitle {
@@ -277,6 +336,14 @@
     white-space: nowrap;
   }
 
+  body[data-mode="today"] .today-header {
+    align-items: center;
+  }
+
+  body[data-mode="today"] #todayPickerBackBtn {
+    padding: 10px 12px;
+  }
+
   body[data-mode="today"].today-picker-open .file-row.in-today {
     background: #dcfce7;
     border-color: #22c55e;
@@ -287,6 +354,7 @@
   }
 
   body[data-mode="schedule"] .summary-card,
+  body[data-mode="schedule"] .focus-card,
   body[data-mode="schedule"] #layoutRow {
     display: none !important;
   }

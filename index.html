@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="./src/styles/main.css" />
   <link rel="stylesheet" href="./src/styles/mobile.css" />
   <link rel="stylesheet" href="./src/styles/phone.css" />
+  <link rel="stylesheet" href="./src/styles/phone-bottom-nav.css" />
   <link rel="stylesheet" href="./src/styles/phone-menu.css" />
   <link rel="stylesheet" href="./src/styles/phone-modals.css" />
   <link rel="stylesheet" href="./src/styles/a11y.css" />
@@ -911,6 +912,26 @@
 
 	  <button class="expand-btn" id="expandPageBtn" type="button" aria-label="Toggle expand">⤢</button>
 	  <div id="studyAriaLive" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+	  <nav class="phone-bottom-nav" aria-label="Hauptnavigation">
+	    <button class="phone-bottom-nav__btn" type="button" data-mode="board" aria-label="Board">
+	      <span class="phone-bottom-nav__icon" aria-hidden="true">🏠</span>
+	      <span class="phone-bottom-nav__label">Board</span>
+	    </button>
+	    <button class="phone-bottom-nav__btn" type="button" data-mode="subjects" aria-label="Subjects">
+	      <span class="phone-bottom-nav__icon" aria-hidden="true">📚</span>
+	      <span class="phone-bottom-nav__label">Subjects</span>
+	    </button>
+	    <button class="phone-bottom-nav__btn" type="button" data-mode="today" aria-label="Today's focus">
+	      <span class="phone-bottom-nav__icon" aria-hidden="true">✅</span>
+	      <span class="phone-bottom-nav__label">Today</span>
+	    </button>
+	    <button class="phone-bottom-nav__btn" type="button" data-mode="schedule" aria-label="Schedule">
+	      <span class="phone-bottom-nav__icon" aria-hidden="true">🗓️</span>
+	      <span class="phone-bottom-nav__label">Schedule</span>
+	    </button>
+	  </nav>
+
 	  <script src="./src/storage.js"></script>
 	  <script src="./src/assignments.js"></script>
 	  <script src="./src/notes.js"></script>
@@ -928,5 +949,6 @@
 	  <script src="./src/index/index.part2.js"></script>
 	  <script src="./src/index/index.part3.js"></script>
 	  <script src="./src/index/index.part4.js"></script>
+	  <script src="./src/phone/phone-nav.js"></script>
 	</body>
 </html>

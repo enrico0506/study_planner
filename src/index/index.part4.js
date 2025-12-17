@@ -548,23 +548,38 @@
       });
       todayHeaderActions.appendChild(expandBtn);
 
+      const pickerBackBtn = document.createElement("button");
+      pickerBackBtn.type = "button";
+      pickerBackBtn.className = "chip-btn mobile-menu-only";
+      pickerBackBtn.id = "todayPickerBackBtn";
+      pickerBackBtn.textContent = "Back to Today";
+      pickerBackBtn.hidden = true;
+      pickerBackBtn.addEventListener("click", () => {
+        document.body.classList.remove("today-picker-open");
+        pickBtn.textContent = "Add from subjects";
+        renderTable();
+        const sidebar = document.querySelector("#layoutRow .today-sidebar");
+        sidebar?.scrollIntoView({ behavior: "smooth", block: "start" });
+        pickerBackBtn.hidden = true;
+      });
       const pickBtn = document.createElement("button");
       pickBtn.type = "button";
       pickBtn.className = "btn btn-secondary mobile-menu-only";
       pickBtn.id = "todayPickToggleBtn";
-      pickBtn.textContent = "Add";
+      pickBtn.textContent = "Add from subjects";
       pickBtn.addEventListener("click", () => {
         const open = !document.body.classList.contains("today-picker-open");
         document.body.classList.toggle("today-picker-open", open);
-        pickBtn.textContent = open ? "Done" : "Add";
+        pickBtn.textContent = open ? "Back to Today" : "Add from subjects";
+        pickerBackBtn.hidden = !open;
         renderTable();
-
         const target = open
           ? document.querySelector("#layoutRow .main-area")
           : document.querySelector("#layoutRow .today-sidebar");
         target?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
       todayHeaderActions.appendChild(pickBtn);
+      todayHeaderActions.appendChild(pickerBackBtn);
 
       applyTodayExpandedLayout();
     }
@@ -1448,19 +1463,21 @@
       subjectCursorIndex = subjectCursorIndex + 1;
       applySubjectPaging();
     });
-    subjectBackBtn?.addEventListener("click", () => {
-      if (
-        document.body.dataset.mode === "today" &&
-        document.body.classList.contains("today-picker-open")
-      ) {
-        document.body.classList.remove("today-picker-open");
-        const pickBtn = document.getElementById("todayPickToggleBtn");
-        if (pickBtn) pickBtn.textContent = "Add";
-        renderTable();
-        const sidebar = document.querySelector("#layoutRow .today-sidebar");
-        sidebar?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    });
+      subjectBackBtn?.addEventListener("click", () => {
+        if (
+          document.body.dataset.mode === "today" &&
+          document.body.classList.contains("today-picker-open")
+        ) {
+          document.body.classList.remove("today-picker-open");
+          const pickBtn = document.getElementById("todayPickToggleBtn");
+          if (pickBtn) pickBtn.textContent = "Add from subjects";
+          const backBtn = document.getElementById("todayPickerBackBtn");
+          if (backBtn) backBtn.hidden = true;
+          renderTable();
+          const sidebar = document.querySelector("#layoutRow .today-sidebar");
+          sidebar?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
 
     function getPageMode() {
       const mode = new URLSearchParams(window.location.search).get("mode");
