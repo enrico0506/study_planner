@@ -3757,14 +3757,20 @@ body.session-header-mounted #focusCard {
       word-break: break-word;
     }
 
-    .file-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      font-size: 0.72rem;
-      color: #6b7280;
-      margin-top: 6px;
-    }
+	    .file-meta {
+	      display: flex;
+	      flex-direction: column;
+	      gap: 8px;
+	      font-size: 0.72rem;
+	      color: #6b7280;
+	      margin-top: 6px;
+	    }
+
+	    /* Compact subjects (non-maximized): keep hover actions from changing row height. */
+	    .app:not(.subjects-maximized) .file-meta {
+	      position: relative;
+	      padding-right: 90px;
+	    }
 
     .confidence-badge {
       padding: 1px 7px;
@@ -3864,17 +3870,28 @@ body.session-header-mounted #focusCard {
       gap: 6px;
     }
 
-.file-actions-row {
-      display: flex;
-      gap: 6px;
-      justify-content: flex-end;
-      opacity: 0;
-      pointer-events: none;
-      max-height: 0;
-      overflow: hidden;
-      transform: translateY(-2px);
-      transition: opacity 0.12s ease, transform 0.12s ease, max-height 0.12s ease;
-    }
+	.file-actions-row {
+	      display: flex;
+	      gap: 6px;
+	      justify-content: flex-end;
+	      opacity: 0;
+	      pointer-events: none;
+	      max-height: 0;
+	      overflow: hidden;
+	      transform: translateY(-2px);
+	      transition: opacity 0.12s ease, transform 0.12s ease, max-height 0.12s ease;
+	    }
+
+	    .app:not(.subjects-maximized) .file-actions-row {
+	      position: absolute;
+	      top: 0;
+	      right: 0;
+	      gap: 4px;
+	      max-height: none;
+	      overflow: visible;
+	      transform: translateY(-1px);
+	      transition: opacity 0.12s ease, transform 0.12s ease;
+	    }
 
     .file-row:hover .file-actions-row,
     .file-row:focus-within .file-actions-row {
@@ -3884,12 +3901,19 @@ body.session-header-mounted #focusCard {
       transform: translateY(0);
     }
 
-    .file-action-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 10px;
-      box-shadow: none;
-    }
+	    .file-action-btn {
+	      width: 32px;
+	      height: 32px;
+	      border-radius: 10px;
+	      box-shadow: none;
+	    }
+
+	    .app:not(.subjects-maximized) .file-action-btn {
+	      width: 24px;
+	      height: 24px;
+	      border-radius: 9px;
+	      font-size: 0.9rem;
+	    }
 
     .add-file-slot {
       margin-top: 6px;
