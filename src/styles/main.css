@@ -2152,13 +2152,6 @@ body.session-header-mounted #focusCard {
       padding-bottom: 6px;
     }
 
-    .schedule-day-add-btn {
-      padding: 6px 10px;
-      border-radius: 12px;
-      font-size: 0.78rem;
-      line-height: 1;
-    }
-
     .schedule-day-date {
       font-weight: 700;
       color: var(--accent-ink);
@@ -2206,6 +2199,22 @@ body.session-header-mounted #focusCard {
       color: #0f172a;
       border: 1px solid #dfe4f0;
       box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    }
+
+    .schedule-add-chip {
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      background: #ffffff;
+      border: 1px dashed #c9d5ff;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+      color: #1d4ed8;
+      font-size: 1.05rem;
+      padding: 8px 10px;
+    }
+
+    .schedule-add-chip:hover {
+      background: #eef2ff;
     }
 
     .schedule-chip-muted {

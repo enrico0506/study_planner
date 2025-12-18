@@ -877,20 +877,8 @@
 	        header.appendChild(dateLabel);
 	        header.appendChild(nameLabel);
 
-	        if (key && todayKey && key >= todayKey) {
-	          const addBtn = document.createElement("button");
-	          addBtn.type = "button";
-	          addBtn.className = "chip-btn chip-btn-primary schedule-day-add-btn";
-	          addBtn.textContent = "+ Todo";
-	          addBtn.addEventListener("click", (event) => {
-	            event.stopPropagation();
-	            openScheduleManualTodoModal(key);
-	          });
-	          header.appendChild(addBtn);
-	        }
-
-        const list = document.createElement("div");
-        list.className = "schedule-list";
+	        const list = document.createElement("div");
+	        list.className = "schedule-list";
 
         // Keep tasks grouped by subject in the order they appear
         const subjectOrder = [];
@@ -908,11 +896,11 @@
           orderedList.push(...(subjectGroups[sid] || []));
         });
 
-        if (!orderedList.length) {
-          const empty = document.createElement("div");
-          empty.className = "schedule-empty";
-          empty.textContent = "No focus captured.";
-          list.appendChild(empty);
+	        if (!orderedList.length) {
+	          const empty = document.createElement("div");
+	          empty.className = "schedule-empty";
+	          empty.textContent = "No focus captured.";
+	          list.appendChild(empty);
 	        } else {
 	          orderedList.forEach((todo) => {
 	            const isCustom = (todo.kind || "file") === "custom";
@@ -1041,13 +1029,27 @@
               scheduleDrag = null;
             });
 
-            list.appendChild(chip);
-          });
-        }
+	            list.appendChild(chip);
+	          });
+	        }
 
-        col.appendChild(header);
-        col.appendChild(list);
-        scheduleGrid.appendChild(col);
+	        if (key && todayKey && key >= todayKey) {
+	          const add = document.createElement("button");
+	          add.type = "button";
+	          add.className = "schedule-focus-chip schedule-add-chip";
+	          add.textContent = "+";
+	          add.title = "Add todo";
+	          add.setAttribute("aria-label", "Add todo");
+	          add.addEventListener("click", (event) => {
+	            event.stopPropagation();
+	            openScheduleManualTodoModal(key);
+	          });
+	          list.appendChild(add);
+	        }
+
+	        col.appendChild(header);
+	        col.appendChild(list);
+	        scheduleGrid.appendChild(col);
       }
     }
 
