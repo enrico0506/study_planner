@@ -353,6 +353,17 @@
       return true;
     }
 
+    function removeCalendarEvent(eventId) {
+      const id = String(eventId || "");
+      if (!id) return false;
+      const list = Array.isArray(calendarEvents) ? calendarEvents : [];
+      const before = list.length;
+      calendarEvents = list.filter((e) => !(e && e.id === id));
+      if (calendarEvents.length === before) return false;
+      saveCalendarEvents({ debounceMs: 0 });
+      return true;
+    }
+
     function getUpcomingCalendarEvents(windowDays = 5) {
       const now = new Date();
       now.setHours(0, 0, 0, 0);

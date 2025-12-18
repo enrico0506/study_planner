@@ -1070,6 +1070,7 @@
 	        if (hasOpenDeadline) col.classList.add("schedule-day-alert");
 
 	        dayCalendarEvents.forEach((evt) => {
+	          if (!evt.id) evt.id = "evt_legacy_" + createId();
 	          const chip = document.createElement("div");
 	          chip.className =
 	            "schedule-focus-chip schedule-deadline-chip schedule-deadline-" +
@@ -1081,6 +1082,23 @@
 	          const time = evt.time ? `${evt.time} · ` : "";
 	          label.textContent = time + (evt.title || "Deadline");
 	          label.title = evt.notes ? `${evt.title}\n\n${evt.notes}` : evt.title || "Deadline";
+
+	          const del = document.createElement("button");
+	          del.type = "button";
+	          del.className = "schedule-deadline-delete";
+	          del.textContent = "✕";
+	          del.title = "Delete";
+	          del.setAttribute("aria-label", "Delete");
+	          del.addEventListener("click", (e) => {
+	            e.stopPropagation();
+	            if (!confirm(`Delete "${evt.title || "calendar item"}"?`)) return;
+	            const removed = removeCalendarEvent(evt.id);
+	            if (removed) {
+	              loadCalendarEvents();
+	              renderScheduleView();
+	              showToast("Deleted.", "success");
+	            }
+	          });
 
 	          const cb = document.createElement("input");
 	          cb.type = "checkbox";
@@ -1096,6 +1114,7 @@
 	          });
 
 	          chip.appendChild(label);
+	          chip.appendChild(del);
 	          chip.appendChild(cb);
 
 	          chip.addEventListener("click", () => {

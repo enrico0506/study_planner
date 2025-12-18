@@ -2249,6 +2249,21 @@ body.session-header-mounted #focusCard {
       accent-color: #ef4444;
     }
 
+    .schedule-deadline-delete {
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      background: rgba(255, 255, 255, 0.7);
+      color: inherit;
+      border-radius: 10px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      flex: none;
+    }
+
+    .schedule-deadline-delete:hover {
+      background: rgba(255, 255, 255, 0.95);
+    }
+
     .schedule-day-alert .schedule-day-header {
       background: #fee2e2;
       border-color: #ef4444;
