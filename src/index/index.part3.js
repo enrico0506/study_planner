@@ -2068,22 +2068,25 @@
             const isPaused =
               isThisActive && activeStudy && activeStudy.paused;
 
-            if (!subjectsMaximized && !isPhoneTodayPicker()) {
-              if (!isThisActive) {
-                const studyBtn = document.createElement("button");
-                studyBtn.className = "chip-btn chip-btn-primary";
-                studyBtn.textContent = "Study";
+	            if (!subjectsMaximized && !isPhoneTodayPicker()) {
+	              if (!isThisActive) {
+	                const studyBtn = document.createElement("button");
+	                studyBtn.className = "chip-btn chip-btn-primary";
+	                studyBtn.textContent = "Study";
                 studyBtn.addEventListener("click", (event) => {
                   event.stopPropagation();
                   startStudy(subj.id, file);
                 });
-                rightMeta.appendChild(studyBtn);
-              } else {
-                const primaryBtn = document.createElement("button");
-                primaryBtn.className = "chip-btn chip-btn-primary";
-                primaryBtn.textContent = isPaused ? "Resume" : "Pause";
-                primaryBtn.addEventListener("click", (event) => {
-                  event.stopPropagation();
+	                rightMeta.appendChild(studyBtn);
+	              } else {
+	                const studyActionsRow = document.createElement("div");
+	                studyActionsRow.className = "file-study-actions-row";
+
+	                const primaryBtn = document.createElement("button");
+	                primaryBtn.className = "chip-btn chip-btn-primary";
+	                primaryBtn.textContent = isPaused ? "Resume" : "Pause";
+	                primaryBtn.addEventListener("click", (event) => {
+	                  event.stopPropagation();
                   if (activeStudy.paused) {
                     activeStudy.startTimeMs = Date.now();
                     activeStudy.paused = false;
@@ -2097,18 +2100,19 @@
                   }
                 });
 
-                const stopBtn = document.createElement("button");
-                stopBtn.className = "chip-btn chip-btn-danger";
-                stopBtn.textContent = "Stop";
-                stopBtn.addEventListener("click", (event) => {
-                  event.stopPropagation();
-                  stopStudy(subj.id, file.id);
-                });
+	                const stopBtn = document.createElement("button");
+	                stopBtn.className = "chip-btn chip-btn-danger";
+	                stopBtn.textContent = "Stop";
+	                stopBtn.addEventListener("click", (event) => {
+	                  event.stopPropagation();
+	                  stopStudy(subj.id, file.id);
+	                });
 
-                rightMeta.appendChild(primaryBtn);
-                rightMeta.appendChild(stopBtn);
-              }
-            }
+	                studyActionsRow.appendChild(primaryBtn);
+	                studyActionsRow.appendChild(stopBtn);
+	                rightMeta.insertBefore(studyActionsRow, rightMeta.firstChild);
+	              }
+	            }
 
             // Add-to-today controls:
             // - desktop: only show in Subjects maximized mode (existing behavior)

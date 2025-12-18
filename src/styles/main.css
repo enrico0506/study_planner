@@ -3722,10 +3722,29 @@ body.session-header-mounted #focusCard {
       background: #dbeafe;
     }
 
-    .file-row.studying {
-      background: #dcfce7;
-      border-color: #22c55e;
-    }
+	    .file-row.studying {
+	      background: #dcfce7;
+	      border-color: #22c55e;
+	    }
+
+	    .file-row.studying .file-actions-row {
+	      opacity: 0 !important;
+	      pointer-events: none !important;
+	      max-height: 0 !important;
+	      transform: translateY(-2px) !important;
+	    }
+
+	    .file-study-actions-row {
+	      display: grid;
+	      grid-template-columns: 1fr 1fr;
+	      gap: 6px;
+	      width: 100%;
+	    }
+
+	    .file-study-actions-row .chip-btn {
+	      width: 100%;
+	      min-width: 0;
+	    }
 
     .file-row.in-today {
       border-color: #22c55e;

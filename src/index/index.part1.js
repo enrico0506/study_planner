@@ -610,7 +610,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	      };
 
 	      const evaluate = () => {
-	        if (subjectsMaximized || isPhoneLayout()) return;
+	        if (isPhoneLayout()) return;
 	        if (!subjectTable.isConnected) return;
 
 	        const addCol = subjectTable.querySelector(".subject-add-column");
