@@ -412,22 +412,32 @@ const CVD_SAFE_SUBJECT_COLORS = [
       const rightBtn = document.getElementById("subjectScrollRightBtn");
       if (!leftBtn || !rightBtn) return;
 
-      if (!leftBtn.dataset.bound) {
-        leftBtn.dataset.bound = "1";
-        leftBtn.addEventListener("click", (event) => {
-          event.preventDefault();
-          const step = Math.max(240, Math.round(wrapper.clientWidth * 0.8));
-          wrapper.scrollBy({ left: -step, behavior: "smooth" });
-        });
-      }
-      if (!rightBtn.dataset.bound) {
-        rightBtn.dataset.bound = "1";
-        rightBtn.addEventListener("click", (event) => {
-          event.preventDefault();
-          const step = Math.max(240, Math.round(wrapper.clientWidth * 0.8));
-          wrapper.scrollBy({ left: step, behavior: "smooth" });
-        });
-      }
+	      if (!leftBtn.dataset.bound) {
+	        leftBtn.dataset.bound = "1";
+	        leftBtn.addEventListener("click", (event) => {
+	          event.preventDefault();
+	          const api = wrapper._spSubjectSnap;
+	          if (api && typeof api.moveByPages === "function") {
+	            api.moveByPages(-1);
+	            return;
+	          }
+	          const step = Math.max(240, Math.round(wrapper.clientWidth * 0.8));
+	          wrapper.scrollBy({ left: -step, behavior: "smooth" });
+	        });
+	      }
+	      if (!rightBtn.dataset.bound) {
+	        rightBtn.dataset.bound = "1";
+	        rightBtn.addEventListener("click", (event) => {
+	          event.preventDefault();
+	          const api = wrapper._spSubjectSnap;
+	          if (api && typeof api.moveByPages === "function") {
+	            api.moveByPages(1);
+	            return;
+	          }
+	          const step = Math.max(240, Math.round(wrapper.clientWidth * 0.8));
+	          wrapper.scrollBy({ left: step, behavior: "smooth" });
+	        });
+	      }
 
       const update = () => {
         const max = Math.max(0, wrapper.scrollWidth - wrapper.clientWidth);
@@ -516,32 +526,45 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	        subjectSnapAnim.rafId = requestAnimationFrame(tick);
 	      };
 
-	      const snapToNearest = (options = {}) => {
+	      const getSnapMetrics = () => {
 	        const cols = Array.from(
 	          subjectTable.querySelectorAll(".subject-column:not(.subject-add-column)")
 	        );
-	        if (!cols.length) return;
-
+	        if (!cols.length) return null;
 	        const wrapperStyle = window.getComputedStyle(wrapper);
 	        const padLeft = parseFloat(wrapperStyle.paddingLeft) || 0;
-
 	        const computed = window.getComputedStyle(subjectTable);
 	        const gapRaw = computed.columnGap || computed.gap || "0px";
 	        const gap = parseFloat(gapRaw) || 0;
 	        const colWidth = cols[0].getBoundingClientRect().width || cols[0].offsetWidth || 0;
-	        if (!colWidth) return;
-
+	        if (!colWidth) return null;
 	        const step = colWidth + gap;
 	        const visible = cols.length >= 4 ? 4 : Math.max(1, cols.length);
 	        const maxIdx = Math.max(0, cols.length - visible);
-	        const idx = Math.max(0, Math.min(maxIdx, Math.round(wrapper.scrollLeft / step)));
+	        return { cols, padLeft, step, visible, maxIdx };
+	      };
+
+	      const computeTargetLeftForIdx = (idx) => {
+	        const m = getSnapMetrics();
+	        if (!m) return null;
+	        const i = Math.max(0, Math.min(m.maxIdx, idx));
 	        const wrapperRect = wrapper.getBoundingClientRect();
-	        const colRect = cols[idx].getBoundingClientRect();
+	        const colRect = m.cols[i].getBoundingClientRect();
 	        const colLeft = colRect.left - wrapperRect.left + wrapper.scrollLeft;
 	        const target = Math.min(
-	          Math.max(0, colLeft - padLeft),
+	          Math.max(0, colLeft - m.padLeft),
 	          Math.max(0, wrapper.scrollWidth - wrapper.clientWidth)
 	        );
+	        return { target, idx: i, maxIdx: m.maxIdx, visible: m.visible };
+	      };
+
+	      const snapToNearest = (options = {}) => {
+	        const m = getSnapMetrics();
+	        if (!m) return;
+	        const idx = Math.max(0, Math.min(m.maxIdx, Math.round(wrapper.scrollLeft / m.step)));
+	        const computed = computeTargetLeftForIdx(idx);
+	        if (!computed) return;
+	        const target = computed.target;
 	        if (Math.abs(wrapper.scrollLeft - target) < 1.5) return;
 	        if (options.behavior === "auto" || options.behavior === "instant") {
 	          cancelSnapAnim();
@@ -549,6 +572,43 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	          return;
 	        }
 	        smoothScrollToLeft(target, options.durationMs || 420);
+	      };
+
+	      const getCurrentSnapIndex = () => {
+	        const m = getSnapMetrics();
+	        if (!m) return 0;
+	        return Math.max(0, Math.min(m.maxIdx, Math.round(wrapper.scrollLeft / m.step)));
+	      };
+
+	      const snapToIndex = (idx, options = {}) => {
+	        const computed = computeTargetLeftForIdx(idx);
+	        if (!computed) return;
+	        const target = computed.target;
+	        if (Math.abs(wrapper.scrollLeft - target) < 1.5) return;
+	        if (options.behavior === "auto" || options.behavior === "instant") {
+	          cancelSnapAnim();
+	          wrapper.scrollLeft = target;
+	          return;
+	        }
+	        smoothScrollToLeft(target, options.durationMs || 440);
+	      };
+
+	      const scrollToEnd = () => {
+	        cancelSnapAnim();
+	        wrapper.scrollTo({ left: wrapper.scrollWidth - wrapper.clientWidth, behavior: "smooth" });
+	      };
+
+	      const moveByPages = (deltaPages) => {
+	        const m = getSnapMetrics();
+	        if (!m) return;
+	        const cur = getCurrentSnapIndex();
+	        const pageSize = m.visible >= 4 ? 4 : m.visible;
+	        const nextIdx = Math.max(0, Math.min(m.maxIdx, cur + deltaPages * pageSize));
+	        if (deltaPages > 0 && cur >= m.maxIdx) {
+	          scrollToEnd();
+	          return;
+	        }
+	        snapToIndex(nextIdx, { behavior: "smooth", durationMs: 520 });
 	      };
 
 	      const evaluate = () => {
@@ -602,6 +662,13 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	      ["wheel", "pointerdown", "touchstart", "keydown"].forEach((evt) => {
 	        wrapper.addEventListener(evt, cancelSnapAnim, { passive: true });
 	      });
+
+	      wrapper._spSubjectSnap = {
+	        cancel: cancelSnapAnim,
+	        snapToNearest,
+	        snapToIndex,
+	        moveByPages
+	      };
 
 	      window.addEventListener("resize", () => {
 	        if (subjectSnapTimer) clearTimeout(subjectSnapTimer);
