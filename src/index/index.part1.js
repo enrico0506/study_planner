@@ -448,6 +448,8 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	    let subjectSnapTimer = null;
 	    let subjectAddPeekTimer = null;
 	    let lastSubjectAddClickAt = 0;
+	    let subjectSnapAnim = null;
+	    let subjectSnapAnimating = false;
 
 	    function ensureSubjectFourSnap() {
 	      if (!subjectTable) return;
@@ -472,6 +474,47 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
 	      if (wrapper.dataset.subjectSnapBound) return;
 	      wrapper.dataset.subjectSnapBound = "1";
+
+	      const prefersReducedMotion =
+	        window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+	      const cancelSnapAnim = () => {
+	        if (subjectSnapAnim && subjectSnapAnim.rafId) {
+	          cancelAnimationFrame(subjectSnapAnim.rafId);
+	        }
+	        subjectSnapAnim = null;
+	        subjectSnapAnimating = false;
+	      };
+
+	      const smoothScrollToLeft = (targetLeft, durationMs = 420) => {
+	        if (!Number.isFinite(targetLeft)) return;
+	        cancelSnapAnim();
+	        if (prefersReducedMotion) {
+	          wrapper.scrollLeft = targetLeft;
+	          return;
+	        }
+	        const from = wrapper.scrollLeft;
+	        const to = targetLeft;
+	        if (Math.abs(from - to) < 1.5) return;
+	        const start = performance.now();
+	        subjectSnapAnim = { rafId: 0, start, from, to };
+
+	        const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+	        const tick = (now) => {
+	          if (!subjectSnapAnim) return;
+	          subjectSnapAnimating = true;
+	          const elapsed = now - start;
+	          const t = Math.max(0, Math.min(1, elapsed / durationMs));
+	          const eased = easeOutCubic(t);
+	          wrapper.scrollLeft = from + (to - from) * eased;
+	          if (t < 1) {
+	            subjectSnapAnim.rafId = requestAnimationFrame(tick);
+	          } else {
+	            cancelSnapAnim();
+	          }
+	        };
+	        subjectSnapAnim.rafId = requestAnimationFrame(tick);
+	      };
 
 	      const snapToNearest = (options = {}) => {
 	        const cols = Array.from(
@@ -500,7 +543,12 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	          Math.max(0, wrapper.scrollWidth - wrapper.clientWidth)
 	        );
 	        if (Math.abs(wrapper.scrollLeft - target) < 1.5) return;
-	        wrapper.scrollTo({ left: target, behavior: options.behavior || "smooth" });
+	        if (options.behavior === "auto" || options.behavior === "instant") {
+	          cancelSnapAnim();
+	          wrapper.scrollLeft = target;
+	          return;
+	        }
+	        smoothScrollToLeft(target, options.durationMs || 420);
 	      };
 
 	      const evaluate = () => {
@@ -541,6 +589,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	      wrapper.addEventListener(
 	        "scroll",
 	        () => {
+	          if (subjectSnapAnimating) return;
 	          if (subjectSnapTimer) clearTimeout(subjectSnapTimer);
 	          subjectSnapTimer = setTimeout(() => {
 	            subjectSnapTimer = null;
@@ -549,6 +598,10 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	        },
 	        { passive: true }
 	      );
+
+	      ["wheel", "pointerdown", "touchstart", "keydown"].forEach((evt) => {
+	        wrapper.addEventListener(evt, cancelSnapAnim, { passive: true });
+	      });
 
 	      window.addEventListener("resize", () => {
 	        if (subjectSnapTimer) clearTimeout(subjectSnapTimer);
