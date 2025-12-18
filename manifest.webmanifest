@@ -1,18 +1,63 @@
 {
   "name": "Study Planner",
-  "short_name": "StudyPlanner",
-  "start_url": "./index.html",
-  "scope": "./",
+  "short_name": "Study Planner",
+  "description": "A lightweight study planner with board, calendar, timetable, notes, and flashcards.",
+  "start_url": "/index.html",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#2f62f4",
   "icons": [
     {
-      "src": "./public/icons/app-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "url": "/index.html"
+    },
+    {
+      "name": "Calendar",
+      "short_name": "Calendar",
+      "url": "/calendar.html"
+    },
+    {
+      "name": "Stundenplan",
+      "short_name": "Stundenplan",
+      "url": "/stundenplan.html"
+    },
+    {
+      "name": "Notizen",
+      "short_name": "Notizen",
+      "url": "/notizen.html"
+    },
+    {
+      "name": "Karteikarten",
+      "short_name": "Karteikarten",
+      "url": "/karteikarten.html"
     }
   ]
 }
-

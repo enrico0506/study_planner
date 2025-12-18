@@ -132,6 +132,20 @@ function sendHtml(res, filename) {
   res.sendFile(path.join(__dirname, filename));
 }
 
+// PWA assets (explicit headers for installability + updates)
+app.get("/manifest.webmanifest", (_req, res) => {
+  res.type("application/manifest+json");
+  res.setHeader("Cache-Control", "no-cache");
+  res.sendFile(path.join(__dirname, "manifest.webmanifest"));
+});
+
+app.get("/sw.js", (_req, res) => {
+  res.type("application/javascript");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Service-Worker-Allowed", "/");
+  res.sendFile(path.join(__dirname, "sw.js"));
+});
+
 // Front-end entry points
 app.get("/", (_req, res) => sendHtml(res, "index.html"));
 app.get("/index.html", (_req, res) => sendHtml(res, "index.html"));
@@ -144,6 +158,7 @@ app.get("/notizen", (_req, res) => res.redirect("/notizen.html"));
 app.get("/study-confidence-table.html", (_req, res) =>
   sendHtml(res, "study-confidence-table.html")
 );
+app.get("/offline.html", (_req, res) => sendHtml(res, "offline.html"));
 
 // Health check
 app.get("/healthz", (_req, res) => res.send("ok"));

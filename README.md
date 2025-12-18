@@ -13,8 +13,22 @@ Lightweight study board with subjects/files, Pomodoro timer, today's focus list,
 
 ## Run
 - Open `index.html` directly in a browser (no build step; data in `localStorage`).
-- Or serve locally to avoid any file:// quirks: `python -m http.server 8000` then visit http://localhost:8000/.
-- Or run via Node/Express (same static files, plus health/db endpoints): `npm install` then `npm start` (defaults to port `10000`).
+- For PWA testing / installability, use Node/Express (serves `/manifest.webmanifest`, `/sw.js`, `/icons/*` correctly): `npm install` then `npm start` (defaults to port `10000`).
+- Optional: (re)generate PWA icons: `npm run gen:icons` (also runs automatically on `npm install`).
+
+## PWA (Installable App)
+Installability requirements are met when served on HTTPS (production) or on `localhost` (local dev).
+
+### Verify installability
+- Open Chrome/Edge → DevTools → **Application**
+  - **Manifest**: name + icons (192 & 512) should be detected
+  - **Service Workers**: `sw.js` should be active, with a fetch handler
+- Run Lighthouse (PWA/installability checks): DevTools → **Lighthouse**
+- Offline test: DevTools → **Network** → set **Offline**, then reload → app shell or `offline.html` should load (no browser error page)
+
+### Install (Desktop)
+- Windows: Chrome/Edge → click the **Install** icon in the address bar (or menu → “Install Study Planner…”)
+- Linux: Chrome/Chromium/Edge → click the **Install** icon in the address bar (or menu → “Install Study Planner…”)
 
 ## Accounts (optional)
 This repo includes a tiny email+password login and a per-user cloud sync of all `localStorage` keys that start with `study*`.

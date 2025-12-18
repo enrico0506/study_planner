@@ -8,7 +8,7 @@
   const CONFIG_KEY = "studyFocusConfig_v1";
   const AUTOSAVE_MS = 300;
   const FOLDER_ALL = "__all__";
-  const JSZIP_LOCAL_SRC = "./public/vendor/jszip.min.js";
+  const JSZIP_LOCAL_SRC = "/vendor/jszip.min.js";
   const JSZIP_CDN_SRC = "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
   const RECENT_LIMIT = 5;
 

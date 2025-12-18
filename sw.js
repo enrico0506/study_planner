@@ -1,52 +1,115 @@
-/* Study Planner service worker: offline-first cache for static assets. */
+/* Study Planner service worker: app-shell caching + offline navigation fallback. */
 (() => {
-  const CACHE_VERSION = "v3";
-  const STATIC_CACHE = `studyplanner-static-${CACHE_VERSION}`;
+  const VERSION = "v4";
+  const SHELL_CACHE = `study-planner-shell-${VERSION}`;
+  const RUNTIME_CACHE = `study-planner-runtime-${VERSION}`;
 
   const PRECACHE_URLS = [
-    "./",
-    "./index.html",
-    "./calendar.html",
-    "./stundenplan.html",
-    "./karteikarten.html",
-    "./account.html",
-    "./notizen.html",
-    "./manifest.webmanifest",
-    "./public/vendor/jszip.min.js",
-    "./src/page-menu.js",
-    "./src/sync.js",
-    "./src/storage.js",
-    "./src/data-tools.js",
-    "./src/pwa.js",
-    "./src/a11y-utils.js",
-    "./src/notes.js",
-    "./src/index/index.part1.js",
-    "./src/index/index.part2.js",
-    "./src/index/index.part3.js",
-    "./src/index/index.part4.js",
-    "./src/calendar.js",
-    "./src/stundenplan.js",
-    "./src/karteikarten.js",
-    "./src/account.js",
-    "./src/notizen.js",
-    "./src/styles/main.css",
-    "./src/styles/mobile.css",
-    "./src/styles/phone.css",
-    "./src/styles/phone-menu.css",
-    "./src/styles/phone-modals.css",
-    "./src/styles/phone-pages.css",
-    "./src/styles/a11y.css",
-    "./src/styles/enhancements.css",
-    "./src/styles/notizen.css",
-    "./public/icons/app-icon.svg"
+    "/",
+    "/index.html",
+    "/calendar.html",
+    "/stundenplan.html",
+    "/karteikarten.html",
+    "/notizen.html",
+    "/account.html",
+    "/study-confidence-table.html",
+    "/offline.html",
+    "/manifest.webmanifest",
+    "/pwa.js",
+
+    "/icons/app-icon.svg",
+    "/icons/icon-192.png",
+    "/icons/icon-512.png",
+    "/icons/icon-192-maskable.png",
+    "/icons/icon-512-maskable.png",
+    "/icons/apple-touch-icon.png",
+
+    "/vendor/jszip.min.js",
+
+    "/src/storage.js",
+    "/src/sync.js",
+    "/src/page-menu.js",
+    "/src/a11y-utils.js",
+    "/src/data-tools.js",
+    "/src/notes.js",
+    "/src/assignments.js",
+    "/src/assignments-ui.js",
+    "/src/autoplan.js",
+    "/src/time-budget.js",
+    "/src/review-engine.js",
+    "/src/exam-mode.js",
+    "/src/notes-to-flashcards.js",
+    "/src/notifications.js",
+    "/src/session-journal.js",
+    "/src/insights.js",
+    "/src/calendar.js",
+    "/src/stundenplan.js",
+    "/src/karteikarten.js",
+    "/src/account.js",
+    "/src/notizen.js",
+    "/src/shared/sessionHeader.js",
+    "/src/index/index.part1.js",
+    "/src/index/index.part2.js",
+    "/src/index/index.part3.js",
+    "/src/index/index.part4.js",
+    "/src/phone/phone-nav.js",
+
+    "/src/styles/main.css",
+    "/src/styles/mobile.css",
+    "/src/styles/phone.css",
+    "/src/styles/phone-pages.css",
+    "/src/styles/phone-bottom-nav.css",
+    "/src/styles/phone-menu.css",
+    "/src/styles/phone-modals.css",
+    "/src/styles/a11y.css",
+    "/src/styles/enhancements.css",
+    "/src/styles/calendar-extras.css",
+    "/src/styles/notes.css",
+    "/src/styles/exam-mode.css",
+    "/src/styles/insights.css",
+    "/src/styles/notizen.css",
+    "/src/styles/karteikarten.css",
+    "/src/styles/stundenplan.css"
   ];
+
+  function isSameOrigin(url) {
+    return url.origin === self.location.origin;
+  }
+
+  function isBypassRequest(req, url) {
+    if (req.method !== "GET") return true;
+    if (!isSameOrigin(url)) return true;
+    if (url.pathname === "/sw.js") return true;
+    if (url.pathname.startsWith("/api/")) return true;
+    if (req.headers.get("authorization")) return true;
+    return false;
+  }
+
+  function isStaticAsset(url) {
+    return (
+      url.pathname.startsWith("/src/") ||
+      url.pathname.startsWith("/icons/") ||
+      url.pathname.startsWith("/vendor/") ||
+      url.pathname === "/manifest.webmanifest" ||
+      url.pathname.endsWith(".css") ||
+      url.pathname.endsWith(".js") ||
+      url.pathname.endsWith(".png") ||
+      url.pathname.endsWith(".svg")
+    );
+  }
+
+  self.addEventListener("message", (event) => {
+    if (event.data && event.data.type === "SKIP_WAITING") {
+      void self.skipWaiting();
+    }
+  });
 
   self.addEventListener("install", (event) => {
     event.waitUntil(
       (async () => {
-        const cache = await caches.open(STATIC_CACHE);
+        const cache = await caches.open(SHELL_CACHE);
         await cache.addAll(PRECACHE_URLS);
-        self.skipWaiting();
+        await self.skipWaiting();
       })()
     );
   });
@@ -56,33 +119,66 @@
       (async () => {
         const keys = await caches.keys();
         await Promise.all(
-          keys.map((k) => (k.startsWith("studyplanner-static-") && k !== STATIC_CACHE ? caches.delete(k) : null))
+          keys.map((k) => {
+            if (k === SHELL_CACHE || k === RUNTIME_CACHE) return null;
+            if (k.startsWith("study-planner-shell-") || k.startsWith("study-planner-runtime-")) {
+              return caches.delete(k);
+            }
+            return null;
+          })
         );
-        self.clients.claim();
+        await self.clients.claim();
       })()
     );
   });
 
   self.addEventListener("fetch", (event) => {
     const req = event.request;
-    if (req.method !== "GET") return;
     const url = new URL(req.url);
-    if (url.origin !== self.location.origin) return;
+    if (isBypassRequest(req, url)) return;
 
-    event.respondWith(
-      (async () => {
-        const cache = await caches.open(STATIC_CACHE);
-        const cached = await cache.match(req);
-        if (cached) return cached;
-        try {
-          const res = await fetch(req);
-          if (res && res.ok) cache.put(req, res.clone());
-          return res;
-        } catch {
-          if (req.mode === "navigate") return (await cache.match("./index.html")) || (await cache.match("./"));
-          throw new Error("offline");
-        }
-      })()
-    );
+    if (req.mode === "navigate") {
+      event.respondWith(
+        (async () => {
+          try {
+            const res = await fetch(req);
+            const runtime = await caches.open(RUNTIME_CACHE);
+            if (res && res.ok) runtime.put(req, res.clone());
+            return res;
+          } catch {
+            return (
+              (await caches.match(req)) ||
+              (await caches.match("/index.html")) ||
+              (await caches.match("/offline.html"))
+            );
+          }
+        })()
+      );
+      return;
+    }
+
+    if (isStaticAsset(url)) {
+      event.respondWith(
+        (async () => {
+          const cache = await caches.open(RUNTIME_CACHE);
+          const cached = await cache.match(req);
+          const fetchPromise = fetch(req)
+            .then((res) => {
+              if (res && res.ok) cache.put(req, res.clone());
+              return res;
+            })
+            .catch(() => null);
+
+          if (cached) {
+            event.waitUntil(fetchPromise);
+            return cached;
+          }
+
+          const res = await fetchPromise;
+          if (res) return res;
+          return cached || Response.error();
+        })()
+      );
+    }
   });
 })();
