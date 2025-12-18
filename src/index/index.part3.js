@@ -813,29 +813,6 @@
 	      closeScheduleManualTodoModal();
 	    }
 
-	    function getScheduleManualAddDayKey() {
-	      const val = scheduleManualAddDate && scheduleManualAddDate.value ? scheduleManualAddDate.value : "";
-	      if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
-	      if (isPhoneLayout()) {
-	        const cursor = new Date(getScheduleCursorDay());
-	        const key = dateToKey(cursor);
-	        if (key) return key;
-	      }
-	      return getTodayKey();
-	    }
-
-	    function ensureScheduleManualAddControlsSynced({ phone, start }) {
-	      if (!scheduleManualAddDate) return;
-	      const todayKey = getTodayKey();
-	      scheduleManualAddDate.min = todayKey;
-	      if (phone) {
-	        const key = dateToKey(start) || todayKey;
-	        scheduleManualAddDate.value = key;
-	      } else if (!scheduleManualAddDate.value) {
-	        scheduleManualAddDate.value = todayKey;
-	      }
-	    }
-
 	    function renderScheduleView() {
 	      if (!scheduleGrid) return;
 	      const phone = isPhoneLayout();
@@ -868,16 +845,14 @@
         if (scheduleTodayBtn) scheduleTodayBtn.textContent = "This week";
 	      }
 
-	      ensureScheduleManualAddControlsSynced({ phone, start });
-
 	      scheduleGrid.innerHTML = "";
 	      const todayKey = getTodayKey();
 
-      for (let i = 0; i < daysToRender; i++) {
-        const day = new Date(start);
-        day.setDate(start.getDate() + i);
-        const key = dateToKey(day);
-        const dayList = Array.isArray(dailyFocusMap[key]) ? dailyFocusMap[key] : [];
+	      for (let i = 0; i < daysToRender; i++) {
+	        const day = new Date(start);
+	        day.setDate(start.getDate() + i);
+	        const key = dateToKey(day);
+	        const dayList = Array.isArray(dailyFocusMap[key]) ? dailyFocusMap[key] : [];
 
         const col = document.createElement("div");
         col.className = "schedule-day";
@@ -895,12 +870,24 @@
           " " +
           day.getFullYear();
 
-        const nameLabel = document.createElement("div");
-        nameLabel.className = "schedule-day-name";
-        nameLabel.textContent = day.toLocaleString(undefined, { weekday: "short" });
+	        const nameLabel = document.createElement("div");
+	        nameLabel.className = "schedule-day-name";
+	        nameLabel.textContent = day.toLocaleString(undefined, { weekday: "short" });
 
-        header.appendChild(dateLabel);
-        header.appendChild(nameLabel);
+	        header.appendChild(dateLabel);
+	        header.appendChild(nameLabel);
+
+	        if (key && todayKey && key >= todayKey) {
+	          const addBtn = document.createElement("button");
+	          addBtn.type = "button";
+	          addBtn.className = "chip-btn chip-btn-primary schedule-day-add-btn";
+	          addBtn.textContent = "+ Todo";
+	          addBtn.addEventListener("click", (event) => {
+	            event.stopPropagation();
+	            openScheduleManualTodoModal(key);
+	          });
+	          header.appendChild(addBtn);
+	        }
 
         const list = document.createElement("div");
         list.className = "schedule-list";

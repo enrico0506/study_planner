@@ -1104,25 +1104,6 @@
       }
     });
 
-    function openScheduleManualTodoFromControls() {
-      const key = getScheduleManualAddDayKey();
-      if (!key) return;
-      if (key < getTodayKey()) {
-        showNotice("Please pick today or a future day.", "warn");
-        return;
-      }
-      openScheduleManualTodoModal(key);
-    }
-
-    scheduleManualAddInput?.addEventListener("click", () => openScheduleManualTodoFromControls());
-    scheduleManualAddInput?.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        openScheduleManualTodoFromControls();
-      }
-    });
-    scheduleManualAddBtn?.addEventListener("click", () => openScheduleManualTodoFromControls());
-
     scheduleManualTodoSubtaskAdd?.addEventListener("click", addScheduleManualTodoSubtaskFromInput);
     scheduleManualTodoSubtaskInput?.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {

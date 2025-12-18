@@ -2132,52 +2132,6 @@ body.session-header-mounted #focusCard {
       margin-top: 6px;
     }
 
-    .schedule-manual-add {
-      margin-top: 14px;
-      padding-top: 12px;
-      border-top: 1px solid #edf0f7;
-    }
-
-    .schedule-manual-add-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .schedule-manual-add-input {
-      flex: 1;
-      min-width: 220px;
-      border: 1px solid #dfe4f0;
-      border-radius: 12px;
-      padding: 10px 12px;
-      background: #ffffff;
-      color: var(--accent-ink);
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-      cursor: pointer;
-    }
-
-    .schedule-manual-add-input:focus {
-      outline: none;
-      border-color: #c9d5ff;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14);
-    }
-
-    .schedule-manual-add-date {
-      border: 1px solid #dfe4f0;
-      border-radius: 12px;
-      padding: 10px 12px;
-      background: #ffffff;
-      color: var(--accent-ink);
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-    }
-
-    .schedule-manual-add-hint {
-      margin-top: 6px;
-      font-size: 0.82rem;
-      color: var(--ink-muted);
-    }
-
     .schedule-day {
       background: #ffffff;
       border: 1px solid #e6e9f2;
@@ -2196,6 +2150,13 @@ body.session-header-mounted #focusCard {
       gap: 6px;
       border-bottom: 1px solid #edf0f7;
       padding-bottom: 6px;
+    }
+
+    .schedule-day-add-btn {
+      padding: 6px 10px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      line-height: 1;
     }
 
     .schedule-day-date {
