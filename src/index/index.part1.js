@@ -358,15 +358,10 @@ const CVD_SAFE_SUBJECT_COLORS = [
       );
     }
 
-    function applyDesktopSubjectSizing() {
-      if (!subjectTable) return;
-      if (subjectsMaximized) {
-        subjectTable.classList.remove("subject-table-dynamic");
-        subjectTable.style.removeProperty("grid-template-columns");
-        return;
-      }
-      if (isPhoneLayout()) return;
-      if (window.matchMedia && window.matchMedia("(max-width: 960px)").matches) return;
+	    function applyDesktopSubjectSizing() {
+	      if (!subjectTable) return;
+	      if (isPhoneLayout()) return;
+	      if (window.matchMedia && window.matchMedia("(max-width: 960px)").matches) return;
 
       const wrapper = subjectTable.closest(".table-wrapper");
       if (!wrapper) return;
@@ -389,10 +384,12 @@ const CVD_SAFE_SUBJECT_COLORS = [
       const gapRaw = tableStyles.columnGap || tableStyles.gap || "0px";
       const gap = parseFloat(gapRaw) || 0;
 
-      const visibleSubjects = count >= 4 ? 4 : Math.max(1, count);
-      const base =
-        (viewportWidth - gap * Math.max(0, visibleSubjects - 1)) / Math.max(1, visibleSubjects);
-      const subjectWidth = Math.round(Math.max(190, Math.min(360, base)));
+	      const desiredVisible = subjectsMaximized ? 5 : 4;
+	      const visibleSubjects = count >= desiredVisible ? desiredVisible : Math.max(1, count);
+	      const base =
+	        (viewportWidth - gap * Math.max(0, visibleSubjects - 1)) / Math.max(1, visibleSubjects);
+	      const minWidth = subjectsMaximized ? 170 : 190;
+	      const subjectWidth = Math.round(Math.max(minWidth, Math.min(360, base)));
 
       const template = `repeat(${count}, ${subjectWidth}px) ${addColWidth}px`;
       subjectTable.classList.add("subject-table-dynamic");
@@ -463,7 +460,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
 	    function ensureSubjectFourSnap() {
 	      if (!subjectTable) return;
-	      if (subjectsMaximized) return;
 	      if (isPhoneLayout()) return;
 	      if (window.matchMedia && window.matchMedia("(max-width: 960px)").matches) return;
 
@@ -539,7 +535,8 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	        const colWidth = cols[0].getBoundingClientRect().width || cols[0].offsetWidth || 0;
 	        if (!colWidth) return null;
 	        const step = colWidth + gap;
-	        const visible = cols.length >= 4 ? 4 : Math.max(1, cols.length);
+	        const desiredVisible = subjectsMaximized ? 5 : 4;
+	        const visible = cols.length >= desiredVisible ? desiredVisible : Math.max(1, cols.length);
 	        const maxIdx = Math.max(0, cols.length - visible);
 	        return { cols, padLeft, step, visible, maxIdx };
 	      };
@@ -602,7 +599,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	        const m = getSnapMetrics();
 	        if (!m) return;
 	        const cur = getCurrentSnapIndex();
-	        const pageSize = m.visible >= 4 ? 4 : m.visible;
+	        const pageSize = m.visible;
 	        const nextIdx = Math.max(0, Math.min(m.maxIdx, cur + deltaPages * pageSize));
 	        if (deltaPages > 0 && cur >= m.maxIdx) {
 	          scrollToEnd();
