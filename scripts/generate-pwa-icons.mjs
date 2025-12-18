@@ -28,8 +28,46 @@ async function renderSvgToPng({ svg, size }) {
   const resvg = new Resvg(svg, {
     fitTo: { mode: "width", value: size }
   });
+  for (const href of resvg.imagesToResolve()) {
+    if (href.startsWith("data:")) continue;
+    const filePath = path.join(iconsDir, href);
+    const buffer = await fs.readFile(filePath);
+    resvg.resolveImage(href, buffer);
+  }
   const rendered = resvg.render();
   return Buffer.from(rendered.asPng());
+}
+
+async function readLogoDataUri() {
+  const candidates = ["logo.png", "logo.jpg", "logo.jpeg"];
+  for (const filename of candidates) {
+    const filePath = path.join(iconsDir, filename);
+    if (!(await fileExists(filePath))) continue;
+    const buffer = await fs.readFile(filePath);
+    const ext = path.extname(filename).toLowerCase();
+    const mime =
+      ext === ".png" ? "image/png" : ext === ".jpg" || ext === ".jpeg" ? "image/jpeg" : null;
+    if (!mime) continue;
+    return `data:${mime};base64,${buffer.toString("base64")}`;
+  }
+  return null;
+}
+
+function inlineLogo(svg, dataUri) {
+  if (!dataUri) return svg;
+  return svg
+    .replaceAll('href="logo.jpeg"', `href="${dataUri}"`)
+    .replaceAll("href='logo.jpeg'", `href='${dataUri}'`)
+    .replaceAll('xlink:href="logo.jpeg"', `xlink:href="${dataUri}"`)
+    .replaceAll("xlink:href='logo.jpeg'", `xlink:href='${dataUri}'`)
+    .replaceAll('href="logo.jpg"', `href="${dataUri}"`)
+    .replaceAll("href='logo.jpg'", `href='${dataUri}'`)
+    .replaceAll('xlink:href="logo.jpg"', `xlink:href="${dataUri}"`)
+    .replaceAll("xlink:href='logo.jpg'", `xlink:href='${dataUri}'`)
+    .replaceAll('href="logo.png"', `href="${dataUri}"`)
+    .replaceAll("href='logo.png'", `href='${dataUri}'`)
+    .replaceAll('xlink:href="logo.png"', `xlink:href="${dataUri}"`)
+    .replaceAll("xlink:href='logo.png'", `xlink:href='${dataUri}'`);
 }
 
 async function fileExists(filePath) {
@@ -54,9 +92,12 @@ async function main() {
     fs.readFile(sourceAnySvg, "utf8"),
     fs.readFile(sourceMaskableSvg, "utf8")
   ]);
+  const logoDataUri = await readLogoDataUri();
+  const inlinedAnySvg = inlineLogo(anySvg, logoDataUri);
+  const inlinedMaskableSvg = inlineLogo(maskableSvg, logoDataUri);
 
   for (const target of targets) {
-    const svg = target.src === sourceMaskableSvg ? maskableSvg : anySvg;
+    const svg = target.src === sourceMaskableSvg ? inlinedMaskableSvg : inlinedAnySvg;
     const png = await renderSvgToPng({ svg, size: target.size });
     await fs.writeFile(path.join(iconsDir, target.out), png);
   }
@@ -66,4 +107,3 @@ main().catch((err) => {
   console.error("[gen:icons] Failed to generate PWA icons:", err);
   process.exitCode = 1;
 });
-

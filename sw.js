@@ -1,6 +1,6 @@
 /* Study Planner service worker: app-shell caching + offline navigation fallback. */
 (() => {
-  const VERSION = "v4";
+  const VERSION = "v6";
   const SHELL_CACHE = `study-planner-shell-${VERSION}`;
   const RUNTIME_CACHE = `study-planner-runtime-${VERSION}`;
 
@@ -18,6 +18,7 @@
     "/pwa.js",
 
     "/icons/app-icon.svg",
+    "/icons/logo.jpeg",
     "/icons/icon-192.png",
     "/icons/icon-512.png",
     "/icons/icon-192-maskable.png",
