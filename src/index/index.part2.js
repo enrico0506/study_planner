@@ -757,7 +757,7 @@
       return n;
     }
 
-    function barRow(label, valueMs, maxMs) {
+    function barRow(label, valueMs, maxMs, color) {
       const row = el("div", "bar-row");
       const left = el("div", "", label);
       const right = el("div", "calendar-event-meta", formatDuration(valueMs));
@@ -765,6 +765,7 @@
       const fill = el("div", "bar-fill");
       const pct = maxMs ? Math.max(2, Math.round((valueMs * 100) / maxMs)) : 0;
       fill.style.width = `${Math.min(100, pct)}%`;
+      if (color) fill.style.background = String(color);
       track.appendChild(fill);
       left.appendChild(track);
       row.appendChild(left);
@@ -793,7 +794,14 @@
       if (!sortedSubj.length) {
         listA.appendChild(el("div", "calendar-empty", "No study time tracked today yet."));
       } else {
-        sortedSubj.forEach((r) => listA.appendChild(barRow(r.subj?.name || "Subject", r.ms, maxSubj)));
+        sortedSubj.forEach((r) => {
+          const c = (r.subj && r.subj.id && typeof getSubjectColorById === "function")
+            ? getSubjectColorById(r.subj.id)
+            : typeof getSubjectColor === "function"
+              ? getSubjectColor(r.subjIndex || 0)
+              : null;
+          listA.appendChild(barRow(r.subj?.name || "Subject", r.ms, maxSubj, c));
+        });
       }
       secA.appendChild(listA);
       todayStatsModalBody.appendChild(secA);
@@ -808,7 +816,10 @@
       } else {
         tasks.forEach((r) => {
           const label = `${r.subj?.name || "Subject"} · ${(r.file && r.file.name) || "File"}`;
-          listB.appendChild(barRow(label, r.ms, maxTask));
+          const c = (r.subj && r.subj.id && typeof getSubjectColorById === "function")
+            ? getSubjectColorById(r.subj.id)
+            : null;
+          listB.appendChild(barRow(label, r.ms, maxTask, c));
         });
       }
       secB.appendChild(listB);
