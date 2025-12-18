@@ -559,7 +559,10 @@
 	            studyBtn.textContent = "Study";
 	            studyBtn.addEventListener("click", (e) => {
 	              e.stopPropagation();
-	              if (subj && file) startStudy(todo.subjectId, file);
+	              if (subj && file) {
+	                moveTodoToTop(todo.id, { render: false });
+	                startStudy(todo.subjectId, file);
+	              }
 	            });
 	            footer.appendChild(studyBtn);
 	          } else {
