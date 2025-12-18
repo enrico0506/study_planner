@@ -2509,12 +2509,54 @@ body.session-header-mounted #focusCard {
   flex-direction: column;
   gap: 10px;
   padding: 12px;
+  position: relative;
   border-radius: 14px;
   border: 2px solid #c7d2fe;
   background: #ffffff;
   box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
   border-left: 10px solid var(--todo-accent, #4f46e5);
   background-image: none;
+}
+
+.today-item.today-item-slim {
+  gap: 6px;
+  padding: 8px 10px;
+}
+
+.today-item.today-item-slim .today-item-top {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto;
+  gap: 6px;
+}
+
+.today-item.today-item-slim .today-actions {
+  width: auto;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+.today-item.today-item-slim.today-item-clickable {
+  cursor: pointer;
+}
+
+.today-remove-x {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(4px);
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 2px 6px;
+  border-radius: 999px;
+  transition: background 0.08s ease, color 0.08s ease;
+}
+
+.today-remove-x:hover {
+  background: rgba(254, 226, 226, 0.9);
+  color: #b91c1c;
 }
 
 .today-item-top {

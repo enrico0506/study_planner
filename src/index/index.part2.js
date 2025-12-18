@@ -1492,6 +1492,19 @@
       return true;
     }
 
+    function moveTodoToTop(todoId, options = {}) {
+      const idx = todayTodos.findIndex((t) => t.id === todoId);
+      if (idx <= 0) return false;
+      const [moved] = todayTodos.splice(idx, 1);
+      todayTodos.unshift(moved);
+      saveTodayTodos();
+      if (options.render !== false) {
+        renderTodayTodos();
+        renderTable();
+      }
+      return true;
+    }
+
     function removeTodo(todoId) {
       todayTodos = todayTodos.filter((t) => t.id !== todoId);
       saveTodayTodos();

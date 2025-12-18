@@ -718,9 +718,9 @@
       </div>
     </div>
   </div>
-	  <!-- Suggestions Modal -->
-	  <div class="modal-backdrop" id="suggestionModalBackdrop" hidden>
-	    <div class="modal suggestion-modal" role="dialog" aria-modal="true">
+		  <!-- Suggestions Modal -->
+		  <div class="modal-backdrop" id="suggestionModalBackdrop" hidden>
+		    <div class="modal suggestion-modal" role="dialog" aria-modal="true">
       <div class="modal-header">
         <div>
           <div class="modal-title">Study suggestions</div>
@@ -749,8 +749,26 @@
             <div class="modal-subtle" id="unifiedReviewHint"></div>
           </div>
           <div class="today-suggestions-list" id="unifiedReviewList"></div>
-        </div>
-      </div>
+	    </div>
+		  </div>
+
+	  <!-- Today subtasks (compact view) Modal -->
+	  <div class="modal-backdrop" id="subtasksModalBackdrop" hidden>
+	    <div class="modal subtasks-modal" role="dialog" aria-modal="true" aria-labelledby="subtasksModalTitle">
+	      <div class="modal-header">
+	        <div>
+	          <div class="modal-title" id="subtasksModalTitle">Subtasks</div>
+	          <div class="modal-subtitle" id="subtasksModalSubtitle"></div>
+	        </div>
+	        <button class="modal-close-btn" id="subtasksModalCloseBtn" aria-label="Close">✕</button>
+	      </div>
+	      <div class="modal-body" id="subtasksModalBody"></div>
+	      <div class="modal-footer">
+	        <div class="spacer"></div>
+	        <button class="btn btn-secondary" id="subtasksModalCloseBtn2" type="button">Close</button>
+	      </div>
+	    </div>
+	  </div>
       <div class="modal-footer">
         <div class="spacer"></div>
         <button class="btn btn-secondary" id="suggestionModalCloseBtn2" type="button">Close</button>
