@@ -54,7 +54,11 @@
 		          const cb = document.createElement("input");
 		          cb.type = "checkbox";
 		          cb.checked = !!(sub && sub.done);
-		          cb.disabled = true;
+		          cb.addEventListener("click", (e) => e.stopPropagation());
+		          cb.addEventListener("change", () => {
+		            toggleSubtask(todoId, sub.id, cb.checked, { promptConfidence: true });
+		            requestAnimationFrame(() => renderSubtasksModal(todoId));
+		          });
 
 		          const label = document.createElement("div");
 		          label.className = "today-subtask-label";
