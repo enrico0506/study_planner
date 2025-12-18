@@ -1043,16 +1043,16 @@
       }
     }
 
-    function finalizeActiveSession(autoFinished, markComplete = true) {
-      if (!activeStudy) return;
-      const session = activeStudy;
-      const endedAtMs = Date.now();
-      const rawElapsed = computeElapsedMs(session);
-      const elapsed =
-        typeof session.targetMs === "number"
-          ? Math.min(rawElapsed, session.targetMs)
-          : rawElapsed;
-      let recapPayload = null;
+	    function finalizeActiveSession(autoFinished, markComplete = true) {
+	      if (!activeStudy) return;
+	      const session = activeStudy;
+	      const endedAtMs = Date.now();
+	      const rawElapsed = computeElapsedMs(session);
+	      const elapsed =
+	        typeof session.targetMs === "number" && session.timerMode !== "stopwatch"
+	          ? Math.min(rawElapsed, session.targetMs)
+	          : rawElapsed;
+	      let recapPayload = null;
 
       if (
         session.kind === "study" &&
