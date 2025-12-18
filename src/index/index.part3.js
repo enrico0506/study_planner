@@ -2209,11 +2209,12 @@
       // Add subject column at the right
       subjectTable.appendChild(createAddSubjectColumn());
 
-      applyDesktopSubjectSizing();
-      ensureSubjectScrollButtons();
+	      applyDesktopSubjectSizing();
+	      ensureSubjectScrollButtons();
+	      ensureSubjectFourSnap();
 
-      updateSummary();
-      renderDueSoonLane();
-      renderSmartSuggestions();
+	      updateSummary();
+	      renderDueSoonLane();
+	      renderSmartSuggestions();
       updateStudyTimerDisplay();
     }

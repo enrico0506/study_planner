@@ -399,10 +399,10 @@ const CVD_SAFE_SUBJECT_COLORS = [
       subjectTable.style.gridTemplateColumns = template;
     }
 
-    function ensureSubjectScrollButtons() {
-      if (!subjectTable) return;
-      if (isPhoneLayout()) return;
-      const wrapper = subjectTable.closest(".table-wrapper");
+	    function ensureSubjectScrollButtons() {
+	      if (!subjectTable) return;
+	      if (isPhoneLayout()) return;
+	      const wrapper = subjectTable.closest(".table-wrapper");
       if (!wrapper) return;
 
       // Remove previous overlay arrows (older versions).
@@ -442,8 +442,124 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
       wrapper.addEventListener("scroll", () => requestAnimationFrame(update), { passive: true });
       window.addEventListener("resize", () => requestAnimationFrame(update));
-      requestAnimationFrame(update);
-    }
+	      requestAnimationFrame(update);
+	    }
+
+	    let subjectSnapTimer = null;
+	    let subjectAddPeekTimer = null;
+	    let lastSubjectAddClickAt = 0;
+
+	    function ensureSubjectFourSnap() {
+	      if (!subjectTable) return;
+	      if (subjectsMaximized) return;
+	      if (isPhoneLayout()) return;
+	      if (window.matchMedia && window.matchMedia("(max-width: 960px)").matches) return;
+
+	      const wrapper = subjectTable.closest(".table-wrapper");
+	      if (!wrapper) return;
+
+	      const addBtn = subjectTable.querySelector(".subject-add-btn");
+	      if (addBtn && !addBtn.dataset.boundSnap) {
+	        addBtn.dataset.boundSnap = "1";
+	        addBtn.addEventListener("click", () => {
+	          lastSubjectAddClickAt = Date.now();
+	          if (subjectAddPeekTimer) {
+	            clearTimeout(subjectAddPeekTimer);
+	            subjectAddPeekTimer = null;
+	          }
+	        });
+	      }
+
+	      if (wrapper.dataset.subjectSnapBound) return;
+	      wrapper.dataset.subjectSnapBound = "1";
+
+	      const snapToNearest = (options = {}) => {
+	        const cols = Array.from(
+	          subjectTable.querySelectorAll(".subject-column:not(.subject-add-column)")
+	        );
+	        if (!cols.length) return;
+
+	        const wrapperStyle = window.getComputedStyle(wrapper);
+	        const padLeft = parseFloat(wrapperStyle.paddingLeft) || 0;
+
+	        const computed = window.getComputedStyle(subjectTable);
+	        const gapRaw = computed.columnGap || computed.gap || "0px";
+	        const gap = parseFloat(gapRaw) || 0;
+	        const colWidth = cols[0].getBoundingClientRect().width || cols[0].offsetWidth || 0;
+	        if (!colWidth) return;
+
+	        const step = colWidth + gap;
+	        const visible = cols.length >= 4 ? 4 : Math.max(1, cols.length);
+	        const maxIdx = Math.max(0, cols.length - visible);
+	        const idx = Math.max(0, Math.min(maxIdx, Math.round(wrapper.scrollLeft / step)));
+	        const wrapperRect = wrapper.getBoundingClientRect();
+	        const colRect = cols[idx].getBoundingClientRect();
+	        const colLeft = colRect.left - wrapperRect.left + wrapper.scrollLeft;
+	        const target = Math.min(
+	          Math.max(0, colLeft - padLeft),
+	          Math.max(0, wrapper.scrollWidth - wrapper.clientWidth)
+	        );
+	        if (Math.abs(wrapper.scrollLeft - target) < 1.5) return;
+	        wrapper.scrollTo({ left: target, behavior: options.behavior || "smooth" });
+	      };
+
+	      const evaluate = () => {
+	        if (subjectsMaximized || isPhoneLayout()) return;
+	        if (!subjectTable.isConnected) return;
+
+	        const addCol = subjectTable.querySelector(".subject-add-column");
+	        const wrapperRect = wrapper.getBoundingClientRect();
+	        const addRect = addCol ? addCol.getBoundingClientRect() : null;
+	        const viewportStart = wrapper.scrollLeft;
+	        const viewportEnd = viewportStart + wrapper.clientWidth;
+	        const addVisible =
+	          addCol &&
+	          addRect &&
+	          (() => {
+	            const addLeft = addRect.left - wrapperRect.left + wrapper.scrollLeft;
+	            const addRight = addLeft + addRect.width;
+	            return addRight > viewportStart + 2 && addLeft < viewportEnd - 2;
+	          })();
+
+	        if (addVisible) {
+	          if (subjectAddPeekTimer) clearTimeout(subjectAddPeekTimer);
+	          subjectAddPeekTimer = setTimeout(() => {
+	            subjectAddPeekTimer = null;
+	            if (Date.now() - lastSubjectAddClickAt < 2800) return;
+	            snapToNearest({ behavior: "smooth" });
+	          }, 3000);
+	          return;
+	        }
+
+	        if (subjectAddPeekTimer) {
+	          clearTimeout(subjectAddPeekTimer);
+	          subjectAddPeekTimer = null;
+	        }
+	        snapToNearest({ behavior: "smooth" });
+	      };
+
+	      wrapper.addEventListener(
+	        "scroll",
+	        () => {
+	          if (subjectSnapTimer) clearTimeout(subjectSnapTimer);
+	          subjectSnapTimer = setTimeout(() => {
+	            subjectSnapTimer = null;
+	            evaluate();
+	          }, 120);
+	        },
+	        { passive: true }
+	      );
+
+	      window.addEventListener("resize", () => {
+	        if (subjectSnapTimer) clearTimeout(subjectSnapTimer);
+	        subjectSnapTimer = setTimeout(() => {
+	          subjectSnapTimer = null;
+	          evaluate();
+	        }, 160);
+	      });
+
+	      requestAnimationFrame(evaluate);
+	    }
 
     function getScheduleCursorDay() {
       if (!scheduleCursorDay) {
