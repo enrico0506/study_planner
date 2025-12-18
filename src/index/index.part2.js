@@ -309,9 +309,9 @@
       }
     }
 
-    function saveCalendarEvents() {
+    function saveCalendarEvents({ debounceMs = 150 } = {}) {
       try {
-        if (SP_STORAGE) SP_STORAGE.setJSON(CALENDAR_KEY, calendarEvents || [], { debounceMs: 150 });
+        if (SP_STORAGE) SP_STORAGE.setJSON(CALENDAR_KEY, calendarEvents || [], { debounceMs });
         else localStorage.setItem(CALENDAR_KEY, JSON.stringify(calendarEvents || []));
       } catch (e) {}
       try {
@@ -336,7 +336,20 @@
       };
       if (!Array.isArray(calendarEvents)) calendarEvents = [];
       calendarEvents.push(evt);
-      saveCalendarEvents();
+      saveCalendarEvents({ debounceMs: 0 });
+      return true;
+    }
+
+    function toggleCalendarEventDone(eventId, done) {
+      const id = String(eventId || "");
+      if (!id) return false;
+      const nextDone = !!done;
+      const list = Array.isArray(calendarEvents) ? calendarEvents : [];
+      const idx = list.findIndex((e) => e && e.id === id);
+      if (idx === -1) return false;
+      list[idx].done = nextDone;
+      calendarEvents = list;
+      saveCalendarEvents({ debounceMs: 0 });
       return true;
     }
 
@@ -1828,6 +1841,24 @@
       const isFileTodo =
         (todo.kind || "file") !== "custom" && !!todo.subjectId && !!todo.fileId;
       if (todo.done && !wasDone && promptConfidence && isFileTodo) {
+        promptConfidenceUpdateForFile(todo.subjectId, todo.fileId);
+      }
+    }
+
+    function setAllSubtasks(todoId, checked, { promptConfidence = false } = {}) {
+      const todo = todayTodos.find((t) => t && t.id === todoId);
+      if (!todo || !Array.isArray(todo.subtasks)) return;
+      const next = !!checked;
+      todo.subtasks.forEach((s) => {
+        if (s) s.done = next;
+      });
+      todo.done = next ? true : false;
+      saveTodayTodos();
+      renderTodayTodos();
+      renderScheduleView();
+      const isFileTodo =
+        (todo.kind || "file") !== "custom" && !!todo.subjectId && !!todo.fileId;
+      if (todo.done && promptConfidence && isFileTodo) {
         promptConfidenceUpdateForFile(todo.subjectId, todo.fileId);
       }
     }

@@ -1052,11 +1052,22 @@
 	          .filter((evt) => evt && evt.date === key)
 	          .slice()
 	          .sort((a, b) => {
+	            const da = a && a.done ? 1 : 0;
+	            const db = b && b.done ? 1 : 0;
+	            if (da !== db) return da - db;
 	            const ta = a.time || "24:00";
 	            const tb = b.time || "24:00";
 	            if (ta === tb) return String(a.title || "").localeCompare(String(b.title || ""));
 	            return String(ta).localeCompare(String(tb));
 	          });
+
+	        const hasOpenDeadline = dayCalendarEvents.some(
+	          (evt) =>
+	            evt &&
+	            !evt.done &&
+	            (evt.type === "deadline" || evt.type === "exam")
+	        );
+	        if (hasOpenDeadline) col.classList.add("schedule-day-alert");
 
 	        dayCalendarEvents.forEach((evt) => {
 	          const chip = document.createElement("div");
@@ -1070,7 +1081,22 @@
 	          const time = evt.time ? `${evt.time} · ` : "";
 	          label.textContent = time + (evt.title || "Deadline");
 	          label.title = evt.notes ? `${evt.title}\n\n${evt.notes}` : evt.title || "Deadline";
+
+	          const cb = document.createElement("input");
+	          cb.type = "checkbox";
+	          cb.className = "schedule-deadline-check";
+	          cb.checked = !!evt.done;
+	          cb.addEventListener("click", (e) => e.stopPropagation());
+	          cb.addEventListener("change", () => {
+	            const changed = toggleCalendarEventDone(evt.id, cb.checked);
+	            if (changed) {
+	              loadCalendarEvents();
+	              renderScheduleView();
+	            }
+	          });
+
 	          chip.appendChild(label);
+	          chip.appendChild(cb);
 
 	          chip.addEventListener("click", () => {
 	            const parts = [];
@@ -1280,12 +1306,37 @@
           : "Subtasks (read-only history)";
       }
 
-      scheduleTaskModalSubtasks.innerHTML = "";
-      const subs = Array.isArray(todo.subtasks) ? todo.subtasks : [];
-      if (!subs.length) {
-            const empty = document.createElement("div");
-            empty.className = "schedule-task-empty";
-            empty.textContent = "No subtasks for this task.";
+	      scheduleTaskModalSubtasks.innerHTML = "";
+	      const subs = Array.isArray(todo.subtasks) ? todo.subtasks : [];
+
+	      if (onToday && subs.length) {
+	        const allRow = document.createElement("label");
+	        allRow.className = "schedule-task-all";
+	        const allCb = document.createElement("input");
+	        allCb.type = "checkbox";
+	        const allDone = subs.every((s) => s && s.done);
+	        allCb.checked = allDone;
+	        const allText = document.createElement("span");
+	        allText.textContent = "Mark all done";
+	        allCb.addEventListener("change", () => {
+	          setAllSubtasks(todo.id, allCb.checked, { promptConfidence: true });
+	          const updated =
+	            dayKey === getTodayKey()
+	              ? todayTodos.find((t) => t && t.id === todo.id)
+	              : (dailyFocusMap[dayKey] || []).find((t) => t && t.id === todo.id);
+	          requestAnimationFrame(() => {
+	            if (updated) openScheduleTaskModal(updated, dayKey);
+	          });
+	        });
+	        allRow.appendChild(allCb);
+	        allRow.appendChild(allText);
+	        scheduleTaskModalSubtasks.appendChild(allRow);
+	      }
+
+	      if (!subs.length) {
+	            const empty = document.createElement("div");
+	            empty.className = "schedule-task-empty";
+	            empty.textContent = "No subtasks for this task.";
             scheduleTaskModalSubtasks.appendChild(empty);
       } else {
         subs.forEach((sub) => {

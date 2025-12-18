@@ -1716,6 +1716,8 @@
     window.addEventListener("pageshow", (event) => {
       if (!event.persisted) return;
       maybeAutoResumeNavPausedSession();
+      loadCalendarEvents();
       renderFocusState();
       updateStudyTimerDisplay();
+      renderScheduleView();
     });
