@@ -633,7 +633,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	            subjectAddPeekTimer = null;
 	            if (Date.now() - lastSubjectAddClickAt < 2800) return;
 	            snapToNearest({ behavior: "smooth" });
-	          }, 3000);
+	          }, 2000);
 	          return;
 	        }
 
