@@ -361,7 +361,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	    function applyDesktopSubjectSizing() {
 	      if (!subjectTable) return;
 	      if (isPhoneLayout()) return;
-	      if (window.matchMedia && window.matchMedia("(max-width: 960px)").matches) return;
+	      if (!subjectsMaximized && window.matchMedia && window.matchMedia("(max-width: 960px)").matches) return;
 
       const wrapper = subjectTable.closest(".table-wrapper");
       if (!wrapper) return;
@@ -388,8 +388,9 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	      const visibleSubjects = count >= desiredVisible ? desiredVisible : Math.max(1, count);
 	      const base =
 	        (viewportWidth - gap * Math.max(0, visibleSubjects - 1)) / Math.max(1, visibleSubjects);
-	      const minWidth = subjectsMaximized ? 170 : 190;
-	      const subjectWidth = Math.round(Math.max(minWidth, Math.min(360, base)));
+	      const minWidth = subjectsMaximized ? 140 : 190;
+	      // Use floor to guarantee all visible columns fit (avoid 1px overflow from rounding).
+	      const subjectWidth = Math.floor(Math.max(minWidth, Math.min(360, base)));
 
       const template = `repeat(${count}, ${subjectWidth}px) ${addColWidth}px`;
       subjectTable.classList.add("subject-table-dynamic");
@@ -461,7 +462,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	    function ensureSubjectFourSnap() {
 	      if (!subjectTable) return;
 	      if (isPhoneLayout()) return;
-	      if (window.matchMedia && window.matchMedia("(max-width: 960px)").matches) return;
+	      if (!subjectsMaximized && window.matchMedia && window.matchMedia("(max-width: 960px)").matches) return;
 
 	      const wrapper = subjectTable.closest(".table-wrapper");
 	      if (!wrapper) return;
