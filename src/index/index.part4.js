@@ -1104,6 +1104,42 @@
       }
     });
 
+    scheduleManualTodoSubtaskAdd?.addEventListener("click", addScheduleManualTodoSubtaskFromInput);
+    scheduleManualTodoSubtaskInput?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        addScheduleManualTodoSubtaskFromInput();
+      }
+    });
+    scheduleManualTodoTypeSelect?.addEventListener("change", () => {
+      setScheduleManualTodoModalType(scheduleManualTodoTypeSelect.value);
+      if (scheduleManualTodoModalBackdrop && !scheduleManualTodoModalBackdrop.hidden) {
+        if (scheduleManualTodoModalState && scheduleManualTodoModalState.type === "subject_todo") {
+          scheduleManualTodoSubjectSelect?.focus();
+        } else {
+          scheduleManualTodoNameInput?.focus();
+        }
+      }
+    });
+    scheduleManualTodoSubjectSelect?.addEventListener("change", () => {
+      renderScheduleManualTodoFileOptions(scheduleManualTodoSubjectSelect.value, "");
+      scheduleManualTodoFileSelect?.focus();
+    });
+    scheduleManualTodoNameInput?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      scheduleManualTodoModalSave?.click();
+    });
+
+    scheduleManualTodoModalClose?.addEventListener("click", () => closeScheduleManualTodoModal());
+    scheduleManualTodoModalCancel?.addEventListener("click", () => closeScheduleManualTodoModal());
+    scheduleManualTodoModalSave?.addEventListener("click", () => submitScheduleManualTodoModal());
+    scheduleManualTodoModalBackdrop?.addEventListener("mousedown", (event) => {
+      if (event.target === scheduleManualTodoModalBackdrop) {
+        closeScheduleManualTodoModal();
+      }
+    });
+
     if (noticeModalBackdrop) {
       noticeModalBackdrop.addEventListener("mousedown", (event) => {
         if (event.target === noticeModalBackdrop) {
@@ -1179,6 +1215,20 @@
         }
       });
     }
+
+    if (scheduleManualTodoModalBackdrop) {
+      scheduleManualTodoModalBackdrop.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeScheduleManualTodoModal();
+        }
+      });
+    }
+
+    window.addEventListener("study:calendar-changed", () => {
+      loadCalendarEvents();
+      renderScheduleView();
+    });
 
     if (todayDropZone) {
       todayDropZone.addEventListener("dragenter", (event) => {
@@ -1666,6 +1716,8 @@
     window.addEventListener("pageshow", (event) => {
       if (!event.persisted) return;
       maybeAutoResumeNavPausedSession();
+      loadCalendarEvents();
       renderFocusState();
       updateStudyTimerDisplay();
+      renderScheduleView();
     });

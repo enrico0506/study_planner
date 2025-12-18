@@ -554,6 +554,98 @@
         </div>
       </div>
     </div>
+
+    <!-- Schedule Manual Todo Modal -->
+    <div class="modal-backdrop" id="scheduleManualTodoModalBackdrop" hidden>
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title" id="scheduleManualTodoModalTitle">Add todo</div>
+            <div class="modal-subtitle" id="scheduleManualTodoModalSubtitle">Create a custom todo for the selected day.</div>
+          </div>
+          <button class="modal-close-btn" id="scheduleManualTodoModalClose" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-field-row">
+            <label for="scheduleManualTodoTypeSelect">Add</label>
+            <select id="scheduleManualTodoTypeSelect">
+              <option value="custom_todo">Custom todo</option>
+              <option value="subject_todo">Todo from subjects</option>
+              <option value="deadline">Deadline (sync to calendar)</option>
+            </select>
+          </div>
+
+          <div class="modal-field-row">
+            <label id="scheduleManualTodoNameLabel" for="scheduleManualTodoNameInput">Title</label>
+            <input
+              type="text"
+              id="scheduleManualTodoNameInput"
+              placeholder="e.g. Write summary / Prepare slides"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="modal-field-row" id="scheduleManualTodoSubjectRow" hidden>
+            <label for="scheduleManualTodoSubjectSelect">Subject</label>
+            <select id="scheduleManualTodoSubjectSelect"></select>
+          </div>
+
+          <div class="modal-field-row" id="scheduleManualTodoFileRow" hidden>
+            <label for="scheduleManualTodoFileSelect">Task</label>
+            <select id="scheduleManualTodoFileSelect"></select>
+          </div>
+
+          <div id="scheduleManualTodoDeadlineFields" hidden>
+            <div class="modal-field-row">
+              <label for="scheduleManualTodoDeadlineTime">Time (optional)</label>
+              <input type="time" id="scheduleManualTodoDeadlineTime" step="60" />
+            </div>
+            <div class="modal-field-row modal-row-inline">
+              <div>
+                <label for="scheduleManualTodoDeadlineType">Type</label>
+                <select id="scheduleManualTodoDeadlineType">
+                  <option value="deadline">Deadline</option>
+                  <option value="exam">Exam / quiz</option>
+                  <option value="study">Study block</option>
+                  <option value="reminder">Reminder</option>
+                </select>
+              </div>
+              <div>
+                <label for="scheduleManualTodoDeadlinePriority">Priority</label>
+                <select id="scheduleManualTodoDeadlinePriority">
+                  <option value="normal">Normal</option>
+                  <option value="important">Important</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+            </div>
+            <div class="modal-field-row">
+              <label for="scheduleManualTodoDeadlineNotes">Notes (optional)</label>
+              <textarea id="scheduleManualTodoDeadlineNotes" rows="3"></textarea>
+            </div>
+          </div>
+
+          <div class="modal-field">
+            <div class="modal-field-label">Subtasks (optional)</div>
+            <div class="subtask-input-row">
+              <input
+                type="text"
+                id="scheduleManualTodoSubtaskInput"
+                placeholder="Type a subtask and press Enter"
+                autocomplete="off"
+              />
+              <button class="chip-btn chip-btn-primary" id="scheduleManualTodoSubtaskAdd" type="button">+</button>
+            </div>
+            <div class="subtask-list" id="scheduleManualTodoSubtaskList"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="spacer"></div>
+          <button class="btn btn-secondary" id="scheduleManualTodoModalCancel" type="button">Cancel</button>
+          <button class="btn" id="scheduleManualTodoModalSave" type="button">Add todo</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- File Modal -->

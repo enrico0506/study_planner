@@ -309,6 +309,50 @@
       }
     }
 
+    function saveCalendarEvents({ debounceMs = 150 } = {}) {
+      try {
+        if (SP_STORAGE) SP_STORAGE.setJSON(CALENDAR_KEY, calendarEvents || [], { debounceMs });
+        else localStorage.setItem(CALENDAR_KEY, JSON.stringify(calendarEvents || []));
+      } catch (e) {}
+      try {
+        window.dispatchEvent(new CustomEvent("study:calendar-changed"));
+      } catch {}
+    }
+
+    function addCalendarEvent({ title, date, time = "", type = "deadline", priority = "normal", notes = "" } = {}) {
+      const cleanTitle = String(title || "").trim();
+      const cleanDate = String(date || "").trim();
+      if (!cleanTitle || !cleanDate) return false;
+      const evt = {
+        id: "evt_" + createId(),
+        title: cleanTitle,
+        date: cleanDate,
+        time: String(time || "").trim(),
+        type: String(type || "deadline"),
+        priority: String(priority || "normal"),
+        notes: String(notes || "").trim(),
+        done: false,
+        source: "schedule"
+      };
+      if (!Array.isArray(calendarEvents)) calendarEvents = [];
+      calendarEvents.push(evt);
+      saveCalendarEvents({ debounceMs: 0 });
+      return true;
+    }
+
+    function toggleCalendarEventDone(eventId, done) {
+      const id = String(eventId || "");
+      if (!id) return false;
+      const nextDone = !!done;
+      const list = Array.isArray(calendarEvents) ? calendarEvents : [];
+      const idx = list.findIndex((e) => e && e.id === id);
+      if (idx === -1) return false;
+      list[idx].done = nextDone;
+      calendarEvents = list;
+      saveCalendarEvents({ debounceMs: 0 });
+      return true;
+    }
+
     function getUpcomingCalendarEvents(windowDays = 5) {
       const now = new Date();
       now.setHours(0, 0, 0, 0);
@@ -1447,6 +1491,86 @@
       return true;
     }
 
+    function addTodoForFileToDay(dayKey, subjectId, fileId, subtaskTexts) {
+      const key = String(dayKey || "").trim();
+      if (!key) return false;
+      const todayKey = getTodayKey();
+      if (key === todayKey) {
+        return addTodoForFile(subjectId, fileId, subtaskTexts);
+      }
+
+      const { subj, file } = resolveFileRef(subjectId, fileId);
+      if (!subj || !file) return false;
+
+      if (!dailyFocusMap || typeof dailyFocusMap !== "object") dailyFocusMap = {};
+      const list = Array.isArray(dailyFocusMap[key]) ? dailyFocusMap[key] : [];
+      const already = list.some((t) => t && t.subjectId === subjectId && t.fileId === fileId);
+      if (already) return false;
+
+      const subtasks = Array.isArray(subtaskTexts)
+        ? subtaskTexts
+            .map((txt) => (txt || "").trim())
+            .filter(Boolean)
+            .map((txt) => ({ id: createId(), label: txt, done: false }))
+        : [];
+
+      const todo = {
+        id: createId(),
+        kind: "file",
+        subjectId,
+        fileId,
+        label: file.name || "Untitled file",
+        subjectName: subj.name || "Subject",
+        done: false,
+        subtasks
+      };
+
+      dailyFocusMap[key] = [todo, ...list];
+      saveDailyFocusMap();
+      renderScheduleView();
+      return true;
+    }
+
+    function addCustomTodoToDay(dayKey, label, subtaskTexts) {
+      const cleanKey = String(dayKey || "").trim();
+      const cleanLabel = String(label || "").trim();
+      if (!cleanKey) return false;
+      if (!cleanLabel) return false;
+
+      const subtasks = Array.isArray(subtaskTexts)
+        ? subtaskTexts
+            .map((txt) => (txt || "").trim())
+            .filter(Boolean)
+            .map((txt) => ({ id: createId(), label: txt, done: false }))
+        : [];
+
+      const todo = {
+        id: createId(),
+        kind: "custom",
+        subjectId: null,
+        fileId: null,
+        label: cleanLabel,
+        subjectName: "",
+        done: false,
+        handoffNote: "",
+        subtasks
+      };
+
+      if (cleanKey === getTodayKey()) {
+        todayTodos.unshift(todo);
+        saveTodayTodos();
+        renderTodayTodos();
+        return true;
+      }
+
+      if (!dailyFocusMap || typeof dailyFocusMap !== "object") dailyFocusMap = {};
+      const existing = Array.isArray(dailyFocusMap[cleanKey]) ? dailyFocusMap[cleanKey] : [];
+      dailyFocusMap[cleanKey] = [todo, ...existing];
+      saveDailyFocusMap();
+      renderScheduleView();
+      return true;
+    }
+
     function renderAddTodoSubtasks() {
       if (!addTodoSubtaskList || !addTodoModalState) return;
       addTodoSubtaskList.innerHTML = "";
@@ -1616,7 +1740,9 @@
       }
       saveTodayTodos();
       renderTodayTodos();
-      if (checked && !wasDone && promptConfidence) {
+      const isFileTodo =
+        (todo.kind || "file") !== "custom" && !!todo.subjectId && !!todo.fileId;
+      if (checked && !wasDone && promptConfidence && isFileTodo) {
         promptConfidenceUpdateForFile(todo.subjectId, todo.fileId);
       }
     }
@@ -1712,7 +1838,27 @@
       }
       saveTodayTodos();
       renderTodayTodos();
-      if (todo.done && !wasDone && promptConfidence) {
+      const isFileTodo =
+        (todo.kind || "file") !== "custom" && !!todo.subjectId && !!todo.fileId;
+      if (todo.done && !wasDone && promptConfidence && isFileTodo) {
+        promptConfidenceUpdateForFile(todo.subjectId, todo.fileId);
+      }
+    }
+
+    function setAllSubtasks(todoId, checked, { promptConfidence = false } = {}) {
+      const todo = todayTodos.find((t) => t && t.id === todoId);
+      if (!todo || !Array.isArray(todo.subtasks)) return;
+      const next = !!checked;
+      todo.subtasks.forEach((s) => {
+        if (s) s.done = next;
+      });
+      todo.done = next ? true : false;
+      saveTodayTodos();
+      renderTodayTodos();
+      renderScheduleView();
+      const isFileTodo =
+        (todo.kind || "file") !== "custom" && !!todo.subjectId && !!todo.fileId;
+      if (todo.done && promptConfidence && isFileTodo) {
         promptConfidenceUpdateForFile(todo.subjectId, todo.fileId);
       }
     }

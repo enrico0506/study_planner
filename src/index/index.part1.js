@@ -254,6 +254,27 @@ const CVD_SAFE_SUBJECT_COLORS = [
     const scheduleTaskModalSubtasks = document.getElementById("scheduleTaskModalSubtasks");
     const scheduleTaskStudyBtn = document.getElementById("scheduleTaskStudyBtn");
     const scheduleTaskCloseBtn = document.getElementById("scheduleTaskCloseBtn");
+    const scheduleManualTodoModalBackdrop = document.getElementById("scheduleManualTodoModalBackdrop");
+    const scheduleManualTodoModalTitle = document.getElementById("scheduleManualTodoModalTitle");
+    const scheduleManualTodoModalSubtitle = document.getElementById("scheduleManualTodoModalSubtitle");
+    const scheduleManualTodoTypeSelect = document.getElementById("scheduleManualTodoTypeSelect");
+    const scheduleManualTodoNameLabel = document.getElementById("scheduleManualTodoNameLabel");
+    const scheduleManualTodoNameInput = document.getElementById("scheduleManualTodoNameInput");
+    const scheduleManualTodoSubjectRow = document.getElementById("scheduleManualTodoSubjectRow");
+    const scheduleManualTodoSubjectSelect = document.getElementById("scheduleManualTodoSubjectSelect");
+    const scheduleManualTodoFileRow = document.getElementById("scheduleManualTodoFileRow");
+    const scheduleManualTodoFileSelect = document.getElementById("scheduleManualTodoFileSelect");
+    const scheduleManualTodoDeadlineFields = document.getElementById("scheduleManualTodoDeadlineFields");
+    const scheduleManualTodoDeadlineTime = document.getElementById("scheduleManualTodoDeadlineTime");
+    const scheduleManualTodoDeadlineType = document.getElementById("scheduleManualTodoDeadlineType");
+    const scheduleManualTodoDeadlinePriority = document.getElementById("scheduleManualTodoDeadlinePriority");
+    const scheduleManualTodoDeadlineNotes = document.getElementById("scheduleManualTodoDeadlineNotes");
+    const scheduleManualTodoSubtaskInput = document.getElementById("scheduleManualTodoSubtaskInput");
+    const scheduleManualTodoSubtaskAdd = document.getElementById("scheduleManualTodoSubtaskAdd");
+    const scheduleManualTodoSubtaskList = document.getElementById("scheduleManualTodoSubtaskList");
+    const scheduleManualTodoModalClose = document.getElementById("scheduleManualTodoModalClose");
+    const scheduleManualTodoModalCancel = document.getElementById("scheduleManualTodoModalCancel");
+    const scheduleManualTodoModalSave = document.getElementById("scheduleManualTodoModalSave");
     const noticeModalBackdrop = document.getElementById("noticeModalBackdrop");
     const noticeModalTitle = document.getElementById("noticeModalTitle");
     const noticeModalMessage = document.getElementById("noticeModalMessage");
@@ -1773,24 +1794,35 @@ const CVD_SAFE_SUBJECT_COLORS = [
     }
 
     function cloneTodos(list) {
-      return (Array.isArray(list) ? list : []).map((t) => ({
-        id: t.id,
-        subjectId: t.subjectId,
-        fileId: t.fileId,
-        label: t.label || "",
-        subjectName: t.subjectName || "",
-        done: !!t.done,
-        handoffNote: typeof t.handoffNote === "string" ? t.handoffNote : "",
-        subtasks: Array.isArray(t.subtasks)
-          ? t.subtasks
-              .filter((s) => s && s.id && s.label !== undefined)
-              .map((s) => ({
-                id: s.id,
-                label: s.label,
-                done: !!s.done
-              }))
-          : []
-      }));
+      const raw = Array.isArray(list) ? list : [];
+      return raw
+        .filter((t) => t && t.id)
+        .map((t) => {
+          const kind =
+            t.kind === "custom" ||
+            (t.kind !== "file" && (!t.subjectId || !t.fileId) && (t.label || "").trim())
+              ? "custom"
+              : "file";
+          return {
+            id: t.id,
+            kind,
+            subjectId: kind === "file" ? t.subjectId : null,
+            fileId: kind === "file" ? t.fileId : null,
+            label: t.label || "",
+            subjectName: kind === "file" ? t.subjectName || "" : "",
+            done: !!t.done,
+            handoffNote: kind === "file" && typeof t.handoffNote === "string" ? t.handoffNote : "",
+            subtasks: Array.isArray(t.subtasks)
+              ? t.subtasks
+                  .filter((s) => s && s.id && s.label !== undefined)
+                  .map((s) => ({
+                    id: s.id,
+                    label: s.label,
+                    done: !!s.done
+                  }))
+              : []
+          };
+        });
     }
 
     function saveTodayTodos() {
@@ -1840,7 +1872,13 @@ const CVD_SAFE_SUBJECT_COLORS = [
         if (!raw) return;
         const data = JSON.parse(raw);
         if (Array.isArray(data)) {
-          todayTodos = cloneTodos(data.filter((t) => t && t.id && t.subjectId && t.fileId));
+          todayTodos = cloneTodos(
+            data.filter((t) => {
+              if (!t || !t.id) return false;
+              if (t.kind === "custom") return !!String(t.label || "").trim();
+              return !!t.subjectId && !!t.fileId;
+            })
+          );
           dailyFocusMap[todayKey] = cloneTodos(todayTodos);
           saveDailyFocusMap();
           try {
