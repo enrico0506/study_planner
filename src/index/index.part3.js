@@ -1070,7 +1070,6 @@
 	        if (hasOpenDeadline) col.classList.add("schedule-day-alert");
 
 	        dayCalendarEvents.forEach((evt) => {
-	          if (!evt.id) evt.id = "evt_legacy_" + createId();
 	          const chip = document.createElement("div");
 	          chip.className =
 	            "schedule-focus-chip schedule-deadline-chip schedule-deadline-" +

@@ -307,6 +307,7 @@
       } catch (e) {
         calendarEvents = [];
       }
+      ensureCalendarEventIds();
     }
 
     function saveCalendarEvents({ debounceMs = 150 } = {}) {
@@ -317,6 +318,26 @@
       try {
         window.dispatchEvent(new CustomEvent("study:calendar-changed"));
       } catch {}
+    }
+
+    function ensureCalendarEventIds() {
+      const list = Array.isArray(calendarEvents) ? calendarEvents : [];
+      let changed = false;
+      list.forEach((evt) => {
+        if (!evt || typeof evt !== "object") return;
+        if (!evt.id) {
+          evt.id = "evt_legacy_" + createId();
+          changed = true;
+        }
+        if (typeof evt.done !== "boolean") {
+          evt.done = !!evt.done;
+          changed = true;
+        }
+      });
+      if (changed) {
+        calendarEvents = list;
+        saveCalendarEvents({ debounceMs: 0 });
+      }
     }
 
     function addCalendarEvent({ title, date, time = "", type = "deadline", priority = "normal", notes = "" } = {}) {
