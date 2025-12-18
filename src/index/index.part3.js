@@ -1976,26 +1976,38 @@
             actionsRow.className = "file-actions-row";
             actionsRow.addEventListener("click", (event) => event.stopPropagation());
 
-            const addTodayActionBtn = document.createElement("button");
-            addTodayActionBtn.type = "button";
-            addTodayActionBtn.className = "icon-btn icon-btn-ghost file-action-btn";
-            addTodayActionBtn.textContent = "+";
-            addTodayActionBtn.title = "Add to Today's focus";
-            addTodayActionBtn.setAttribute("aria-label", "Add to Today's focus");
-            addTodayActionBtn.addEventListener("click", (event) => {
-              event.stopPropagation();
-              const added = addTodoForFile(subj.id, file.id);
-              if (added) {
-                showToast("Added to Today's focus.", "success");
-                announceLive(`Added “${file.name || "Untitled"}” to Today’s focus.`);
-                renderTable();
-                flashTodayTodoByFile(subj.id, file.id);
-              } else {
-                showToast("Already in Today's focus.", "info");
-                announceLive(`Already in Today’s focus: “${file.name || "Untitled"}”.`);
-                flashTodayTodoByFile(subj.id, file.id);
-              }
-            });
+	            const addTodayActionBtn = document.createElement("button");
+	            addTodayActionBtn.type = "button";
+	            addTodayActionBtn.className =
+	              "icon-btn icon-btn-ghost file-action-btn " + (inToday ? "file-action-remove" : "file-action-add");
+	            addTodayActionBtn.textContent = inToday ? "−" : "+";
+	            addTodayActionBtn.title = inToday ? "Remove from Today's focus" : "Add to Today's focus";
+	            addTodayActionBtn.setAttribute(
+	              "aria-label",
+	              inToday ? "Remove from Today's focus" : "Add to Today's focus"
+	            );
+	            addTodayActionBtn.addEventListener("click", (event) => {
+	              event.stopPropagation();
+	              if (inToday) {
+	                showNotice("Remove this file from Today's focus?", "warn", () => {
+	                  cleanupTodoForFile(subj.id, file.id);
+	                  renderTable();
+	                  announceLive(`Removed “${file.name || "Untitled"}” from Today’s focus.`);
+	                });
+	                return;
+	              }
+	              const added = addTodoForFile(subj.id, file.id);
+	              if (added) {
+	                showToast("Added to Today's focus.", "success");
+	                announceLive(`Added “${file.name || "Untitled"}” to Today’s focus.`);
+	                renderTable();
+	                flashTodayTodoByFile(subj.id, file.id);
+	              } else {
+	                showToast("Already in Today's focus.", "info");
+	                announceLive(`Already in Today’s focus: “${file.name || "Untitled"}”.`);
+	                flashTodayTodoByFile(subj.id, file.id);
+	              }
+	            });
 
             const moveUpBtn = document.createElement("button");
             moveUpBtn.type = "button";

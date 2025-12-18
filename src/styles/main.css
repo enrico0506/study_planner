@@ -3734,6 +3734,14 @@ body.session-header-mounted #focusCard {
 	      transform: translateY(-2px) !important;
 	    }
 
+	    .app:not(.subjects-maximized) .file-row.studying .file-meta {
+	      padding-right: 0;
+	    }
+
+	    .app:not(.subjects-maximized) .file-row.studying .file-actions {
+	      width: 100%;
+	    }
+
 	    .file-study-actions-row {
 	      display: grid;
 	      grid-template-columns: 1fr 1fr;
@@ -3744,7 +3752,35 @@ body.session-header-mounted #focusCard {
 	    .file-study-actions-row .chip-btn {
 	      width: 100%;
 	      min-width: 0;
+	      padding: 10px 12px;
 	    }
+
+	    .subjects-maximized .file-actions-row {
+	      display: none !important;
+	    }
+
+	    .app:not(.subjects-maximized) .file-action-btn.file-action-add {
+	      background: rgba(220, 252, 231, 0.95);
+	      border-color: rgba(34, 197, 94, 0.45);
+	      color: #166534;
+	    }
+
+	    .app:not(.subjects-maximized) .file-action-btn.file-action-add:hover {
+	      background: rgba(187, 247, 208, 0.95);
+	      border-color: rgba(34, 197, 94, 0.7);
+	    }
+
+	    .app:not(.subjects-maximized) .file-action-btn.file-action-remove {
+	      background: rgba(254, 226, 226, 0.95);
+	      border-color: rgba(239, 68, 68, 0.45);
+	      color: #b91c1c;
+	    }
+
+	    .app:not(.subjects-maximized) .file-action-btn.file-action-remove:hover {
+	      background: rgba(254, 202, 202, 0.95);
+	      border-color: rgba(239, 68, 68, 0.7);
+	    }
+
 
     .file-row.in-today {
       border-color: #22c55e;
