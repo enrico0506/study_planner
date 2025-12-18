@@ -2535,6 +2535,29 @@ body.session-header-mounted #focusCard {
   gap: 6px;
 }
 
+.today-item.today-item-slim .today-actions .today-timer {
+  margin-right: 0;
+  min-width: 0;
+  text-align: right;
+}
+
+.today-slim-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.today-item.today-item-slim .today-slim-footer .chip-btn {
+  padding: 9px 12px;
+  font-size: 0.86rem;
+  border-radius: 10px;
+}
+
+.today-item.today-item-slim-expanded .today-subtasks {
+  margin-top: 4px;
+}
+
 .today-item.today-item-slim.today-item-clickable {
   cursor: pointer;
 }
