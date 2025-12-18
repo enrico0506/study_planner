@@ -50,11 +50,6 @@
       "url": "/stundenplan.html"
     },
     {
-      "name": "Notizen",
-      "short_name": "Notizen",
-      "url": "/notizen.html"
-    },
-    {
       "name": "Karteikarten",
       "short_name": "Karteikarten",
       "url": "/karteikarten.html"

@@ -27,11 +27,3 @@
 
 ## PWA (only on https/localhost)
 - Load once online → go offline → reload → pages still open (from cache).
-
-## Notizen
-- Create folder, create doc, edit, refresh → content persists.
-- Search by title and by content; pinned-only filter hides others.
-- Pin/unpin persists after reload.
-- Export doc (HTML + MD), export all (ZIP), re-import ZIP reproduces docs/folders.
-- Offline: open notizen.html after first load → docs still available.
-- Login sync: new/edited docs appear on second device after sync/replace snapshot.
