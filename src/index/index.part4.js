@@ -919,10 +919,11 @@
       toggleSubjectsMaximize();
     });
     expandPageBtn?.addEventListener("click", toggleExpand);
-    window.addEventListener("resize", () => {
-      enforceTodayHeight();
-      applyDesktopSubjectSizing();
-    });
+	    window.addEventListener("resize", () => {
+	      enforceTodayHeight();
+	      applyDesktopSubjectSizing();
+	      ensureSubjectFourSnap();
+	    });
     const settingsPrefsSaveBtn = document.getElementById("settingsPrefsSaveBtn");
     settingsPrefsSaveBtn?.addEventListener("click", () => {
       const langSelect = document.getElementById("settingsLanguageSelect");

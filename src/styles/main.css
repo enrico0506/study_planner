@@ -1296,6 +1296,20 @@ body.session-header-mounted #focusCard {
   background: var(--study-bar-bg, #e8ecf7);
   overflow: hidden;
   display: flex;
+  border: 1px solid rgba(99, 102, 241, 0);
+  transition: border-color 0.08s ease, box-shadow 0.08s ease;
+  cursor: pointer;
+}
+
+.summary-study-bar:hover {
+  border-color: rgba(37, 99, 235, 0.7);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.summary-study-bar:focus-visible {
+  outline: none;
+  border-color: rgba(37, 99, 235, 0.85);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
 }
 
     .summary-study-segment {
@@ -2509,12 +2523,90 @@ body.session-header-mounted #focusCard {
   flex-direction: column;
   gap: 10px;
   padding: 12px;
+  position: relative;
   border-radius: 14px;
   border: 2px solid #c7d2fe;
   background: #ffffff;
   box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
   border-left: 10px solid var(--todo-accent, #4f46e5);
   background-image: none;
+}
+
+.today-item.today-item-slim {
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.today-item.today-item-slim .today-item-top {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.today-item.today-item-slim .today-actions {
+  width: auto;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.today-item.today-item-slim .today-actions .today-timer {
+  margin-right: 0;
+  min-width: 0;
+  text-align: right;
+}
+
+.today-slim-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.today-item.today-item-slim .today-slim-footer .chip-btn {
+  padding: 9px 12px;
+  font-size: 0.86rem;
+  border-radius: 10px;
+}
+
+.today-item.today-item-slim-expanded .today-subtasks {
+  margin-top: 4px;
+  border-radius: 14px;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.today-item.today-item-slim.today-item-clickable {
+  cursor: pointer;
+}
+
+.today-remove-x {
+  border: none;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(4px);
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 2px 6px;
+  border-radius: 999px;
+  transition: background 0.08s ease, color 0.08s ease;
+}
+
+.today-item.today-item-slim .today-remove-x {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+}
+
+.today-item.today-item-slim .today-actions input[type="checkbox"] {
+  margin-top: 1px;
+}
+
+.today-remove-x:hover {
+  background: rgba(254, 226, 226, 0.9);
+  color: #b91c1c;
 }
 
 .today-item-top {
@@ -3630,10 +3722,65 @@ body.session-header-mounted #focusCard {
       background: #dbeafe;
     }
 
-    .file-row.studying {
-      background: #dcfce7;
-      border-color: #22c55e;
-    }
+	    .file-row.studying {
+	      background: #dcfce7;
+	      border-color: #22c55e;
+	    }
+
+	    .file-row.studying .file-actions-row {
+	      opacity: 0 !important;
+	      pointer-events: none !important;
+	      max-height: 0 !important;
+	      transform: translateY(-2px) !important;
+	    }
+
+	    .app:not(.subjects-maximized) .file-row.studying .file-meta {
+	      padding-right: 0;
+	    }
+
+	    .app:not(.subjects-maximized) .file-row.studying .file-actions {
+	      width: 100%;
+	    }
+
+	    .file-study-actions-row {
+	      display: grid;
+	      grid-template-columns: 1fr 1fr;
+	      gap: 6px;
+	      width: 100%;
+	    }
+
+	    .file-study-actions-row .chip-btn {
+	      width: 100%;
+	      min-width: 0;
+	      padding: 10px 12px;
+	    }
+
+	    .subjects-maximized .file-actions-row {
+	      display: none !important;
+	    }
+
+	    .app:not(.subjects-maximized) .file-action-btn.file-action-add {
+	      background: rgba(220, 252, 231, 0.95);
+	      border-color: rgba(34, 197, 94, 0.45);
+	      color: #166534;
+	    }
+
+	    .app:not(.subjects-maximized) .file-action-btn.file-action-add:hover {
+	      background: rgba(187, 247, 208, 0.95);
+	      border-color: rgba(34, 197, 94, 0.7);
+	    }
+
+	    .app:not(.subjects-maximized) .file-action-btn.file-action-remove {
+	      background: rgba(254, 226, 226, 0.95);
+	      border-color: rgba(239, 68, 68, 0.45);
+	      color: #b91c1c;
+	    }
+
+	    .app:not(.subjects-maximized) .file-action-btn.file-action-remove:hover {
+	      background: rgba(254, 202, 202, 0.95);
+	      border-color: rgba(239, 68, 68, 0.7);
+	    }
+
 
     .file-row.in-today {
       border-color: #22c55e;
@@ -3665,14 +3812,20 @@ body.session-header-mounted #focusCard {
       word-break: break-word;
     }
 
-    .file-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      font-size: 0.72rem;
-      color: #6b7280;
-      margin-top: 6px;
-    }
+	    .file-meta {
+	      display: flex;
+	      flex-direction: column;
+	      gap: 8px;
+	      font-size: 0.72rem;
+	      color: #6b7280;
+	      margin-top: 6px;
+	    }
+
+	    /* Compact subjects (non-maximized): keep hover actions from changing row height. */
+	    .app:not(.subjects-maximized) .file-meta {
+	      position: relative;
+	      padding-right: 90px;
+	    }
 
     .confidence-badge {
       padding: 1px 7px;
@@ -3772,17 +3925,28 @@ body.session-header-mounted #focusCard {
       gap: 6px;
     }
 
-.file-actions-row {
-      display: flex;
-      gap: 6px;
-      justify-content: flex-end;
-      opacity: 0;
-      pointer-events: none;
-      max-height: 0;
-      overflow: hidden;
-      transform: translateY(-2px);
-      transition: opacity 0.12s ease, transform 0.12s ease, max-height 0.12s ease;
-    }
+	.file-actions-row {
+	      display: flex;
+	      gap: 6px;
+	      justify-content: flex-end;
+	      opacity: 0;
+	      pointer-events: none;
+	      max-height: 0;
+	      overflow: hidden;
+	      transform: translateY(-2px);
+	      transition: opacity 0.12s ease, transform 0.12s ease, max-height 0.12s ease;
+	    }
+
+	    .app:not(.subjects-maximized) .file-actions-row {
+	      position: absolute;
+	      top: 0;
+	      right: 0;
+	      gap: 4px;
+	      max-height: none;
+	      overflow: visible;
+	      transform: translateY(-1px);
+	      transition: opacity 0.12s ease, transform 0.12s ease;
+	    }
 
     .file-row:hover .file-actions-row,
     .file-row:focus-within .file-actions-row {
@@ -3792,12 +3956,19 @@ body.session-header-mounted #focusCard {
       transform: translateY(0);
     }
 
-    .file-action-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 10px;
-      box-shadow: none;
-    }
+	    .file-action-btn {
+	      width: 32px;
+	      height: 32px;
+	      border-radius: 10px;
+	      box-shadow: none;
+	    }
+
+	    .app:not(.subjects-maximized) .file-action-btn {
+	      width: 24px;
+	      height: 24px;
+	      border-radius: 9px;
+	      font-size: 0.9rem;
+	    }
 
     .add-file-slot {
       margin-top: 6px;

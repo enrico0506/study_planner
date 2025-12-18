@@ -41,9 +41,6 @@
     <div class="header-row">
       <div class="header-main">
         <h1>Study Planner</h1>
-        <p class="subtitle">
-          Columns = subjects · Rows = files with confidence · Drag files to reorder · Track time per file.
-        </p>
       </div>
       <div class="header-actions">
         <div class="view-toggle" role="tablist" aria-label="Choose view">
@@ -380,10 +377,10 @@
           <span>Today's study time</span>
           <span id="summaryStudyTodayLabel">0 min</span>
         </div>
-          <div class="summary-study-bar" id="summaryStudyBar"></div>
-          <div class="summary-study-legend" id="summaryStudyLegend"></div>
-        </div>
-      </div>
+	          <div class="summary-study-bar" id="summaryStudyBar" role="button" tabindex="0" aria-label="Open today's study stats"></div>
+	          <div class="summary-study-legend" id="summaryStudyLegend"></div>
+	        </div>
+	      </div>
 
       <!-- Focus timer -->
       <div class="focus-card" id="focusCard">
@@ -451,10 +448,9 @@
         <div class="table-wrapper">
           <div class="subject-scroll">
             <div class="section-heading">
-              <div class="section-heading-text">
-                <h2 class="section-title">Subjects</h2>
-                <p class="section-subtitle">Manage all your subjects and files here.</p>
-              </div>
+                <div class="section-heading-text">
+                  <h2 class="section-title">Subjects</h2>
+                </div>
               <div class="section-actions">
                 <button class="subject-nav-btn mobile-menu-only" id="subjectBackBtn" type="button" aria-label="Back">←</button>
                 <button class="subject-nav-btn mobile-menu-only" id="subjectPrevBtn" type="button" aria-label="Previous subject">‹</button>
@@ -718,9 +714,9 @@
       </div>
     </div>
   </div>
-	  <!-- Suggestions Modal -->
-	  <div class="modal-backdrop" id="suggestionModalBackdrop" hidden>
-	    <div class="modal suggestion-modal" role="dialog" aria-modal="true">
+		  <!-- Suggestions Modal -->
+		  <div class="modal-backdrop" id="suggestionModalBackdrop" hidden>
+		    <div class="modal suggestion-modal" role="dialog" aria-modal="true">
       <div class="modal-header">
         <div>
           <div class="modal-title">Study suggestions</div>
@@ -749,19 +745,55 @@
             <div class="modal-subtle" id="unifiedReviewHint"></div>
           </div>
           <div class="today-suggestions-list" id="unifiedReviewList"></div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <div class="spacer"></div>
-        <button class="btn btn-secondary" id="suggestionModalCloseBtn2" type="button">Close</button>
-      </div>
+	    </div>
+		  </div>
+	      <div class="modal-footer">
+	        <div class="spacer"></div>
+	        <button class="btn btn-secondary" id="suggestionModalCloseBtn2" type="button">Close</button>
+	      </div>
     </div>
+		  </div>
+
+	  <!-- Today subtasks (compact view) Modal -->
+	  <div class="modal-backdrop" id="subtasksModalBackdrop" hidden>
+	    <div class="modal subtasks-modal" role="dialog" aria-modal="true" aria-labelledby="subtasksModalTitle">
+	      <div class="modal-header">
+	        <div>
+	          <div class="modal-title" id="subtasksModalTitle">Subtasks</div>
+	          <div class="modal-subtitle" id="subtasksModalSubtitle"></div>
+	        </div>
+	        <button class="modal-close-btn" id="subtasksModalCloseBtn" aria-label="Close">✕</button>
+	      </div>
+	      <div class="modal-body" id="subtasksModalBody"></div>
+	      <div class="modal-footer">
+	        <div class="spacer"></div>
+	        <button class="btn btn-secondary" id="subtasksModalCloseBtn2" type="button">Close</button>
+	      </div>
+	    </div>
 	  </div>
 
-  <!-- Notes Modal -->
-  <div class="calendar-modal notes-modal" id="notesModal" aria-hidden="true">
-    <div class="calendar-modal-backdrop" id="notesModalBackdrop"></div>
-    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="notesModalTitle">
+	  <!-- Today stats modal -->
+	  <div class="modal-backdrop" id="todayStatsModalBackdrop" hidden>
+	    <div class="modal insights-modal today-stats-modal" role="dialog" aria-modal="true" aria-labelledby="todayStatsModalTitle">
+	      <div class="modal-header">
+	        <div>
+	          <div class="modal-title" id="todayStatsModalTitle">Today</div>
+	          <div class="modal-subtitle" id="todayStatsModalSubtitle"></div>
+	        </div>
+	        <button class="modal-close-btn" id="todayStatsModalCloseBtn" aria-label="Close">✕</button>
+	      </div>
+	      <div class="modal-body" id="todayStatsModalBody"></div>
+	      <div class="modal-footer">
+	        <div class="spacer"></div>
+	        <button class="btn btn-secondary" id="todayStatsModalCloseBtn2" type="button">Close</button>
+	      </div>
+	    </div>
+	  </div>
+
+	  <!-- Notes Modal -->
+	  <div class="calendar-modal notes-modal" id="notesModal" aria-hidden="true">
+	    <div class="calendar-modal-backdrop" id="notesModalBackdrop"></div>
+	    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="notesModalTitle">
       <div class="calendar-modal-head">
         <div>
           <div class="modal-label">Notes</div>
