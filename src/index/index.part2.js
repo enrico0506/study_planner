@@ -706,6 +706,149 @@
       return { perSubject, totalMs };
     }
 
+    const todayStatsModalBackdrop = document.getElementById("todayStatsModalBackdrop");
+    const todayStatsModalTitle = document.getElementById("todayStatsModalTitle");
+    const todayStatsModalSubtitle = document.getElementById("todayStatsModalSubtitle");
+    const todayStatsModalBody = document.getElementById("todayStatsModalBody");
+    const todayStatsModalCloseBtn = document.getElementById("todayStatsModalCloseBtn");
+    const todayStatsModalCloseBtn2 = document.getElementById("todayStatsModalCloseBtn2");
+
+    function closeTodayStatsModal() {
+      if (!todayStatsModalBackdrop) return;
+      todayStatsModalBackdrop.hidden = true;
+      todayStatsModalBackdrop.style.display = "none";
+    }
+
+    function getFileTodayMs(file, dayId, key) {
+      if (!file) return 0;
+      if (dayId !== null && file.dailyMsPacked) return packedGet(file.dailyMsPacked, dayId) || 0;
+      if (file.dailyMs && file.dailyMs[key]) return file.dailyMs[key] || 0;
+      return 0;
+    }
+
+    function computeTodayStudyByTask() {
+      const key = getTodayKey();
+      const dayId = dateKeyToDayId(key);
+      const perTask = [];
+      subjects.forEach((subj) => {
+        (subj.files || []).forEach((file) => {
+          const ms = getFileTodayMs(file, dayId, key);
+          if (ms > 0) perTask.push({ subj, file, ms });
+        });
+      });
+      if (activeStudy && activeStudy.kind === "study" && activeStudy.subjectId && activeStudy.fileId) {
+        const { subj, file } = resolveFileRef(activeStudy.subjectId, activeStudy.fileId);
+        if (subj && file) {
+          const extra = computeElapsedMs(activeStudy);
+          const existing = perTask.find((x) => x.file && x.file.id === file.id && x.subj && x.subj.id === subj.id);
+          if (existing) existing.ms += extra;
+          else perTask.push({ subj, file, ms: extra });
+        }
+      }
+      perTask.sort((a, b) => b.ms - a.ms);
+      const totalMs = perTask.reduce((sum, r) => sum + r.ms, 0);
+      return { perTask, totalMs, key };
+    }
+
+    function el(tag, className, text) {
+      const n = document.createElement(tag);
+      if (className) n.className = className;
+      if (text != null) n.textContent = String(text);
+      return n;
+    }
+
+    function barRow(label, valueMs, maxMs) {
+      const row = el("div", "bar-row");
+      const left = el("div", "", label);
+      const right = el("div", "calendar-event-meta", formatDuration(valueMs));
+      const track = el("div", "bar-track");
+      const fill = el("div", "bar-fill");
+      const pct = maxMs ? Math.max(2, Math.round((valueMs * 100) / maxMs)) : 0;
+      fill.style.width = `${Math.min(100, pct)}%`;
+      track.appendChild(fill);
+      left.appendChild(track);
+      row.appendChild(left);
+      row.appendChild(right);
+      return row;
+    }
+
+    function renderTodayStatsModal() {
+      if (!todayStatsModalBody) return;
+      const { perSubject, totalMs } = computeTodayStudyBySubject();
+      const taskStats = computeTodayStudyByTask();
+      const dayLabel = taskStats.key || getTodayKey();
+
+      if (todayStatsModalTitle) todayStatsModalTitle.textContent = "Today";
+      if (todayStatsModalSubtitle) {
+        todayStatsModalSubtitle.textContent = `${dayLabel} • ${totalMs ? formatDuration(totalMs) : "0 min"}`;
+      }
+
+      todayStatsModalBody.replaceChildren();
+
+      const secA = el("div", "insights-section");
+      secA.appendChild(el("div", "insights-title", "By subject"));
+      const listA = el("div", "bar-list");
+      const sortedSubj = [...perSubject].sort((a, b) => b.ms - a.ms);
+      const maxSubj = sortedSubj[0] ? sortedSubj[0].ms : 0;
+      if (!sortedSubj.length) {
+        listA.appendChild(el("div", "calendar-empty", "No study time tracked today yet."));
+      } else {
+        sortedSubj.forEach((r) => listA.appendChild(barRow(r.subj?.name || "Subject", r.ms, maxSubj)));
+      }
+      secA.appendChild(listA);
+      todayStatsModalBody.appendChild(secA);
+
+      const secB = el("div", "insights-section");
+      secB.appendChild(el("div", "insights-title", "By task"));
+      const listB = el("div", "bar-list");
+      const tasks = (taskStats.perTask || []).slice(0, 18);
+      const maxTask = tasks[0] ? tasks[0].ms : 0;
+      if (!tasks.length) {
+        listB.appendChild(el("div", "calendar-empty", "No tasks studied today yet."));
+      } else {
+        tasks.forEach((r) => {
+          const label = `${r.subj?.name || "Subject"} · ${(r.file && r.file.name) || "File"}`;
+          listB.appendChild(barRow(label, r.ms, maxTask));
+        });
+      }
+      secB.appendChild(listB);
+      todayStatsModalBody.appendChild(secB);
+    }
+
+    function openTodayStatsModal() {
+      if (!todayStatsModalBackdrop) return;
+      renderTodayStatsModal();
+      todayStatsModalBackdrop.hidden = false;
+      todayStatsModalBackdrop.style.display = "flex";
+      if (todayStatsModalCloseBtn && typeof todayStatsModalCloseBtn.focus === "function") {
+        todayStatsModalCloseBtn.focus();
+      }
+    }
+
+    if (todayStatsModalCloseBtn) todayStatsModalCloseBtn.addEventListener("click", closeTodayStatsModal);
+    if (todayStatsModalCloseBtn2) todayStatsModalCloseBtn2.addEventListener("click", closeTodayStatsModal);
+    if (todayStatsModalBackdrop) {
+      todayStatsModalBackdrop.addEventListener("click", (event) => {
+        if (event.target === todayStatsModalBackdrop) closeTodayStatsModal();
+      });
+      todayStatsModalBackdrop.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeTodayStatsModal();
+        }
+      });
+    }
+
+    if (summaryStudyBar) {
+      summaryStudyBar.addEventListener("click", openTodayStatsModal);
+      summaryStudyBar.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openTodayStatsModal();
+        }
+      });
+    }
+
     function enforceTodayHeight() {
       if (!todaySidebar) return;
       if (layoutRow && layoutRow.classList.contains("today-full")) {

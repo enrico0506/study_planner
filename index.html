@@ -380,10 +380,10 @@
           <span>Today's study time</span>
           <span id="summaryStudyTodayLabel">0 min</span>
         </div>
-          <div class="summary-study-bar" id="summaryStudyBar"></div>
-          <div class="summary-study-legend" id="summaryStudyLegend"></div>
-        </div>
-      </div>
+	          <div class="summary-study-bar" id="summaryStudyBar" role="button" tabindex="0" aria-label="Open today's study stats"></div>
+	          <div class="summary-study-legend" id="summaryStudyLegend"></div>
+	        </div>
+	      </div>
 
       <!-- Focus timer -->
       <div class="focus-card" id="focusCard">
@@ -772,6 +772,24 @@
 	      <div class="modal-footer">
 	        <div class="spacer"></div>
 	        <button class="btn btn-secondary" id="subtasksModalCloseBtn2" type="button">Close</button>
+	      </div>
+	    </div>
+	  </div>
+
+	  <!-- Today stats modal -->
+	  <div class="modal-backdrop" id="todayStatsModalBackdrop" hidden>
+	    <div class="modal insights-modal today-stats-modal" role="dialog" aria-modal="true" aria-labelledby="todayStatsModalTitle">
+	      <div class="modal-header">
+	        <div>
+	          <div class="modal-title" id="todayStatsModalTitle">Today</div>
+	          <div class="modal-subtitle" id="todayStatsModalSubtitle"></div>
+	        </div>
+	        <button class="modal-close-btn" id="todayStatsModalCloseBtn" aria-label="Close">✕</button>
+	      </div>
+	      <div class="modal-body" id="todayStatsModalBody"></div>
+	      <div class="modal-footer">
+	        <div class="spacer"></div>
+	        <button class="btn btn-secondary" id="todayStatsModalCloseBtn2" type="button">Close</button>
 	      </div>
 	    </div>
 	  </div>

@@ -1296,6 +1296,20 @@ body.session-header-mounted #focusCard {
   background: var(--study-bar-bg, #e8ecf7);
   overflow: hidden;
   display: flex;
+  border: 1px solid rgba(99, 102, 241, 0);
+  transition: border-color 0.08s ease, box-shadow 0.08s ease;
+  cursor: pointer;
+}
+
+.summary-study-bar:hover {
+  border-color: rgba(37, 99, 235, 0.7);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.summary-study-bar:focus-visible {
+  outline: none;
+  border-color: rgba(37, 99, 235, 0.85);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
 }
 
     .summary-study-segment {
