@@ -1123,6 +1123,7 @@
     });
     scheduleManualTodoSubjectSelect?.addEventListener("change", () => {
       renderScheduleManualTodoFileOptions(scheduleManualTodoSubjectSelect.value, "");
+      scheduleManualTodoFileSelect?.focus();
     });
     scheduleManualTodoNameInput?.addEventListener("keydown", (event) => {
       if (event.key !== "Enter") return;

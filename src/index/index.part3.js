@@ -766,6 +766,12 @@
 	        scheduleManualTodoSubjectSelect.appendChild(opt);
 	        return;
 	      }
+	      {
+	        const opt = document.createElement("option");
+	        opt.value = "";
+	        opt.textContent = "Select subject…";
+	        scheduleManualTodoSubjectSelect.appendChild(opt);
+	      }
 	      subjects.forEach((subj) => {
 	        const opt = document.createElement("option");
 	        opt.value = subj.id;
@@ -780,6 +786,13 @@
 	    function renderScheduleManualTodoFileOptions(subjectId, selectedFileId) {
 	      if (!scheduleManualTodoFileSelect) return;
 	      scheduleManualTodoFileSelect.innerHTML = "";
+	      if (!subjectId) {
+	        const opt = document.createElement("option");
+	        opt.value = "";
+	        opt.textContent = "Select subject first";
+	        scheduleManualTodoFileSelect.appendChild(opt);
+	        return;
+	      }
 	      const subj = subjects.find((s) => s.id === subjectId);
 	      const files = subj && Array.isArray(subj.files) ? subj.files : [];
 	      if (!files.length) {
@@ -788,6 +801,12 @@
 	        opt.textContent = "No files";
 	        scheduleManualTodoFileSelect.appendChild(opt);
 	        return;
+	      }
+	      {
+	        const opt = document.createElement("option");
+	        opt.value = "";
+	        opt.textContent = "Select task…";
+	        scheduleManualTodoFileSelect.appendChild(opt);
 	      }
 	      files.forEach((file) => {
 	        const opt = document.createElement("option");
@@ -840,10 +859,11 @@
 	      }
 
 	      if (isSubject) {
-	        const initialSubject = scheduleManualTodoSubjectSelect?.value || (subjects[0] && subjects[0].id) || "";
-	        renderScheduleManualTodoSubjectOptions(initialSubject);
-	        const sid = scheduleManualTodoSubjectSelect?.value || initialSubject;
-	        renderScheduleManualTodoFileOptions(sid, scheduleManualTodoFileSelect?.value || "");
+	        const currentSubject = scheduleManualTodoSubjectSelect?.value || "";
+	        renderScheduleManualTodoSubjectOptions(currentSubject);
+	        const sid = scheduleManualTodoSubjectSelect?.value || "";
+	        const currentFile = scheduleManualTodoFileSelect?.value || "";
+	        renderScheduleManualTodoFileOptions(sid, currentFile);
 	      }
 
 	      if (isDeadline) {
@@ -940,7 +960,7 @@
 	        const subjectId = scheduleManualTodoSubjectSelect?.value || "";
 	        const fileId = scheduleManualTodoFileSelect?.value || "";
 	        if (!subjectId || !fileId) {
-	          showNotice("Please pick a subject and file.", "warn");
+	          showNotice("Please pick a subject and task.", "warn");
 	          return;
 	        }
 	        const ok = addTodoForFileToDay(dayKey, subjectId, fileId, subtasks);
