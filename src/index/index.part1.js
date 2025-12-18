@@ -12,6 +12,7 @@ const STORAGE_KEY = "studySubjects_v1";
     const CONF_MODE_KEY = "studyConfidenceMode_v1";
     const SP_STORAGE =
       window.StudyPlanner && window.StudyPlanner.Storage ? window.StudyPlanner.Storage : null;
+const DESKTOP_VISIBLE_SUBJECTS = 4;
 
 const DEFAULT_SUBJECT_COLORS = [
       "#4f8bff", // vivid blue
@@ -401,17 +402,17 @@ const CVD_SAFE_SUBJECT_COLORS = [
       const paddingRight = parseFloat(wrapperStyles.paddingRight) || 0;
       const viewportWidth = Math.max(0, wrapper.clientWidth - paddingLeft - paddingRight);
 
-      const tableStyles = window.getComputedStyle(subjectTable);
-      const gapRaw = tableStyles.columnGap || tableStyles.gap || "0px";
-      const gap = parseFloat(gapRaw) || 0;
+	      const tableStyles = window.getComputedStyle(subjectTable);
+	      const gapRaw = tableStyles.columnGap || tableStyles.gap || "0px";
+	      const gap = parseFloat(gapRaw) || 0;
 
-	      const desiredVisible = subjectsMaximized ? 5 : 4;
+	      const desiredVisible = DESKTOP_VISIBLE_SUBJECTS;
 	      const visibleSubjects = count >= desiredVisible ? desiredVisible : Math.max(1, count);
 	      const base =
 	        (viewportWidth - gap * Math.max(0, visibleSubjects - 1)) / Math.max(1, visibleSubjects);
 	      const minWidth = subjectsMaximized ? 140 : 190;
 	      // Use floor to guarantee all visible columns fit (avoid 1px overflow from rounding).
-	      const subjectWidth = Math.floor(Math.max(minWidth, Math.min(360, base)));
+	      const subjectWidth = Math.floor(Math.max(minWidth, base));
 
       const template = `repeat(${count}, ${subjectWidth}px) ${addColWidth}px`;
       subjectTable.classList.add("subject-table-dynamic");
@@ -557,7 +558,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	        const colWidth = cols[0].getBoundingClientRect().width || cols[0].offsetWidth || 0;
 	        if (!colWidth) return null;
 	        const step = colWidth + gap;
-	        const desiredVisible = subjectsMaximized ? 5 : 4;
+	        const desiredVisible = DESKTOP_VISIBLE_SUBJECTS;
 	        const visible = cols.length >= desiredVisible ? desiredVisible : Math.max(1, cols.length);
 	        const maxIdx = Math.max(0, cols.length - visible);
 	        return { cols, padLeft, step, visible, maxIdx };

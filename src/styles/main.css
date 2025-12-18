@@ -3419,17 +3419,16 @@ body.session-header-mounted #focusCard {
 }
 
 .section-heading {
-  display: flex;
+  display: inline-flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   padding: 6px 4px 8px;
   min-width: max-content;
+  align-self: flex-start;
   position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   background: #fff;
   z-index: 6;
 }
