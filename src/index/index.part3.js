@@ -449,9 +449,9 @@
           }
         });
 
-		        if (!isThisActive) {
-		          if (isSlimMode) {
-		            const removeX = document.createElement("button");
+	        if (!isThisActive) {
+	          if (isSlimMode) {
+	            const removeX = document.createElement("button");
 	            removeX.type = "button";
 	            removeX.className = "today-remove-x";
 	            removeX.textContent = "✕";
@@ -465,7 +465,7 @@
 	                announceLive(`Removed “${(file && file.name) || todo.label || "Untitled"}” from Today’s focus.`);
 	              });
 	            });
-	            item.appendChild(removeX);
+	            actions.appendChild(removeX);
 	          } else {
 	            const removeBtn = document.createElement("button");
 	            removeBtn.type = "button";

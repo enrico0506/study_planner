@@ -2533,20 +2533,22 @@ body.session-header-mounted #focusCard {
 }
 
 .today-item.today-item-slim {
-  gap: 6px;
-  padding: 8px 10px;
+  gap: 8px;
+  padding: 10px 12px;
 }
 
 .today-item.today-item-slim .today-item-top {
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-rows: auto;
-  gap: 6px;
+  gap: 10px;
+  align-items: baseline;
 }
 
 .today-item.today-item-slim .today-actions {
   width: auto;
   flex-wrap: nowrap;
-  gap: 6px;
+  gap: 8px;
+  align-items: baseline;
 }
 
 .today-item.today-item-slim .today-actions .today-timer {
@@ -2560,6 +2562,7 @@ body.session-header-mounted #focusCard {
   align-items: center;
   justify-content: flex-start;
   gap: 8px;
+  padding-top: 2px;
 }
 
 .today-item.today-item-slim .today-slim-footer .chip-btn {
@@ -2570,6 +2573,9 @@ body.session-header-mounted #focusCard {
 
 .today-item.today-item-slim-expanded .today-subtasks {
   margin-top: 4px;
+  border-radius: 14px;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .today-item.today-item-slim.today-item-clickable {
@@ -2577,18 +2583,18 @@ body.session-header-mounted #focusCard {
 }
 
 .today-remove-x {
-  position: absolute;
-  top: 8px;
-  right: 8px;
   border: none;
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(4px);
+  background: transparent;
   color: #6b7280;
   cursor: pointer;
   font-size: 0.95rem;
   padding: 2px 6px;
   border-radius: 999px;
   transition: background 0.08s ease, color 0.08s ease;
+}
+
+.today-item.today-item-slim .today-actions input[type="checkbox"] {
+  margin-top: 1px;
 }
 
 .today-remove-x:hover {
