@@ -2233,6 +2233,38 @@ body.session-header-mounted #focusCard {
       border-color: var(--chip-border, #cbd5e1);
     }
 
+    .schedule-deadline-chip {
+      cursor: pointer;
+    }
+
+    .schedule-deadline-chip:hover {
+      filter: brightness(0.985);
+    }
+
+    .schedule-deadline-deadline {
+      --chip-bg: #fff7ed;
+      --chip-border: #fed7aa;
+      --chip-ink: #9a3412;
+    }
+
+    .schedule-deadline-exam {
+      --chip-bg: #fdf2f8;
+      --chip-border: #fbcfe8;
+      --chip-ink: #9d174d;
+    }
+
+    .schedule-deadline-study {
+      --chip-bg: #eff6ff;
+      --chip-border: #bfdbfe;
+      --chip-ink: #1d4ed8;
+    }
+
+    .schedule-deadline-reminder {
+      --chip-bg: #f8fafc;
+      --chip-border: #cbd5e1;
+      --chip-ink: #0f172a;
+    }
+
     .schedule-chip-label {
       flex: 1;
       min-width: 0;

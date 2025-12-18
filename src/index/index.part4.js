@@ -1111,6 +1111,19 @@
         addScheduleManualTodoSubtaskFromInput();
       }
     });
+    scheduleManualTodoTypeSelect?.addEventListener("change", () => {
+      setScheduleManualTodoModalType(scheduleManualTodoTypeSelect.value);
+      if (scheduleManualTodoModalBackdrop && !scheduleManualTodoModalBackdrop.hidden) {
+        if (scheduleManualTodoModalState && scheduleManualTodoModalState.type === "subject_todo") {
+          scheduleManualTodoSubjectSelect?.focus();
+        } else {
+          scheduleManualTodoNameInput?.focus();
+        }
+      }
+    });
+    scheduleManualTodoSubjectSelect?.addEventListener("change", () => {
+      renderScheduleManualTodoFileOptions(scheduleManualTodoSubjectSelect.value, "");
+    });
     scheduleManualTodoNameInput?.addEventListener("keydown", (event) => {
       if (event.key !== "Enter") return;
       event.preventDefault();
@@ -1210,6 +1223,11 @@
         }
       });
     }
+
+    window.addEventListener("study:calendar-changed", () => {
+      loadCalendarEvents();
+      renderScheduleView();
+    });
 
     if (todayDropZone) {
       todayDropZone.addEventListener("dragenter", (event) => {

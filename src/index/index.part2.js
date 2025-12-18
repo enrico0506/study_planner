@@ -309,6 +309,37 @@
       }
     }
 
+    function saveCalendarEvents() {
+      try {
+        if (SP_STORAGE) SP_STORAGE.setJSON(CALENDAR_KEY, calendarEvents || [], { debounceMs: 150 });
+        else localStorage.setItem(CALENDAR_KEY, JSON.stringify(calendarEvents || []));
+      } catch (e) {}
+      try {
+        window.dispatchEvent(new CustomEvent("study:calendar-changed"));
+      } catch {}
+    }
+
+    function addCalendarEvent({ title, date, time = "", type = "deadline", priority = "normal", notes = "" } = {}) {
+      const cleanTitle = String(title || "").trim();
+      const cleanDate = String(date || "").trim();
+      if (!cleanTitle || !cleanDate) return false;
+      const evt = {
+        id: "evt_" + createId(),
+        title: cleanTitle,
+        date: cleanDate,
+        time: String(time || "").trim(),
+        type: String(type || "deadline"),
+        priority: String(priority || "normal"),
+        notes: String(notes || "").trim(),
+        done: false,
+        source: "schedule"
+      };
+      if (!Array.isArray(calendarEvents)) calendarEvents = [];
+      calendarEvents.push(evt);
+      saveCalendarEvents();
+      return true;
+    }
+
     function getUpcomingCalendarEvents(windowDays = 5) {
       const now = new Date();
       now.setHours(0, 0, 0, 0);
@@ -1444,6 +1475,46 @@
       todayTodos.unshift(todo);
       saveTodayTodos();
       renderTodayTodos();
+      return true;
+    }
+
+    function addTodoForFileToDay(dayKey, subjectId, fileId, subtaskTexts) {
+      const key = String(dayKey || "").trim();
+      if (!key) return false;
+      const todayKey = getTodayKey();
+      if (key === todayKey) {
+        return addTodoForFile(subjectId, fileId, subtaskTexts);
+      }
+
+      const { subj, file } = resolveFileRef(subjectId, fileId);
+      if (!subj || !file) return false;
+
+      if (!dailyFocusMap || typeof dailyFocusMap !== "object") dailyFocusMap = {};
+      const list = Array.isArray(dailyFocusMap[key]) ? dailyFocusMap[key] : [];
+      const already = list.some((t) => t && t.subjectId === subjectId && t.fileId === fileId);
+      if (already) return false;
+
+      const subtasks = Array.isArray(subtaskTexts)
+        ? subtaskTexts
+            .map((txt) => (txt || "").trim())
+            .filter(Boolean)
+            .map((txt) => ({ id: createId(), label: txt, done: false }))
+        : [];
+
+      const todo = {
+        id: createId(),
+        kind: "file",
+        subjectId,
+        fileId,
+        label: file.name || "Untitled file",
+        subjectName: subj.name || "Subject",
+        done: false,
+        subtasks
+      };
+
+      dailyFocusMap[key] = [todo, ...list];
+      saveDailyFocusMap();
+      renderScheduleView();
       return true;
     }
 
