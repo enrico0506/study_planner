@@ -465,7 +465,7 @@
 	                announceLive(`Removed “${(file && file.name) || todo.label || "Untitled"}” from Today’s focus.`);
 	              });
 	            });
-	            actions.appendChild(removeX);
+	            item.appendChild(removeX);
 	          } else {
 	            const removeBtn = document.createElement("button");
 	            removeBtn.type = "button";
