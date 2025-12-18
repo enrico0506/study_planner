@@ -1104,6 +1104,47 @@
       }
     });
 
+    function openScheduleManualTodoFromControls() {
+      const key = getScheduleManualAddDayKey();
+      if (!key) return;
+      if (key < getTodayKey()) {
+        showNotice("Please pick today or a future day.", "warn");
+        return;
+      }
+      openScheduleManualTodoModal(key);
+    }
+
+    scheduleManualAddInput?.addEventListener("click", () => openScheduleManualTodoFromControls());
+    scheduleManualAddInput?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openScheduleManualTodoFromControls();
+      }
+    });
+    scheduleManualAddBtn?.addEventListener("click", () => openScheduleManualTodoFromControls());
+
+    scheduleManualTodoSubtaskAdd?.addEventListener("click", addScheduleManualTodoSubtaskFromInput);
+    scheduleManualTodoSubtaskInput?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        addScheduleManualTodoSubtaskFromInput();
+      }
+    });
+    scheduleManualTodoNameInput?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      scheduleManualTodoModalSave?.click();
+    });
+
+    scheduleManualTodoModalClose?.addEventListener("click", () => closeScheduleManualTodoModal());
+    scheduleManualTodoModalCancel?.addEventListener("click", () => closeScheduleManualTodoModal());
+    scheduleManualTodoModalSave?.addEventListener("click", () => submitScheduleManualTodoModal());
+    scheduleManualTodoModalBackdrop?.addEventListener("mousedown", (event) => {
+      if (event.target === scheduleManualTodoModalBackdrop) {
+        closeScheduleManualTodoModal();
+      }
+    });
+
     if (noticeModalBackdrop) {
       noticeModalBackdrop.addEventListener("mousedown", (event) => {
         if (event.target === noticeModalBackdrop) {
@@ -1176,6 +1217,15 @@
       scheduleTaskModalBackdrop.addEventListener("mousedown", (event) => {
         if (event.target === scheduleTaskModalBackdrop) {
           closeScheduleTaskModal();
+        }
+      });
+    }
+
+    if (scheduleManualTodoModalBackdrop) {
+      scheduleManualTodoModalBackdrop.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeScheduleManualTodoModal();
         }
       });
     }

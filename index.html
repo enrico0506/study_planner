@@ -503,6 +503,20 @@
         </div>
       </div>
       <div class="schedule-grid" id="scheduleGrid"></div>
+      <div class="schedule-manual-add" id="scheduleManualAdd">
+        <div class="schedule-manual-add-row">
+          <input
+            class="schedule-manual-add-input"
+            id="scheduleManualAddInput"
+            type="text"
+            placeholder="Add a manual todo…"
+            readonly
+          />
+          <input class="schedule-manual-add-date" id="scheduleManualAddDate" type="date" />
+          <button class="chip-btn chip-btn-primary" id="scheduleManualAddBtn" type="button">Add</button>
+        </div>
+        <div class="schedule-manual-add-hint">Adds a custom todo (with subtasks) to the selected day.</div>
+      </div>
     </div>
 
     <!-- Add-to-Today Modal -->
@@ -551,6 +565,48 @@
         <div class="modal-footer">
           <div class="spacer"></div>
           <button class="btn" id="scheduleTaskStudyBtn" type="button">Study</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schedule Manual Todo Modal -->
+    <div class="modal-backdrop" id="scheduleManualTodoModalBackdrop" hidden>
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title" id="scheduleManualTodoModalTitle">Add todo</div>
+            <div class="modal-subtitle" id="scheduleManualTodoModalSubtitle">Create a custom todo for the selected day.</div>
+          </div>
+          <button class="modal-close-btn" id="scheduleManualTodoModalClose" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-field-row">
+            <label for="scheduleManualTodoNameInput">Todo name</label>
+            <input
+              type="text"
+              id="scheduleManualTodoNameInput"
+              placeholder="e.g. Write summary / Prepare slides"
+              autocomplete="off"
+            />
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Subtasks (optional)</div>
+            <div class="subtask-input-row">
+              <input
+                type="text"
+                id="scheduleManualTodoSubtaskInput"
+                placeholder="Type a subtask and press Enter"
+                autocomplete="off"
+              />
+              <button class="chip-btn chip-btn-primary" id="scheduleManualTodoSubtaskAdd" type="button">+</button>
+            </div>
+            <div class="subtask-list" id="scheduleManualTodoSubtaskList"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="spacer"></div>
+          <button class="btn btn-secondary" id="scheduleManualTodoModalCancel" type="button">Cancel</button>
+          <button class="btn" id="scheduleManualTodoModalSave" type="button">Add todo</button>
         </div>
       </div>
     </div>

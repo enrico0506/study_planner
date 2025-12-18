@@ -2132,6 +2132,52 @@ body.session-header-mounted #focusCard {
       margin-top: 6px;
     }
 
+    .schedule-manual-add {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid #edf0f7;
+    }
+
+    .schedule-manual-add-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .schedule-manual-add-input {
+      flex: 1;
+      min-width: 220px;
+      border: 1px solid #dfe4f0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: #ffffff;
+      color: var(--accent-ink);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+      cursor: pointer;
+    }
+
+    .schedule-manual-add-input:focus {
+      outline: none;
+      border-color: #c9d5ff;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14);
+    }
+
+    .schedule-manual-add-date {
+      border: 1px solid #dfe4f0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: #ffffff;
+      color: var(--accent-ink);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+    }
+
+    .schedule-manual-add-hint {
+      margin-top: 6px;
+      font-size: 0.82rem;
+      color: var(--ink-muted);
+    }
+
     .schedule-day {
       background: #ffffff;
       border: 1px solid #e6e9f2;
@@ -2209,6 +2255,12 @@ body.session-header-mounted #focusCard {
       background: var(--chip-bg, #f4f6fb);
       color: var(--chip-ink, #0f172a);
       border-color: var(--chip-border, #dfe4f0);
+    }
+
+    .schedule-chip-custom {
+      background: var(--chip-bg, #f1f5f9);
+      color: var(--chip-ink, #0f172a);
+      border-color: var(--chip-border, #cbd5e1);
     }
 
     .schedule-chip-label {

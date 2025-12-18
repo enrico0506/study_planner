@@ -371,6 +371,17 @@
     max-width: 100%;
   }
 
+  body[data-mode="schedule"] .schedule-manual-add-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body[data-mode="schedule"] .schedule-manual-add-input,
+  body[data-mode="schedule"] .schedule-manual-add-date,
+  body[data-mode="schedule"] #scheduleManualAddBtn {
+    width: 100%;
+  }
+
   body[data-mode="today"] .today-actions {
     min-width: 0;
     max-width: none;

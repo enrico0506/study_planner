@@ -22,13 +22,19 @@
 		        return;
 		      }
 
-		      const { subj, file } = resolveFileRef(todo.subjectId, todo.fileId);
+		      const isFileTodo =
+		        (todo.kind || "file") !== "custom" && !!todo.subjectId && !!todo.fileId;
+		      const { subj, file } = isFileTodo
+		        ? resolveFileRef(todo.subjectId, todo.fileId)
+		        : { subj: null, file: null };
 		      if (subtasksModalTitle) {
 		        subtasksModalTitle.textContent = (file && file.name) || todo.label || "Subtasks";
 		      }
 		      if (subtasksModalSubtitle) {
 		        const subs = Array.isArray(todo.subtasks) ? todo.subtasks : [];
-		        subtasksModalSubtitle.textContent = `${(subj && subj.name) || "Subject"} • ${subs.length} subtask${subs.length === 1 ? "" : "s"}`;
+		        subtasksModalSubtitle.textContent = `${
+		          isFileTodo ? (subj && subj.name) || "Subject" : "Custom"
+		        } • ${subs.length} subtask${subs.length === 1 ? "" : "s"}`;
 		      }
 
 		      subtasksModalBody.innerHTML = "";
@@ -219,7 +225,11 @@
       const completedItems = [];
 
       sortedTodos.forEach((todo) => {
-	        const { subj, file } = resolveFileRef(todo.subjectId, todo.fileId);
+	        const isCustom = (todo.kind || "file") === "custom";
+	        const isFileTodo = !isCustom && !!todo.subjectId && !!todo.fileId;
+	        const { subj, file } = isFileTodo
+	          ? resolveFileRef(todo.subjectId, todo.fileId)
+	          : { subj: null, file: null };
 	        const subjColor = getSubjectColorById(todo.subjectId);
 	        const tintAlpha = getSubjectTintAlphaById(todo.subjectId);
 	        const item = document.createElement("div");
@@ -235,10 +245,10 @@
 	        const tinted = hexToRgba(subjColor, tintAlpha);
 	        const borderTint = hexToRgba(subjColor, Math.max(0.2, Math.min(0.7, tintAlpha * 2.25)));
 	        item.style.setProperty("--todo-accent", subjColor);
-		        if (tinted) item.style.backgroundColor = tinted;
-		        if (borderTint) item.style.borderColor = borderTint;
+	        if (tinted) item.style.backgroundColor = tinted;
+	        if (borderTint) item.style.borderColor = borderTint;
 	        if (todo.done) item.classList.add("today-item-done");
-	        if (!file || !subj) item.classList.add("today-item-missing");
+	        if (isFileTodo && (!file || !subj)) item.classList.add("today-item-missing");
 	        const isCollapsed = !!(todayCollapsedMap && todayCollapsedMap[todo.id]);
 	        if (isCollapsed) item.classList.add("today-item-collapsed");
         if (isDragMode) {
@@ -349,14 +359,14 @@
 	        const actions = document.createElement("div");
 	        actions.className = "today-actions";
 
-	          if (!isSlimMode) {
-	            const noteNextBtn = document.createElement("button");
-	            noteNextBtn.type = "button";
-	            noteNextBtn.className = "chip-btn chip-btn-ghost";
-	            noteNextBtn.textContent = "Note for next time";
-	            noteNextBtn.addEventListener("click", (e) => {
-	              e.stopPropagation();
-	              if (!file) return;
+		          if (!isSlimMode) {
+		            const noteNextBtn = document.createElement("button");
+		            noteNextBtn.type = "button";
+		            noteNextBtn.className = "chip-btn chip-btn-ghost";
+		            noteNextBtn.textContent = "Note for next time";
+		            noteNextBtn.addEventListener("click", (e) => {
+		              e.stopPropagation();
+		              if (!file) return;
 	              openNoticePrompt("Note for next time", file.nextTimeNotePending || "", (val) => {
 	                const trimmed = String(val || "").trim();
 	                if (trimmed) {
@@ -413,9 +423,9 @@
 
 	            reorderActions.appendChild(upBtn);
 	            reorderActions.appendChild(downBtn);
-	            actions.appendChild(reorderActions);
-	            actions.appendChild(noteNextBtn);
-	          }
+		            actions.appendChild(reorderActions);
+		            if (isFileTodo && file) actions.appendChild(noteNextBtn);
+		          }
 
 		        const isThisActive = isActiveStudy(todo.subjectId, todo.fileId);
 		        const isPaused = isThisActive && activeStudy && activeStudy.paused;
@@ -500,12 +510,14 @@
         const subtasksList = document.createElement("div");
         subtasksList.className = "today-subtasks-list";
 
-	        if (!subs.length) {
-	          const hint = document.createElement("div");
-	          hint.className = "today-subtasks-empty";
-	          hint.textContent = "No subtasks yet. Add what you want to cover for this file.";
-	          subtasksList.appendChild(hint);
-	        } else {
+		        if (!subs.length) {
+		          const hint = document.createElement("div");
+		          hint.className = "today-subtasks-empty";
+		          hint.textContent = isFileTodo
+		            ? "No subtasks yet. Add what you want to cover for this file."
+		            : "No subtasks yet. Add what you want to do.";
+		          subtasksList.appendChild(hint);
+		        } else {
           subs.forEach((sub) => {
             const row = document.createElement("div");
             row.className = "today-subtask-row";
@@ -607,33 +619,34 @@
 	        }
 
 	        if (!todo.done && isSlimMode) {
-	          const footer = document.createElement("div");
-	          footer.className = "today-slim-footer";
-	          if (!isThisActive) {
-	            const studyBtn = document.createElement("button");
-	            studyBtn.type = "button";
-	            studyBtn.className = "chip-btn chip-btn-primary";
-	            studyBtn.textContent = "Study";
-	            studyBtn.addEventListener("click", (e) => {
-	              e.stopPropagation();
-	              if (subj && file) {
-	                moveTodoToTop(todo.id, { render: false });
-	                startStudy(todo.subjectId, file);
-	              }
-	            });
+		          const footer = document.createElement("div");
+		          footer.className = "today-slim-footer";
+		          if (!isThisActive) {
+		            const subsBtn = document.createElement("button");
+		            subsBtn.type = "button";
+		            subsBtn.className = "chip-btn chip-btn-ghost";
+		            subsBtn.textContent = "Subtasks";
+		            subsBtn.addEventListener("click", (e) => {
+		              e.stopPropagation();
+		              openSubtasksModal(todo, file, subj);
+		            });
 
-	            const subsBtn = document.createElement("button");
-	            subsBtn.type = "button";
-	            subsBtn.className = "chip-btn chip-btn-ghost";
-	            subsBtn.textContent = "Subtasks";
-	            subsBtn.addEventListener("click", (e) => {
-	              e.stopPropagation();
-	              openSubtasksModal(todo, file, subj);
-	            });
-
-	            footer.appendChild(studyBtn);
-	            footer.appendChild(subsBtn);
-	          } else {
+		            if (isFileTodo) {
+		              const studyBtn = document.createElement("button");
+		              studyBtn.type = "button";
+		              studyBtn.className = "chip-btn chip-btn-primary";
+		              studyBtn.textContent = "Study";
+		              studyBtn.addEventListener("click", (e) => {
+		                e.stopPropagation();
+		                if (subj && file) {
+		                  moveTodoToTop(todo.id, { render: false });
+		                  startStudy(todo.subjectId, file);
+		                }
+		              });
+		              footer.appendChild(studyBtn);
+		            }
+		            footer.appendChild(subsBtn);
+		          } else {
 	            const primaryBtn = document.createElement("button");
 	            primaryBtn.type = "button";
 	            primaryBtn.className = "chip-btn chip-btn-primary";
@@ -701,10 +714,10 @@
       requestAnimationFrame(() => enforceTodayHeight());
     }
 
-    function formatWeekRangeLabel(start, end) {
-      if (!start || !end) return "";
-      const opts = { month: "short" };
-      const startMonth = start.toLocaleString(undefined, opts);
+	    function formatWeekRangeLabel(start, end) {
+	      if (!start || !end) return "";
+	      const opts = { month: "short" };
+	      const startMonth = start.toLocaleString(undefined, opts);
       const endMonth = end.toLocaleString(undefined, opts);
       const startText = startMonth + " " + start.getDate();
       const endText =
@@ -712,21 +725,129 @@
         endMonth +
         " " +
         end.getDate();
-      return startText + " - " + endText;
-    }
+	      return startText + " - " + endText;
+	    }
 
-    function renderScheduleView() {
-      if (!scheduleGrid) return;
-      const phone = isPhoneLayout();
+	    let scheduleManualTodoModalState = null; // { dayKey, subtasks: string[] }
+
+	    function renderScheduleManualTodoSubtasks() {
+	      if (!scheduleManualTodoSubtaskList || !scheduleManualTodoModalState) return;
+	      scheduleManualTodoSubtaskList.innerHTML = "";
+	      const items = Array.isArray(scheduleManualTodoModalState.subtasks)
+	        ? scheduleManualTodoModalState.subtasks
+	        : [];
+	      if (!items.length) return;
+	      items.forEach((label, idx) => {
+	        const chip = document.createElement("div");
+	        chip.className = "subtask-chip";
+	        const text = document.createElement("span");
+	        text.textContent = label;
+	        const remove = document.createElement("button");
+	        remove.type = "button";
+	        remove.className = "subtask-chip-remove";
+	        remove.textContent = "✕";
+	        remove.addEventListener("click", () => {
+	          scheduleManualTodoModalState.subtasks.splice(idx, 1);
+	          renderScheduleManualTodoSubtasks();
+	        });
+	        chip.appendChild(text);
+	        chip.appendChild(remove);
+	        scheduleManualTodoSubtaskList.appendChild(chip);
+	      });
+	    }
+
+	    function addScheduleManualTodoSubtaskFromInput() {
+	      if (!scheduleManualTodoModalState || !scheduleManualTodoSubtaskInput) return;
+	      const txt = scheduleManualTodoSubtaskInput.value.trim();
+	      if (!txt) return;
+	      scheduleManualTodoModalState.subtasks.push(txt);
+	      scheduleManualTodoSubtaskInput.value = "";
+	      renderScheduleManualTodoSubtasks();
+	    }
+
+	    function closeScheduleManualTodoModal() {
+	      scheduleManualTodoModalState = null;
+	      if (!scheduleManualTodoModalBackdrop) return;
+	      scheduleManualTodoModalBackdrop.hidden = true;
+	      scheduleManualTodoModalBackdrop.style.display = "none";
+	    }
+
+	    function openScheduleManualTodoModal(dayKey) {
+	      if (!scheduleManualTodoModalBackdrop) return;
+	      const key = String(dayKey || "").trim();
+	      if (!key) return;
+	      scheduleManualTodoModalState = { dayKey: key, subtasks: [] };
+	      if (scheduleManualTodoModalTitle) scheduleManualTodoModalTitle.textContent = "Add todo";
+	      if (scheduleManualTodoModalSubtitle) {
+	        const date = parseCalendarDate(key);
+	        scheduleManualTodoModalSubtitle.textContent = date
+	          ? `For ${date.toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "2-digit" })}`
+	          : "Create a custom todo for the selected day.";
+	      }
+	      if (scheduleManualTodoNameInput) scheduleManualTodoNameInput.value = "";
+	      if (scheduleManualTodoSubtaskInput) scheduleManualTodoSubtaskInput.value = "";
+	      renderScheduleManualTodoSubtasks();
+	      scheduleManualTodoModalBackdrop.hidden = false;
+	      scheduleManualTodoModalBackdrop.style.display = "flex";
+	      scheduleManualTodoNameInput?.focus();
+	    }
+
+	    function submitScheduleManualTodoModal() {
+	      if (!scheduleManualTodoModalState) return;
+	      const dayKey = scheduleManualTodoModalState.dayKey;
+	      const label = (scheduleManualTodoNameInput?.value || "").trim();
+	      const subtasks = Array.isArray(scheduleManualTodoModalState.subtasks)
+	        ? [...scheduleManualTodoModalState.subtasks]
+	        : [];
+	      if (!label) {
+	        showNotice("Please enter a todo name.", "warn");
+	        scheduleManualTodoNameInput?.focus();
+	        return;
+	      }
+	      if (dayKey < getTodayKey()) {
+	        showNotice("Please pick today or a future day.", "warn");
+	        return;
+	      }
+	      const ok = addCustomTodoToDay(dayKey, label, subtasks);
+	      if (ok) showToast("Todo added.", "success");
+	      closeScheduleManualTodoModal();
+	    }
+
+	    function getScheduleManualAddDayKey() {
+	      const val = scheduleManualAddDate && scheduleManualAddDate.value ? scheduleManualAddDate.value : "";
+	      if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+	      if (isPhoneLayout()) {
+	        const cursor = new Date(getScheduleCursorDay());
+	        const key = dateToKey(cursor);
+	        if (key) return key;
+	      }
+	      return getTodayKey();
+	    }
+
+	    function ensureScheduleManualAddControlsSynced({ phone, start }) {
+	      if (!scheduleManualAddDate) return;
+	      const todayKey = getTodayKey();
+	      scheduleManualAddDate.min = todayKey;
+	      if (phone) {
+	        const key = dateToKey(start) || todayKey;
+	        scheduleManualAddDate.value = key;
+	      } else if (!scheduleManualAddDate.value) {
+	        scheduleManualAddDate.value = todayKey;
+	      }
+	    }
+
+	    function renderScheduleView() {
+	      if (!scheduleGrid) return;
+	      const phone = isPhoneLayout();
 
       let start;
       let end;
       let daysToRender = 7;
 
-      if (phone) {
-        const cursor = new Date(getScheduleCursorDay());
-        start = cursor;
-        end = cursor;
+	      if (phone) {
+	        const cursor = new Date(getScheduleCursorDay());
+	        start = cursor;
+	        end = cursor;
         daysToRender = 1;
         if (scheduleRangeLabel) {
           scheduleRangeLabel.textContent = cursor.toLocaleDateString(undefined, {
@@ -736,19 +857,21 @@
           });
         }
         if (scheduleTodayBtn) scheduleTodayBtn.textContent = "Today";
-      } else {
-        if (!scheduleWeekStart) scheduleWeekStart = getWeekStart(new Date());
-        start = new Date(scheduleWeekStart);
-        end = new Date(start);
+	      } else {
+	        if (!scheduleWeekStart) scheduleWeekStart = getWeekStart(new Date());
+	        start = new Date(scheduleWeekStart);
+	        end = new Date(start);
         end.setDate(start.getDate() + 6);
         if (scheduleRangeLabel) {
           scheduleRangeLabel.textContent = formatWeekRangeLabel(start, end);
         }
         if (scheduleTodayBtn) scheduleTodayBtn.textContent = "This week";
-      }
+	      }
 
-      scheduleGrid.innerHTML = "";
-      const todayKey = getTodayKey();
+	      ensureScheduleManualAddControlsSynced({ phone, start });
+
+	      scheduleGrid.innerHTML = "";
+	      const todayKey = getTodayKey();
 
       for (let i = 0; i < daysToRender; i++) {
         const day = new Date(start);
@@ -803,17 +926,22 @@
           empty.className = "schedule-empty";
           empty.textContent = "No focus captured.";
           list.appendChild(empty);
-        } else {
-          orderedList.forEach((todo) => {
-            const { subj, file } = resolveFileRef(todo.subjectId, todo.fileId);
-            const chip = document.createElement("div");
-            chip.className = "schedule-focus-chip schedule-chip-subject";
-            const color = getSubjectColorById(todo.subjectId);
-            const tintAlpha = getSubjectTintAlphaById(todo.subjectId);
-            const bg = hexToRgba(color, Math.max(0.12, Math.min(0.45, tintAlpha))) || "#f4f6fb";
-            const border =
-              hexToRgba(color, Math.max(0.25, Math.min(0.7, tintAlpha * 2.25))) || "#dfe4f0";
-            chip.style.setProperty("--chip-bg", bg);
+	        } else {
+	          orderedList.forEach((todo) => {
+	            const isCustom = (todo.kind || "file") === "custom";
+	            const isFileTodo = !isCustom && !!todo.subjectId && !!todo.fileId;
+	            const { subj, file } = isFileTodo
+	              ? resolveFileRef(todo.subjectId, todo.fileId)
+	              : { subj: null, file: null };
+	            const chip = document.createElement("div");
+	            chip.className =
+	              "schedule-focus-chip " + (isCustom ? "schedule-chip-custom" : "schedule-chip-subject");
+	            const color = isCustom ? "#64748b" : getSubjectColorById(todo.subjectId);
+	            const tintAlpha = isCustom ? 0.22 : getSubjectTintAlphaById(todo.subjectId);
+	            const bg = hexToRgba(color, Math.max(0.12, Math.min(0.45, tintAlpha))) || "#f4f6fb";
+	            const border =
+	              hexToRgba(color, Math.max(0.25, Math.min(0.7, tintAlpha * 2.25))) || "#dfe4f0";
+	            chip.style.setProperty("--chip-bg", bg);
             chip.style.setProperty("--chip-border", border);
             chip.style.setProperty("--chip-ink", "#0f172a");
             const labelText = todo.label || "Untitled";
@@ -823,15 +951,15 @@
             label.textContent = labelText;
             label.title = labelText;
 
-            const isToday = key === todayKey;
-            const isDone = !!todo.done;
-            let studyBtn = null;
-            if (isToday && !isDone) {
-              studyBtn = document.createElement("button");
-              studyBtn.type = "button";
-              studyBtn.className = "schedule-chip-study";
-              studyBtn.textContent = "Study";
-              studyBtn.title = "Start a study session";
+	            const isToday = key === todayKey;
+	            const isDone = !!todo.done;
+	            let studyBtn = null;
+	            if (isToday && !isDone && isFileTodo) {
+	              studyBtn = document.createElement("button");
+	              studyBtn.type = "button";
+	              studyBtn.className = "schedule-chip-study";
+	              studyBtn.textContent = "Study";
+	              studyBtn.title = "Start a study session";
               studyBtn.addEventListener("click", (event) => {
                 event.stopPropagation();
                 if (subj && file) {
@@ -944,12 +1072,14 @@
       }
     }
 
-    function openScheduleTaskModal(todo, dayKey) {
-      if (!scheduleTaskModalBackdrop || !scheduleTaskModalTitle || !scheduleTaskModalSubtasks) return;
-      const onToday = dayKey === getTodayKey();
-      scheduleModalState = { todoId: todo.id, dayKey };
-      const subjName = todo.subjectName || "Task";
-      scheduleTaskModalTitle.textContent = todo.label || subjName || "Task";
+	    function openScheduleTaskModal(todo, dayKey) {
+	      if (!scheduleTaskModalBackdrop || !scheduleTaskModalTitle || !scheduleTaskModalSubtasks) return;
+	      const onToday = dayKey === getTodayKey();
+	      const isCustom = (todo && (todo.kind || "file")) === "custom";
+	      const isFileTodo = !isCustom && !!todo.subjectId && !!todo.fileId;
+	      scheduleModalState = { todoId: todo.id, dayKey };
+	      const subjName = todo.subjectName || "Task";
+	      scheduleTaskModalTitle.textContent = todo.label || subjName || "Task";
       if (scheduleTaskModalSubtitle) {
         scheduleTaskModalSubtitle.textContent = onToday
           ? "Today's subtasks"
@@ -989,16 +1119,20 @@
         });
       }
 
-      if (scheduleTaskStudyBtn) {
-        scheduleTaskStudyBtn.disabled = !onToday;
-        scheduleTaskStudyBtn.textContent = onToday ? "Study now" : "Study (today only)";
-        scheduleTaskStudyBtn.onclick = () => {
-          if (!onToday) return;
-          const { file, subj } = resolveFileRef(todo.subjectId, todo.fileId);
-          if (subj && file) {
-            startStudy(todo.subjectId, file);
-            closeScheduleTaskModal();
-          } else {
+	      if (scheduleTaskStudyBtn) {
+	        scheduleTaskStudyBtn.disabled = !onToday || !isFileTodo;
+	        scheduleTaskStudyBtn.textContent = !isFileTodo
+	          ? "Study (files only)"
+	          : onToday
+	          ? "Study now"
+	          : "Study (today only)";
+	        scheduleTaskStudyBtn.onclick = () => {
+	          if (!onToday || !isFileTodo) return;
+	          const { file, subj } = resolveFileRef(todo.subjectId, todo.fileId);
+	          if (subj && file) {
+	            startStudy(todo.subjectId, file);
+	            closeScheduleTaskModal();
+	          } else {
             showNotice("This task is missing its subject or file.", "warn");
           }
         };
