@@ -10,34 +10,42 @@
 		    const subtasksModalCloseBtn2 = document.getElementById("subtasksModalCloseBtn2");
 		    let subtasksModalTodoId = null;
 
-		    function closeSubtasksModal() {
-		      if (!subtasksModalBackdrop) return;
-		      subtasksModalBackdrop.hidden = true;
-		      subtasksModalBackdrop.style.display = "none";
-		      subtasksModalTodoId = null;
-		    }
+		    function renderSubtasksModal(todoId) {
+		      if (!subtasksModalBody) return;
+		      const todo = todayTodos.find((t) => t && t.id === todoId);
+		      if (!todo) {
+		        subtasksModalBody.innerHTML = "";
+		        const hint = document.createElement("div");
+		        hint.className = "today-subtasks-empty";
+		        hint.textContent = "Task not found.";
+		        subtasksModalBody.appendChild(hint);
+		        return;
+		      }
 
-		    function openSubtasksModal(todo, file, subj) {
-		      if (!subtasksModalBackdrop || !subtasksModalBody) return;
-		      subtasksModalTodoId = todo && todo.id ? todo.id : null;
+		      const { subj, file } = resolveFileRef(todo.subjectId, todo.fileId);
 		      if (subtasksModalTitle) {
-		        subtasksModalTitle.textContent = (file && file.name) || (todo && todo.label) || "Subtasks";
+		        subtasksModalTitle.textContent = (file && file.name) || todo.label || "Subtasks";
 		      }
 		      if (subtasksModalSubtitle) {
-		        const subs = Array.isArray(todo && todo.subtasks) ? todo.subtasks : [];
+		        const subs = Array.isArray(todo.subtasks) ? todo.subtasks : [];
 		        subtasksModalSubtitle.textContent = `${(subj && subj.name) || "Subject"} • ${subs.length} subtask${subs.length === 1 ? "" : "s"}`;
 		      }
+
 		      subtasksModalBody.innerHTML = "";
 
-		      const subs = Array.isArray(todo && todo.subtasks) ? todo.subtasks : [];
+		      const wrap = document.createElement("div");
+		      wrap.className = "today-subtasks";
+
+		      const list = document.createElement("div");
+		      list.className = "today-subtasks-list";
+
+		      const subs = Array.isArray(todo.subtasks) ? todo.subtasks : [];
 		      if (!subs.length) {
 		        const hint = document.createElement("div");
 		        hint.className = "today-subtasks-empty";
 		        hint.textContent = "No subtasks yet.";
-		        subtasksModalBody.appendChild(hint);
+		        list.appendChild(hint);
 		      } else {
-		        const list = document.createElement("div");
-		        list.className = "today-subtasks-list";
 		        subs.forEach((sub) => {
 		          const row = document.createElement("div");
 		          row.className = "today-subtask-row";
@@ -52,12 +60,68 @@
 		          label.className = "today-subtask-label";
 		          label.textContent = (sub && sub.label) || "Untitled subtask";
 
+		          const rm = document.createElement("button");
+		          rm.type = "button";
+		          rm.className = "today-subtask-remove";
+		          rm.textContent = "✕";
+		          rm.title = "Remove subtask";
+		          rm.addEventListener("click", () => {
+		            removeSubtask(todoId, sub.id);
+		            requestAnimationFrame(() => renderSubtasksModal(todoId));
+		          });
+
 		          row.appendChild(cb);
 		          row.appendChild(label);
+		          row.appendChild(rm);
 		          list.appendChild(row);
 		        });
-		        subtasksModalBody.appendChild(list);
 		      }
+
+		      const addRow = document.createElement("div");
+		      addRow.className = "today-subtask-add";
+		      const addInput = document.createElement("input");
+		      addInput.type = "text";
+		      addInput.placeholder = "Add subtask...";
+		      const addBtn = document.createElement("button");
+		      addBtn.type = "button";
+		      addBtn.textContent = "+";
+		      addBtn.className = "today-subtask-add-btn";
+
+		      function commitSubtask() {
+		        const text = addInput.value.trim();
+		        if (!text) return;
+		        addSubtask(todoId, text);
+		        addInput.value = "";
+		        requestAnimationFrame(() => renderSubtasksModal(todoId));
+		      }
+
+		      addBtn.addEventListener("click", commitSubtask);
+		      addInput.addEventListener("keydown", (event) => {
+		        if (event.key === "Enter") {
+		          event.preventDefault();
+		          commitSubtask();
+		        }
+		      });
+
+		      addRow.appendChild(addInput);
+		      addRow.appendChild(addBtn);
+
+		      wrap.appendChild(list);
+		      wrap.appendChild(addRow);
+		      subtasksModalBody.appendChild(wrap);
+		    }
+
+		    function closeSubtasksModal() {
+		      if (!subtasksModalBackdrop) return;
+		      subtasksModalBackdrop.hidden = true;
+		      subtasksModalBackdrop.style.display = "none";
+		      subtasksModalTodoId = null;
+		    }
+
+		    function openSubtasksModal(todo, file, subj) {
+		      if (!subtasksModalBackdrop || !subtasksModalBody) return;
+		      subtasksModalTodoId = todo && todo.id ? todo.id : null;
+		      renderSubtasksModal(subtasksModalTodoId);
 
 		      subtasksModalBackdrop.hidden = false;
 		      subtasksModalBackdrop.style.display = "flex";
@@ -349,16 +413,9 @@
 	            actions.appendChild(noteNextBtn);
 	          }
 
-	        const timerSpan = document.createElement("span");
-	        timerSpan.className = "today-timer";
-	        timerSpan.id = "today-timer-" + todo.fileId;
-        timerSpan.textContent = isActiveStudy(todo.subjectId, todo.fileId)
-          ? formatHMS(computeElapsedMs(activeStudy))
-          : "";
-
-	        const isThisActive = isActiveStudy(todo.subjectId, todo.fileId);
-	        const isPaused = isThisActive && activeStudy && activeStudy.paused;
-	        const isSlimExpanded = isSlimMode && !!slimExpandedTodoId && todo.id === slimExpandedTodoId;
+		        const isThisActive = isActiveStudy(todo.subjectId, todo.fileId);
+		        const isPaused = isThisActive && activeStudy && activeStudy.paused;
+		        const isSlimExpanded = isSlimMode && !!slimExpandedTodoId && todo.id === slimExpandedTodoId;
 
 	        item.addEventListener("keydown", (event) => {
 	          if (isSlimMode && (event.key === "Enter" || event.key === " ")) {
@@ -392,13 +449,9 @@
           }
         });
 
-	        if (!todo.done) {
-	          actions.appendChild(timerSpan);
-	        }
-
-	        if (!isThisActive) {
-	          if (isSlimMode) {
-	            const removeX = document.createElement("button");
+		        if (!isThisActive) {
+		          if (isSlimMode) {
+		            const removeX = document.createElement("button");
 	            removeX.type = "button";
 	            removeX.className = "today-remove-x";
 	            removeX.textContent = "✕";
@@ -564,7 +617,18 @@
 	                startStudy(todo.subjectId, file);
 	              }
 	            });
+
+	            const subsBtn = document.createElement("button");
+	            subsBtn.type = "button";
+	            subsBtn.className = "chip-btn chip-btn-ghost";
+	            subsBtn.textContent = "Subtasks";
+	            subsBtn.addEventListener("click", (e) => {
+	              e.stopPropagation();
+	              openSubtasksModal(todo, file, subj);
+	            });
+
 	            footer.appendChild(studyBtn);
+	            footer.appendChild(subsBtn);
 	          } else {
 	            const primaryBtn = document.createElement("button");
 	            primaryBtn.type = "button";
@@ -1249,7 +1313,7 @@
       updateStudyTimerDisplay();
     }
 
-    function updateStudyTimerDisplay() {
+	    function updateStudyTimerDisplay() {
       const currentKey =
         activeStudy && activeStudy.kind === "study"
           ? activeStudy.subjectId + "|" + activeStudy.fileId
@@ -1266,13 +1330,10 @@
 
       if (!focusTimerDisplay) return;
 
-      if (!activeStudy) {
-        focusTimerDisplay.textContent = "00:00:00";
-        document
-          .querySelectorAll(".today-timer")
-          .forEach((el) => (el.textContent = ""));
-        return;
-      }
+	      if (!activeStudy) {
+	        focusTimerDisplay.textContent = "00:00:00";
+	        return;
+	      }
 
       const elapsed = computeElapsedMs(activeStudy);
       const targetMs =
@@ -1290,24 +1351,20 @@
           return;
         }
         const text = formatHMS(remaining);
-        focusTimerDisplay.textContent = text;
-        if (activeStudy.kind === "study" && activeStudy.fileId) {
-          const span = document.getElementById("timer-" + activeStudy.fileId);
-          if (span) span.textContent = text;
-          const spanToday = document.getElementById("today-timer-" + activeStudy.fileId);
-          if (spanToday) spanToday.textContent = text;
-        }
-      } else {
-        const text = formatHMS(elapsed);
-        focusTimerDisplay.textContent = text;
-        if (activeStudy.kind === "study" && activeStudy.fileId) {
-          const span = document.getElementById("timer-" + activeStudy.fileId);
-          if (span) span.textContent = text;
-          const spanToday = document.getElementById("today-timer-" + activeStudy.fileId);
-          if (spanToday) spanToday.textContent = text;
-        }
-      }
-    }
+	        focusTimerDisplay.textContent = text;
+	        if (activeStudy.kind === "study" && activeStudy.fileId) {
+	          const span = document.getElementById("timer-" + activeStudy.fileId);
+	          if (span) span.textContent = text;
+	        }
+	      } else {
+	        const text = formatHMS(elapsed);
+	        focusTimerDisplay.textContent = text;
+	        if (activeStudy.kind === "study" && activeStudy.fileId) {
+	          const span = document.getElementById("timer-" + activeStudy.fileId);
+	          if (span) span.textContent = text;
+	        }
+	      }
+	    }
 
     let lastStudyDayKey = null;
     function maybeHandleStudyDayRollover() {
