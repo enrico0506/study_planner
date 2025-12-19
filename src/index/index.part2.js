@@ -1258,9 +1258,9 @@
 
       const { perSubject, totalMs } = computeTodayStudyBySubject();
 
-      summaryStudyTodayLabel.textContent = totalMs
-        ? formatDuration(totalMs)
-        : "0 min";
+      const todayLabel = totalMs ? formatDuration(totalMs) : "0 min";
+      summaryStudyTodayLabel.textContent = todayLabel;
+      if (summaryStudyValue) summaryStudyValue.textContent = todayLabel;
 
       summaryStudyBar.innerHTML = "";
       summaryStudyLegend.innerHTML = "";
@@ -1274,7 +1274,9 @@
         emptyBar.style.height = "100%";
         emptyBar.style.background = "#e5e7eb";
         summaryStudyBar.appendChild(emptyBar);
-        summaryStudyBar.style.background = useIpadCharts ? "conic-gradient(#e5e7eb 0 100%)" : "";
+        summaryStudyBar.style.background = useIpadCharts
+          ? "conic-gradient(from -90deg, #e5e7eb 0 100%)"
+          : "";
         return;
       }
 
@@ -1309,8 +1311,8 @@
 
       if (useIpadCharts) {
         summaryStudyBar.style.background = stops.length
-          ? `conic-gradient(${stops.join(", ")})`
-          : "conic-gradient(#e5e7eb 0 100%)";
+          ? `conic-gradient(from -90deg, ${stops.join(", ")})`
+          : "conic-gradient(from -90deg, #e5e7eb 0 100%)";
       } else {
         summaryStudyBar.style.background = "";
       }
@@ -1334,14 +1336,17 @@
       const weekMs = sumLastNDays(totals, 7);
       const goalMs = Math.max(0, weeklyTargetMinutes || 0) * 60 * 1000;
       const pct = goalMs > 0 ? Math.min(100, (weekMs * 100) / goalMs) : 0;
-      const goalColor = "color-mix(in srgb, var(--accent) 65%, #ffffff)";
+      const goalColor = "color-mix(in srgb, var(--accent) 75%, #ffffff)";
+      const goalTrack = "color-mix(in srgb, var(--accent) 25%, #ffffff)";
 
-      weeklyGoalProgressLabel.textContent = formatHoursCompact(weekMs);
+      const weeklyProgress = formatHoursCompact(weekMs);
+      weeklyGoalProgressLabel.textContent = weeklyProgress;
+      if (weeklyGoalValue) weeklyGoalValue.textContent = weeklyProgress;
       weeklyGoalTotalLabel.textContent = goalMs ? formatHoursCompact(goalMs) : "0h";
       weeklyGoalFill.style.width = goalMs ? pct + "%" : "0%";
       if (weeklyGoalFill.parentElement) {
         weeklyGoalFill.parentElement.style.background = useIpadCharts
-          ? `conic-gradient(${goalColor} ${pct}%, var(--surface-soft) 0)`
+          ? `conic-gradient(from -90deg, ${goalColor} ${pct}%, ${goalTrack} ${pct}% 100%)`
           : "";
       }
       const remaining = goalMs - weekMs;
@@ -1382,7 +1387,9 @@
       summaryLow.textContent = lowCount;
       if (summarySubjectsHeader) summarySubjectsHeader.textContent = totalSubjects;
       if (summaryFilesHeader) summaryFilesHeader.textContent = totalFiles;
-      summaryConfLabel.textContent = avg + "%";
+      const confLabel = avg + "%";
+      summaryConfLabel.textContent = confLabel;
+      if (summaryConfValue) summaryConfValue.textContent = confLabel;
 
       summaryConfFill.classList.remove("meter-low", "meter-mid", "meter-high");
       const targetClass = meterClass(avg);
@@ -1392,8 +1399,9 @@
       if (summaryConfFill.parentElement) {
         const confPct = totalFiles ? avg : 0;
         const confColor = meterColor(avg);
+        const confTrack = "color-mix(in srgb, " + confColor + " 22%, #ffffff)";
         summaryConfFill.parentElement.style.background = useIpadCharts
-          ? `conic-gradient(${confColor} ${confPct}%, var(--surface-soft) 0)`
+          ? `conic-gradient(from -90deg, ${confColor} ${confPct}%, ${confTrack} ${confPct}% 100%)`
           : "";
       }
 
