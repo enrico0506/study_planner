@@ -5657,20 +5657,39 @@ body.session-header-mounted #focusCard {
 }
 
 [data-theme] .focus-break-btn {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent-ink);
+  background: var(--surface-soft);
+  border-color: var(--border-strong);
+  color: var(--ink);
 }
 
 [data-theme] .focus-break-btn:hover {
-  background: var(--accent-soft-hover);
-  border-color: var(--accent);
+  background: var(--surface-strong);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border-strong));
+  color: var(--accent-ink);
 }
 
 [data-theme] .file-row.studying {
   background: color-mix(in srgb, var(--accent) 16%, var(--surface-strong));
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong));
   box-shadow: 0 10px 22px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+[data-theme] #focusCard.focus-study-active {
+  background: color-mix(in srgb, var(--accent) 12%, var(--card-surface-2));
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border-strong));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent), var(--shadow-card);
+}
+
+[data-theme] #focusCard.focus-study-paused {
+  background: color-mix(in srgb, var(--accent) 10%, var(--card-surface-2));
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border-strong));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent), var(--shadow-card);
+}
+
+[data-theme] #focusCard.focus-break-active {
+  background: color-mix(in srgb, var(--accent) 14%, var(--card-surface-2));
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border-strong));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent), var(--shadow-card);
 }
 
 [data-theme] .file-row.in-today {
