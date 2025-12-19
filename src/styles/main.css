@@ -5667,6 +5667,17 @@ body.session-header-mounted #focusCard {
   border-color: var(--accent);
 }
 
+[data-theme] .file-row.studying {
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-strong));
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong));
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+[data-theme] .file-row.in-today {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-strong));
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border-strong));
+}
+
 /* Calendar page */
 body.calendar-page {
   overflow: hidden;
