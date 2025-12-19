@@ -206,6 +206,10 @@
     toggleClass(document.body, "flashcards-phone-review", active);
   }
 
+  function setReviewActive(active) {
+    toggleClass(document.body, "flashcards-review-active", active);
+  }
+
   function clearReviewIdleTimeout() {
     if (!state.reviewIdleTimeout) return;
     clearTimeout(state.reviewIdleTimeout);
@@ -1171,6 +1175,7 @@
     renderReview();
     if (elements.showAnswerBtn) elements.showAnswerBtn.focus();
     setPhoneReviewMode(true);
+    setReviewActive(true);
     startFlashcardsTimer();
     scheduleReviewIdleTimeout();
   }
@@ -1178,6 +1183,7 @@
   function exitReview() {
     clearReviewIdleTimeout();
     setPhoneReviewMode(false);
+    setReviewActive(false);
     state.showAnswer = false;
     state.currentCard = null;
     state.reviewQueue = [];

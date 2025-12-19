@@ -486,6 +486,19 @@ body.flashcards-page .card-row-actions {
   align-items: center;
 }
 
+body.flashcards-page .review-ad {
+  display: none;
+  width: 100%;
+  min-height: 72px;
+  border-radius: 14px;
+  border: 1px dashed var(--border-strong);
+  background: color-mix(in srgb, var(--surface-strong) 65%, transparent);
+}
+
+body.flashcards-page.flashcards-review-active .review-ad {
+  display: block;
+}
+
 /* Review: stronger affordances */
 body.flashcards-page .review-start-row {
   display: flex;
