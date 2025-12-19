@@ -2555,13 +2555,16 @@
               addFab.textContent = "+";
               addFab.title = "Add to Today's focus";
               addFab.setAttribute("aria-label", "Add to Today's focus");
+              addFab.setAttribute("draggable", "false");
               addFab.addEventListener("click", (event) => {
-                event.preventDefault();
                 event.stopPropagation();
                 openAddTodoModal(subj.id, file);
               });
               addFab.addEventListener("mousedown", (event) => {
                 event.stopPropagation();
+              });
+              addFab.addEventListener("dragstart", (event) => {
+                event.preventDefault();
               });
               row.appendChild(addFab);
               row.classList.add("file-row-has-fab");
