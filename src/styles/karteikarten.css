@@ -416,6 +416,7 @@ body.flashcards-page .review-card.review-swipe-repeat::after {
     box-shadow: none;
     padding: 14px 12px 18px;
     min-height: 100vh;
+    height: 100vh;
   }
 
   body.flashcards-page.flashcards-phone-review .review-start-row,

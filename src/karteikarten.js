@@ -114,13 +114,6 @@
     return window.innerWidth >= 900;
   }
 
-  function isPhoneMode() {
-    if (window.matchMedia) {
-      return window.matchMedia("(max-width: 720px)").matches;
-    }
-    return window.innerWidth <= 720;
-  }
-
   const CARD_LIST_PAGE_SIZE = 200;
   const REVIEW_IDLE_LIMIT_MS = 5 * 60 * 1000;
   const KATEX_DELIMITERS = [
@@ -209,10 +202,6 @@
   }
 
   function setPhoneReviewMode(active) {
-    if (!isPhoneMode()) {
-      toggleClass(document.body, "flashcards-phone-review", false);
-      return;
-    }
     toggleClass(document.body, "flashcards-phone-review", active);
   }
 
