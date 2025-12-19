@@ -248,9 +248,10 @@
   }
 
   .schedule-grid {
-    grid-template-columns: repeat(5, minmax(200px, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     width: 100%;
     box-sizing: border-box;
+    gap: 10px;
   }
 
   .schedule-grid.schedule-grid-weekend {
