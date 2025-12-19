@@ -333,6 +333,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
     const openTimerSettingsBtn = document.getElementById("openTimerSettingsBtn");
     const focusTimerBox = document.querySelector(".focus-timer-box");
     const focusTimerToggle = document.querySelector(".focus-timer-toggle");
+    const focusBreakButtons = document.querySelector(".focus-break-buttons");
     const startShortBreakBtn = document.getElementById("startShortBreakBtn");
     const startLongBreakBtn = document.getElementById("startLongBreakBtn");
 
@@ -376,6 +377,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
     let scheduleWeekendShifted = false;
     let focusTimerToggleHome = null;
     let focusSettingsText = null;
+    let focusBreakButtonsHome = null;
 
     // Helpers
     function isPhoneLayout() {
@@ -429,6 +431,33 @@ const CVD_SAFE_SUBJECT_COLORS = [
           openTimerSettingsBtn.textContent = focusSettingsText || "Timer settings";
           openTimerSettingsBtn.classList.remove("focus-settings-btn");
           openTimerSettingsBtn.removeAttribute("aria-label");
+        }
+      }
+
+      if (focusBreakButtons && !focusBreakButtonsHome) {
+        focusBreakButtonsHome = {
+          parent: focusBreakButtons.parentElement,
+          next: focusBreakButtons.nextSibling
+        };
+      }
+
+      if (focusBreakButtons && focusTimerBox) {
+        if (useIpadLayout && focusBreakButtons.parentElement !== focusTimerBox) {
+          focusTimerBox.appendChild(focusBreakButtons);
+        } else if (!useIpadLayout && focusBreakButtonsHome) {
+          if (focusBreakButtons.parentElement !== focusBreakButtonsHome.parent) {
+            if (
+              focusBreakButtonsHome.next &&
+              focusBreakButtonsHome.next.parentNode === focusBreakButtonsHome.parent
+            ) {
+              focusBreakButtonsHome.parent.insertBefore(
+                focusBreakButtons,
+                focusBreakButtonsHome.next
+              );
+            } else {
+              focusBreakButtonsHome.parent.appendChild(focusBreakButtons);
+            }
+          }
         }
       }
     }

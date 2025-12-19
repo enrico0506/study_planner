@@ -49,6 +49,11 @@
     display: block;
   }
 
+  .section-heading,
+  .section-actions {
+    background: #ffffff;
+  }
+
   .summary-top {
     display: none;
   }
@@ -222,6 +227,12 @@
     grid-area: focus-right;
   }
 
+  .focus-timer-box {
+    position: relative;
+    padding-top: 28px;
+    padding-bottom: 40px;
+  }
+
   .focus-bottom {
     grid-area: focus-controls;
     margin-top: 0;
@@ -231,19 +242,32 @@
     flex-wrap: wrap;
     justify-self: start;
     align-self: end;
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
   }
 
   .focus-break-buttons {
     margin-left: 0;
     flex-direction: row;
     gap: 6px;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
     flex-wrap: wrap;
+    position: absolute;
+    left: 50%;
+    bottom: 8px;
+    transform: translateX(-50%);
+    width: calc(100% - 16px);
   }
 
   .focus-timer-toggle {
-    margin-top: -16px;
-    margin-bottom: 4px;
+    margin-top: 0;
+    margin-bottom: 0;
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   .focus-subtitle:empty {
