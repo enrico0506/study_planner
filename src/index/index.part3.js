@@ -1030,14 +1030,17 @@
           });
         }
 	        if (scheduleTodayBtn) scheduleTodayBtn.textContent = "Today";
-	      } else {
-	        if (!scheduleWeekStart) scheduleWeekStart = getWeekStart(new Date());
-	        start = new Date(scheduleWeekStart);
+      } else {
+        if (!scheduleWeekStart) scheduleWeekStart = getWeekStart(new Date());
+        start = new Date(scheduleWeekStart);
         if (scheduleWeekendShifted) {
           start.setDate(start.getDate() + 2);
           daysToRender = 5;
         }
-	        end = new Date(start);
+        if (!scheduleWeekendShifted) {
+          daysToRender = 5;
+        }
+        end = new Date(start);
         end.setDate(start.getDate() + daysToRender - 1);
         if (scheduleRangeLabel) {
           scheduleRangeLabel.textContent = formatWeekRangeLabel(start, end);
