@@ -1121,7 +1121,7 @@ body.session-header-mounted #focusCard {
 
     @media (min-width: 1060px) and (max-width: 1839px) {
       .top-row {
-        grid-template-columns: clamp(220px, 18vw, 320px) minmax(0, 1fr) minmax(360px, 1.05fr);
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
         grid-template-areas: "ad summary focus";
       }
 
