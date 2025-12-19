@@ -1361,8 +1361,20 @@
       todayDropZone.addEventListener("drop", (event) => {
         event.preventDefault();
         todayDropZone.classList.remove("today-dropzone-active");
-        if (!dragState) return;
-        addTodoForFile(dragState.subjectId, dragState.fileId);
+        let source = dragState;
+        if (!source && event.dataTransfer) {
+          const payload = event.dataTransfer.getData("application/json");
+          if (payload) {
+            try {
+              const parsed = JSON.parse(payload);
+              if (parsed && parsed.subjectId && parsed.fileId) source = parsed;
+            } catch (err) {
+              // Ignore malformed payloads; fall back to dragState.
+            }
+          }
+        }
+        if (!source) return;
+        addTodoForFile(source.subjectId, source.fileId);
         dragState = null;
       });
     }

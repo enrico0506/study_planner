@@ -2335,6 +2335,10 @@
                 event.dataTransfer.effectAllowed = "copyMove";
                 // setData required for some browsers to allow drop
                 event.dataTransfer.setData("text/plain", file.id);
+                event.dataTransfer.setData(
+                  "application/json",
+                  JSON.stringify({ subjectId: subj.id, fileId: file.id })
+                );
               }
             });
 
@@ -2454,47 +2458,6 @@
             const rightMeta = document.createElement("div");
             rightMeta.className = "file-actions";
 
-            const actionsRow = document.createElement("div");
-            actionsRow.className = "file-actions-row";
-            actionsRow.addEventListener("click", (event) => event.stopPropagation());
-
-	            const addTodayActionBtn = document.createElement("button");
-	            addTodayActionBtn.type = "button";
-	            addTodayActionBtn.className =
-	              "icon-btn icon-btn-ghost file-action-btn " + (inToday ? "file-action-remove" : "file-action-add");
-	            addTodayActionBtn.textContent = inToday ? "−" : "+";
-	            addTodayActionBtn.title = inToday ? "Remove from Today's focus" : "Add to Today's focus";
-	            addTodayActionBtn.setAttribute(
-	              "aria-label",
-	              inToday ? "Remove from Today's focus" : "Add to Today's focus"
-	            );
-	            addTodayActionBtn.addEventListener("click", (event) => {
-	              event.stopPropagation();
-	              if (inToday) {
-	                showNotice("Remove this file from Today's focus?", "warn", () => {
-	                  cleanupTodoForFile(subj.id, file.id);
-	                  renderTable();
-	                  announceLive(`Removed “${file.name || "Untitled"}” from Today’s focus.`);
-	                });
-	                return;
-	              }
-	              openAddTodoModal(subj.id, file);
-	            });
-
-            const moveUpBtn = document.createElement("button");
-            moveUpBtn.type = "button";
-            moveUpBtn.className = "icon-btn icon-btn-ghost file-action-btn";
-            moveUpBtn.textContent = "↑";
-            moveUpBtn.title = "Move up";
-            moveUpBtn.setAttribute("aria-label", "Move up");
-
-            const moveDownBtn = document.createElement("button");
-            moveDownBtn.type = "button";
-            moveDownBtn.className = "icon-btn icon-btn-ghost file-action-btn";
-            moveDownBtn.textContent = "↓";
-            moveDownBtn.title = "Move down";
-            moveDownBtn.setAttribute("aria-label", "Move down");
-
             const ensureManualAndMove = (delta) => {
               const fileIndex = subj.files.findIndex((f) => f.id === file.id);
               if (fileIndex === -1) return;
@@ -2517,26 +2480,6 @@
                 `Moved “${file.name || "Untitled"}” to position ${nextIdx + 1} in ${subj.name || "subject"}.`
               );
             };
-
-            if (!subj.sortMode || subj.sortMode === "manual") {
-              const fileIndex = subj.files.findIndex((f) => f.id === file.id);
-              if (fileIndex <= 0) moveUpBtn.disabled = true;
-              if (fileIndex === -1 || fileIndex >= subj.files.length - 1) moveDownBtn.disabled = true;
-            }
-
-            moveUpBtn.addEventListener("click", (event) => {
-              event.stopPropagation();
-              ensureManualAndMove(-1);
-            });
-            moveDownBtn.addEventListener("click", (event) => {
-              event.stopPropagation();
-              ensureManualAndMove(1);
-            });
-
-            actionsRow.appendChild(addTodayActionBtn);
-            actionsRow.appendChild(moveUpBtn);
-            actionsRow.appendChild(moveDownBtn);
-            rightMeta.appendChild(actionsRow);
 
             row.addEventListener("keydown", (event) => {
               if (!event.altKey) return;
