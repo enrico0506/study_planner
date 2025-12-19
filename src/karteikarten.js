@@ -127,6 +127,8 @@
     currentCard: null,
     showAnswer: false,
     reviewDone: 0,
+    reviewKnown: 0,
+    reviewTotal: 0,
     editingCardId: null,
     selectedCardIds: new Set(),
     cardSearch: "",
@@ -177,6 +179,27 @@
     // Pause first to capture elapsed, then stop to persist session to journal.
     state.sessionHeader.pause?.(reason);
     state.sessionHeader.stop?.();
+  }
+
+  function ensureReviewTimerRunning() {
+    if (state.sessionStartedHere) return;
+    startFlashcardsTimer();
+  }
+
+  function computeReviewTotal() {
+    const remaining = (state.currentCard ? 1 : 0) + (state.reviewQueue ? state.reviewQueue.length : 0);
+    return Math.max(0, remaining);
+  }
+
+  function resetReviewCounters() {
+    state.reviewDone = 0;
+    state.reviewKnown = 0;
+    state.reviewTotal = computeReviewTotal();
+  }
+
+  function ensureReviewSession() {
+    if (!state.reviewTotal) resetReviewCounters();
+    ensureReviewTimerRunning();
   }
 
   function toggleReviewMaximize(force) {
@@ -310,7 +333,7 @@
     state.cardListLimit = CARD_LIST_PAGE_SIZE;
     if (elements.cardSearchInput) elements.cardSearchInput.value = "";
     buildQueue();
-    state.reviewDone = 0;
+    resetReviewCounters();
     saveState();
     render();
     updateSessionHeaderContext();
@@ -624,8 +647,8 @@
     elements.modeIntervalBtn.classList.toggle("mode-btn-active", mode === "interval");
     elements.reviewModeLabel.textContent = mode === "interval" ? "Intervall (Anki-ähnlich)" : "Normaler Durchgang";
     state.showAnswer = false;
-    state.reviewDone = 0;
     buildQueue();
+    resetReviewCounters();
     saveState();
     renderReview();
     updateSessionHeaderContext();
@@ -730,8 +753,8 @@
       elements.startReviewBtn.disabled = !canStart;
     }
     if (elements.reviewProgress) {
-      const remaining = (state.currentCard ? 1 : 0) + (state.reviewQueue ? state.reviewQueue.length : 0);
-      setText(elements.reviewProgress, remaining ? `${state.reviewDone + 1} / ${state.reviewDone + remaining}` : "");
+      const total = state.reviewTotal || 0;
+      setText(elements.reviewProgress, total ? `${state.reviewKnown} / ${total}` : "");
     }
 
     if (!state.currentCard) {
@@ -784,12 +807,15 @@
 
   function handleNormalReview(known) {
     if (!state.currentCard) return;
+    ensureReviewSession();
     const card = state.currentCard;
     card.lastReviewed = Date.now();
     if (!card.reviewCount) card.reviewCount = 0;
     card.reviewCount += 1;
     if (!known) {
       state.reviewQueue.push(card);
+    } else {
+      state.reviewKnown += 1;
     }
     state.reviewDone += 1;
     saveState();
@@ -798,7 +824,9 @@
 
   function handleIntervalReview(rating) {
     if (!state.currentCard) return;
+    ensureReviewSession();
     scheduleCardInterval(state.currentCard, rating);
+    if (rating !== "again") state.reviewKnown += 1;
     state.reviewDone += 1;
     saveState();
     moveToNextCard();
@@ -904,9 +932,9 @@
     setStatus(elements.csvStatus, `Import abgeschlossen: ${candidate.rows.length} Karten.`, { tone: "good" });
     state.activeDeckId = targetDeck.id;
     state.cardListLimit = CARD_LIST_PAGE_SIZE;
-    state.reviewDone = 0;
     setModalState(elements.csvModal, false);
     buildQueue(true);
+    resetReviewCounters();
     saveState();
     render();
     elements.csvFileInput.value = "";
@@ -1086,8 +1114,8 @@
   }
 
   function startReview() {
-    state.reviewDone = 0;
     buildQueue(true);
+    resetReviewCounters();
     renderReview();
     if (elements.showAnswerBtn) elements.showAnswerBtn.focus();
     startFlashcardsTimer();
@@ -1098,6 +1126,8 @@
     state.currentCard = null;
     state.reviewQueue = [];
     state.reviewDone = 0;
+    state.reviewKnown = 0;
+    state.reviewTotal = 0;
     stopFlashcardsTimer("exit-review");
     toggleReviewMaximize(false);
     render();
@@ -1255,7 +1285,7 @@
       state.editingCardId = null;
       setModalState(elements.cardModal, false);
       buildQueue(true);
-      state.reviewDone = 0;
+      resetReviewCounters();
       saveState();
       render();
     });
@@ -1345,6 +1375,7 @@
 
     on(elements.showAnswerBtn, "click", (event) => {
       event.preventDefault();
+      ensureReviewSession();
       state.showAnswer = true;
       renderReview();
     });
@@ -1375,8 +1406,8 @@
 
     on(elements.rebuildQueueBtn, "click", (event) => {
       event.preventDefault();
-      state.reviewDone = 0;
       buildQueue(true);
+      resetReviewCounters();
       render();
     });
 
@@ -1432,8 +1463,8 @@
         );
         elements.quickAddForm.reset();
         setStatus(elements.quickAddStatus, "Hinzugefügt.", { tone: "good" });
-        state.reviewDone = 0;
         buildQueue(true);
+        resetReviewCounters();
         saveState();
         render();
         elements.quickFrontInput.focus();
@@ -1528,6 +1559,7 @@
       if (event.key === " ") {
         event.preventDefault();
         if (!state.showAnswer) {
+          ensureReviewSession();
           state.showAnswer = true;
           renderReview();
         }
