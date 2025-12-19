@@ -133,7 +133,7 @@
   .summary-progress-fill,
   .summary-goal-fill,
   .summary-study-segment {
-    display: block;
+    display: none;
   }
 
   .summary-study-bar {
@@ -160,6 +160,24 @@
     font-weight: 800;
     color: var(--accent-ink);
     display: block;
+  }
+
+  .ring-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .ring-track {
+    stroke: #e5e7eb;
+    stroke-width: 10;
+  }
+
+  .ring-progress,
+  .ring-segment {
+    stroke-width: 10;
   }
 
   .summary-study-legend,

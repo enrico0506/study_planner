@@ -207,6 +207,82 @@
       return `linear-gradient(90deg, ${color}, ${color})`;
     }
 
+    function ensureRingSvg(container) {
+      if (!container) return null;
+      if (container._ringSvg) return container._ringSvg;
+
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", "0 0 120 120");
+      svg.classList.add("ring-svg");
+
+      const track = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      track.setAttribute("cx", "60");
+      track.setAttribute("cy", "60");
+      track.setAttribute("r", "50");
+      track.setAttribute("fill", "none");
+      track.setAttribute("class", "ring-track");
+      track.setAttribute("vector-effect", "non-scaling-stroke");
+
+      const progress = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      progress.setAttribute("cx", "60");
+      progress.setAttribute("cy", "60");
+      progress.setAttribute("r", "50");
+      progress.setAttribute("fill", "none");
+      progress.setAttribute("class", "ring-progress");
+      progress.setAttribute("vector-effect", "non-scaling-stroke");
+      progress.setAttribute("stroke-linecap", "round");
+
+      const segments = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      segments.setAttribute("class", "ring-segments");
+
+      svg.appendChild(track);
+      svg.appendChild(segments);
+      svg.appendChild(progress);
+      container.prepend(svg);
+
+      const circumference = 2 * Math.PI * 50;
+      container._ringSvg = { svg, track, progress, segments, circumference };
+      return container._ringSvg;
+    }
+
+    function updateRingSingle(container, pct, color, trackColor) {
+      const ring = ensureRingSvg(container);
+      if (!ring) return;
+      const clamped = Math.max(0, Math.min(100, pct));
+      const offset = ring.circumference * (1 - clamped / 100);
+      ring.track.setAttribute("stroke", trackColor || "#e5e7eb");
+      ring.progress.setAttribute("stroke", color || "#94a3b8");
+      ring.progress.setAttribute("stroke-dasharray", `${ring.circumference}`);
+      ring.progress.setAttribute("stroke-dashoffset", `${offset}`);
+      ring.progress.style.display = "";
+      ring.segments.innerHTML = "";
+    }
+
+    function updateRingSegments(container, segments) {
+      const ring = ensureRingSvg(container);
+      if (!ring) return;
+      ring.progress.style.display = "none";
+      ring.segments.innerHTML = "";
+      let startOffset = 0;
+      segments.forEach(({ color, pct }) => {
+        const segLen = ring.circumference * (pct / 100);
+        if (segLen <= 0.5) return;
+        const seg = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        seg.setAttribute("cx", "60");
+        seg.setAttribute("cy", "60");
+        seg.setAttribute("r", "50");
+        seg.setAttribute("fill", "none");
+        seg.setAttribute("stroke", color);
+        seg.setAttribute("stroke-linecap", "butt");
+        seg.setAttribute("stroke-dasharray", `${segLen} ${ring.circumference - segLen}`);
+        seg.setAttribute("stroke-dashoffset", `${-startOffset}`);
+        seg.setAttribute("class", "ring-segment");
+        seg.setAttribute("vector-effect", "non-scaling-stroke");
+        ring.segments.appendChild(seg);
+        startOffset += segLen;
+      });
+    }
+
     function meterColor(value) {
       const clamped = Math.max(0, Math.min(100, value));
       const base = meterBaseColors || { low: "#fb7185", mid: "#fbbf24", high: "#22c55e" };
@@ -1263,7 +1339,6 @@
       if (summaryStudyValue) summaryStudyValue.textContent = todayLabel;
 
       summaryStudyBar.innerHTML = "";
-      summaryStudyBar.style.setProperty("--ring-glow", "#a5b4fc");
       summaryStudyLegend.innerHTML = "";
 
       const useIpadCharts =
@@ -1275,9 +1350,9 @@
         emptyBar.style.height = "100%";
         emptyBar.style.background = "#e5e7eb";
         summaryStudyBar.appendChild(emptyBar);
-        summaryStudyBar.style.background = useIpadCharts
-          ? "conic-gradient(from -90deg, #e5e7eb 0 100%)"
-          : "";
+        if (useIpadCharts) {
+          updateRingSingle(summaryStudyBar, 0, "#e5e7eb", "#e5e7eb");
+        }
         return;
       }
 
@@ -1313,12 +1388,12 @@
       });
 
       if (useIpadCharts) {
-        summaryStudyBar.style.background = stops.length
-          ? `conic-gradient(from -90deg, ${stops.join(", ")})`
-          : "conic-gradient(from -90deg, #e5e7eb 0 100%)";
-        if (firstColor) summaryStudyBar.style.setProperty("--ring-glow", firstColor);
-      } else {
-        summaryStudyBar.style.background = "";
+        const segments = perSubject.map(({ subj, subjIndex, ms }) => {
+          const pct = totalMs ? (ms * 100) / totalMs : 0;
+          const color = getSubjectColorById(subj?.id) || getSubjectColor(subjIndex);
+          return { pct, color };
+        });
+        updateRingSegments(summaryStudyBar, segments);
       }
     }
 
@@ -1348,11 +1423,8 @@
       if (weeklyGoalValue) weeklyGoalValue.textContent = weeklyProgress;
       weeklyGoalTotalLabel.textContent = goalMs ? formatHoursCompact(goalMs) : "0h";
       weeklyGoalFill.style.width = goalMs ? pct + "%" : "0%";
-      if (weeklyGoalFill.parentElement) {
-        weeklyGoalFill.parentElement.style.background = useIpadCharts
-          ? `conic-gradient(from -90deg, ${goalColor} ${pct}%, ${goalTrack} ${pct}% 100%)`
-          : "";
-        weeklyGoalFill.parentElement.style.setProperty("--ring-glow", "var(--accent)");
+      if (weeklyGoalFill.parentElement && useIpadCharts) {
+        updateRingSingle(weeklyGoalFill.parentElement, pct, goalColor, goalTrack);
       }
       const remaining = goalMs - weekMs;
       if (!goalMs) {
@@ -1401,14 +1473,11 @@
       summaryConfFill.classList.add(targetClass);
       summaryConfFill.style.width = (totalFiles ? avg : 0) + "%";
       summaryConfFill.style.background = meterGradient(avg);
-      if (summaryConfFill.parentElement) {
+      if (summaryConfFill.parentElement && useIpadCharts) {
         const confPct = totalFiles ? avg : 0;
         const confColor = meterColor(avg);
         const confTrack = "color-mix(in srgb, " + confColor + " 20%, #ffffff)";
-        summaryConfFill.parentElement.style.background = useIpadCharts
-          ? `conic-gradient(from -90deg, ${confColor} ${confPct}%, ${confTrack} ${confPct}% 100%)`
-          : "";
-        summaryConfFill.parentElement.style.setProperty("--ring-glow", confColor);
+        updateRingSingle(summaryConfFill.parentElement, confPct, confColor, confTrack);
       }
 
       updateTodayStudyUI();
