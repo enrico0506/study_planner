@@ -26,142 +26,264 @@
   <link rel="stylesheet" href="./src/styles/phone-modals.css" />
   <link rel="stylesheet" href="./src/styles/a11y.css" />
   <link rel="stylesheet" href="./src/styles/enhancements.css" />
-  <style>
-    body { background: radial-gradient(1200px 600px at 20% 0%, rgba(79, 139, 255, 0.25), transparent 60%),
-                    radial-gradient(1000px 500px at 80% 10%, rgba(34, 197, 94, 0.16), transparent 55%),
-                    radial-gradient(900px 600px at 30% 90%, rgba(249, 115, 115, 0.10), transparent 60%); }
-    .account-page { max-width: 1040px; margin: 0 auto; padding: 18px; }
-    .account-top { display:flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
-    .account-top a { color: inherit; text-decoration: none; }
-    .account-hero { display:flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-    .account-hero h1 { margin:0; font-size: 20px; letter-spacing: 0.2px; }
-    .account-hero p { margin:0; opacity: 0.85; }
-    .account-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
-    @media (min-width: 900px) { .account-grid { grid-template-columns: 1fr 1fr; } }
-    .account-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10); border-radius: 16px; padding: 16px; backdrop-filter: blur(10px); box-shadow: 0 18px 60px rgba(0,0,0,0.18); }
-    .account-card h2 { margin: 0 0 10px; font-size: 15px; letter-spacing: 0.2px; }
-    .account-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
-    .account-input { flex: 1; min-width: 220px; padding: 11px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(10, 14, 20, 0.35); color: inherit; }
-    .account-btn { padding: 11px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.12); color: inherit; cursor: pointer; }
-    .account-btn.primary { background: linear-gradient(135deg, rgba(79, 139, 255, 0.55), rgba(79, 139, 255, 0.22)); border-color: rgba(79, 139, 255, 0.45); }
-    .account-btn.secondary { background: rgba(255,255,255,0.06); }
-    .account-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-    .account-msg { font-size: 12px; opacity: 0.95; line-height: 1.4; white-space: pre-wrap; }
-    .account-list { margin: 8px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
-    .account-list li { display:flex; justify-content: space-between; gap: 10px; align-items:center; padding: 10px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.04); }
-    .account-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; opacity: 0.95; }
-    .pill { display:inline-flex; align-items:center; gap: 8px; padding: 8px 10px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); }
-    .pill-dot { width: 8px; height: 8px; border-radius: 999px; background: rgba(249, 115, 115, 0.9); }
-    .pill-dot.ok { background: rgba(34, 197, 94, 0.9); }
-    .account-full { grid-column: 1 / -1; }
-  </style>
+  <link rel="stylesheet" href="./src/styles/account.css" />
 </head>
 <body class="account-page-body">
-  <div class="account-page">
-    <div class="account-top">
-      <div class="pill" id="authPill"><span class="pill-dot" id="authDot"></span><span id="authPillText">Checking session…</span></div>
-      <a class="btn btn-secondary" href="./index.html">Back to app</a>
-      <div class="header-menu" aria-label="Menu">
-        <button class="header-menu-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Open menu">...</button>
-        <div class="header-menu-panel">
-          <div class="header-menu-group">
-            <div class="header-menu-subtitle">Pages</div>
-            <a class="header-menu-link" href="./index.html?mode=board">Board</a>
-            <a class="header-menu-link" href="./index.html?mode=subjects">Subjects</a>
-            <a class="header-menu-link" href="./index.html?mode=today">Today's focus</a>
-            <a class="header-menu-link" href="./index.html?mode=schedule">Daily schedule</a>
+  <div class="account-shell">
+    <header class="account-appbar">
+      <div class="account-appbar-left">
+        <a class="account-back" href="./index.html">Back to app</a>
+      </div>
+      <div class="account-appbar-title">
+        <div class="account-title">Account & sync</div>
+        <div class="account-subtitle">Manage sign-in, security, and device backups.</div>
+      </div>
+      <div class="account-appbar-right">
+        <div class="pill" id="authPill">
+          <span class="pill-dot" id="authDot"></span>
+          <span id="authPillText">Checking session…</span>
+        </div>
+        <div class="header-menu" aria-label="Menu">
+          <button class="header-menu-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Open menu">...</button>
+          <div class="header-menu-panel">
+            <div class="header-menu-group">
+              <div class="header-menu-subtitle">Pages</div>
+              <a class="header-menu-link" href="./index.html?mode=board">Board</a>
+              <a class="header-menu-link" href="./index.html?mode=subjects">Subjects</a>
+              <a class="header-menu-link" href="./index.html?mode=today">Today's focus</a>
+              <a class="header-menu-link" href="./index.html?mode=schedule">Daily schedule</a>
+            </div>
+            <div class="header-menu-divider"></div>
+            <div class="header-menu-group">
+              <div class="header-menu-subtitle">Study hubs</div>
+              <a class="header-menu-link" href="./calendar.html">Calendar</a>
+              <a class="header-menu-link" href="./stundenplan.html">Stundenplan</a>
+              <a class="header-menu-link" href="./karteikarten.html">Karteikarten</a>
+              <a class="header-menu-link" href="./account.html">Account</a>
+            </div>
           </div>
-          <div class="header-menu-divider"></div>
-	          <div class="header-menu-group">
-	            <div class="header-menu-subtitle">Study hubs</div>
-	            <a class="header-menu-link" href="./calendar.html">Calendar</a>
-	            <a class="header-menu-link" href="./stundenplan.html">Stundenplan</a>
-	            <a class="header-menu-link" href="./karteikarten.html">Karteikarten</a>
-	            <a class="header-menu-link" href="./account.html">Account</a>
-	          </div>
         </div>
       </div>
+    </header>
+
+    <div class="account-layout">
+      <aside class="account-sidebar">
+        <div class="account-nav-label">Quick links</div>
+        <nav class="account-nav" aria-label="Account sections">
+          <a class="account-nav-link" href="#overview">Overview</a>
+          <a class="account-nav-link" href="#login">Login / Register</a>
+          <a class="account-nav-link" href="#security">Security</a>
+          <a class="account-nav-link" href="#verification">Email verification</a>
+          <a class="account-nav-link" href="#backups">Backups</a>
+        </nav>
+      </aside>
+
+      <main class="account-content">
+        <section class="account-section" id="overview">
+          <div class="section-head">
+            <h2>Overview</h2>
+            <p>Your account status and the most important actions.</p>
+          </div>
+          <div class="account-card account-overview-card">
+            <div class="account-overview-left">
+              <div class="account-avatar" id="accountAvatar">?</div>
+              <div class="account-overview-meta">
+                <div class="account-overview-title" id="accountEmailValue">Not signed in</div>
+                <div class="account-overview-sub" id="accountVerifyValue">Signed out</div>
+              </div>
+            </div>
+            <div class="account-overview-actions">
+              <button class="account-btn account-btn-secondary" id="accountCopyEmailBtn" type="button">Copy email</button>
+              <button class="account-btn account-btn-primary" id="accountSyncNowBtn" type="button">
+                <span class="btn-label">Sync now</span>
+                <span class="btn-spinner" aria-hidden="true"></span>
+              </button>
+              <button class="account-btn account-btn-danger" id="accountLogoutBtn" type="button">Logout</button>
+            </div>
+          </div>
+          <div class="account-meta-grid">
+            <div class="account-meta-card">
+              <div class="account-meta-label">Last sync</div>
+              <div class="account-meta-value" id="accountLastSyncValue">—</div>
+            </div>
+            <div class="account-meta-card">
+              <div class="account-meta-label">Last backup</div>
+              <div class="account-meta-value" id="lastBackupValue">—</div>
+            </div>
+          </div>
+          <div class="account-msg" id="accountStatusMsg" aria-live="polite"></div>
+        </section>
+
+        <section class="account-section" id="login">
+          <div class="section-head">
+            <h2>Login / Register</h2>
+            <p>Sign in to sync your study data between devices.</p>
+          </div>
+          <div class="account-card" id="authCard">
+            <div class="account-form">
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="authEmail">Email</label>
+                  <input class="account-input" id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+                  <div class="field-hint" id="authEmailHint">Use the same email on all devices.</div>
+                </div>
+                <div class="form-field">
+                  <label for="authPassword">Password</label>
+                  <div class="input-with-toggle">
+                    <input class="account-input" id="authPassword" type="password" placeholder="Minimum 8 characters" autocomplete="current-password" />
+                    <button class="field-toggle" type="button" data-toggle-target="authPassword" aria-pressed="false">Show</button>
+                  </div>
+                  <div class="field-hint" id="authPasswordHint">Password must be at least 8 characters.</div>
+                </div>
+              </div>
+              <div class="account-row">
+                <button class="account-btn account-btn-primary" id="loginBtn" type="button">Login</button>
+                <button class="account-btn account-btn-secondary" id="registerBtn" type="button">Register</button>
+              </div>
+            </div>
+            <div class="account-msg" id="authMsg" aria-live="polite"></div>
+            <div class="account-tip">
+              Tip: Registering uploads your current local data to your new account automatically.
+            </div>
+          </div>
+        </section>
+
+        <section class="account-section" id="security">
+          <div class="section-head">
+            <h2>Security</h2>
+            <p>Update your password and manage advanced recovery options.</p>
+          </div>
+          <div class="account-card">
+            <div class="account-form">
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="currentPassword">Current password</label>
+                  <div class="input-with-toggle">
+                    <input class="account-input" id="currentPassword" type="password" placeholder="Current password" autocomplete="current-password" />
+                    <button class="field-toggle" type="button" data-toggle-target="currentPassword" aria-pressed="false">Show</button>
+                  </div>
+                </div>
+                <div class="form-field">
+                  <label for="newPassword">New password</label>
+                  <div class="input-with-toggle">
+                    <input class="account-input" id="newPassword" type="password" placeholder="Minimum 8 characters" autocomplete="new-password" />
+                    <button class="field-toggle" type="button" data-toggle-target="newPassword" aria-pressed="false">Show</button>
+                  </div>
+                  <div class="field-hint" id="newPasswordHint">Use at least 8 characters.</div>
+                </div>
+              </div>
+              <div class="account-row">
+                <button class="account-btn account-btn-primary" id="changePasswordBtn" type="button">Change password</button>
+              </div>
+            </div>
+            <div class="account-msg" id="changePasswordMsg" aria-live="polite"></div>
+          </div>
+
+          <details class="account-details">
+            <summary>Advanced: Password reset</summary>
+            <div class="account-card account-card-inline">
+              <div class="account-form">
+                <div class="form-grid">
+                  <div class="form-field">
+                    <label for="resetEmail">Account email</label>
+                    <input class="account-input" id="resetEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+                  </div>
+                  <div class="form-field">
+                    <label>&nbsp;</label>
+                    <button class="account-btn account-btn-secondary" id="requestResetBtn" type="button">Request reset token</button>
+                  </div>
+                  <div class="form-field">
+                    <label for="resetToken">Reset token</label>
+                    <input class="account-input" id="resetToken" type="text" placeholder="Paste reset token" />
+                  </div>
+                  <div class="form-field">
+                    <label for="resetNewPassword">New password</label>
+                    <div class="input-with-toggle">
+                      <input class="account-input" id="resetNewPassword" type="password" placeholder="Minimum 8 characters" autocomplete="new-password" />
+                      <button class="field-toggle" type="button" data-toggle-target="resetNewPassword" aria-pressed="false">Show</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="account-row">
+                  <button class="account-btn account-btn-primary" id="resetPasswordBtn" type="button">Reset password</button>
+                </div>
+              </div>
+              <div class="account-msg" id="resetMsg" aria-live="polite"></div>
+            </div>
+          </details>
+        </section>
+
+        <section class="account-section" id="verification">
+          <div class="section-head">
+            <h2>Email verification</h2>
+            <p>Verify your email to secure your account.</p>
+          </div>
+          <div class="account-card">
+            <div class="account-row">
+              <button class="account-btn account-btn-primary" id="requestVerifyBtn" type="button">Send verification email</button>
+            </div>
+            <details class="account-details account-details-inline">
+              <summary>Have a token? Paste it here</summary>
+              <div class="account-form">
+                <div class="form-grid">
+                  <div class="form-field">
+                    <label for="verifyToken">Verification token</label>
+                    <input class="account-input" id="verifyToken" type="text" placeholder="Paste verification token" />
+                  </div>
+                  <div class="form-field">
+                    <label>&nbsp;</label>
+                    <button class="account-btn account-btn-primary" id="verifyEmailBtn" type="button">Verify email</button>
+                  </div>
+                </div>
+              </div>
+            </details>
+            <div class="account-msg" id="verifyMsg" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <section class="account-section" id="backups">
+          <div class="section-head">
+            <h2>Backups</h2>
+            <p>Restoring a backup replaces local data on this device. Your account data remains safe.</p>
+          </div>
+          <div class="account-card">
+            <div class="account-row account-row-between">
+              <div class="account-row">
+                <button class="account-btn account-btn-secondary" id="refreshVersionsBtn" type="button">Refresh list</button>
+                <div class="field-inline">
+                  <label for="versionsFilter" class="sr-only">Filter backups</label>
+                  <input class="account-input" id="versionsFilter" type="text" placeholder="Filter by ID or date" />
+                </div>
+              </div>
+            </div>
+            <ul class="account-list" id="versionsList"></ul>
+            <div class="account-msg" id="versionsMsg" aria-live="polite"></div>
+          </div>
+        </section>
+      </main>
     </div>
+  </div>
 
-    <div class="account-hero">
-      <h1>Account & sync</h1>
-      <p>Login/register, sync your study data between devices, and restore backups.</p>
-    </div>
-
-    <div class="account-grid">
-      <div class="account-card" id="authCard">
-        <h2>Login or register</h2>
-        <div class="account-row">
-          <input class="account-input" id="authEmail" type="email" placeholder="Email" autocomplete="email" />
-          <input class="account-input" id="authPassword" type="password" placeholder="Password (min 8 chars)" autocomplete="current-password" />
+  <div class="account-modal-backdrop" id="restoreConfirmBackdrop" hidden>
+    <div class="account-modal" role="dialog" aria-modal="true" aria-labelledby="restoreConfirmTitle">
+      <div class="account-modal-head">
+        <div>
+          <div class="account-modal-title" id="restoreConfirmTitle">Restore backup?</div>
+          <div class="account-modal-subtitle" id="restoreConfirmBody"></div>
         </div>
-        <div class="account-row">
-          <button class="account-btn primary" id="loginBtn" type="button">Login</button>
-          <button class="account-btn secondary" id="registerBtn" type="button">Register</button>
-        </div>
-        <div class="account-msg" id="authMsg"></div>
-        <div class="account-msg" style="opacity:0.8; margin-top:10px;">
-          Tip: If you already created subjects/lessons locally, registering will upload them to your new account automatically.
-        </div>
+        <button class="icon-btn" id="restoreConfirmCloseBtn" type="button" aria-label="Close">✕</button>
       </div>
-
-      <div class="account-card">
-        <h2>Status</h2>
-        <div class="account-msg" id="accountStatusMsg">Loading…</div>
-        <div class="account-row">
-          <button class="account-btn primary" id="accountSyncNowBtn" type="button">Sync now</button>
-          <button class="account-btn secondary" id="accountLogoutBtn" type="button">Logout</button>
-        </div>
-      </div>
-
-      <div class="account-card">
-        <h2>Change password</h2>
-        <div class="account-row">
-          <input class="account-input" id="currentPassword" type="password" placeholder="Current password" autocomplete="current-password" />
-          <input class="account-input" id="newPassword" type="password" placeholder="New password (min 8 chars)" autocomplete="new-password" />
-        </div>
-        <div class="account-row">
-          <button class="account-btn primary" id="changePasswordBtn" type="button">Change</button>
-        </div>
-        <div class="account-msg" id="changePasswordMsg"></div>
-      </div>
-
-      <div class="account-card">
-        <h2>Email verification (optional)</h2>
-        <div class="account-row">
-          <button class="account-btn primary" id="requestVerifyBtn" type="button">Send verification email</button>
-        </div>
-        <div class="account-row">
-          <input class="account-input" id="verifyToken" type="text" placeholder="Paste verification token" />
-          <button class="account-btn primary" id="verifyEmailBtn" type="button">Verify</button>
-        </div>
-        <div class="account-msg" id="verifyMsg"></div>
-      </div>
-
-      <div class="account-card">
-        <h2>Password reset (no email sender yet)</h2>
-        <div class="account-row">
-          <input class="account-input" id="resetEmail" type="email" placeholder="Email" autocomplete="email" />
-          <button class="account-btn primary" id="requestResetBtn" type="button">Request reset token</button>
-        </div>
-        <div class="account-row">
-          <input class="account-input" id="resetToken" type="text" placeholder="Paste reset token" />
-          <input class="account-input" id="resetNewPassword" type="password" placeholder="New password (min 8 chars)" autocomplete="new-password" />
-          <button class="account-btn primary" id="resetPasswordBtn" type="button">Reset</button>
-        </div>
-        <div class="account-msg" id="resetMsg"></div>
-      </div>
-
-      <div class="account-card account-full">
-        <h2>Backups (last 20)</h2>
-        <div class="account-row">
-          <button class="account-btn secondary" id="refreshVersionsBtn" type="button">Refresh list</button>
-        </div>
-        <ul class="account-list" id="versionsList"></ul>
-        <div class="account-msg" id="versionsMsg"></div>
+      <div class="account-modal-actions">
+        <button class="account-btn account-btn-secondary" id="restoreConfirmCancelBtn" type="button">Cancel</button>
+        <button class="account-btn account-btn-danger" id="restoreConfirmConfirmBtn" type="button">
+          <span class="btn-label">Restore</span>
+          <span class="btn-spinner" aria-hidden="true"></span>
+        </button>
       </div>
     </div>
   </div>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
 
   <script src="./src/storage.js" defer></script>
   <script src="./src/a11y-utils.js" defer></script>
