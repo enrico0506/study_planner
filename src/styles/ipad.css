@@ -87,6 +87,18 @@
     letter-spacing: 0.08em;
   }
 
+  .summary-progress-header span:first-child {
+    display: none;
+  }
+
+  .summary-progress-header::before {
+    content: "Confidence";
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+  }
+
   #summaryConfLabel,
   #summaryStudyTodayLabel,
   .summary-goal-line {
@@ -241,8 +253,8 @@
   }
 
   .today-item.today-item-slim .today-actions input[type="checkbox"] {
-    margin-top: -8px;
-    align-self: flex-start;
+    margin-top: -14px;
+    align-self: center;
   }
 
   .schedule-view {
