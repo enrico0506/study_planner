@@ -37,6 +37,116 @@
     display: none;
   }
 
+  .summary-card {
+    padding: 10px 12px;
+  }
+
+  .summary-progress,
+  .summary-study {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 64px;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  .summary-progress-header,
+  .summary-study-header {
+    margin-bottom: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .summary-progress-bar,
+  .summary-goal-track,
+  .summary-study-bar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    justify-self: end;
+    align-self: center;
+  }
+
+  .summary-progress-bar {
+    background: conic-gradient(
+      var(--summary-conf-color, #e5e7eb) calc(var(--summary-conf-pct, 0) * 1%),
+      var(--surface-soft) 0
+    );
+  }
+
+  .summary-goal {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 64px;
+    gap: 10px;
+    padding: 8px 10px;
+    align-items: start;
+  }
+
+  .summary-goal-track {
+    margin-top: 0;
+    background: conic-gradient(
+      color-mix(in srgb, var(--accent) 65%, #ffffff) calc(var(--weekly-goal-pct, 0) * 1%),
+      var(--surface-soft) 0
+    );
+  }
+
+  .summary-progress-fill,
+  .summary-goal-fill,
+  .summary-study-segment {
+    display: none;
+  }
+
+  .summary-study-bar {
+    display: block;
+    background: var(--summary-study-conic, conic-gradient(#e5e7eb 0 100%));
+  }
+
+  .summary-study-legend {
+    display: none;
+  }
+
+  .focus-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: "focus-left focus-controls focus-right";
+    align-items: center;
+    gap: 12px;
+  }
+
+  .focus-main {
+    display: contents;
+  }
+
+  .focus-left {
+    grid-area: focus-left;
+  }
+
+  .focus-right {
+    grid-area: focus-right;
+  }
+
+  .focus-bottom {
+    grid-area: focus-controls;
+    margin-top: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .focus-break-buttons {
+    margin-left: 0;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .today-study-inline {
+    margin-top: 6px;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    align-self: flex-start;
+  }
+
   /* Clone laptop-friendly layout tuning. */
   .app {
     margin: 28px auto 36px;

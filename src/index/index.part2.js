@@ -203,16 +203,19 @@
     }
 
     function meterGradient(value) {
+      const color = meterColor(value);
+      return `linear-gradient(90deg, ${color}, ${color})`;
+    }
+
+    function meterColor(value) {
       const clamped = Math.max(0, Math.min(100, value));
       const base = meterBaseColors || { low: "#fb7185", mid: "#fbbf24", high: "#22c55e" };
       const low = base.low || "#fb7185";
       const mid = base.mid || low;
       const high = base.high || mid;
-      const color =
-        clamped < 50
-          ? mixColors(low, mid, clamped / 50)
-          : mixColors(mid, high, (clamped - 50) / 50);
-      return `linear-gradient(90deg, ${color}, ${color})`;
+      return clamped < 50
+        ? mixColors(low, mid, clamped / 50)
+        : mixColors(mid, high, (clamped - 50) / 50);
     }
 
     function mixColors(a, b, t = 0.5) {
@@ -1268,8 +1271,15 @@
         emptyBar.style.height = "100%";
         emptyBar.style.background = "#e5e7eb";
         summaryStudyBar.appendChild(emptyBar);
+        summaryStudyBar.style.setProperty(
+          "--summary-study-conic",
+          "conic-gradient(#e5e7eb 0 100%)"
+        );
         return;
       }
+
+      let start = 0;
+      const stops = [];
 
 	      perSubject.forEach(({ subj, subjIndex, ms }) => {
 	        const width = (ms * 100) / totalMs;
@@ -1280,6 +1290,10 @@
 	        seg.style.width = width + "%";
 	        seg.style.background = subjectColor;
 	        summaryStudyBar.appendChild(seg);
+
+        const end = start + width;
+        stops.push(`${subjectColor} ${start}% ${end}%`);
+        start = end;
 
         const legendItem = document.createElement("div");
 	        legendItem.className = "summary-study-legend-item";
@@ -1292,6 +1306,11 @@
         legendItem.appendChild(label);
         summaryStudyLegend.appendChild(legendItem);
       });
+
+      summaryStudyBar.style.setProperty(
+        "--summary-study-conic",
+        stops.length ? `conic-gradient(${stops.join(", ")})` : "conic-gradient(#e5e7eb 0 100%)"
+      );
     }
 
     function updateGoalsAndStreaks() {
@@ -1313,6 +1332,7 @@
       weeklyGoalProgressLabel.textContent = formatHoursCompact(weekMs);
       weeklyGoalTotalLabel.textContent = goalMs ? formatHoursCompact(goalMs) : "0h";
       weeklyGoalFill.style.width = goalMs ? pct + "%" : "0%";
+      weeklyGoalFill.parentElement?.style.setProperty("--weekly-goal-pct", pct);
       const remaining = goalMs - weekMs;
       if (!goalMs) {
         weeklyGoalHint.textContent = "Set a target to get a weekly rhythm.";
@@ -1354,6 +1374,8 @@
       summaryConfFill.classList.add(targetClass);
       summaryConfFill.style.width = (totalFiles ? avg : 0) + "%";
       summaryConfFill.style.background = meterGradient(avg);
+      summaryConfFill.parentElement?.style.setProperty("--summary-conf-pct", totalFiles ? avg : 0);
+      summaryConfFill.parentElement?.style.setProperty("--summary-conf-color", meterColor(avg));
 
       updateTodayStudyUI();
       updateGoalsAndStreaks();

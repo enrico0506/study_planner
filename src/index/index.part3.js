@@ -203,6 +203,8 @@
       }
 
 	      const isSlimMode = !todayExpanded && !subjectsMaximized;
+	      const useCompactTodayActions =
+	        typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
 	      const activeSlimTodo =
 	        isSlimMode && activeStudy && activeStudy.kind === "study"
 	          ? todayTodos.find(
@@ -340,6 +342,10 @@
           item.appendChild(noteBox);
         }
 
+	        const isThisActive = isActiveStudy(todo.subjectId, todo.fileId);
+	        const isPaused = isThisActive && activeStudy && activeStudy.paused;
+	        const isSlimExpanded = isSlimMode && !!slimExpandedTodoId && todo.id === slimExpandedTodoId;
+
 	        const title = document.createElement("div");
 	        title.className = "today-title";
 	        title.textContent = (file && file.name) || todo.label || "Untitled";
@@ -351,6 +357,21 @@
 	        title.appendChild(collapsedHint);
 
 	        textWrap.appendChild(title);
+
+	        if (useCompactTodayActions && isFileTodo && file && !todo.done && !isThisActive) {
+	          const studyInline = document.createElement("button");
+	          studyInline.type = "button";
+	          studyInline.className = "chip-btn chip-btn-primary today-study-inline";
+	          studyInline.textContent = "Study";
+	          studyInline.addEventListener("click", (e) => {
+	            e.stopPropagation();
+	            if (subj && file) {
+	              moveTodoToTop(todo.id, { render: false });
+	              startStudy(todo.subjectId, file);
+	            }
+	          });
+	          textWrap.appendChild(studyInline);
+	        }
 
 	        if (!isSlimMode) left.appendChild(checkbox);
 	        left.appendChild(colorDot);
@@ -426,10 +447,6 @@
 		            actions.appendChild(reorderActions);
 		            if (isFileTodo && file) actions.appendChild(noteNextBtn);
 		          }
-
-		        const isThisActive = isActiveStudy(todo.subjectId, todo.fileId);
-		        const isPaused = isThisActive && activeStudy && activeStudy.paused;
-		        const isSlimExpanded = isSlimMode && !!slimExpandedTodoId && todo.id === slimExpandedTodoId;
 
 	        item.addEventListener("keydown", (event) => {
 	          if (isSlimMode && (event.key === "Enter" || event.key === " ")) {
@@ -583,35 +600,38 @@
 	          subtasksWrap.classList.add("today-subtasks-scroll");
 	        }
 
-        const toggleSubsBtn = document.createElement("button");
-        toggleSubsBtn.type = "button";
-        toggleSubsBtn.className = "today-subtasks-toggle";
-        toggleSubsBtn.textContent = "Subtasks";
-        toggleSubsBtn.setAttribute("aria-expanded", "true");
+        let toggleSubsBtn = null;
+        if (!useCompactTodayActions) {
+          toggleSubsBtn = document.createElement("button");
+          toggleSubsBtn.type = "button";
+          toggleSubsBtn.className = "today-subtasks-toggle";
+          toggleSubsBtn.textContent = "Subtasks";
+          toggleSubsBtn.setAttribute("aria-expanded", "true");
 
-        function updateToggleLabel() {
-          const isCollapsed = subtasksWrap.classList.contains("collapsed");
-          const count = subs.length;
-          if (isCollapsed) {
-            if (!count) toggleSubsBtn.textContent = "0 subtasks";
-            else toggleSubsBtn.textContent = count === 1 ? "1 subtask" : `${count} subtasks`;
-          } else {
-            toggleSubsBtn.textContent = "Hide";
-          }
-          toggleSubsBtn.setAttribute("aria-expanded", String(!isCollapsed));
+          const updateToggle = () => {
+            const isCollapsed = subtasksWrap.classList.contains("collapsed");
+            const count = subs.length;
+            if (isCollapsed) {
+              if (!count) toggleSubsBtn.textContent = "0 subtasks";
+              else toggleSubsBtn.textContent = count === 1 ? "1 subtask" : `${count} subtasks`;
+            } else {
+              toggleSubsBtn.textContent = "Hide";
+            }
+            toggleSubsBtn.setAttribute("aria-expanded", String(!isCollapsed));
+          };
+
+          toggleSubsBtn.addEventListener("click", () => {
+            subtasksWrap.classList.toggle("collapsed");
+            updateToggle();
+          });
+
+          updateToggle();
         }
-
-        toggleSubsBtn.addEventListener("click", () => {
-          subtasksWrap.classList.toggle("collapsed");
-          updateToggleLabel();
-        });
-
-	        updateToggleLabel();
 
 	        item.appendChild(topRow);
 	        if (!todo.done) {
 	          if (!isSlimMode) {
-	            item.appendChild(toggleSubsBtn);
+	            if (toggleSubsBtn) item.appendChild(toggleSubsBtn);
 	            item.appendChild(subtasksWrap);
 	          } else if (isSlimExpanded) {
 	            item.appendChild(subtasksWrap);
@@ -619,34 +639,40 @@
 	        }
 
 	        if (!todo.done && isSlimMode) {
-		          const footer = document.createElement("div");
-		          footer.className = "today-slim-footer";
-		          if (!isThisActive) {
-		            const subsBtn = document.createElement("button");
-		            subsBtn.type = "button";
-		            subsBtn.className = "chip-btn chip-btn-ghost";
-		            subsBtn.textContent = "Subtasks";
-		            subsBtn.addEventListener("click", (e) => {
-		              e.stopPropagation();
-		              openSubtasksModal(todo, file, subj);
-		            });
+	          const footer = document.createElement("div");
+	          footer.className = "today-slim-footer";
+	          let footerHasContent = false;
 
-		            if (isFileTodo) {
-		              const studyBtn = document.createElement("button");
-		              studyBtn.type = "button";
-		              studyBtn.className = "chip-btn chip-btn-primary";
-		              studyBtn.textContent = "Study";
-		              studyBtn.addEventListener("click", (e) => {
-		                e.stopPropagation();
-		                if (subj && file) {
-		                  moveTodoToTop(todo.id, { render: false });
-		                  startStudy(todo.subjectId, file);
-		                }
-		              });
-		              footer.appendChild(studyBtn);
-		            }
-		            footer.appendChild(subsBtn);
-		          } else {
+	          if (!isThisActive) {
+	            if (!useCompactTodayActions) {
+	              const subsBtn = document.createElement("button");
+	              subsBtn.type = "button";
+	              subsBtn.className = "chip-btn chip-btn-ghost";
+	              subsBtn.textContent = "Subtasks";
+	              subsBtn.addEventListener("click", (e) => {
+	                e.stopPropagation();
+	                openSubtasksModal(todo, file, subj);
+	              });
+	              footer.appendChild(subsBtn);
+	              footerHasContent = true;
+	            }
+
+	            if (!useCompactTodayActions && isFileTodo) {
+	              const studyBtn = document.createElement("button");
+	              studyBtn.type = "button";
+	              studyBtn.className = "chip-btn chip-btn-primary";
+	              studyBtn.textContent = "Study";
+	              studyBtn.addEventListener("click", (e) => {
+	                e.stopPropagation();
+	                if (subj && file) {
+	                  moveTodoToTop(todo.id, { render: false });
+	                  startStudy(todo.subjectId, file);
+	                }
+	              });
+	              footer.appendChild(studyBtn);
+	              footerHasContent = true;
+	            }
+	          } else {
 	            const primaryBtn = document.createElement("button");
 	            primaryBtn.type = "button";
 	            primaryBtn.className = "chip-btn chip-btn-primary";
@@ -678,8 +704,10 @@
 
 	            footer.appendChild(primaryBtn);
 	            footer.appendChild(stopBtn);
+	            footerHasContent = true;
 	          }
-	          item.appendChild(footer);
+
+	          if (footerHasContent) item.appendChild(footer);
 	        }
 
 	        if (isSlimMode && !todo.done) {
