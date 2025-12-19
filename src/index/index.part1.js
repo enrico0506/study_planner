@@ -331,6 +331,8 @@ const CVD_SAFE_SUBJECT_COLORS = [
     const focusTimerDisplay = document.getElementById("focusTimerDisplay");
     const focusSessionControls = document.getElementById("focusSessionControls");
     const openTimerSettingsBtn = document.getElementById("openTimerSettingsBtn");
+    const focusTimerBox = document.querySelector(".focus-timer-box");
+    const focusTimerToggle = document.querySelector(".focus-timer-toggle");
     const startShortBreakBtn = document.getElementById("startShortBreakBtn");
     const startLongBreakBtn = document.getElementById("startLongBreakBtn");
 
@@ -372,6 +374,8 @@ const CVD_SAFE_SUBJECT_COLORS = [
     let scheduleModalState = null;
     let scheduleDrag = null;
     let scheduleWeekendShifted = false;
+    let focusTimerToggleHome = null;
+    let focusSettingsText = null;
 
     // Helpers
     function isPhoneLayout() {
@@ -383,6 +387,50 @@ const CVD_SAFE_SUBJECT_COLORS = [
         window.matchMedia &&
         window.matchMedia("(max-width: 1024px) and (orientation: landscape) and (aspect-ratio: 4 / 3)").matches
       );
+    }
+
+    function applyIpadFocusLayout() {
+      const useIpadLayout = isIpadLandscapeLayout();
+
+      if (focusTimerToggle && !focusTimerToggleHome) {
+        focusTimerToggleHome = {
+          parent: focusTimerToggle.parentElement,
+          next: focusTimerToggle.nextSibling
+        };
+      }
+
+      if (focusTimerToggle && focusTimerBox) {
+        if (useIpadLayout && focusTimerToggle.parentElement !== focusTimerBox) {
+          focusTimerBox.insertBefore(focusTimerToggle, focusTimerBox.firstChild);
+        } else if (!useIpadLayout && focusTimerToggleHome) {
+          if (focusTimerToggle.parentElement !== focusTimerToggleHome.parent) {
+            if (
+              focusTimerToggleHome.next &&
+              focusTimerToggleHome.next.parentNode === focusTimerToggleHome.parent
+            ) {
+              focusTimerToggleHome.parent.insertBefore(
+                focusTimerToggle,
+                focusTimerToggleHome.next
+              );
+            } else {
+              focusTimerToggleHome.parent.appendChild(focusTimerToggle);
+            }
+          }
+        }
+      }
+
+      if (openTimerSettingsBtn) {
+        if (focusSettingsText === null) focusSettingsText = openTimerSettingsBtn.textContent;
+        if (useIpadLayout) {
+          openTimerSettingsBtn.textContent = "⚙";
+          openTimerSettingsBtn.classList.add("focus-settings-btn");
+          openTimerSettingsBtn.setAttribute("aria-label", "Timer settings");
+        } else {
+          openTimerSettingsBtn.textContent = focusSettingsText || "Timer settings";
+          openTimerSettingsBtn.classList.remove("focus-settings-btn");
+          openTimerSettingsBtn.removeAttribute("aria-label");
+        }
+      }
     }
 
     function getDesiredVisibleSubjects() {

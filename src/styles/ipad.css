@@ -44,6 +44,10 @@
     gap: 10px;
   }
 
+  .section-title-meta {
+    display: block;
+  }
+
   .summary-top {
     display: none;
   }
@@ -143,12 +147,17 @@
     font-size: 0.92rem;
     font-weight: 800;
     color: var(--accent-ink);
+    display: block;
   }
 
   .summary-study-legend,
   .summary-goal-footer,
   .summary-goal-header .chip-btn {
     display: none;
+  }
+
+  #scheduleWeekendToggleBtn {
+    display: inline-flex;
   }
 
   .focus-card {
@@ -168,6 +177,11 @@
   .focus-left {
     grid-area: focus-left;
     align-self: flex-start;
+  }
+
+  .focus-label,
+  .focus-subtitle {
+    display: none;
   }
 
   .focus-right {
@@ -193,7 +207,7 @@
   }
 
   .focus-timer-toggle {
-    margin-top: -6px;
+    margin-top: -10px;
     margin-bottom: 4px;
   }
 

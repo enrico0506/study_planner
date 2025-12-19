@@ -2317,14 +2317,22 @@ body.session-header-mounted #focusCard {
       cursor: pointer;
     }
 
-    .focus-settings-btn {
-      width: 34px;
-      height: 34px;
-      padding: 0;
-      font-size: 1rem;
-      display: inline-grid;
-      place-items: center;
-    }
+.focus-settings-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  font-size: 1rem;
+  display: inline-grid;
+  place-items: center;
+}
+
+.summary-ring-value {
+  display: none;
+}
+
+#scheduleWeekendToggleBtn {
+  display: none;
+}
 
     .schedule-deadline-chip:hover {
       filter: brightness(0.985);
@@ -3533,6 +3541,7 @@ body.session-header-mounted #focusCard {
   margin: 2px 0 0;
   font-size: 0.78rem;
   color: var(--ink-muted);
+  display: none;
 }
 
 .section-subtitle {

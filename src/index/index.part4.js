@@ -944,6 +944,7 @@
 	      enforceTodayHeight();
 	      applyDesktopSubjectSizing();
 	      ensureSubjectFourSnap();
+	      applyIpadFocusLayout();
 	    });
     const settingsPrefsSaveBtn = document.getElementById("settingsPrefsSaveBtn");
     settingsPrefsSaveBtn?.addEventListener("click", () => {
@@ -1119,6 +1120,8 @@
         renderScheduleView();
       });
     }
+
+    applyIpadFocusLayout();
 
     if (scheduleTaskCloseBtn) {
       scheduleTaskCloseBtn.addEventListener("click", () => {
