@@ -163,9 +163,11 @@
   .focus-card {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    grid-template-areas: "focus-left focus-controls focus-right";
-    align-items: center;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "focus-left focus-right"
+      "focus-controls focus-right";
+    align-items: start;
     gap: 12px;
     padding-bottom: 12px;
   }
@@ -177,6 +179,7 @@
   .focus-left {
     grid-area: focus-left;
     align-self: flex-start;
+    min-width: 0;
   }
 
   .focus-label,
@@ -194,8 +197,9 @@
     flex-direction: row;
     align-items: flex-start;
     gap: 6px;
-    position: static;
     flex-wrap: wrap;
+    justify-self: start;
+    align-self: end;
   }
 
   .focus-break-buttons {
