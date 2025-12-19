@@ -367,10 +367,21 @@ body.flashcards-page .review-card.review-swipe-repeat::after {
 
   body.flashcards-page .deck-list-item {
     align-items: center;
+    width: calc(100% - 6px);
+    margin: 0 auto;
+    padding: 10px;
+    box-sizing: border-box;
   }
 
   body.flashcards-page .deck-list-learn {
     display: inline-flex;
+  }
+
+  body.flashcards-page .deck-modal-row {
+    width: calc(100% - 6px);
+    margin: 0 auto;
+    padding: 10px;
+    box-sizing: border-box;
   }
 }
 

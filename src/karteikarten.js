@@ -115,6 +115,7 @@
   }
 
   const CARD_LIST_PAGE_SIZE = 200;
+  const REVIEW_IDLE_LIMIT_MS = 5 * 60 * 1000;
   const KATEX_DELIMITERS = [
     { left: "$$", right: "$$", display: true },
     { left: "$", right: "$", display: false },
@@ -140,6 +141,7 @@
     reviewDone: 0,
     reviewKnown: 0,
     reviewTotal: 0,
+    reviewIdleTimeout: null,
     editingCardId: null,
     selectedCardIds: new Set(),
     cardSearch: "",
@@ -180,12 +182,14 @@
   }
 
   function pauseFlashcardsTimer(reason = "manual") {
+    clearReviewIdleTimeout();
     state.sessionStartedHere = false;
     state.sessionHeader?.pause?.(reason);
   }
 
   function stopFlashcardsTimer(reason = "manual") {
     if (!state.sessionHeader) return;
+    clearReviewIdleTimeout();
     state.sessionStartedHere = false;
     // Pause first to capture elapsed, then stop to persist session to journal.
     state.sessionHeader.pause?.(reason);
@@ -195,6 +199,25 @@
   function ensureReviewTimerRunning() {
     if (state.sessionStartedHere) return;
     startFlashcardsTimer();
+  }
+
+  function clearReviewIdleTimeout() {
+    if (!state.reviewIdleTimeout) return;
+    clearTimeout(state.reviewIdleTimeout);
+    state.reviewIdleTimeout = null;
+  }
+
+  function scheduleReviewIdleTimeout() {
+    clearReviewIdleTimeout();
+    state.reviewIdleTimeout = window.setTimeout(() => {
+      state.reviewIdleTimeout = null;
+      stopFlashcardsTimer("review-idle");
+    }, REVIEW_IDLE_LIMIT_MS);
+  }
+
+  function recordReviewRating() {
+    ensureReviewSession();
+    scheduleReviewIdleTimeout();
   }
 
   function computeReviewTotal() {
@@ -831,7 +854,7 @@
 
   function handleNormalReview(known) {
     if (!state.currentCard) return;
-    ensureReviewSession();
+    recordReviewRating();
     const card = state.currentCard;
     card.lastReviewed = Date.now();
     if (!card.reviewCount) card.reviewCount = 0;
@@ -848,7 +871,7 @@
 
   function handleIntervalReview(rating) {
     if (!state.currentCard) return;
-    ensureReviewSession();
+    recordReviewRating();
     scheduleCardInterval(state.currentCard, rating);
     if (rating !== "again") state.reviewKnown += 1;
     state.reviewDone += 1;
@@ -1142,10 +1165,10 @@
     resetReviewCounters();
     renderReview();
     if (elements.showAnswerBtn) elements.showAnswerBtn.focus();
-    startFlashcardsTimer();
   }
 
   function exitReview() {
+    clearReviewIdleTimeout();
     state.showAnswer = false;
     state.currentCard = null;
     state.reviewQueue = [];
