@@ -1,0 +1,141 @@
+/* Tablet/iPad layout overrides */
+@media (min-width: 721px) and (max-width: 1024px),
+  (pointer: coarse) and (min-width: 721px) and (max-width: 1366px) {
+  html,
+  body {
+    height: auto;
+    overflow-x: hidden;
+  }
+
+  body {
+    padding-top: 12px;
+    padding-bottom: 18px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    font-size: 16px;
+  }
+
+  .app {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  #layoutRow {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "today" "main";
+    gap: 16px;
+    max-width: 100%;
+  }
+
+  #layoutRow .main-area {
+    grid-area: main;
+    overflow: visible;
+    padding-bottom: 8px;
+  }
+
+  #layoutRow .today-sidebar {
+    grid-area: today;
+    order: -1;
+    position: static;
+    width: 100%;
+    max-width: none;
+    align-self: stretch;
+  }
+
+  @media (min-width: 980px) {
+    #layoutRow {
+      grid-template-columns: minmax(0, 1fr) 320px;
+      grid-template-areas: "main today";
+    }
+
+    #layoutRow .today-sidebar {
+      order: 0;
+      position: sticky;
+      top: 12px;
+      align-self: start;
+    }
+  }
+
+  .table-wrapper {
+    overflow-x: hidden;
+    overflow-y: visible;
+    padding: 10px;
+    cursor: default;
+  }
+
+  .subject-scroll {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .subject-table {
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    min-width: 0;
+    background: transparent;
+  }
+
+  @media (min-width: 980px) {
+    .subject-table {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .subject-column {
+    min-width: 0;
+    max-width: none;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+  }
+
+  .subject-scroll-head-btn,
+  .subject-scroll-nav {
+    display: none !important;
+  }
+
+  .schedule-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @media (min-width: 980px) {
+    .schedule-grid {
+      grid-template-columns: minmax(0, 1fr) 320px;
+    }
+  }
+
+  button,
+  .btn,
+  .chip-btn,
+  .view-toggle-btn,
+  .confidence-toggle-btn,
+  .header-quick-trigger,
+  .header-menu-toggle,
+  .subject-nav-btn,
+  .schedule-nav-btn,
+  select,
+  input[type="text"],
+  input[type="number"] {
+    min-height: 44px;
+  }
+
+  .btn,
+  .chip-btn,
+  .view-toggle-btn,
+  .confidence-toggle-btn,
+  .header-quick-trigger,
+  .header-menu-toggle,
+  .subject-nav-btn,
+  .schedule-nav-btn,
+  select,
+  input[type="text"],
+  input[type="number"] {
+    padding: 8px 12px;
+  }
+}
