@@ -2557,6 +2557,7 @@
               addFab.setAttribute("aria-label", "Add to Today's focus");
               addFab.setAttribute("draggable", "false");
               addFab.addEventListener("click", (event) => {
+                event.preventDefault();
                 event.stopPropagation();
                 openAddTodoModal(subj.id, file);
               });
@@ -2688,6 +2689,7 @@
 
             // Click row to edit in modal
             row.addEventListener("click", (event) => {
+              if (event.defaultPrevented) return;
               if (event.target && event.target.closest(".file-add-today-fab")) return;
               openFileModalEdit(subj.id, file);
             });

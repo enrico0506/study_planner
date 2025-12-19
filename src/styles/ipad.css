@@ -426,7 +426,8 @@
 
   .table-wrapper {
     max-height: none !important;
-    overflow: visible !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
   }
 
   .today-sidebar {
