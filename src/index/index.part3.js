@@ -1012,6 +1012,8 @@
 	    function renderScheduleView() {
 	      if (!scheduleGrid) return;
 	      const phone = isPhoneLayout();
+      const useIpadLayout =
+        typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
 
       let start;
       let end;
@@ -1030,14 +1032,14 @@
           });
         }
 	        if (scheduleTodayBtn) scheduleTodayBtn.textContent = "Today";
-      } else {
-        if (!scheduleWeekStart) scheduleWeekStart = getWeekStart(new Date());
-        start = new Date(scheduleWeekStart);
-        if (scheduleWeekendShifted) {
+	      } else {
+	        if (!scheduleWeekStart) scheduleWeekStart = getWeekStart(new Date());
+	        start = new Date(scheduleWeekStart);
+        if (useIpadLayout && scheduleWeekendShifted) {
           start.setDate(start.getDate() + 2);
           daysToRender = 5;
         }
-        if (!scheduleWeekendShifted) {
+        if (useIpadLayout && !scheduleWeekendShifted) {
           daysToRender = 5;
         }
         end = new Date(start);
@@ -1050,7 +1052,10 @@
 
 	      scheduleGrid.innerHTML = "";
       if (!phone) {
-        scheduleGrid.classList.toggle("schedule-grid-weekend", scheduleWeekendShifted);
+        scheduleGrid.classList.toggle(
+          "schedule-grid-weekend",
+          useIpadLayout && scheduleWeekendShifted
+        );
       }
 	      const todayKey = getTodayKey();
 

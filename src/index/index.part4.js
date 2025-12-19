@@ -1102,7 +1102,11 @@
 
     if (scheduleWeekendToggleBtn) {
       scheduleWeekendToggleBtn.addEventListener("click", () => {
-        if (isPhoneLayout()) return;
+        if (
+          isPhoneLayout() ||
+          !(typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout())
+        )
+          return;
         if (!scheduleWeekendShifted) {
           scheduleWeekendShifted = true;
           scheduleWeekendToggleBtn.setAttribute("aria-pressed", "true");
