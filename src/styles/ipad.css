@@ -51,7 +51,7 @@
 
   .section-heading,
   .section-actions {
-    background: #ffffff;
+    background: var(--surface-soft);
   }
 
   .schedule-subtitle {
@@ -266,7 +266,7 @@
     gap: 6px;
     align-items: center;
     justify-content: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     position: absolute;
     left: 50%;
     bottom: 6px;
@@ -319,7 +319,7 @@
 
   .today-item.today-item-slim .today-color-dot {
     margin-left: 0;
-    margin-top: 18px;
+    margin-top: 26px;
   }
 
   .today-item.today-item-slim .today-actions input[type="checkbox"] {
