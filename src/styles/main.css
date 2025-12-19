@@ -5632,6 +5632,27 @@ body.session-header-mounted #focusCard {
   box-shadow: var(--shadow-card);
 }
 
+[data-theme] .stats-summary,
+[data-theme] .stats-meta-row,
+[data-theme] .stats-chart-footer,
+[data-theme] .stats-bar-label {
+  color: var(--ink-muted);
+}
+
+[data-theme] .stats-card-title,
+[data-theme] .stats-value,
+[data-theme] .stats-hero-title,
+[data-theme] .stats-hero-value,
+[data-theme] .stats-row-title,
+[data-theme] .stats-row-time,
+[data-theme] .stats-section-title {
+  color: var(--ink);
+}
+
+[data-theme] .stats-range-btn-active {
+  color: var(--accent-ink);
+}
+
 [data-theme] .stats-range-btn {
   background: var(--surface-soft);
 }
