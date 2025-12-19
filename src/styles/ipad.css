@@ -149,6 +149,7 @@
   }
 
   .focus-card {
+    position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto auto;
     grid-template-areas: "focus-left focus-controls focus-right";
@@ -174,6 +175,9 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
   }
 
   .focus-break-buttons {
@@ -195,8 +199,17 @@
     top: 8px;
   }
 
+  .today-item.today-item-slim .today-item-left {
+    padding-left: 18px;
+  }
+
+  .today-item.today-item-slim .today-color-dot {
+    margin-left: 4px;
+  }
+
   .today-item.today-item-slim .today-actions input[type="checkbox"] {
-    margin-top: -4px;
+    margin-top: -8px;
+    align-self: flex-start;
   }
 
   .schedule-view {
