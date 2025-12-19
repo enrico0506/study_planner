@@ -274,6 +274,24 @@
     grid-template-columns: repeat(5, minmax(200px, 1fr));
   }
 
+  /* Keep popups away from screen edges on iPad. */
+  .modal-backdrop,
+  .settings-backdrop,
+  .calendar-modal-backdrop {
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  .modal,
+  .settings-dialog,
+  .calendar-modal-dialog,
+  .notice-modal,
+  .stats-modal,
+  .suggestion-modal {
+    max-width: min(760px, calc(100% - 40px));
+    max-height: calc(100% - 40px);
+  }
+
   /* Clone laptop-friendly layout tuning. */
   .app {
     margin: 28px auto 36px;
