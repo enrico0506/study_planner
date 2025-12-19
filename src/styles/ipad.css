@@ -327,6 +327,23 @@
     align-self: center;
   }
 
+  .file-row {
+    position: relative;
+  }
+
+  .file-add-today-fab {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-strong);
+    color: var(--accent-ink);
+    box-shadow: var(--shadow-soft);
+  }
+
   .schedule-view {
     overflow-x: hidden;
     padding-right: 16px;

@@ -2548,6 +2548,20 @@
             const isPaused =
               isThisActive && activeStudy && activeStudy.paused;
 
+            if (!isThisActive && !inToday && !isPhoneTodayPicker()) {
+              const addFab = document.createElement("button");
+              addFab.type = "button";
+              addFab.className = "icon-btn file-add-today-fab";
+              addFab.textContent = "+";
+              addFab.title = "Add to Today's focus";
+              addFab.setAttribute("aria-label", "Add to Today's focus");
+              addFab.addEventListener("click", (event) => {
+                event.stopPropagation();
+                openAddTodoModal(subj.id, file);
+              });
+              row.appendChild(addFab);
+            }
+
 	            if (!subjectsMaximized && !isPhoneTodayPicker()) {
 	              if (!isThisActive) {
 	                const studyBtn = document.createElement("button");
