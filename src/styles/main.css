@@ -245,8 +245,12 @@ html.ads-disabled ins.adsbygoogle {
   letter-spacing: 2px;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .header-menu-toggle:hover {
   background: var(--accent-soft);
+}
 }
 
 .header-menu-panel {
@@ -311,12 +315,16 @@ html.ads-disabled ins.adsbygoogle {
   transition: background 0.12s ease, border-color 0.12s ease, transform 0.1s ease;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .header-menu-link:hover,
 .header-menu-item:hover,
 .header-menu-subitem:hover {
   background: var(--accent-soft);
   border-color: var(--accent);
   transform: translateX(-1px);
+}
 }
 
 .header-menu-subgroup {
@@ -433,9 +441,13 @@ html.ads-disabled ins.adsbygoogle {
   transition: background 0.12s ease, border-color 0.12s ease;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .settings-nav-item:hover {
   background: #e8edff;
   border-color: #cfd8ec;
+}
 }
 
 .settings-nav-active {
@@ -491,10 +503,14 @@ html.ads-disabled ins.adsbygoogle {
   transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .settings-theme-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
   border-color: #cfd8ec;
+}
 }
 
 .settings-theme-active {
@@ -646,12 +662,16 @@ html.ads-disabled ins.adsbygoogle {
   transition: background 0.12s ease, border-color 0.12s ease, transform 0.1s ease;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .header-quick-dropdown:hover .header-quick-trigger,
 .header-quick-trigger:focus-visible,
 .header-quick-dropdown.quick-open .header-quick-trigger {
   background: var(--surface-soft);
   border-color: var(--accent);
   transform: translateY(-1px);
+}
 }
 
 .header-quick-caret {
@@ -683,11 +703,15 @@ html.ads-disabled ins.adsbygoogle {
   z-index: 20;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .header-quick-dropdown:hover .header-quick-panel,
 .header-quick-dropdown.quick-open .header-quick-panel {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
+}
 }
 
 .header-quick-item {
@@ -700,10 +724,14 @@ html.ads-disabled ins.adsbygoogle {
   transition: background 0.12s ease, color 0.12s ease;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .header-quick-item:hover,
 .header-quick-item:focus-visible {
   background: var(--accent-soft);
   color: var(--accent-ink);
+}
 }
 
 .confidence-toggle {
@@ -728,9 +756,13 @@ html.ads-disabled ins.adsbygoogle {
   transition: background 0.12s ease, color 0.12s ease, transform 0.08s ease;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .confidence-toggle-btn:hover {
   background: var(--accent-soft);
   transform: translateY(-0.5px);
+}
 }
 
 .confidence-toggle-active {
@@ -750,10 +782,14 @@ html.ads-disabled ins.adsbygoogle {
       transition: background 0.12s ease, color 0.12s ease, transform 0.08s ease;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .view-toggle-btn:hover {
       background: var(--accent-soft);
       transform: translateY(-0.5px);
     }
+}
 
     .view-toggle-active {
       background: #ffffff;
@@ -774,9 +810,13 @@ html.ads-disabled ins.adsbygoogle {
       box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .view-menu-btn:hover {
       background: var(--accent-soft);
     }
+}
 
     .view-menu {
       position: absolute;
@@ -804,10 +844,14 @@ html.ads-disabled ins.adsbygoogle {
       cursor: pointer;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .view-menu-item:hover {
       background: var(--accent-soft);
       color: #1d4ed8;
     }
+}
 
     .theme-switcher {
       position: relative;
@@ -827,10 +871,14 @@ html.ads-disabled ins.adsbygoogle {
       min-width: 170px;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .theme-toggle:hover {
       background: var(--accent-soft);
       border-color: var(--accent-soft-hover);
     }
+}
 
     .theme-dot {
       width: 12px;
@@ -889,10 +937,14 @@ html.ads-disabled ins.adsbygoogle {
       cursor: pointer;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .theme-option:hover {
       background: var(--accent-soft);
       color: var(--accent-ink);
     }
+}
 
     .theme-option-active {
       background: var(--surface-soft);
@@ -1054,10 +1106,14 @@ body.session-header-mounted #focusCard {
       box-shadow: none;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .btn:not([disabled]):hover {
   background: color-mix(in srgb, var(--accent) 85%, #000000 15%);
   transform: translateY(-0.5px);
   box-shadow: 0 12px 24px color-mix(in srgb, var(--accent) 35%, transparent);
+}
 }
 
     .btn:not([disabled]):active {
@@ -1071,10 +1127,14 @@ body.session-header-mounted #focusCard {
   color: var(--ink);
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .btn-secondary:hover {
       background: var(--accent-soft);
       box-shadow: none;
     }
+}
 
     @media (max-width: 720px) {
       .header-row {
@@ -1379,9 +1439,13 @@ body.session-header-mounted #focusCard {
   cursor: pointer;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .summary-study-bar:hover {
   border-color: rgba(37, 99, 235, 0.7);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
 }
 
 .summary-study-bar:focus-visible {
@@ -1563,9 +1627,13 @@ body.session-header-mounted #focusCard {
   transition: background 0.12s ease, color 0.12s ease, transform 0.08s ease;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .focus-timer-mode-btn:hover {
   background: var(--accent-soft);
   transform: translateY(-0.5px);
+}
 }
 
 .focus-timer-active {
@@ -1612,12 +1680,16 @@ body.session-header-mounted #focusCard {
       transition: background 0.08s ease, border-color 0.08s ease, color 0.08s ease, transform 0.08s ease;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .focus-break-btn:hover {
       background: var(--surface-strong);
       border-color: color-mix(in srgb, var(--accent) 35%, var(--border-strong));
       color: var(--accent-ink);
       transform: translateY(-0.5px);
     }
+}
 
     /* Bigger Pause / Stop buttons in focus card */
 
@@ -1633,12 +1705,16 @@ body.session-header-mounted #focusCard {
       transition: background 0.1s ease, border-color 0.1s ease, transform 0.08s ease, box-shadow 0.08s ease;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .focus-main-btn:hover {
       background: var(--surface-strong);
       border-color: color-mix(in srgb, var(--accent) 35%, var(--border-strong));
       transform: translateY(-0.5px);
       box-shadow: 0 1px 3px rgba(15, 23, 42, 0.16);
     }
+}
 
     .focus-main-btn:active {
       transform: translateY(0);
@@ -1651,10 +1727,14 @@ body.session-header-mounted #focusCard {
       border-color: var(--accent);
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .focus-main-btn-primary:hover {
       background: color-mix(in srgb, var(--accent) 80%, var(--ink));
       border-color: color-mix(in srgb, var(--accent) 80%, var(--ink));
     }
+}
 
     .focus-main-btn-danger {
       background: #ef4444;
@@ -1662,10 +1742,14 @@ body.session-header-mounted #focusCard {
       border-color: #b91c1c;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .focus-main-btn-danger:hover {
       background: #b91c1c;
       border-color: #7f1d1d;
     }
+}
 
     @media (max-width: 900px) {
       .focus-main {
@@ -1922,9 +2006,13 @@ body.session-header-mounted #focusCard {
       transition: background 0.12s ease, transform 0.08s ease;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .due-chip-add:hover {
       background: #f5f7fb;
     }
+}
 
     .due-chip-add:disabled {
       opacity: 0.6;
@@ -2193,9 +2281,13 @@ body.session-header-mounted #focusCard {
       box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .schedule-nav-btn:hover {
       background: var(--accent-soft);
     }
+}
 
     .schedule-range {
       min-width: 160px;
@@ -2293,9 +2385,13 @@ body.session-header-mounted #focusCard {
       padding: 8px 10px;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .schedule-add-chip:hover {
       background: #eef2ff;
     }
+}
 
     .schedule-chip-muted {
       opacity: 0.65;
@@ -2338,9 +2434,13 @@ body.session-header-mounted #focusCard {
   display: none;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .schedule-deadline-chip:hover {
       filter: brightness(0.985);
     }
+}
 
     .schedule-deadline-check {
       width: 18px;
@@ -2361,9 +2461,13 @@ body.session-header-mounted #focusCard {
       flex: none;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .schedule-deadline-delete:hover {
       background: var(--surface-strong);
     }
+}
 
     .schedule-day-alert .schedule-day-header {
       background: var(--accent-soft);
@@ -2423,9 +2527,13 @@ body.session-header-mounted #focusCard {
       box-shadow: 0 6px 12px color-mix(in srgb, var(--accent) 20%, transparent);
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .schedule-chip-study:hover {
       background: color-mix(in srgb, var(--accent) 24%, var(--surface-strong));
     }
+}
 
     .schedule-chip-active {
       border-color: var(--accent);
@@ -2613,8 +2721,12 @@ body.session-header-mounted #focusCard {
   z-index: 600;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .expand-btn:hover {
   background: var(--accent-ink, #234fce);
+}
 }
 
 .today-list.today-list-grid .today-item {
@@ -2817,9 +2929,13 @@ body.session-header-mounted #focusCard {
   margin-top: 1px;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .today-remove-x:hover {
   background: rgba(254, 226, 226, 0.9);
   color: #b91c1c;
+}
 }
 
 .today-item-top {
@@ -2974,6 +3090,9 @@ body.session-header-mounted #focusCard {
   transition: opacity 0.12s ease, transform 0.12s ease, max-width 0.12s ease, max-height 0.12s ease;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .today-item:hover .today-reorder-actions,
 .today-item:focus-within .today-reorder-actions {
   opacity: 1;
@@ -2981,6 +3100,7 @@ body.session-header-mounted #focusCard {
   max-width: 200px;
   max-height: 44px;
   transform: translateY(0);
+}
 }
 
 .today-reorder-btn {
@@ -3122,10 +3242,14 @@ body.session-header-mounted #focusCard {
       transition: background 0.08s ease, color 0.08s ease;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .today-subtask-remove:hover {
       background: #fee2e2;
       color: #b91c1c;
     }
+}
 
     .today-subtask-add {
       display: grid;
@@ -3161,11 +3285,15 @@ body.session-header-mounted #focusCard {
       transition: background 0.08s ease, border-color 0.08s ease, transform 0.08s ease;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .today-subtask-add-btn:hover {
       background: #cbd5ff;
       border-color: #a5b4fc;
       transform: translateY(-0.5px);
     }
+}
 
     .today-subtasks-toggle {
       align-self: flex-start;
@@ -3181,9 +3309,13 @@ body.session-header-mounted #focusCard {
       gap: 6px;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .today-subtasks-toggle:hover {
       background: #cbd5ff;
     }
+}
 
     .today-remove-btn {
       border: 1px solid #e5e7eb;
@@ -3197,12 +3329,16 @@ body.session-header-mounted #focusCard {
       white-space: nowrap;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .today-remove-btn:hover {
       background: #fee2e2;
       border-color: #fecaca;
       color: #b91c1c;
       transform: translateY(-0.5px);
     }
+}
 
     .today-timer {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -3358,9 +3494,13 @@ body.session-header-mounted #focusCard {
   opacity: 0.0;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .table-wrapper:hover .subject-scroll-btn,
 .table-wrapper:focus-within .subject-scroll-btn {
   opacity: 1;
+}
 }
 
 .subject-scroll-btn:disabled {
@@ -3368,9 +3508,13 @@ body.session-header-mounted #focusCard {
   cursor: default;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .subject-scroll-btn:not(:disabled):hover {
   background: rgba(255, 255, 255, 1);
   transform: translateY(-1px);
+}
 }
 
 @media (max-width: 960px) {
@@ -3582,9 +3726,13 @@ body.session-header-mounted #focusCard {
   transition: background 0.12s ease, transform 0.12s ease, opacity 0.12s ease;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .subject-scroll-head-btn:hover {
   background: rgba(255, 255, 255, 1);
   transform: translateY(-1px);
+}
 }
 
 .subject-scroll-head-btn:disabled {
@@ -3676,9 +3824,13 @@ body.session-header-mounted #focusCard {
       overflow: hidden;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .subject-color-dot:hover {
       outline-color: color-mix(in srgb, var(--border-strong) 80%, transparent);
     }
+}
 
     .subject-color-dot .subject-color-input {
       position: absolute;
@@ -3803,8 +3955,12 @@ body.session-header-mounted #focusCard {
   box-shadow: var(--shadow-soft);
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .subject-max-btn:hover {
   background: var(--accent-soft);
+}
 }
 
     .subject-delete-btn {
@@ -3818,10 +3974,14 @@ body.session-header-mounted #focusCard {
       transition: background 0.08s ease, color 0.08s ease;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .subject-delete-btn:hover {
       background: #fee2e2;
       color: #b91c1c;
     }
+}
 
     .subject-meter {
       width: 100%;
@@ -3893,10 +4053,14 @@ body.session-header-mounted #focusCard {
       background-clip: content-box;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     *::-webkit-scrollbar-thumb:hover {
       background: rgba(15, 23, 42, 0.22);
       background-clip: content-box;
     }
+}
 
     *::-webkit-scrollbar-track {
       background: transparent;
@@ -3924,11 +4088,15 @@ body.session-header-mounted #focusCard {
         opacity 0.06s ease;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .file-row:hover {
       background: #eff6ff;
       border-color: #bfdbfe;
       transform: translateY(-0.5px);
     }
+}
 
     .file-row.dragging {
       opacity: 0.4;
@@ -3985,10 +4153,14 @@ body.session-header-mounted #focusCard {
 	      color: #166534;
 	    }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 	    .app:not(.subjects-maximized) .file-action-btn.file-action-add:hover {
 	      background: rgba(187, 247, 208, 0.95);
 	      border-color: rgba(34, 197, 94, 0.7);
 	    }
+}
 
 	    .app:not(.subjects-maximized) .file-action-btn.file-action-remove {
 	      background: rgba(254, 226, 226, 0.95);
@@ -3996,10 +4168,14 @@ body.session-header-mounted #focusCard {
 	      color: #b91c1c;
 	    }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 	    .app:not(.subjects-maximized) .file-action-btn.file-action-remove:hover {
 	      background: rgba(254, 202, 202, 0.95);
 	      border-color: rgba(239, 68, 68, 0.7);
 	    }
+}
 
 
     .file-row.in-today {
@@ -4110,10 +4286,14 @@ body.session-header-mounted #focusCard {
       text-align: center;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .chip-btn-danger:hover {
       background: #fecaca;
       transform: translateY(-0.5px);
     }
+}
 
     .chip-btn-primary {
       background: #e0f2fe;
@@ -4122,10 +4302,14 @@ body.session-header-mounted #focusCard {
       text-align: center;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .chip-btn-primary:hover {
       background: #bfdbfe;
       transform: translateY(-0.5px);
     }
+}
 
     .chip-btn-success {
       background: #dcfce7;
@@ -4133,10 +4317,14 @@ body.session-header-mounted #focusCard {
       border: 1px solid #a7f3d0;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .chip-btn-success:hover {
       background: #bbf7d0;
       transform: none;
     }
+}
 
     .file-actions {
       display: flex;
@@ -4168,6 +4356,9 @@ body.session-header-mounted #focusCard {
 	      transition: opacity 0.12s ease, transform 0.12s ease;
 	    }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .file-row:hover .file-actions-row,
     .file-row:focus-within .file-actions-row {
       opacity: 1;
@@ -4175,6 +4366,7 @@ body.session-header-mounted #focusCard {
       max-height: 44px;
       transform: translateY(0);
     }
+}
 
 	    .file-action-btn {
 	      width: 32px;
@@ -4204,11 +4396,15 @@ body.session-header-mounted #focusCard {
       box-sizing: border-box;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .add-file-slot:hover {
       background: #eff6ff;
       border-color: #bfdbfe;
       color: #1d4ed8;
     }
+}
 
     .empty-hint {
       font-size: 0.74rem;
@@ -4265,9 +4461,13 @@ body.session-header-mounted #focusCard {
       box-shadow: 0 10px 22px rgba(29, 78, 216, 0.25);
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .subject-add-btn:hover {
       background: #234fce;
     }
+}
 
     /* Meter colors */
 
@@ -4434,10 +4634,14 @@ body.session-header-mounted #focusCard {
       transition: background 0.08s ease, color 0.08s ease;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .modal-close-btn:hover {
       background: #f3f4f6;
       color: #374151;
     }
+}
 
 .modal-body {
   padding: 4px 0 8px;
@@ -4527,10 +4731,14 @@ body.session-header-mounted #focusCard {
       border-radius: 6px;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .subtask-chip-remove:hover {
       background: #e5e7eb;
       color: #111827;
     }
+}
 
     textarea {
       width: 100%;
@@ -4589,10 +4797,14 @@ body.session-header-mounted #focusCard {
       transition: background 0.08s ease, transform 0.08s ease;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .modal-delete-btn:hover {
       background: #fecaca;
       transform: translateY(-0.5px);
     }
+}
 
     .modal-delete-btn[hidden] {
       display: none;
@@ -4739,12 +4951,16 @@ body.session-header-mounted #focusCard {
       transition: background 0.1s ease, border-color 0.1s ease, color 0.1s ease, transform 0.08s ease;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .stats-range-btn:hover {
       background: var(--accent-soft);
       border-color: #c9d5ff;
       color: #1d4ed8;
       transform: translateY(-0.5px);
     }
+}
 
     .stats-range-btn-active {
       background: var(--accent);
@@ -5012,12 +5228,16 @@ body.session-header-mounted #focusCard {
         opacity 0.06s ease;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .file-row:hover {
       background: #f4f7ff;
       border-color: #d7def1;
       box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
       transform: translateY(-1px);
     }
+}
 
     .file-row.studying {
       background: #f0fbf6;
@@ -5105,12 +5325,16 @@ body.session-header-mounted #focusCard {
       color: var(--accent-ink);
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .focus-break-btn:hover {
       background: var(--accent-soft);
       border-color: #c9d5ff;
       color: #1d4ed8;
       transform: translateY(-0.5px);
     }
+}
 
     .focus-main-btn {
       background: #f4f6fb;
@@ -5118,11 +5342,15 @@ body.session-header-mounted #focusCard {
       color: var(--accent-ink);
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .focus-main-btn:hover {
       background: var(--accent-soft);
       border-color: #c9d5ff;
       box-shadow: 0 1px 3px rgba(15, 23, 42, 0.16);
     }
+}
 
     .focus-main-btn-primary {
       background: var(--accent);
@@ -5130,10 +5358,14 @@ body.session-header-mounted #focusCard {
       color: #ffffff;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .focus-main-btn-primary:hover {
       background: #234fce;
       border-color: #234fce;
     }
+}
 
     .focus-main-btn-danger {
       background: #fef2f2;
@@ -5141,9 +5373,13 @@ body.session-header-mounted #focusCard {
       color: #b91c1c;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .focus-main-btn-danger:hover {
   background: #fee2e2;
   border-color: #fecaca;
+}
 }
 
 .focus-inline-settings {
@@ -5217,16 +5453,24 @@ body.session-header-mounted #focusCard {
       text-align: center;
     }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
     .chip-btn-primary:hover {
       background: var(--accent-soft-hover);
       transform: translateY(-0.5px);
     }
+}
+
+@media (any-hover: hover) and (any-pointer: fine) {
+
 
     .add-file-slot:hover {
       background: #f3f4f6;
       border-color: #d4d4d8;
       color: #111827;
     }
+}
 
     .subject-add-box {
       background: #f6f7ff;
@@ -5266,10 +5510,14 @@ body.session-header-mounted #focusCard {
   border: 0 !important;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .icon-btn:hover {
   background: #eef2ff;
   border-color: #c9d5ff;
   transform: translateY(-1px);
+}
 }
 
 .today-maximize-btn::before {
@@ -5550,10 +5798,14 @@ body.session-header-mounted #focusCard {
   box-shadow: none;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 [data-theme] .btn-secondary:hover {
   background: var(--accent-soft);
   border-color: var(--border-subtle);
   color: var(--accent-ink);
+}
 }
 
 [data-theme] .chip-btn {
@@ -5568,8 +5820,12 @@ body.session-header-mounted #focusCard {
   color: var(--accent-ink);
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 [data-theme] .chip-btn-primary:hover {
   background: var(--accent-soft-hover);
+}
 }
 
 [data-theme] .schedule-chip-study {
@@ -5710,9 +5966,13 @@ body.session-header-mounted #focusCard {
   color: var(--accent-ink);
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 [data-theme] .today-subtask-add-btn:hover,
 [data-theme] .today-subtasks-toggle:hover {
   background: var(--accent-soft-hover);
+}
 }
 
 [data-theme] .focus-break-btn {
@@ -5721,10 +5981,14 @@ body.session-header-mounted #focusCard {
   color: var(--ink);
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 [data-theme] .focus-break-btn:hover {
   background: var(--surface-strong);
   border-color: color-mix(in srgb, var(--accent) 35%, var(--border-strong));
   color: var(--accent-ink);
+}
 }
 
 [data-theme] .modal-backdrop {
@@ -5754,9 +6018,13 @@ body.session-header-mounted #focusCard {
   color: var(--ink-muted);
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 [data-theme] .modal-close-btn:hover {
   background: var(--surface-soft);
   color: var(--ink);
+}
 }
 
 [data-theme] .suggestion-modal-section {
@@ -5770,9 +6038,13 @@ body.session-header-mounted #focusCard {
   color: var(--ink);
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 [data-theme] .subtask-chip-remove:hover {
   background: var(--surface-strong);
   color: var(--ink);
+}
 }
 
 [data-theme] .stats-hero-card {
@@ -5843,9 +6115,13 @@ body.session-header-mounted #focusCard {
   color: var(--ink);
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 [data-theme] .settings-nav-item:hover {
   background: var(--accent-soft);
   border-color: var(--accent);
+}
 }
 
 [data-theme] .settings-nav-active {
@@ -5872,9 +6148,13 @@ body.session-header-mounted #focusCard {
   border-color: var(--border-strong);
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 [data-theme] .settings-theme-item:hover {
   border-color: var(--accent);
   box-shadow: var(--shadow-soft);
+}
 }
 
 [data-theme] .settings-theme-active {
@@ -6086,9 +6366,13 @@ body.calendar-page {
   transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.08s ease;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .calendar-day:hover {
   border-color: var(--accent-soft-hover);
   transform: translateY(-1px);
+}
 }
 
 .calendar-day-outside {
@@ -6353,9 +6637,13 @@ body.calendar-page {
   cursor: pointer;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .calendar-form select:hover {
   border-color: var(--accent-soft-hover);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
 }
 
 .calendar-form input::placeholder,
@@ -6609,9 +6897,13 @@ body.timetable-page {
   gap: 8px;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .timetable-tab:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 22px rgba(15, 23, 42, 0.08);
+}
 }
 
 .timetable-tab-active {
@@ -6639,9 +6931,13 @@ body.timetable-page {
   transition: background 0.1s ease, color 0.1s ease;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .timetable-tab-close:hover {
   background: var(--surface-soft);
   color: var(--ink);
+}
 }
 
 .timetable-tab-close:disabled {
@@ -6667,8 +6963,12 @@ body.timetable-page {
   font-weight: 800;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .tab-icon-btn:hover {
   background: var(--accent-soft);
+}
 }
 
 .timetable-tab-menu {
@@ -6706,9 +7006,13 @@ body.timetable-page {
   color: var(--accent-ink);
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .tab-menu-btn:hover {
   background: var(--accent-soft);
   border-color: var(--accent);
+}
 }
 
 .timetable-week-row {
@@ -7104,8 +7408,12 @@ body.timetable-page {
   font-size: 12px;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .timetable-slot-menu-toggle:hover {
   background: var(--accent-soft);
+}
 }
 
 .timetable-slot-menu {
@@ -7144,9 +7452,13 @@ body.timetable-page {
   text-align: left;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .timetable-slot-menu button:hover {
   background: var(--accent-soft);
   border-color: var(--accent);
+}
 }
 
 .timetable-card {
@@ -7351,10 +7663,14 @@ body.timetable-page {
   transition: transform 0.1s ease, box-shadow 0.12s ease, border-color 0.12s ease;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .deck-list-item:hover {
   transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong));
   box-shadow: var(--shadow-soft);
+}
 }
 
 .deck-list-item-active {
@@ -7400,9 +7716,13 @@ body.timetable-page {
   transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .deck-modal-row:hover {
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong));
   box-shadow: var(--shadow-soft);
+}
 }
 
 .deck-modal-title {
@@ -7743,4 +8063,93 @@ body.timetable-page {
   .form-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* =========================================================
+   Touch + Trackpad Ergonomics (iPad branch)
+   ========================================================= */
+
+/* Baseline: touch-friendly */
+:root {
+  --hit: 44px;              /* min hit target */
+  --hit-gap: 12px;          /* spacing between adjacent controls */
+  --control-radius: 12px;
+  --focus-ring: 2px;
+  --focus-offset: 2px;
+}
+
+/* Optional: slightly denser on precise pointers (mouse/trackpad as primary) */
+@media (pointer: fine) {
+  :root {
+    --hit: 36px;
+    --hit-gap: 8px;
+    --control-radius: 10px;
+  }
+}
+
+/* Core interactive controls */
+:where(
+  button,
+  [role="button"],
+  a.btn,
+  .btn,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"]
+) {
+  min-width: var(--hit);
+  min-height: var(--hit);
+  padding: 0 12px;
+  border-radius: var(--control-radius);
+
+  /* reduces double-tap delay/zoom quirks and improves responsiveness */
+  touch-action: manipulation;
+
+  /* optional: remove iOS tap highlight */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Icon-only buttons: guarantee a square hit area */
+:where(
+  .icon-btn,
+  button.icon-btn,
+  [role="button"].icon-btn
+) {
+  width: var(--hit);
+  height: var(--hit);
+  min-width: var(--hit);
+  min-height: var(--hit);
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+}
+
+/* Form fields: avoid iOS "focus zoom" by keeping >=16px font-size */
+:where(input, textarea, select) {
+  min-height: var(--hit);
+  font-size: 16px;
+}
+
+/* Prevent accidental text selection on interactive bits (keep selection for text inputs) */
+:where(button, [role="button"], .btn, .icon-btn, .drag-handle) {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Keyboard focus: visible ring (trackpad users won't get noisy rings, keyboard users will) */
+:where(button, [role="button"], a, input, textarea, select):focus-visible {
+  outline: var(--focus-ring) solid currentColor;
+  outline-offset: var(--focus-offset);
+}
+
+/* Avoid sticky hover on touch; enable hover only if a hover-capable fine pointer exists */
+@media (any-hover: hover) and (any-pointer: fine) {
+  :where(button, [role="button"], a.btn, .btn):hover {
+    filter: brightness(1.03);
+  }
+}
+
+/* If you have toolbars/action rows, enforce comfortable spacing */
+:where(.toolbar, .controls, .actions, .card-actions) {
+  gap: var(--hit-gap);
 }

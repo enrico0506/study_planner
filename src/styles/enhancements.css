@@ -90,10 +90,14 @@
   place-items: center;
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .today-item:hover .today-collapse-btn,
 .today-item:focus-within .today-collapse-btn {
   opacity: 1;
   pointer-events: auto;
+}
 }
 
 .today-collapsed-hint {
@@ -141,8 +145,12 @@
   background: rgba(255, 255, 255, 0.82);
 }
 
+@media (any-hover: hover) and (any-pointer: fine) {
+
+
 .timetable-week-grid .timeline-day:hover {
   background: rgba(226, 232, 240, 0.35);
+}
 }
 
 /* Calendar: subtle dots for item types */
