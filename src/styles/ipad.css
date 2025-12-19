@@ -158,6 +158,7 @@
     grid-template-areas: "focus-left focus-controls focus-right";
     align-items: center;
     gap: 12px;
+    padding-bottom: 54px;
   }
 
   .focus-main {
@@ -166,6 +167,7 @@
 
   .focus-left {
     grid-area: focus-left;
+    align-self: flex-start;
   }
 
   .focus-right {
@@ -187,6 +189,16 @@
     margin-left: 0;
     flex-direction: column;
     gap: 6px;
+    align-items: flex-start;
+  }
+
+  .focus-timer-toggle {
+    margin-top: -6px;
+    margin-bottom: 4px;
+  }
+
+  .focus-subtitle:empty {
+    display: none;
   }
 
   .today-study-inline {
