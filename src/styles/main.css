@@ -151,6 +151,14 @@ body {
   display: none;
 }
 
+html.ads-disabled .ad-column,
+html.ads-disabled .top-ad-slot,
+html.ads-disabled .review-ad,
+html.ads-disabled .adsbygoogle,
+html.ads-disabled ins.adsbygoogle {
+  display: none !important;
+}
+
 .ad-column-left {
   left: calc(50% - (var(--app-desktop-max) / 2) - var(--ad-column-width, 160px) - 16px);
 }

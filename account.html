@@ -10,6 +10,14 @@
   <script>
     (function() {
       try {
+        const adsDisabled = localStorage.getItem("studyAdsDisabled_v1") === "1";
+        if (adsDisabled) document.documentElement.classList.add("ads-disabled");
+      } catch (e) {}
+    })();
+  </script>
+  <script>
+    (function() {
+      try {
         const savedTheme = localStorage.getItem("studyTheme_v1");
         if (savedTheme) {
           document.documentElement.setAttribute("data-theme", savedTheme);

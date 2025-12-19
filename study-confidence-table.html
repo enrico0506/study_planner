@@ -7,6 +7,14 @@
   <meta name="theme-color" content="#2f62f4" />
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5073064276683221"
      crossorigin="anonymous"></script>
+  <script>
+    (function() {
+      try {
+        const adsDisabled = localStorage.getItem("studyAdsDisabled_v1") === "1";
+        if (adsDisabled) document.documentElement.classList.add("ads-disabled");
+      } catch (e) {}
+    })();
+  </script>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192" />
   <link rel="icon" href="/icons/app-icon.svg" type="image/svg+xml" />

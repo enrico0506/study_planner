@@ -503,6 +503,20 @@ body.flashcards-page.flashcards-review-active .review-ad {
   display: block;
 }
 
+body.flashcards-page.flashcards-review-active .review-panel {
+  position: relative;
+}
+
+body.flashcards-page.flashcards-review-active #finishReviewBtn {
+  display: inline-flex;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 10px 16px;
+  font-weight: 700;
+  z-index: 2;
+}
+
 /* Review: stronger affordances */
 body.flashcards-page .review-start-row {
   display: flex;
