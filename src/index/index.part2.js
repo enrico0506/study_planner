@@ -803,6 +803,24 @@
     const todayStatsModalBody = document.getElementById("todayStatsModalBody");
     const todayStatsModalCloseBtn = document.getElementById("todayStatsModalCloseBtn");
     const todayStatsModalCloseBtn2 = document.getElementById("todayStatsModalCloseBtn2");
+    const todayStatsViews = [
+      { id: "bars", label: "Bars" },
+      { id: "line", label: "Line" },
+      { id: "actual", label: "Actual" },
+      { id: "share", label: "Share" }
+    ];
+    let todayStatsView = "bars";
+    try {
+      const savedView = localStorage.getItem("studyTodayStatsView_v1");
+      if (savedView) todayStatsView = savedView;
+    } catch (e) {}
+
+    function setTodayStatsView(nextView) {
+      todayStatsView = nextView;
+      try {
+        localStorage.setItem("studyTodayStatsView_v1", nextView);
+      } catch (e) {}
+    }
 
     function closeTodayStatsModal() {
       if (!todayStatsModalBackdrop) return;
@@ -859,6 +877,229 @@
       return n;
     }
 
+    function truncateLabel(label, maxLen) {
+      const clean = String(label || "");
+      if (clean.length <= maxLen) return clean;
+      return clean.slice(0, Math.max(0, maxLen - 3)) + "...";
+    }
+
+    function createSvgEl(tag) {
+      return document.createElementNS("http://www.w3.org/2000/svg", tag);
+    }
+
+    function resolveTodayStatsColor(subj, subjIndex) {
+      if (subj && subj.id && typeof getSubjectColorById === "function") {
+        return getSubjectColorById(subj.id);
+      }
+      if (typeof subjIndex === "number" && typeof getSubjectColor === "function") {
+        return getSubjectColor(subjIndex);
+      }
+      return null;
+    }
+
+    function buildTodayStatsItems(list, type) {
+      return list.map((entry) => {
+        const subj = entry.subj || null;
+        const label =
+          type === "subject"
+            ? subj?.name || "Subject"
+            : `${subj?.name || "Subject"} · ${(entry.file && entry.file.name) || "File"}`;
+        const shortLabel =
+          type === "subject"
+            ? label
+            : (entry.file && entry.file.name) || label;
+        return {
+          label,
+          shortLabel,
+          value: entry.ms || 0,
+          color: resolveTodayStatsColor(subj, entry.subjIndex)
+        };
+      });
+    }
+
+    function capTodayStatsItems(items, cap, includeOther) {
+      if (items.length <= cap) return items;
+      const trimmed = items.slice(0, cap);
+      if (!includeOther) return trimmed;
+      const otherValue = items.slice(cap).reduce((sum, item) => sum + item.value, 0);
+      if (otherValue <= 0) return trimmed;
+      trimmed.push({
+        label: "Other",
+        shortLabel: "Other",
+        value: otherValue,
+        color: "rgba(148, 163, 184, 0.9)"
+      });
+      return trimmed;
+    }
+
+    function buildTodayStatsToggle() {
+      const row = el("div", "today-stats-toggle-row");
+      row.appendChild(el("div", "today-stats-toggle-label", "View"));
+      const toggle = el("div", "today-stats-toggle");
+      toggle.setAttribute("role", "group");
+      toggle.setAttribute("aria-label", "Chart view");
+      todayStatsViews.forEach((view) => {
+        const btn = el("button", "today-stats-toggle-btn", view.label);
+        btn.type = "button";
+        if (view.id === todayStatsView) btn.classList.add("is-active");
+        btn.setAttribute("aria-pressed", view.id === todayStatsView ? "true" : "false");
+        btn.addEventListener("click", () => {
+          if (view.id === todayStatsView) return;
+          setTodayStatsView(view.id);
+          renderTodayStatsModal();
+        });
+        toggle.appendChild(btn);
+      });
+      row.appendChild(toggle);
+      return row;
+    }
+
+    function buildTodayStatsKpis(totalMs, subjectCount, taskCount) {
+      const wrap = el("div", "today-stats-kpis");
+      const makeKpi = (label, value) => {
+        const card = el("div", "today-stats-kpi");
+        card.appendChild(el("div", "today-stats-kpi-label", label));
+        card.appendChild(el("div", "today-stats-kpi-value", value));
+        return card;
+      };
+      wrap.appendChild(makeKpi("Total today", totalMs ? formatDuration(totalMs) : "0 min"));
+      wrap.appendChild(makeKpi("Subjects", subjectCount || 0));
+      wrap.appendChild(makeKpi("Tasks", taskCount || 0));
+      return wrap;
+    }
+
+    function buildTodayStatsBars(items, maxValue) {
+      const list = el("div", "bar-list");
+      if (!items.length) return list;
+      items.forEach((item) => {
+        list.appendChild(barRow(item.label, item.value, maxValue, item.color));
+      });
+      return list;
+    }
+
+    function buildTodayStatsActual(items, totalValue) {
+      const list = el("div", "today-stats-table");
+      items.forEach((item) => {
+        const row = el("div", "today-stats-row");
+        const label = el("div", "today-stats-row-label", item.label);
+        const value = el("div", "today-stats-row-value", formatDuration(item.value));
+        const pct = totalValue ? Math.round((item.value / totalValue) * 100) : 0;
+        const percent = el("div", "today-stats-row-percent", `${pct}%`);
+        if (item.color) {
+          label.style.borderLeftColor = item.color;
+        }
+        row.appendChild(label);
+        row.appendChild(value);
+        row.appendChild(percent);
+        list.appendChild(row);
+      });
+      return list;
+    }
+
+    function buildTodayStatsLine(items) {
+      const wrap = el("div", "today-line-chart");
+      if (!items.length) return wrap;
+      const svg = createSvgEl("svg");
+      svg.setAttribute("viewBox", "0 0 320 120");
+      svg.setAttribute("preserveAspectRatio", "none");
+      svg.classList.add("today-line-svg");
+
+      const padX = 16;
+      const padY = 16;
+      const width = 320 - padX * 2;
+      const height = 120 - padY * 2;
+      const max = Math.max(
+        1,
+        ...items.map((item) => item.value)
+      );
+      const step = items.length > 1 ? width / (items.length - 1) : 0;
+      const baseY = padY + height;
+      const points = items.map((item, idx) => {
+        const x = items.length === 1 ? padX + width / 2 : padX + idx * step;
+        const y = padY + (1 - item.value / max) * height;
+        return { x, y };
+      });
+
+      const area = createSvgEl("path");
+      let areaPath = `M ${points[0].x} ${baseY}`;
+      points.forEach((p) => {
+        areaPath += ` L ${p.x} ${p.y}`;
+      });
+      areaPath += ` L ${points[points.length - 1].x} ${baseY} Z`;
+      area.setAttribute("d", areaPath);
+      area.classList.add("today-line-area");
+
+      const line = createSvgEl("polyline");
+      line.setAttribute(
+        "points",
+        points.map((p) => `${p.x},${p.y}`).join(" ")
+      );
+      line.classList.add("today-line-stroke");
+
+      svg.appendChild(area);
+      svg.appendChild(line);
+
+      points.forEach((p, idx) => {
+        const dot = createSvgEl("circle");
+        dot.setAttribute("cx", p.x);
+        dot.setAttribute("cy", p.y);
+        dot.setAttribute("r", "3.5");
+        dot.classList.add("today-line-point");
+        dot.style.fill = items[idx].color || "var(--accent)";
+        svg.appendChild(dot);
+      });
+
+      wrap.appendChild(svg);
+
+      const legend = el("div", "today-line-legend");
+      items.forEach((item) => {
+        const row = el("div", "today-line-item");
+        const swatch = el("span", "today-line-swatch");
+        swatch.style.background = item.color || "var(--accent)";
+        row.appendChild(swatch);
+        row.appendChild(el("span", "today-line-label", truncateLabel(item.shortLabel, 18)));
+        row.appendChild(el("span", "today-line-value", formatDuration(item.value)));
+        legend.appendChild(row);
+      });
+      wrap.appendChild(legend);
+      return wrap;
+    }
+
+    function buildTodayStatsShare(items, totalValue) {
+      const wrap = el("div", "today-donut-wrap");
+      if (!items.length) return wrap;
+      const donut = el("div", "today-donut");
+      let offset = 0;
+      const stops = items.map((item) => {
+        const pct = totalValue ? (item.value / totalValue) * 100 : 0;
+        const color = item.color || "var(--accent)";
+        const start = offset;
+        const end = offset + pct;
+        offset = end;
+        return `${color} ${start}% ${end}%`;
+      });
+      donut.style.background = `conic-gradient(${stops.join(", ")})`;
+      const hole = el("div", "today-donut-hole");
+      hole.appendChild(el("div", "today-donut-total", totalValue ? formatDuration(totalValue) : "0 min"));
+      hole.appendChild(el("div", "today-donut-label", "Total"));
+      donut.appendChild(hole);
+      wrap.appendChild(donut);
+
+      const legend = el("div", "today-donut-legend");
+      items.forEach((item) => {
+        const row = el("div", "today-donut-item");
+        const swatch = el("span", "today-donut-swatch");
+        swatch.style.background = item.color || "var(--accent)";
+        const pct = totalValue ? Math.round((item.value / totalValue) * 100) : 0;
+        row.appendChild(swatch);
+        row.appendChild(el("span", "today-donut-label-text", truncateLabel(item.label, 20)));
+        row.appendChild(el("span", "today-donut-percent", `${pct}%`));
+        legend.appendChild(row);
+      });
+      wrap.appendChild(legend);
+      return wrap;
+    }
+
     function barRow(label, valueMs, maxMs, color) {
       const row = el("div", "bar-row");
       const left = el("div", "", label);
@@ -887,45 +1128,59 @@
       }
 
       todayStatsModalBody.replaceChildren();
+      todayStatsModalBody.appendChild(buildTodayStatsToggle());
 
-      const secA = el("div", "insights-section");
-      secA.appendChild(el("div", "insights-title", "By subject"));
-      const listA = el("div", "bar-list");
       const sortedSubj = [...perSubject].sort((a, b) => b.ms - a.ms);
-      const maxSubj = sortedSubj[0] ? sortedSubj[0].ms : 0;
-      if (!sortedSubj.length) {
-        listA.appendChild(el("div", "calendar-empty", "No study time tracked today yet."));
-      } else {
-        sortedSubj.forEach((r) => {
-          const c = (r.subj && r.subj.id && typeof getSubjectColorById === "function")
-            ? getSubjectColorById(r.subj.id)
-            : typeof getSubjectColor === "function"
-              ? getSubjectColor(r.subjIndex || 0)
-              : null;
-          listA.appendChild(barRow(r.subj?.name || "Subject", r.ms, maxSubj, c));
-        });
-      }
-      secA.appendChild(listA);
-      todayStatsModalBody.appendChild(secA);
+      const subjectItems = buildTodayStatsItems(sortedSubj, "subject");
+      const taskItems = buildTodayStatsItems(taskStats.perTask || [], "task");
+      todayStatsModalBody.appendChild(
+        buildTodayStatsKpis(totalMs, subjectItems.length, taskItems.length)
+      );
 
-      const secB = el("div", "insights-section");
-      secB.appendChild(el("div", "insights-title", "By task"));
-      const listB = el("div", "bar-list");
-      const tasks = (taskStats.perTask || []).slice(0, 18);
-      const maxTask = tasks[0] ? tasks[0].ms : 0;
-      if (!tasks.length) {
-        listB.appendChild(el("div", "calendar-empty", "No tasks studied today yet."));
-      } else {
-        tasks.forEach((r) => {
-          const label = `${r.subj?.name || "Subject"} · ${(r.file && r.file.name) || "File"}`;
-          const c = (r.subj && r.subj.id && typeof getSubjectColorById === "function")
-            ? getSubjectColorById(r.subj.id)
-            : null;
-          listB.appendChild(barRow(label, r.ms, maxTask, c));
-        });
-      }
-      secB.appendChild(listB);
-      todayStatsModalBody.appendChild(secB);
+      const sections = [
+        {
+          title: "By subject",
+          empty: "No study time tracked today yet.",
+          items: subjectItems,
+          max: subjectItems[0] ? subjectItems[0].value : 0,
+          total: totalMs,
+          lineCap: 7
+        },
+        {
+          title: "By task",
+          empty: "No tasks studied today yet.",
+          items: taskItems.slice(0, 18),
+          max: taskItems[0] ? taskItems[0].value : 0,
+          total: taskStats.totalMs || 0,
+          lineCap: 8
+        }
+      ];
+
+      sections.forEach((section) => {
+        const block = el("div", "insights-section");
+        block.appendChild(el("div", "insights-title", section.title));
+        if (!section.items.length) {
+          block.appendChild(el("div", "calendar-empty", section.empty));
+          todayStatsModalBody.appendChild(block);
+          return;
+        }
+
+        if (todayStatsView === "bars") {
+          block.appendChild(buildTodayStatsBars(section.items, section.max));
+        } else if (todayStatsView === "actual") {
+          block.appendChild(buildTodayStatsActual(section.items, section.total));
+        } else if (todayStatsView === "line") {
+          const lineItems = capTodayStatsItems(section.items, section.lineCap, true);
+          block.appendChild(buildTodayStatsLine(lineItems));
+        } else if (todayStatsView === "share") {
+          const shareItems = capTodayStatsItems(section.items, 6, true);
+          block.appendChild(buildTodayStatsShare(shareItems, section.total));
+        } else {
+          block.appendChild(buildTodayStatsBars(section.items, section.max));
+        }
+
+        todayStatsModalBody.appendChild(block);
+      });
     }
 
     function openTodayStatsModal() {
