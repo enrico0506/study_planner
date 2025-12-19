@@ -148,7 +148,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
     };
     let confidenceMode = "manual"; // "manual" | "perceived"
     let timerModePref = "countdown";
-    let expandState = false;
     let subjectsMaximized = false;
 
     // DOM refs
@@ -159,7 +158,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
     const subjectTable = document.getElementById("subjectTable");
     const tableWrapper = document.querySelector(".table-wrapper");
     const mainArea = document.querySelector("#layoutRow .main-area");
-    const expandPageBtn = document.getElementById("expandPageBtn");
     const emptyHint = document.getElementById("emptyHint");
     const openStatsBtn = document.getElementById("openStatsBtn");
     const todayDropZone = document.getElementById("todayDropZone");
@@ -373,6 +371,17 @@ const CVD_SAFE_SUBJECT_COLORS = [
       return window.matchMedia && window.matchMedia("(max-width: 720px)").matches;
     }
 
+    function isIpadLandscapeLayout() {
+      return (
+        window.matchMedia &&
+        window.matchMedia("(max-width: 1024px) and (orientation: landscape) and (aspect-ratio: 4 / 3)").matches
+      );
+    }
+
+    function getDesiredVisibleSubjects() {
+      return isIpadLandscapeLayout() ? 3 : DESKTOP_VISIBLE_SUBJECTS;
+    }
+
     function isPhoneTodayPicker() {
       return (
         isPhoneLayout() &&
@@ -407,7 +416,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	      const gapRaw = tableStyles.columnGap || tableStyles.gap || "0px";
 	      const gap = parseFloat(gapRaw) || 0;
 
-	      const desiredVisible = DESKTOP_VISIBLE_SUBJECTS;
+	      const desiredVisible = getDesiredVisibleSubjects();
 	      const visibleSubjects = count >= desiredVisible ? desiredVisible : Math.max(1, count);
 	      const base =
 	        (viewportWidth - gap * Math.max(0, visibleSubjects - 1)) / Math.max(1, visibleSubjects);
@@ -559,7 +568,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
 	        const colWidth = cols[0].getBoundingClientRect().width || cols[0].offsetWidth || 0;
 	        if (!colWidth) return null;
 	        const step = colWidth + gap;
-	        const desiredVisible = DESKTOP_VISIBLE_SUBJECTS;
+	        const desiredVisible = getDesiredVisibleSubjects();
 	        const visible = cols.length >= desiredVisible ? desiredVisible : Math.max(1, cols.length);
 	        const maxIdx = Math.max(0, cols.length - visible);
 	        return { cols, padLeft, step, visible, maxIdx };
@@ -1316,20 +1325,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
       };
     }
 
-    function toggleExpand() {
-      expandState = !expandState;
-      if (expandState) {
-        appRoot.classList.add("app-expanded");
-        expandPageBtn.textContent = "⤡";
-        document.body.style.overflow = "auto";
-      } else {
-        appRoot.classList.remove("app-expanded");
-        expandPageBtn.textContent = "⤢";
-        document.body.style.overflow = "hidden";
-      }
-      enforceTodayHeight();
-    }
-
     function toggleSubjectsMaximize(force) {
       subjectsMaximized = typeof force === "boolean" ? force : !subjectsMaximized;
       if (subjectsMaximized) {
@@ -1338,17 +1333,13 @@ const CVD_SAFE_SUBJECT_COLORS = [
         appRoot.classList.add("subjects-maximized");
         layoutRow?.classList.add("today-full");
         if (todaySidebar) todaySidebar.style.display = "none";
-        expandState = true;
-        if (expandPageBtn) expandPageBtn.textContent = "⤡";
         document.body.style.overflow = "auto";
       } else {
         appRoot.classList.remove("subjects-maximized");
         if (layoutRow) layoutRow.classList.remove("today-full");
         if (todaySidebar) todaySidebar.style.display = "";
-        // If the user had not expanded the page manually, restore default body overflow
-        if (!todayExpanded && !expandState) {
+        if (!todayExpanded) {
           document.body.style.overflow = "hidden";
-          if (expandPageBtn) expandPageBtn.textContent = "⤢";
         }
       }
       applyTodayExpandedLayout();

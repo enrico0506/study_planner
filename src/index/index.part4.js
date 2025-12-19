@@ -940,7 +940,6 @@
     maximizeSubjectsBtn?.addEventListener("click", () => {
       toggleSubjectsMaximize();
     });
-    expandPageBtn?.addEventListener("click", toggleExpand);
 	    window.addEventListener("resize", () => {
 	      enforceTodayHeight();
 	      applyDesktopSubjectSizing();
