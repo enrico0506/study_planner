@@ -2707,8 +2707,15 @@
             // Click row to edit in modal
             row.addEventListener("click", (event) => {
               if (event.defaultPrevented) return;
-              if (event.target && event.target.closest && event.target.closest("button")) return;
-              if (event.target && event.target.closest(".file-add-today-fab")) return;
+              const target = event.target;
+              const targetElement =
+                target && target.closest
+                  ? target
+                  : target && target.parentElement
+                  ? target.parentElement
+                  : null;
+              if (targetElement && targetElement.closest("button")) return;
+              if (targetElement && targetElement.closest(".file-add-today-fab")) return;
               openFileModalEdit(subj.id, file);
             });
 
