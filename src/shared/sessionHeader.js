@@ -1,7 +1,6 @@
 (() => {
   const StudyPlanner = window.StudyPlanner || (window.StudyPlanner = {});
   const Storage = StudyPlanner.Storage || null;
-  const SessionJournal = StudyPlanner.SessionJournal || null;
 
   const ACTIVE_KEY = "studySessionHeaderActive_v1";
   const SESSIONS_KEY = "studySessions_v1";
@@ -81,6 +80,10 @@
 
   function loadSessions() {
     return getJSON(SESSIONS_KEY, []);
+  }
+
+  function getSessionJournal() {
+    return StudyPlanner && StudyPlanner.SessionJournal ? StudyPlanner.SessionJournal : null;
   }
 
   function computeTotals(sessions) {
@@ -262,8 +265,9 @@
       active.startedAtMs = null;
       active.accumulatedMs = elapsed;
       const minMs = typeof active.meta?.minMs === "number" ? Math.max(0, active.meta.minMs) : MIN_MS;
-      if (elapsed >= minMs && SessionJournal && typeof SessionJournal.appendSession === "function") {
-        SessionJournal.appendSession({
+      const journal = getSessionJournal();
+      if (elapsed >= minMs && journal && typeof journal.appendSession === "function") {
+        journal.appendSession({
           id: `sess_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
           startedAt: new Date(startedAt).toISOString(),
           endedAt: new Date(startedAt + elapsed).toISOString(),
