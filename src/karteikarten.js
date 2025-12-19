@@ -107,6 +107,13 @@
     el.classList.toggle(className, force);
   }
 
+  function isLaptopMode() {
+    if (window.matchMedia) {
+      return window.matchMedia("(min-width: 900px) and (pointer: fine)").matches;
+    }
+    return window.innerWidth >= 900;
+  }
+
   const CARD_LIST_PAGE_SIZE = 200;
   const KATEX_DELIMITERS = [
     { left: "$$", right: "$$", display: true },
@@ -1662,11 +1669,21 @@
 
     if (elements.reviewCard) {
       on(elements.reviewCard, "click", (event) => {
-        if (!state.currentCard || state.showAnswer) return;
+        if (!state.currentCard) return;
         if (isInteractiveTarget(event.target)) return;
-        ensureReviewSession();
-        state.showAnswer = true;
-        renderReview();
+        if (!state.showAnswer) {
+          ensureReviewSession();
+          state.showAnswer = true;
+          renderReview();
+          return;
+        }
+        if (state.mode !== "normal" || !isLaptopMode()) return;
+        const rect = elements.reviewCard.getBoundingClientRect();
+        const clickX = event.clientX;
+        if (!Number.isFinite(clickX) || rect.width <= 0) return;
+        const known = clickX - rect.left >= rect.width / 2;
+        triggerSwipeFeedback(known ? "known" : "repeat");
+        handleNormalReview(known);
       });
 
       let swipeActive = false;
