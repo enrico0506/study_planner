@@ -5668,6 +5668,105 @@ body.session-header-mounted #focusCard {
   color: var(--accent-ink);
 }
 
+[data-theme] .settings-backdrop {
+  background: color-mix(in srgb, var(--ink) 30%, transparent);
+}
+
+[data-theme] .settings-dialog {
+  background: var(--card-surface);
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  color: var(--ink);
+}
+
+[data-theme] .settings-label {
+  color: var(--ink-muted);
+}
+
+[data-theme] .settings-title {
+  color: var(--ink);
+}
+
+[data-theme] .settings-nav {
+  background: var(--surface-soft);
+  border-color: var(--border-strong);
+}
+
+[data-theme] .settings-nav-item {
+  background: var(--surface-strong);
+  border-color: var(--border-strong);
+  color: var(--ink);
+}
+
+[data-theme] .settings-nav-item:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+[data-theme] .settings-nav-active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+[data-theme] .settings-panels {
+  background: var(--surface-strong);
+  border-color: var(--border-strong);
+}
+
+[data-theme] .settings-panel-title {
+  color: var(--ink);
+}
+
+[data-theme] .settings-panel-text {
+  color: var(--ink-muted);
+}
+
+[data-theme] .settings-theme-item {
+  background: var(--surface-strong);
+  border-color: var(--border-strong);
+}
+
+[data-theme] .settings-theme-item:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-soft);
+}
+
+[data-theme] .settings-theme-active {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-soft);
+}
+
+[data-theme] .settings-theme-dot {
+  border-color: var(--border-strong);
+}
+
+[data-theme] .settings-theme-name {
+  color: var(--ink);
+}
+
+[data-theme] .settings-color-row {
+  background: var(--surface-strong);
+  border-color: var(--border-strong);
+}
+
+[data-theme] .settings-color-label {
+  color: var(--ink);
+}
+
+[data-theme] .settings-preview {
+  background: var(--surface-soft);
+  border-color: var(--border-strong);
+}
+
+[data-theme] .settings-preview-title {
+  color: var(--ink);
+}
+
+[data-theme] .settings-pref-row label {
+  color: var(--ink);
+}
+
 [data-theme] .file-row.studying {
   background: color-mix(in srgb, var(--accent) 16%, var(--surface-strong));
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong));
