@@ -613,9 +613,13 @@
       const openWeeklyTargetPrompt = () => {
         const current = streakCurrentLabel ? streakCurrentLabel.textContent : "0 days";
         const best = streakBestLabel ? streakBestLabel.textContent : "Best 0";
-        const hoursValue = Math.max(1, Math.round((weeklyTargetMinutes || DEFAULT_WEEKLY_TARGET_MINUTES) / 60));
-        const title = `Set weekly target (hours) · ${current} · ${best}`;
-        openNoticePrompt(title, String(hoursValue), (value) => {
+        const hoursValue = Math.max(
+          1,
+          Math.round((weeklyTargetMinutes || DEFAULT_WEEKLY_TARGET_MINUTES) / 60)
+        );
+
+        if (!noticeModalBackdrop || !noticeModalMessage || !noticeModalTitle) {
+          const value = prompt("Set weekly target (hours)", String(hoursValue));
           const hours = Number(value);
           if (!Number.isFinite(hours) || hours <= 0) {
             showNotice("Please enter hours greater than zero.", "warn");
@@ -628,7 +632,37 @@
           renderSmartSuggestions();
           renderDueSoonLane();
           showToast("Weekly target updated.", "success");
-        });
+          return;
+        }
+
+        noticeResolver = null;
+        noticeModalTitle.textContent = "Set weekly target (hours)";
+        noticeModalMessage.innerHTML =
+          '<div class="notice-streak">Current streak: ' +
+          current +
+          " · " +
+          best +
+          '</div><input id="noticePromptInput" class="notice-input" type="text" placeholder="' +
+          escapeHtml(String(hoursValue)) +
+          '" />';
+        const input = document.getElementById("noticePromptInput");
+        noticeConfirmHandler = () => {
+          const val = input ? input.value : "";
+          const hours = Number(val);
+          if (!Number.isFinite(hours) || hours <= 0) {
+            showNotice("Please enter hours greater than zero.", "warn");
+            return;
+          }
+          weeklyTargetMinutes = Math.round(hours * 60);
+          saveFocusConfig();
+          updateGoalsAndStreaks();
+          renderStatsModalContent();
+          renderSmartSuggestions();
+          renderDueSoonLane();
+          showToast("Weekly target updated.", "success");
+          return val;
+        };
+        prepareNoticeModal(input);
       };
 
       editGoalBtn.addEventListener("click", openWeeklyTargetPrompt);
