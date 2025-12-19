@@ -1327,6 +1327,18 @@
 	        col.appendChild(header);
 	        col.appendChild(list);
 	        scheduleGrid.appendChild(col);
+	      }
+
+      if (!phone && scheduleWeekendShifted) {
+        requestAnimationFrame(() => {
+          const dayCard = scheduleGrid.querySelector(".schedule-day");
+          if (!dayCard) return;
+          const gridStyles = window.getComputedStyle(scheduleGrid);
+          const gapRaw = gridStyles.columnGap || gridStyles.gap || "0px";
+          const gap = parseFloat(gapRaw) || 0;
+          const step = dayCard.getBoundingClientRect().width + gap;
+          scheduleGrid.scrollLeft = scheduleWeekendScrollLeft + step * 2;
+        });
       }
     }
 

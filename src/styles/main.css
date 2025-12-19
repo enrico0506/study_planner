@@ -2315,6 +2315,15 @@ body.session-header-mounted #focusCard {
       cursor: pointer;
     }
 
+    .focus-settings-btn {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      font-size: 1rem;
+      display: inline-grid;
+      place-items: center;
+    }
+
     .schedule-deadline-chip:hover {
       filter: brightness(0.985);
     }

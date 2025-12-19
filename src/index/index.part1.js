@@ -244,6 +244,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
     const viewScheduleBtn = document.getElementById("viewScheduleBtn");
     const scheduleView = document.getElementById("scheduleView");
     const scheduleGrid = document.getElementById("scheduleGrid");
+    const scheduleWeekendToggleBtn = document.getElementById("scheduleWeekendToggleBtn");
     const scheduleRangeLabel = document.getElementById("scheduleRangeLabel");
     const schedulePrevWeekBtn = document.getElementById("schedulePrevWeekBtn");
     const scheduleNextWeekBtn = document.getElementById("scheduleNextWeekBtn");
@@ -367,6 +368,8 @@ const CVD_SAFE_SUBJECT_COLORS = [
     let subjectCursorIndex = 0;
     let scheduleModalState = null;
     let scheduleDrag = null;
+    let scheduleWeekendShifted = false;
+    let scheduleWeekendScrollLeft = 0;
 
     // Helpers
     function isPhoneLayout() {

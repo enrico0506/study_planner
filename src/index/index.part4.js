@@ -1053,6 +1053,12 @@
         } else {
           if (!scheduleWeekStart) scheduleWeekStart = getWeekStart(new Date());
           scheduleWeekStart.setDate(scheduleWeekStart.getDate() - 7);
+          scheduleWeekendShifted = false;
+          scheduleWeekendScrollLeft = 0;
+          if (scheduleWeekendToggleBtn) {
+            scheduleWeekendToggleBtn.setAttribute("aria-pressed", "false");
+            scheduleWeekendToggleBtn.textContent = "Show weekend";
+          }
         }
         renderScheduleView();
       });
@@ -1067,6 +1073,12 @@
         } else {
           if (!scheduleWeekStart) scheduleWeekStart = getWeekStart(new Date());
           scheduleWeekStart.setDate(scheduleWeekStart.getDate() + 7);
+          scheduleWeekendShifted = false;
+          scheduleWeekendScrollLeft = 0;
+          if (scheduleWeekendToggleBtn) {
+            scheduleWeekendToggleBtn.setAttribute("aria-pressed", "false");
+            scheduleWeekendToggleBtn.textContent = "Show weekend";
+          }
         }
         renderScheduleView();
       });
@@ -1079,7 +1091,39 @@
         } else {
           scheduleWeekStart = getWeekStart(new Date());
         }
+        if (!isPhoneLayout()) {
+          scheduleWeekendShifted = false;
+          scheduleWeekendScrollLeft = 0;
+          if (scheduleWeekendToggleBtn) {
+            scheduleWeekendToggleBtn.setAttribute("aria-pressed", "false");
+            scheduleWeekendToggleBtn.textContent = "Show weekend";
+          }
+        }
         renderScheduleView();
+      });
+    }
+
+    if (scheduleWeekendToggleBtn) {
+      scheduleWeekendToggleBtn.addEventListener("click", () => {
+        if (isPhoneLayout() || !scheduleGrid) return;
+        const dayCard = scheduleGrid.querySelector(".schedule-day");
+        if (!dayCard) return;
+        const gridStyles = window.getComputedStyle(scheduleGrid);
+        const gapRaw = gridStyles.columnGap || gridStyles.gap || "0px";
+        const gap = parseFloat(gapRaw) || 0;
+        const step = dayCard.getBoundingClientRect().width + gap;
+        if (!scheduleWeekendShifted) {
+          scheduleWeekendScrollLeft = scheduleGrid.scrollLeft;
+          scheduleWeekendShifted = true;
+          scheduleWeekendToggleBtn.setAttribute("aria-pressed", "true");
+          scheduleWeekendToggleBtn.textContent = "Back to week";
+          scheduleGrid.scrollTo({ left: scheduleWeekendScrollLeft + step * 2, behavior: "smooth" });
+        } else {
+          scheduleWeekendShifted = false;
+          scheduleWeekendToggleBtn.setAttribute("aria-pressed", "false");
+          scheduleWeekendToggleBtn.textContent = "Show weekend";
+          scheduleGrid.scrollTo({ left: scheduleWeekendScrollLeft, behavior: "smooth" });
+        }
       });
     }
 

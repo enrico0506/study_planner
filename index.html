@@ -422,9 +422,7 @@
           </div>
         </div>
         <div class="focus-bottom">
-          <button class="focus-break-btn" id="openTimerSettingsBtn" type="button">
-            Timer settings
-          </button>
+          <button class="focus-break-btn focus-settings-btn" id="openTimerSettingsBtn" type="button" aria-label="Timer settings">⚙</button>
           <div class="focus-break-buttons">
             <button class="focus-break-btn" id="startShortBreakBtn" type="button">Short break</button>
             <button class="focus-break-btn" id="startLongBreakBtn" type="button">Long break</button>
@@ -514,6 +512,7 @@
         </div>
         <div class="schedule-actions">
           <button class="chip-btn chip-btn-primary" id="scheduleTodayBtn" type="button">This week</button>
+          <button class="chip-btn" id="scheduleWeekendToggleBtn" type="button" aria-pressed="false">Show weekend</button>
           <div class="schedule-nav">
             <button class="schedule-nav-btn" id="schedulePrevWeekBtn" type="button" aria-label="Previous week">‹</button>
             <div class="schedule-range" id="scheduleRangeLabel">This week</div>

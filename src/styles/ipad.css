@@ -169,6 +169,16 @@
     align-self: flex-start;
   }
 
+  .today-item.today-item-slim .today-remove-x {
+    left: 10px;
+    right: auto;
+    top: 8px;
+  }
+
+  .today-item.today-item-slim .today-actions input[type="checkbox"] {
+    margin-top: -4px;
+  }
+
   .schedule-view {
     overflow-x: auto;
   }
@@ -176,6 +186,7 @@
   .schedule-grid {
     grid-template-columns: repeat(7, minmax(180px, 1fr));
     min-width: calc(7 * 180px + 6 * 12px);
+    padding-right: 16px;
   }
 
   /* Clone laptop-friendly layout tuning. */
