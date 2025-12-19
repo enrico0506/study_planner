@@ -270,6 +270,14 @@
     padding-top: 36px;
   }
 
+  .focus-inline-settings[hidden] {
+    display: none !important;
+  }
+
+  .focus-card.settings-open .focus-inline-settings {
+    display: grid !important;
+  }
+
   .focus-inline-title {
     display: none;
   }
