@@ -5668,6 +5668,92 @@ body.session-header-mounted #focusCard {
   color: var(--accent-ink);
 }
 
+[data-theme] .modal-backdrop {
+  background: color-mix(in srgb, var(--ink) 35%, transparent);
+}
+
+[data-theme] .modal {
+  background: var(--surface-strong);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-card);
+  color: var(--ink);
+}
+
+[data-theme] .modal-title,
+[data-theme] .modal-title-sm,
+[data-theme] .stats-section-title {
+  color: var(--ink);
+}
+
+[data-theme] .modal-subtitle,
+[data-theme] .modal-subtle,
+[data-theme] .modal-field-label {
+  color: var(--ink-muted);
+}
+
+[data-theme] .modal-close-btn {
+  color: var(--ink-muted);
+}
+
+[data-theme] .modal-close-btn:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+[data-theme] .suggestion-modal-section {
+  background: var(--surface-soft);
+  border-color: var(--border-strong);
+}
+
+[data-theme] .subtask-chip {
+  background: var(--surface-soft);
+  border-color: var(--border-strong);
+  color: var(--ink);
+}
+
+[data-theme] .subtask-chip-remove:hover {
+  background: var(--surface-strong);
+  color: var(--ink);
+}
+
+[data-theme] .stats-hero-card {
+  background: var(--surface-strong);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-soft);
+}
+
+[data-theme] .stats-hero-goal {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-strong));
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border-strong));
+  box-shadow: var(--shadow-soft);
+}
+
+[data-theme] .stats-hero-progress,
+[data-theme] .stats-conf-track,
+[data-theme] .stats-bar-track {
+  background: var(--surface-soft);
+}
+
+[data-theme] .stats-hero-progress span,
+[data-theme] .stats-bar-fill-vertical,
+[data-theme] .stats-bar-fill {
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--surface-strong)));
+}
+
+[data-theme] .stats-conf-row {
+  color: var(--ink-muted);
+}
+
+[data-theme] .stats-conf-num {
+  color: var(--ink-muted);
+}
+
+[data-theme] .stats-highlight {
+  background: var(--surface-soft);
+  border-color: var(--border-strong);
+  color: var(--ink);
+}
+
 [data-theme] .settings-backdrop {
   background: color-mix(in srgb, var(--ink) 30%, transparent);
 }
