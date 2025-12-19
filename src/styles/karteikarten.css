@@ -34,8 +34,25 @@ body.flashcards-page .deck-card.deck-card-decks {
   padding: 10px 12px;
 }
 
-body.flashcards-page .deck-list-scroll {
-  display: none;
+body.flashcards-page .flashcards-session {
+  width: 100%;
+}
+
+body.flashcards-page .flashcards-session .session-header {
+  margin: 0;
+}
+
+body.flashcards-page .deck-card.deck-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+body.flashcards-page .deck-card.deck-card-list .deck-list-scroll {
+  display: block;
+  max-height: min(420px, 55vh);
+  overflow: auto;
+  padding-right: 2px;
 }
 
 body.flashcards-page .deck-card.deck-card-import {

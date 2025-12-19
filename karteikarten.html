@@ -71,8 +71,6 @@
         </div>
       </div>
     </div>
-    <div class="flashcards-session" id="sessionHeaderMount"></div>
-
     <div class="flashcards-layout">
       <aside class="deck-column">
         <div class="deck-card deck-card-decks">
@@ -85,9 +83,6 @@
               <button class="chip-btn chip-btn-primary" id="focusDeckNameBtn" type="button">+ Neuer Stapel…</button>
               <button class="chip-btn" id="viewDecksBtn" type="button">Stapel ansehen</button>
             </div>
-          </div>
-          <div class="deck-list-scroll">
-            <div class="deck-list" id="deckList"></div>
           </div>
         </div>
 
@@ -119,9 +114,22 @@
             <button class="btn" id="openCardModalBtn" type="button">Neue Karte…</button>
           </div>
         </div>
+
+        <div class="deck-card deck-card-list">
+          <div class="deck-card-head">
+            <div>
+              <div class="deck-card-label">Stapel</div>
+              <div class="deck-card-title">Alle Stapel</div>
+            </div>
+          </div>
+          <div class="deck-list-scroll">
+            <div class="deck-list" id="deckList"></div>
+          </div>
+        </div>
       </aside>
 
       <section class="flashcards-main">
+        <div class="flashcards-session" id="sessionHeaderMount"></div>
         <div class="review-panel">
           <div class="review-head">
             <div>
