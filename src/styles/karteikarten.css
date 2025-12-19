@@ -384,6 +384,10 @@ body.flashcards-page .review-card.review-swipe-repeat::after {
     box-sizing: border-box;
   }
 
+  body.flashcards-page .review-ad {
+    display: block;
+  }
+
   body.flashcards-page.flashcards-phone-review {
     padding: 0;
   }
