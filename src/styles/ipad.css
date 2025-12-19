@@ -54,6 +54,15 @@
     background: var(--surface-soft);
   }
 
+  .section-heading {
+    border-radius: 12px;
+    padding-right: 10px;
+  }
+
+  .section-actions {
+    padding-right: 6px;
+  }
+
   .schedule-subtitle {
     display: none;
   }
