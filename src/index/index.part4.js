@@ -162,6 +162,28 @@
         }
       });
 
+      if (typeof getFlashcardsTotalsForRange === "function") {
+        const flashMs = getFlashcardsTotalsForRange(statsRange);
+        const flashSessions =
+          typeof getFlashcardsSessionsForRange === "function" ? getFlashcardsSessionsForRange(statsRange) : 0;
+        if (flashMs > 0) {
+          totalMsRange += flashMs;
+          totalSessionsRange += flashSessions;
+          perSubject.push({
+            name: "Karteikarten",
+            totalMs: flashMs,
+            sessions: flashSessions
+          });
+          entries.push({
+            subjectName: "Karteikarten",
+            fileName: "Karteikarten",
+            totalMs: flashMs,
+            sessions: flashSessions,
+            confidence: 0
+          });
+        }
+      }
+
       const confidenceTotal =
         confidenceBuckets.low + confidenceBuckets.mid + confidenceBuckets.high;
       const confPct = (count) =>

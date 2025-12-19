@@ -10,6 +10,7 @@ const STORAGE_KEY = "studySubjects_v1";
     const STYLE_PREF_KEY = "studyStylePrefs_v1";
     const CALENDAR_KEY = "studyCalendarEvents_v1";
     const CONF_MODE_KEY = "studyConfidenceMode_v1";
+    const SESSIONS_KEY = "studySessions_v1";
     const SP_STORAGE =
       window.StudyPlanner && window.StudyPlanner.Storage ? window.StudyPlanner.Storage : null;
 const DESKTOP_VISIBLE_SUBJECTS = 4;
@@ -749,6 +750,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
     }
 
     function getSubjectColorById(subjectId) {
+      if (subjectId === "flashcards") return "#f6a23c";
       const idx = subjects.findIndex((s) => s.id === subjectId);
       if (idx === -1) return "#d1d5db";
       const subj = subjects[idx];
@@ -1613,6 +1615,87 @@ const CVD_SAFE_SUBJECT_COLORS = [
       else if (range === "month") windowDays = 30;
       const windowStart = todayStart - (windowDays - 1) * dayMs;
       return ms >= windowStart && ms <= todayStart + dayMs;
+    }
+
+    function getStudyDayKey(date, offsetHours = 2) {
+      const base = date instanceof Date ? date : new Date(date);
+      if (Number.isNaN(base.getTime())) return null;
+      const shifted = new Date(base.getTime() - offsetHours * 60 * 60 * 1000);
+      try {
+        const parts = new Intl.DateTimeFormat("en-CA", {
+          timeZone: "Europe/Berlin",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit"
+        }).formatToParts(shifted);
+        const out = {};
+        parts.forEach((p) => {
+          if (p && p.type) out[p.type] = p.value;
+        });
+        if (out.year && out.month && out.day) return `${out.year}-${out.month}-${out.day}`;
+      } catch (e) {}
+      const year = shifted.getFullYear();
+      const month = String(shifted.getMonth() + 1).padStart(2, "0");
+      const day = String(shifted.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function loadSessionJournal() {
+      if (SP_STORAGE && typeof SP_STORAGE.getJSON === "function") {
+        return SP_STORAGE.getJSON(SESSIONS_KEY, []);
+      }
+      try {
+        const raw = localStorage.getItem(SESSIONS_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function getFlashcardsDailyTotalsMap() {
+      const totals = {};
+      const sessions = loadSessionJournal();
+      sessions.forEach((session) => {
+        if (!session || session.source !== "flashcards") return;
+        const ms = Number(session.durationMs) || Number(session.durationMinutes) * 60000 || 0;
+        if (ms <= 0) return;
+        const key = getStudyDayKey(session.endedAt || session.startedAt);
+        if (!key) return;
+        totals[key] = (totals[key] || 0) + ms;
+      });
+      return totals;
+    }
+
+    function getFlashcardsTotalsForRange(range) {
+      const totals = getFlashcardsDailyTotalsMap();
+      if (range === "all") {
+        return Object.values(totals).reduce((sum, val) => sum + (Number(val) || 0), 0);
+      }
+      let sum = 0;
+      Object.entries(totals).forEach(([key, val]) => {
+        const t = dateKeyToMs(key);
+        if (t === null) return;
+        if (msInRange(t, range)) sum += Number(val) || 0;
+      });
+      return sum;
+    }
+
+    function getFlashcardsSessionsForRange(range) {
+      const sessions = loadSessionJournal();
+      if (range === "all") {
+        return sessions.filter((s) => s && s.source === "flashcards").length;
+      }
+      let count = 0;
+      sessions.forEach((session) => {
+        if (!session || session.source !== "flashcards") return;
+        const key = getStudyDayKey(session.endedAt || session.startedAt);
+        if (!key) return;
+        const t = dateKeyToMs(key);
+        if (t === null) return;
+        if (msInRange(t, range)) count += 1;
+      });
+      return count;
     }
 
     function totalMsForRange(file, range) {

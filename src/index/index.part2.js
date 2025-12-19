@@ -604,6 +604,13 @@
         });
       });
 
+      if (typeof getFlashcardsDailyTotalsMap === "function") {
+        const flashTotals = getFlashcardsDailyTotalsMap();
+        Object.entries(flashTotals || {}).forEach(([key, val]) => {
+          totals[key] = (totals[key] || 0) + (Number(val) || 0);
+        });
+      }
+
       if (
         includeActiveToday &&
         activeStudy &&
@@ -777,6 +784,14 @@
         }
       }
 
+      if (typeof getFlashcardsDailyTotalsMap === "function") {
+        const flashTotals = getFlashcardsDailyTotalsMap();
+        const flashMs = flashTotals && flashTotals[key] ? Number(flashTotals[key]) || 0 : 0;
+        if (flashMs > 0) {
+          results.push({ subj: { id: "flashcards", name: "Karteikarten" }, subjIndex: subjects.length, ms: flashMs });
+        }
+      }
+
       const perSubject = results.filter((r) => r.ms > 0);
       const totalMs = perSubject.reduce((sum, r) => sum + r.ms, 0);
       return { perSubject, totalMs };
@@ -819,6 +834,17 @@
           const existing = perTask.find((x) => x.file && x.file.id === file.id && x.subj && x.subj.id === subj.id);
           if (existing) existing.ms += extra;
           else perTask.push({ subj, file, ms: extra });
+        }
+      }
+      if (typeof getFlashcardsDailyTotalsMap === "function") {
+        const flashTotals = getFlashcardsDailyTotalsMap();
+        const flashMs = flashTotals && flashTotals[key] ? Number(flashTotals[key]) || 0 : 0;
+        if (flashMs > 0) {
+          perTask.push({
+            subj: { id: "flashcards", name: "Karteikarten" },
+            file: { id: "flashcards", name: "Session" },
+            ms: flashMs
+          });
         }
       }
       perTask.sort((a, b) => b.ms - a.ms);
