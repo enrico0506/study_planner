@@ -427,6 +427,19 @@
     max-height: calc(100% - 40px);
   }
 
+  .settings-dialog {
+    max-height: calc(100% - 40px);
+  }
+
+  .settings-body {
+    min-height: 0;
+  }
+
+  .settings-panels {
+    max-height: calc(100% - 140px);
+    overflow: auto;
+  }
+
   /* Clone laptop-friendly layout tuning. */
   .app {
     margin: 28px auto 36px;
