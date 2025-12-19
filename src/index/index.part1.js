@@ -372,7 +372,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
     let scheduleModalState = null;
     let scheduleDrag = null;
     let scheduleWeekendShifted = false;
-    let scheduleWeekendScrollLeft = 0;
 
     // Helpers
     function isPhoneLayout() {

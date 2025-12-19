@@ -1263,6 +1263,7 @@
       if (summaryStudyValue) summaryStudyValue.textContent = todayLabel;
 
       summaryStudyBar.innerHTML = "";
+      summaryStudyBar.style.setProperty("--ring-glow", "#a5b4fc");
       summaryStudyLegend.innerHTML = "";
 
       const useIpadCharts =
@@ -1282,10 +1283,12 @@
 
       let start = 0;
       const stops = [];
+      let firstColor = null;
 
 	      perSubject.forEach(({ subj, subjIndex, ms }) => {
 	        const width = (ms * 100) / totalMs;
 	        const subjectColor = getSubjectColorById(subj?.id) || getSubjectColor(subjIndex);
+        if (!firstColor) firstColor = subjectColor;
 
 	        const seg = document.createElement("div");
 	        seg.className = "summary-study-segment";
@@ -1313,6 +1316,7 @@
         summaryStudyBar.style.background = stops.length
           ? `conic-gradient(from -90deg, ${stops.join(", ")})`
           : "conic-gradient(from -90deg, #e5e7eb 0 100%)";
+        if (firstColor) summaryStudyBar.style.setProperty("--ring-glow", firstColor);
       } else {
         summaryStudyBar.style.background = "";
       }
@@ -1336,8 +1340,8 @@
       const weekMs = sumLastNDays(totals, 7);
       const goalMs = Math.max(0, weeklyTargetMinutes || 0) * 60 * 1000;
       const pct = goalMs > 0 ? Math.min(100, (weekMs * 100) / goalMs) : 0;
-      const goalColor = "color-mix(in srgb, var(--accent) 75%, #ffffff)";
-      const goalTrack = "color-mix(in srgb, var(--accent) 25%, #ffffff)";
+      const goalColor = "color-mix(in srgb, var(--accent) 80%, #ffffff)";
+      const goalTrack = "color-mix(in srgb, var(--accent) 22%, #ffffff)";
 
       const weeklyProgress = formatHoursCompact(weekMs);
       weeklyGoalProgressLabel.textContent = weeklyProgress;
@@ -1348,6 +1352,7 @@
         weeklyGoalFill.parentElement.style.background = useIpadCharts
           ? `conic-gradient(from -90deg, ${goalColor} ${pct}%, ${goalTrack} ${pct}% 100%)`
           : "";
+        weeklyGoalFill.parentElement.style.setProperty("--ring-glow", "var(--accent)");
       }
       const remaining = goalMs - weekMs;
       if (!goalMs) {
@@ -1399,10 +1404,11 @@
       if (summaryConfFill.parentElement) {
         const confPct = totalFiles ? avg : 0;
         const confColor = meterColor(avg);
-        const confTrack = "color-mix(in srgb, " + confColor + " 22%, #ffffff)";
+        const confTrack = "color-mix(in srgb, " + confColor + " 20%, #ffffff)";
         summaryConfFill.parentElement.style.background = useIpadCharts
           ? `conic-gradient(from -90deg, ${confColor} ${confPct}%, ${confTrack} ${confPct}% 100%)`
           : "";
+        summaryConfFill.parentElement.style.setProperty("--ring-glow", confColor);
       }
 
       updateTodayStudyUI();

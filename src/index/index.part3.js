@@ -1029,12 +1029,16 @@
             month: "short"
           });
         }
-        if (scheduleTodayBtn) scheduleTodayBtn.textContent = "Today";
+	        if (scheduleTodayBtn) scheduleTodayBtn.textContent = "Today";
 	      } else {
 	        if (!scheduleWeekStart) scheduleWeekStart = getWeekStart(new Date());
 	        start = new Date(scheduleWeekStart);
+        if (scheduleWeekendShifted) {
+          start.setDate(start.getDate() + 2);
+          daysToRender = 5;
+        }
 	        end = new Date(start);
-        end.setDate(start.getDate() + 6);
+        end.setDate(start.getDate() + daysToRender - 1);
         if (scheduleRangeLabel) {
           scheduleRangeLabel.textContent = formatWeekRangeLabel(start, end);
         }
@@ -1042,6 +1046,9 @@
 	      }
 
 	      scheduleGrid.innerHTML = "";
+      if (!phone) {
+        scheduleGrid.classList.toggle("schedule-grid-weekend", scheduleWeekendShifted);
+      }
 	      const todayKey = getTodayKey();
 
 	      for (let i = 0; i < daysToRender; i++) {
@@ -1328,18 +1335,6 @@
 	        col.appendChild(list);
 	        scheduleGrid.appendChild(col);
 	      }
-
-      if (!phone && scheduleWeekendShifted) {
-        requestAnimationFrame(() => {
-          const dayCard = scheduleGrid.querySelector(".schedule-day");
-          if (!dayCard) return;
-          const gridStyles = window.getComputedStyle(scheduleGrid);
-          const gapRaw = gridStyles.columnGap || gridStyles.gap || "0px";
-          const gap = parseFloat(gapRaw) || 0;
-          const step = dayCard.getBoundingClientRect().width + gap;
-          scheduleGrid.scrollLeft = scheduleWeekendScrollLeft + step * 2;
-        });
-      }
     }
 
     function closeScheduleTaskModal() {
