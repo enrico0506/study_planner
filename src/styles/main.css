@@ -1926,8 +1926,8 @@ body.session-header-mounted #focusCard {
 
 .today-sidebar {
   min-width: 0;
-  width: clamp(280px, 22vw, 360px);
-  max-width: clamp(280px, 22vw, 360px);
+  width: 100%;
+  max-width: none;
   position: sticky;
   top: 12px;
   align-self: stretch;
