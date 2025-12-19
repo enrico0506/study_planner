@@ -151,14 +151,6 @@ body {
   display: none;
 }
 
-html.ads-disabled .ad-column,
-html.ads-disabled .top-ad-slot,
-html.ads-disabled .review-ad,
-html.ads-disabled .adsbygoogle,
-html.ads-disabled ins.adsbygoogle {
-  display: none !important;
-}
-
 .ad-column-left {
   left: calc(50% - (var(--app-desktop-max) / 2) - var(--ad-column-width, 160px) - 16px);
 }
@@ -1508,29 +1500,27 @@ body.session-header-mounted #focusCard {
       min-width: 180px;
     }
 
-.focus-timer-box {
-  width: 170px;
-  height: 170px;
-  border-radius: 16px;
+    .focus-timer-box {
+      width: 170px;
+      height: 170px;
+      border-radius: 16px;
       border: 1px solid var(--border-strong);
       background: radial-gradient(circle at 25% 20%, color-mix(in srgb, var(--accent-soft) 45%, var(--surface-strong)), var(--surface-strong));
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-  box-shadow: var(--shadow-soft);
-  box-sizing: border-box;
-  position: relative;
-}
+      box-shadow: var(--shadow-soft);
+      box-sizing: border-box;
+    }
 
-.focus-timer-label-small {
-  font-size: 0.72rem;
-  color: var(--ink-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  margin-bottom: 4px;
-  margin-top: 2px;
-}
+    .focus-timer-label-small {
+      font-size: 0.72rem;
+      color: var(--ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 4px;
+    }
 
 .focus-timer-display {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -1544,7 +1534,7 @@ body.session-header-mounted #focusCard {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-bottom: 6px;
+  margin-bottom: 0;
   background: var(--surface-soft);
   border: 1px solid var(--border-strong);
   border-radius: 999px;
@@ -2316,27 +2306,6 @@ body.session-header-mounted #focusCard {
     .schedule-deadline-chip {
       cursor: pointer;
     }
-
-.focus-settings-btn {
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  font-size: 1rem;
-  display: inline-grid;
-  place-items: center;
-}
-
-.summary-ring-value {
-  display: none;
-}
-
-#scheduleWeekendToggleBtn {
-  display: none;
-}
-
-.scroll-top-btn {
-  display: none;
-}
 
     .schedule-deadline-chip:hover {
       filter: brightness(0.985);
@@ -3539,13 +3508,6 @@ body.session-header-mounted #focusCard {
   margin: 0;
   font-size: 1.1rem;
   color: var(--ink);
-}
-
-.section-title-meta {
-  margin: 2px 0 0;
-  font-size: 0.78rem;
-  color: var(--ink-muted);
-  display: none;
 }
 
 .section-subtitle {

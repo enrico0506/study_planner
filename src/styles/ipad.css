@@ -38,6 +38,10 @@
     display: none;
   }
 
+  .expand-btn {
+    display: none;
+  }
+
   .summary-card {
     padding: 10px 12px;
     display: grid;
@@ -46,7 +50,19 @@
   }
 
   .section-title-meta {
+    margin: 2px 0 0;
+    font-size: 0.78rem;
+    color: var(--ink-muted);
     display: block;
+  }
+
+  .focus-settings-btn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    font-size: 1rem;
+    display: inline-grid;
+    place-items: center;
   }
 
   .section-heading,

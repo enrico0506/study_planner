@@ -200,7 +200,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
     const quickJumpDropdown = document.getElementById("quickJumpDropdown");
     const quickJumpTrigger = document.getElementById("quickJumpTrigger");
     const quickJumpPanel = document.getElementById("quickJumpPanel");
-    const adsToggleBtn = document.getElementById("adsToggleBtn");
     const settingsModal = document.getElementById("settingsModal");
     const settingsModalBackdrop = document.getElementById("settingsModalBackdrop");
     const settingsModalCloseBtn = document.getElementById("settingsModalCloseBtn");
@@ -214,7 +213,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
   const focusTimerLabel = document.getElementById("focusTimerLabel");
   const manualConfBtn = document.getElementById("manualConfBtn");
   const perceivedConfBtn = document.getElementById("perceivedConfBtn");
-		    const ADS_DISABLED_KEY = "studyAdsDisabled_v1";
 		    let headerMenuTimer = null;
 		    let addTodoModalState = null; // { subjectId, fileId, subjectName, fileName, subtasks: [] }
 
@@ -234,29 +232,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
       }
     }
 
-    applyAdsDisabledState(getAdsDisabled());
-
-    function getAdsDisabled() {
-      try {
-        return localStorage.getItem(ADS_DISABLED_KEY) === "1";
-      } catch {
-        return false;
-      }
-    }
-
-    function applyAdsDisabledState(disabled) {
-      document.documentElement.classList.toggle("ads-disabled", disabled);
-      if (!adsToggleBtn) return;
-      adsToggleBtn.textContent = disabled ? "Ads: Off" : "Ads: On";
-      adsToggleBtn.setAttribute("aria-pressed", disabled ? "true" : "false");
-    }
-
-    function setAdsDisabled(disabled) {
-      try {
-        localStorage.setItem(ADS_DISABLED_KEY, disabled ? "1" : "0");
-      } catch {}
-      applyAdsDisabledState(disabled);
-    }
 
     // View / schedule refs
     const viewBoardBtn = document.getElementById("viewBoardBtn");
@@ -5363,9 +5338,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
       saveActiveSession();
       timerModeStopwatchBtn.classList.add("focus-timer-active");
       timerModeCountdownBtn?.classList.remove("focus-timer-active");
-    });
-    adsToggleBtn?.addEventListener("click", () => {
-      setAdsDisabled(!getAdsDisabled());
     });
     manualConfBtn?.addEventListener("click", () => {
       confidenceMode = "manual";
