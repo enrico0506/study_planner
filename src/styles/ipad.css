@@ -350,6 +350,10 @@
     position: relative;
   }
 
+  .file-row.file-row-has-fab .file-actions-row {
+    display: none;
+  }
+
   .file-add-today-fab {
     position: absolute;
     right: 8px;
