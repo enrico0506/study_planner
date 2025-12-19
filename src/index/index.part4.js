@@ -607,9 +607,12 @@
     }
 
     if (editGoalBtn) {
-      editGoalBtn.addEventListener("click", () => {
+      const openWeeklyTargetPrompt = () => {
+        const current = streakCurrentLabel ? streakCurrentLabel.textContent : "0 days";
+        const best = streakBestLabel ? streakBestLabel.textContent : "Best 0";
         const hoursValue = Math.max(1, Math.round((weeklyTargetMinutes || DEFAULT_WEEKLY_TARGET_MINUTES) / 60));
-        openNoticePrompt("Set weekly target (hours)", String(hoursValue), (value) => {
+        const title = `Set weekly target (hours) · ${current} · ${best}`;
+        openNoticePrompt(title, String(hoursValue), (value) => {
           const hours = Number(value);
           if (!Number.isFinite(hours) || hours <= 0) {
             showNotice("Please enter hours greater than zero.", "warn");
@@ -623,7 +626,12 @@
           renderDueSoonLane();
           showToast("Weekly target updated.", "success");
         });
-      });
+      };
+
+      editGoalBtn.addEventListener("click", openWeeklyTargetPrompt);
+      if (weeklyGoalFill && weeklyGoalFill.parentElement) {
+        weeklyGoalFill.parentElement.addEventListener("click", openWeeklyTargetPrompt);
+      }
 
       applySubjectPaging();
     }
