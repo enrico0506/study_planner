@@ -383,6 +383,57 @@ body.flashcards-page .review-card.review-swipe-repeat::after {
     padding: 10px;
     box-sizing: border-box;
   }
+
+  body.flashcards-page.flashcards-phone-review {
+    padding: 0;
+  }
+
+  body.flashcards-page.flashcards-phone-review .flashcards-shell {
+    width: 100%;
+    min-width: 100%;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    min-height: 100vh;
+  }
+
+  body.flashcards-page.flashcards-phone-review .flashcards-layout {
+    min-height: 100vh;
+  }
+
+  body.flashcards-page.flashcards-phone-review .flashcards-session,
+  body.flashcards-page.flashcards-phone-review .deck-column,
+  body.flashcards-page.flashcards-phone-review .card-editor-form,
+  body.flashcards-page.flashcards-phone-review .card-editor-list {
+    display: none;
+  }
+
+  body.flashcards-page.flashcards-phone-review .review-panel {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 14px 12px 18px;
+    min-height: 100vh;
+  }
+
+  body.flashcards-page.flashcards-phone-review .review-start-row,
+  body.flashcards-page.flashcards-phone-review .review-progress,
+  body.flashcards-page.flashcards-phone-review #reviewStats {
+    display: none;
+  }
+
+  body.flashcards-page.flashcards-phone-review .review-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body.flashcards-page.flashcards-phone-review .review-card-body {
+    flex: 1;
+    min-height: 50vh;
+  }
 }
 
 body.flashcards-page .card-badge {
