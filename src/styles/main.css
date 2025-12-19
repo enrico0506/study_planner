@@ -1073,72 +1073,9 @@ body.session-header-mounted #focusCard {
       margin-bottom: 12px;
     }
 
-    .ad-rail,
-    .inline-ads {
-      display: none;
-    }
-
-    .ad-rail {
-      position: fixed;
-      top: 120px;
-      width: var(--ad-rail-width, 160px);
-      display: none;
-      flex-direction: column;
-      gap: 14px;
-      z-index: 10;
-    }
-
-    .ad-rail-left {
-      left: calc(50% - (var(--app-desktop-max) / 2) - var(--ad-rail-width, 160px) - 16px);
-    }
-
-    .ad-rail-right {
-      right: calc(50% - (var(--app-desktop-max) / 2) - var(--ad-rail-width, 160px) - 16px);
-    }
-
-    .inline-ads {
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .ad-slot {
-      border-radius: 16px;
-      overflow: hidden;
-      border: 1px solid rgba(203, 213, 225, 0.7);
-      background: #ffffff;
-      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
-    }
-
-    .ad-slot img {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
-
-    @media (min-width: 1060px) and (max-width: 1699px) {
-      .top-row {
-        grid-template-columns: var(--ad-inline-width, 120px) minmax(0, 1fr) minmax(360px, 1.05fr);
-      }
-
-      .inline-ads {
-        display: flex;
-      }
-    }
-
-    @media (min-width: 1700px) {
-      .ad-rail {
-        display: flex;
-      }
-    }
-
     @media (max-width: 1050px) {
       .top-row {
         grid-template-columns: 1fr;
-      }
-
-      .inline-ads {
-        display: none;
       }
     }
 
