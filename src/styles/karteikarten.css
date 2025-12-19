@@ -52,6 +52,43 @@ body.flashcards-page .deck-card.deck-card-list .deck-list-scroll {
   padding-right: 2px;
 }
 
+body.flashcards-page .deck-list-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+body.flashcards-page .deck-list-item[role="button"] {
+  outline: none;
+}
+
+body.flashcards-page .deck-list-item:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+body.flashcards-page .deck-list-info {
+  flex: 1;
+  min-width: 0;
+}
+
+body.flashcards-page .deck-list-learn {
+  display: none;
+  align-self: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border-strong));
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-strong));
+  color: var(--accent-ink);
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+body.flashcards-page .deck-list-learn:hover {
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface-strong));
+}
+
 body.flashcards-page .import-actions {
   display: flex;
   gap: 10px;
@@ -221,6 +258,47 @@ body.is-review-maximized .flashcards-shell {
   max-width: 1200px;
 }
 
+body.flashcards-page .review-card {
+  position: relative;
+  overflow: hidden;
+}
+
+body.flashcards-page .review-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: var(--review-swipe-color, transparent);
+}
+
+body.flashcards-page .review-card.review-swipe-known {
+  --review-swipe-color: rgba(34, 197, 94, 0.18);
+  animation: flashcard-swipe-known 0.36s ease;
+}
+
+body.flashcards-page .review-card.review-swipe-repeat {
+  --review-swipe-color: rgba(239, 68, 68, 0.18);
+  animation: flashcard-swipe-repeat 0.36s ease;
+}
+
+body.flashcards-page .review-card.review-swipe-known::after,
+body.flashcards-page .review-card.review-swipe-repeat::after {
+  opacity: 1;
+}
+
+@keyframes flashcard-swipe-known {
+  0% { transform: translateX(0); }
+  45% { transform: translateX(-18px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes flashcard-swipe-repeat {
+  0% { transform: translateX(0); }
+  45% { transform: translateX(18px); }
+  100% { transform: translateX(0); }
+}
+
 @media (min-width: 900px) {
   /* Keep the Übersicht list from pushing the page height */
   body.flashcards-page .card-editor-list {
@@ -235,6 +313,54 @@ body.is-review-maximized .flashcards-shell {
     min-height: 0;
     overflow: auto;
     padding-right: 4px;
+  }
+}
+
+@media (max-width: 720px) {
+  body.flashcards-page .flashcards-layout {
+    grid-template-columns: 1fr;
+  }
+
+  body.flashcards-page .flashcards-main {
+    order: 1;
+  }
+
+  body.flashcards-page .deck-column {
+    order: 2;
+    position: static;
+    max-height: none;
+  }
+
+  body.flashcards-page .deck-card.deck-card-manage {
+    display: none;
+  }
+
+  body.flashcards-page .review-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  body.flashcards-page .review-actions-compact {
+    order: -1;
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  body.flashcards-page .mode-toggle {
+    align-self: flex-start;
+  }
+
+  body.flashcards-page .deck-card.deck-card-list .deck-list-scroll {
+    max-height: none;
+  }
+
+  body.flashcards-page .deck-list-item {
+    align-items: center;
+  }
+
+  body.flashcards-page .deck-list-learn {
+    display: inline-flex;
   }
 }
 

@@ -395,10 +395,14 @@
     }
     state.decks.forEach((d) => {
       const stats = summarizeDeck(d);
-      const btn = document.createElement("button");
-      btn.className = `deck-list-item ${deck && deck.id === d.id ? "deck-list-item-active" : ""}`;
-      btn.type = "button";
-      btn.dataset.deckId = d.id;
+      const item = document.createElement("div");
+      item.className = `deck-list-item ${deck && deck.id === d.id ? "deck-list-item-active" : ""}`;
+      item.dataset.deckId = d.id;
+      item.setAttribute("role", "button");
+      item.tabIndex = 0;
+
+      const info = document.createElement("div");
+      info.className = "deck-list-info";
       const title = document.createElement("div");
       title.className = "deck-list-title";
       title.textContent = d.name || "Deck";
@@ -411,10 +415,19 @@
       meta.className = "deck-list-meta";
       meta.textContent = `${stats.total} Karten • ${stats.due} fällig • ${stats.newCards} neu`;
 
-      btn.appendChild(title);
-      btn.appendChild(subtitle);
-      btn.appendChild(meta);
-      elements.deckList.appendChild(btn);
+      info.appendChild(title);
+      info.appendChild(subtitle);
+      info.appendChild(meta);
+
+      const learnBtn = document.createElement("button");
+      learnBtn.type = "button";
+      learnBtn.className = "deck-list-learn";
+      learnBtn.dataset.action = "learn";
+      learnBtn.textContent = "Lernen";
+
+      item.appendChild(info);
+      item.appendChild(learnBtn);
+      elements.deckList.appendChild(item);
     });
   }
 
@@ -1188,9 +1201,28 @@
     } catch {}
 
     on(elements.deckList, "click", (event) => {
-      const btn = event.target && event.target.closest ? event.target.closest("[data-deck-id]") : null;
-      if (!btn) return;
-      const id = btn.dataset.deckId;
+      const actionBtn = event.target && event.target.closest ? event.target.closest("[data-action]") : null;
+      const item = event.target && event.target.closest ? event.target.closest("[data-deck-id]") : null;
+      if (!item) return;
+      const id = item.dataset.deckId;
+      if (!id) return;
+      if (actionBtn && actionBtn.dataset.action === "learn") {
+        setActiveDeck(id);
+        startReview();
+        elements.reviewCard?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+        return;
+      }
+      setActiveDeck(id);
+    });
+
+    on(elements.deckList, "keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      const actionBtn = event.target && event.target.closest ? event.target.closest("[data-action]") : null;
+      if (actionBtn) return;
+      const item = event.target && event.target.closest ? event.target.closest("[data-deck-id]") : null;
+      if (!item) return;
+      event.preventDefault();
+      const id = item.dataset.deckId;
       if (!id) return;
       setActiveDeck(id);
     });
@@ -1553,6 +1585,12 @@
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) pauseFlashcardsTimer("hidden");
     });
+    window.addEventListener("pagehide", () => {
+      pauseFlashcardsTimer("pagehide");
+    });
+    window.addEventListener("blur", () => {
+      pauseFlashcardsTimer("blur");
+    });
     window.addEventListener("beforeunload", () => {
       stopFlashcardsTimer("nav");
     });
@@ -1621,6 +1659,62 @@
       buildQueue(true);
       render();
     });
+
+    if (elements.reviewCard) {
+      let swipeActive = false;
+      let swipeStartX = 0;
+      let swipeStartY = 0;
+
+      const triggerSwipeFeedback = (kind) => {
+        if (!elements.reviewCard) return;
+        const className = kind === "known" ? "review-swipe-known" : "review-swipe-repeat";
+        elements.reviewCard.classList.remove("review-swipe-known", "review-swipe-repeat");
+        elements.reviewCard.classList.add(className);
+        const remove = () => elements.reviewCard.classList.remove(className);
+        elements.reviewCard.addEventListener("animationend", remove, { once: true });
+        setTimeout(remove, 420);
+      };
+
+      on(elements.reviewCard, "touchstart", (event) => {
+        if (state.mode !== "normal" || !state.currentCard) return;
+        const touch = event.touches && event.touches[0];
+        if (!touch) return;
+        swipeActive = true;
+        swipeStartX = touch.clientX;
+        swipeStartY = touch.clientY;
+      });
+
+      on(elements.reviewCard, "touchmove", (event) => {
+        if (!swipeActive) return;
+        const touch = event.touches && event.touches[0];
+        if (!touch) return;
+        const dx = touch.clientX - swipeStartX;
+        const dy = touch.clientY - swipeStartY;
+        if (Math.abs(dy) > Math.abs(dx) * 1.1) {
+          swipeActive = false;
+        }
+      });
+
+      on(elements.reviewCard, "touchend", (event) => {
+        if (!swipeActive) return;
+        swipeActive = false;
+        if (state.mode !== "normal" || !state.currentCard) return;
+        const touch = event.changedTouches && event.changedTouches[0];
+        if (!touch) return;
+        const dx = touch.clientX - swipeStartX;
+        const dy = touch.clientY - swipeStartY;
+        if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+        if (!state.showAnswer) {
+          ensureReviewSession();
+          state.showAnswer = true;
+          renderReview();
+          return;
+        }
+        const known = dx < 0;
+        triggerSwipeFeedback(known ? "known" : "repeat");
+        handleNormalReview(known);
+      });
+    }
   }
 
   if (document.readyState === "loading") {
