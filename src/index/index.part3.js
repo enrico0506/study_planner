@@ -2397,17 +2397,7 @@
 	                });
 	                return;
 	              }
-	              const added = addTodoForFile(subj.id, file.id);
-	              if (added) {
-	                showToast("Added to Today's focus.", "success");
-	                announceLive(`Added “${file.name || "Untitled"}” to Today’s focus.`);
-	                renderTable();
-	                flashTodayTodoByFile(subj.id, file.id);
-	              } else {
-	                showToast("Already in Today's focus.", "info");
-	                announceLive(`Already in Today’s focus: “${file.name || "Untitled"}”.`);
-	                flashTodayTodoByFile(subj.id, file.id);
-	              }
+	              openAddTodoModal(subj.id, file);
 	            });
 
             const moveUpBtn = document.createElement("button");
