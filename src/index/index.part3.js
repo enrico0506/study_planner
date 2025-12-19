@@ -480,9 +480,9 @@
           }
         });
 
-	        if (!isThisActive) {
-	          if (isSlimMode) {
-	            const removeX = document.createElement("button");
+        if (!isThisActive) {
+          if (isSlimMode) {
+            const removeX = document.createElement("button");
 	            removeX.type = "button";
 	            removeX.className = "today-remove-x";
 	            removeX.textContent = "✕";
@@ -509,16 +509,50 @@
 	                announceLive(`Removed “${(file && file.name) || todo.label || "Untitled"}” from Today’s focus.`);
 	              });
 	            });
-	            actions.appendChild(removeBtn);
-	          }
-	        }
+            actions.appendChild(removeBtn);
+          }
+        }
 
-	        if (isSlimMode) {
-	          actions.appendChild(checkbox);
-	        }
+        if (isSlimMode) {
+          actions.appendChild(checkbox);
+        }
 
-	        topRow.appendChild(left);
-	        topRow.appendChild(actions);
+        if (!isSlimMode && isThisActive) {
+          const primaryBtn = document.createElement("button");
+          primaryBtn.type = "button";
+          primaryBtn.className = "chip-btn chip-btn-primary";
+          primaryBtn.textContent = isPaused ? "Resume" : "Pause";
+          primaryBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (!activeStudy) return;
+            if (activeStudy.paused) {
+              activeStudy.startTimeMs = Date.now();
+              activeStudy.paused = false;
+              renderFocusState();
+              renderTable();
+              renderTodayTodos();
+              renderScheduleView();
+              updateStudyTimerDisplay();
+            } else {
+              pauseStudy(todo.subjectId, todo.fileId);
+            }
+          });
+
+          const stopBtn = document.createElement("button");
+          stopBtn.type = "button";
+          stopBtn.className = "chip-btn chip-btn-danger";
+          stopBtn.textContent = "Stop";
+          stopBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            stopStudy(todo.subjectId, todo.fileId);
+          });
+
+          actions.appendChild(primaryBtn);
+          actions.appendChild(stopBtn);
+        }
+
+        topRow.appendChild(left);
+        topRow.appendChild(actions);
 
 	        // Subtasks
 	        const subtasksWrap = document.createElement("div");

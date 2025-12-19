@@ -54,6 +54,19 @@
     background: #ffffff;
   }
 
+  .schedule-subtitle {
+    display: none;
+  }
+
+  .schedule-bar {
+    align-items: flex-start;
+  }
+
+  .schedule-actions {
+    margin-left: auto;
+    justify-content: flex-end;
+  }
+
   .summary-top {
     display: none;
   }
@@ -256,7 +269,7 @@
     flex-wrap: wrap;
     position: absolute;
     left: 50%;
-    bottom: 8px;
+    bottom: 6px;
     transform: translateX(-50%);
     width: calc(100% - 16px);
   }
@@ -265,7 +278,7 @@
     margin-top: 0;
     margin-bottom: 0;
     position: absolute;
-    top: 6px;
+    top: 2px;
     left: 50%;
     transform: translateX(-50%);
   }
