@@ -147,6 +147,15 @@
     align-self: flex-start;
   }
 
+  .schedule-view {
+    overflow-x: auto;
+  }
+
+  .schedule-grid {
+    grid-template-columns: repeat(7, minmax(180px, 1fr));
+    min-width: calc(7 * 180px + 6 * 12px);
+  }
+
   /* Clone laptop-friendly layout tuning. */
   .app {
     margin: 28px auto 36px;
