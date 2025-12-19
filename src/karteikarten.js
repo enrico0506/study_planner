@@ -1386,6 +1386,18 @@
       openCardForm();
     });
 
+    document.addEventListener("click", (event) => {
+      const target = event.target && event.target.closest ? event.target.closest("[data-manage-action]") : null;
+      if (!target) return;
+      const action = target.dataset.manageAction;
+      if (action === "open") {
+        openManageModal();
+        focusFirstField(elements.manageModal);
+      } else if (action === "close") {
+        closeManageModal();
+      }
+    });
+
     on(elements.modeNormalBtn, "click", (event) => {
       event.preventDefault();
       setMode("normal");

@@ -76,7 +76,7 @@
               <div class="deck-card-title">Aktionen</div>
             </div>
             <div class="deck-card-actions">
-              <button class="btn" id="openManageModalBtn" type="button">Verwalten</button>
+              <button class="btn" id="openManageModalBtn" data-manage-action="open" type="button">Verwalten</button>
             </div>
           </div>
         </div>
@@ -153,7 +153,7 @@
 
   <!-- Verwalten Modal -->
   <div class="calendar-modal" id="manageModal" aria-hidden="true">
-    <div class="calendar-modal-backdrop" id="manageModalBackdrop"></div>
+    <div class="calendar-modal-backdrop" id="manageModalBackdrop" data-manage-action="close"></div>
     <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="manageModalTitle">
       <div class="calendar-modal-head">
         <div>
@@ -162,7 +162,7 @@
           <div class="modal-subtitle">Stapel, Karten und CSV im Griff behalten.</div>
         </div>
         <div class="modal-actions">
-          <button class="btn btn-secondary" id="closeManageModalBtn" type="button">Schließen</button>
+          <button class="btn btn-secondary" id="closeManageModalBtn" data-manage-action="close" type="button">Schließen</button>
         </div>
       </div>
       <div class="calendar-form">
