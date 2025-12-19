@@ -2325,6 +2325,10 @@
 
             // Drag handlers
             row.addEventListener("dragstart", (event) => {
+              if (event.target && event.target.closest && event.target.closest("[data-no-drag]")) {
+                event.preventDefault();
+                return;
+              }
               dragState = { subjectId: subj.id, fileId: file.id };
               row.classList.add("dragging");
               if (event.dataTransfer) {
@@ -2556,6 +2560,7 @@
               addFab.title = "Add to Today's focus";
               addFab.setAttribute("aria-label", "Add to Today's focus");
               addFab.setAttribute("draggable", "false");
+              addFab.dataset.noDrag = "true";
               addFab.addEventListener("click", (event) => {
                 event.preventDefault();
                 event.stopPropagation();
