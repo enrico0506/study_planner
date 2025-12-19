@@ -1,0 +1,135 @@
+/* iPad landscape (4:3) layout overrides
+   Remove the `<link href="./src/styles/ipad.css">` from HTML pages to revert. */
+
+@media (max-width: 1024px) and (orientation: landscape) and (aspect-ratio: 4 / 3) {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    overflow: hidden;
+    padding: 12px 0 24px;
+  }
+
+  body.calendar-page {
+    overflow: hidden;
+    padding: 12px 0 24px;
+  }
+
+  body.timetable-page {
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 12px 0 24px;
+  }
+
+  body.flashcards-page {
+    padding: 12px 0 24px;
+  }
+
+  /* Keep the laptop-style two-column summary + focus row. */
+  .top-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "summary focus";
+  }
+
+  .top-ad-slot {
+    display: none;
+  }
+
+  /* Clone laptop-friendly layout tuning. */
+  .app {
+    margin: 28px auto 36px;
+    padding: 20px 22px 36px;
+    width: min(var(--app-desktop-max), 98%);
+    max-width: var(--app-desktop-max);
+    min-width: min(var(--app-desktop-min), 98%);
+    height: calc(100vh - 24px);
+    height: calc(100dvh - 24px);
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(228, 232, 239, 0.9);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+
+  .layout-row {
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 14px;
+  }
+
+  .today-sidebar {
+    width: 330px;
+    max-width: 330px;
+  }
+
+  .subject-table {
+    grid-auto-columns: minmax(240px, 260px);
+    gap: 8px;
+  }
+
+  .layout-row {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 12px;
+  }
+
+  .today-sidebar {
+    width: 300px;
+    max-width: 300px;
+    top: 8px;
+  }
+
+  .subject-table {
+    grid-auto-columns: minmax(220px, 240px);
+    gap: 6px;
+  }
+
+  .table-wrapper {
+    padding: 6px;
+  }
+
+  .calendar-shell {
+    width: min(1260px, 98vw);
+    margin: 22px auto 32px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 20px 22px 28px;
+    max-height: calc(100vh - 24px);
+    overflow: hidden;
+  }
+
+  .calendar-scroll {
+    overflow: auto;
+    padding-right: 6px;
+  }
+
+  .timetable-shell {
+    width: min(1260px, 98vw);
+    margin: 22px auto 32px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 20px 22px 28px;
+    min-height: calc(100vh - 44px);
+    overflow: visible;
+  }
+
+  .timetable-board {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .timetable-week-grid {
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .flashcards-shell {
+    width: clamp(1000px, 94vw, 1500px);
+    margin: 28px auto 36px;
+    padding: 18px 18px 32px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: visible;
+  }
+}
