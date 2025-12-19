@@ -1100,15 +1100,29 @@ body.session-header-mounted #focusCard {
     .top-row {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(420px, 1.05fr);
+      grid-template-areas: "summary focus";
       gap: 10px;
       align-items: stretch;
       margin-top: 6px;
       margin-bottom: 12px;
     }
 
+    .summary-card {
+      grid-area: summary;
+    }
+
+    .focus-card {
+      grid-area: focus;
+    }
+
+    .top-ad-slot {
+      grid-area: ad;
+    }
+
     @media (min-width: 1060px) and (max-width: 1839px) {
       .top-row {
         grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) minmax(360px, 1.05fr);
+        grid-template-areas: "ad summary focus";
       }
 
       .top-ad-slot {
@@ -1119,6 +1133,9 @@ body.session-header-mounted #focusCard {
     @media (max-width: 1050px) {
       .top-row {
         grid-template-columns: 1fr;
+        grid-template-areas:
+          "summary"
+          "focus";
       }
 
       .top-ad-slot {
