@@ -549,7 +549,10 @@
       if (view === "schedule") {
         renderScheduleView();
         if (scheduleView) {
-          scheduleView.scrollIntoView({ behavior: "smooth", block: "start" });
+          scheduleView.scrollIntoView({ behavior: "auto", block: "start" });
+        }
+        if (typeof window !== "undefined") {
+          window.scrollTo({ top: 0, behavior: "auto" });
         }
       } else {
         applyTodayExpandedLayout();
