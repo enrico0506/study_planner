@@ -40,10 +40,6 @@
       <div class="header-main">
         <p class="eyebrow">Retention</p>
         <h1>Karteikarten</h1>
-        <p class="subtitle">
-          Stapel anlegen, Karten importieren oder schnell tippen. Wechsle zwischen Normal (kenne ich / wiederholen)
-          oder Intervall (Anki-ähnliche Abstände anhand deines Feedbacks).
-        </p>
       </div>
       <div class="header-actions">
         <a class="btn btn-secondary header-calendar-btn" href="index.html">← Back to board</a>
@@ -73,45 +69,15 @@
     </div>
     <div class="flashcards-layout">
       <aside class="deck-column">
-        <div class="deck-card deck-card-decks">
+        <div class="deck-card deck-card-manage">
           <div class="deck-card-head">
             <div>
-              <div class="deck-card-label">Stapel</div>
-              <div class="deck-card-title">Wähle oder lege an</div>
+              <div class="deck-card-label">Verwalten</div>
+              <div class="deck-card-title">Aktionen</div>
             </div>
             <div class="deck-card-actions">
-              <button class="chip-btn chip-btn-primary" id="focusDeckNameBtn" type="button">+ Neuer Stapel…</button>
-              <button class="chip-btn" id="viewDecksBtn" type="button">Stapel ansehen</button>
+              <button class="btn" id="openManageModalBtn" type="button">Verwalten</button>
             </div>
-          </div>
-        </div>
-
-        <div class="deck-card deck-card-import">
-          <details class="import-collapsible" open>
-            <summary>
-              <div class="import-collapsible-summary">
-                <div>
-                  <div class="deck-card-title">Import / Export</div>
-                  <p class="deck-card-subtitle">CSV: Vorderseite, Rückseite, optional Hinweis.</p>
-                </div>
-                <span class="import-caret" aria-hidden="true">⌄</span>
-              </div>
-            </summary>
-            <div class="import-actions">
-              <button class="btn" id="openCsvModalBtn" type="button">CSV importieren…</button>
-              <button class="btn btn-secondary" id="exportDeckBtn" type="button">Deck exportieren (CSV)</button>
-            </div>
-            <div class="import-status" id="importStatus"></div>
-          </details>
-        </div>
-
-        <div class="card-editor-form">
-          <div class="card-editor-head">
-            <div class="deck-card-label">Neue Karte</div>
-            <div class="deck-card-title">Hinzufügen</div>
-          </div>
-          <div class="card-editor-actions">
-            <button class="btn" id="openCardModalBtn" type="button">Neue Karte…</button>
           </div>
         </div>
 
@@ -182,6 +148,33 @@
         </div>
 
       </section>
+    </div>
+  </div>
+
+  <!-- Verwalten Modal -->
+  <div class="calendar-modal" id="manageModal" aria-hidden="true">
+    <div class="calendar-modal-backdrop" id="manageModalBackdrop"></div>
+    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="manageModalTitle">
+      <div class="calendar-modal-head">
+        <div>
+          <div class="modal-label">Karteikarten</div>
+          <div class="modal-title" id="manageModalTitle">Verwalten</div>
+          <div class="modal-subtitle">Stapel, Karten und CSV im Griff behalten.</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="closeManageModalBtn" type="button">Schließen</button>
+        </div>
+      </div>
+      <div class="calendar-form">
+        <div class="import-actions manage-actions">
+          <button class="btn" id="manageOpenCsvBtn" type="button">CSV importieren…</button>
+          <button class="btn btn-secondary" id="manageExportBtn" type="button">Deck exportieren (CSV)</button>
+          <button class="btn" id="manageNewDeckBtn" type="button">Neuer Stapel…</button>
+          <button class="btn btn-secondary" id="manageViewDecksBtn" type="button">Stapel ansehen</button>
+          <button class="btn" id="manageNewCardBtn" type="button">Neue Karte…</button>
+        </div>
+        <div class="import-status" id="importStatus"></div>
+      </div>
     </div>
   </div>
 

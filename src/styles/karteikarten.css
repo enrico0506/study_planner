@@ -23,15 +23,12 @@ body.flashcards-page .deck-column {
   position: sticky;
   top: 14px;
   align-self: start;
-  max-height: none;
+  max-height: calc(100vh - 120px);
   overflow: visible;
 }
 
-body.flashcards-page .deck-card.deck-card-decks {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
+body.flashcards-page .deck-card.deck-card-manage {
+  padding: 12px;
 }
 
 body.flashcards-page .flashcards-session {
@@ -50,37 +47,9 @@ body.flashcards-page .deck-card.deck-card-list {
 
 body.flashcards-page .deck-card.deck-card-list .deck-list-scroll {
   display: block;
-  max-height: min(420px, 55vh);
+  max-height: max(200px, calc(100vh - 520px));
   overflow: auto;
   padding-right: 2px;
-}
-
-body.flashcards-page .deck-card.deck-card-import {
-  overflow: hidden;
-}
-
-body.flashcards-page .import-collapsible summary {
-  list-style: none;
-  cursor: pointer;
-}
-
-body.flashcards-page .import-collapsible summary::-webkit-details-marker {
-  display: none;
-}
-
-body.flashcards-page .import-collapsible-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-body.flashcards-page .import-caret {
-  opacity: 0.7;
-}
-
-body.flashcards-page .import-collapsible[open] .import-caret {
-  transform: rotate(180deg);
 }
 
 body.flashcards-page .import-actions {
@@ -88,6 +57,21 @@ body.flashcards-page .import-actions {
   gap: 10px;
   flex-wrap: wrap;
   margin-top: 10px;
+}
+
+body.flashcards-page .manage-actions {
+  margin-top: 6px;
+}
+
+@media (min-width: 900px) {
+  body.flashcards-page {
+    overflow: hidden;
+  }
+
+  body.flashcards-page .flashcards-shell {
+    max-height: calc(100vh - 48px);
+    overflow: hidden;
+  }
 }
 
 /* Inline quick-add */

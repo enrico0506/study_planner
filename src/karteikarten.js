@@ -7,7 +7,6 @@
     "deckForm",
     "deckNameInput",
     "deckDescriptionInput",
-    "focusDeckNameBtn",
     "csvFileInput",
     "csvDeckSelect",
     "csvDelimiterSelect",
@@ -19,7 +18,6 @@
     "cardFrontInput",
     "cardBackInput",
     "prefillActiveFrontBtn",
-    "openCardModalBtn",
     "openCardModalBtnSecondary",
     "closeCardModalBtn",
     "cardModal",
@@ -48,7 +46,6 @@
     "showUpcomingBtn",
     "startReviewBtn",
     "reviewProgress",
-    "openCsvModalBtn",
     "closeCsvModalBtn",
     "csvModal",
     "csvModalBackdrop",
@@ -56,7 +53,6 @@
     "csvPreview",
     "csvError",
     "csvStatus",
-    "exportDeckBtn",
     "cardHintInput",
     "cardFormStatus",
     "sessionHeaderMount",
@@ -64,11 +60,19 @@
     "deckModalBackdrop",
     "closeDeckModalBtn",
     "deckFormStatus",
-    "viewDecksBtn",
     "deckListModal",
     "deckListModalBackdrop",
     "closeDeckListModalBtn",
     "deckModalList",
+    "openManageModalBtn",
+    "manageModal",
+    "manageModalBackdrop",
+    "closeManageModalBtn",
+    "manageOpenCsvBtn",
+    "manageExportBtn",
+    "manageNewDeckBtn",
+    "manageViewDecksBtn",
+    "manageNewCardBtn",
   ];
 
   const elements = {};
@@ -1222,10 +1226,6 @@
       render();
     });
 
-    on(elements.focusDeckNameBtn, "click", () => {
-      openDeckModal();
-    });
-
     on(elements.cardForm, "submit", (event) => {
       event.preventDefault();
       const deckId = elements.cardDeckSelect.value;
@@ -1307,6 +1307,8 @@
       renderCsvPreview(null);
       setStatus(elements.csvStatus, "");
     };
+    const openManageModal = () => setModalState(elements.manageModal, true);
+    const closeManageModal = () => setModalState(elements.manageModal, false);
 
     const openCardForm = () => {
       state.editingCardId = null;
@@ -1317,7 +1319,6 @@
       focusFirstField(elements.cardModal);
     };
 
-    on(elements.openCardModalBtn, "click", openCardForm);
     on(elements.openCardModalBtnSecondary, "click", openCardForm);
     on(elements.closeCardModalBtn, "click", () => {
       state.editingCardId = null;
@@ -1327,7 +1328,6 @@
 
     on(elements.closeDeckModalBtn, "click", closeDeckModal);
     on(elements.deckModalBackdrop, "click", closeDeckModal);
-    on(elements.viewDecksBtn, "click", openDeckListModal);
     on(elements.deckListModalBackdrop, "click", closeDeckListModal);
     on(elements.closeDeckListModalBtn, "click", closeDeckListModal);
     on(elements.deckModalList, "click", (event) => {
@@ -1339,13 +1339,6 @@
       closeDeckListModal();
     });
 
-    on(elements.openCsvModalBtn, "click", () => {
-      setStatus(elements.csvStatus, "");
-      elements.csvError.hidden = true;
-      elements.csvPreview.hidden = true;
-      openCsvModal();
-      focusFirstField(elements.csvModal);
-    });
     on(elements.closeCsvModalBtn, "click", closeCsvModal);
     on(elements.csvModalBackdrop, "click", closeCsvModal);
 
@@ -1362,7 +1355,36 @@
       updateCsvCandidate();
     });
 
-    if (elements.exportDeckBtn) on(elements.exportDeckBtn, "click", exportActiveDeckCsv);
+    on(elements.openManageModalBtn, "click", () => {
+      openManageModal();
+      focusFirstField(elements.manageModal);
+    });
+    on(elements.closeManageModalBtn, "click", closeManageModal);
+    on(elements.manageModalBackdrop, "click", closeManageModal);
+    on(elements.manageOpenCsvBtn, "click", () => {
+      closeManageModal();
+      setStatus(elements.csvStatus, "");
+      elements.csvError.hidden = true;
+      elements.csvPreview.hidden = true;
+      openCsvModal();
+      focusFirstField(elements.csvModal);
+    });
+    on(elements.manageExportBtn, "click", () => {
+      closeManageModal();
+      exportActiveDeckCsv();
+    });
+    on(elements.manageNewDeckBtn, "click", () => {
+      closeManageModal();
+      openDeckModal();
+    });
+    on(elements.manageViewDecksBtn, "click", () => {
+      closeManageModal();
+      openDeckListModal();
+    });
+    on(elements.manageNewCardBtn, "click", () => {
+      closeManageModal();
+      openCardForm();
+    });
 
     on(elements.modeNormalBtn, "click", (event) => {
       event.preventDefault();
