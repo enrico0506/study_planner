@@ -8,7 +8,8 @@
   }
 
   body {
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     padding: 12px 0 24px;
   }
 
@@ -241,7 +242,7 @@
   }
 
   .focus-timer-toggle {
-    margin-top: -10px;
+    margin-top: -16px;
     margin-bottom: 4px;
   }
 
@@ -289,7 +290,39 @@
   }
 
   .schedule-grid.schedule-grid-weekend {
-    grid-template-columns: repeat(5, minmax(200px, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .table-wrapper {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .today-sidebar {
+    max-height: none !important;
+    height: auto !important;
+  }
+
+  .today-list {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .scroll-top-btn {
+    position: fixed;
+    right: 18px;
+    bottom: 22px;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-strong);
+    color: var(--ink);
+    box-shadow: var(--shadow-soft);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    z-index: 30;
   }
 
   /* Keep popups away from screen edges on iPad. */
@@ -317,14 +350,12 @@
     width: min(var(--app-desktop-max), 98%);
     max-width: var(--app-desktop-max);
     min-width: min(var(--app-desktop-min), 98%);
-    height: calc(100vh - 24px);
-    height: calc(100dvh - 24px);
-    max-height: calc(100vh - 24px);
-    max-height: calc(100dvh - 24px);
+    height: auto;
+    max-height: none;
     border-radius: var(--radius-lg);
     border: 1px solid rgba(228, 232, 239, 0.9);
     box-shadow: var(--shadow-card);
-    overflow: hidden;
+    overflow: visible;
   }
 
   .layout-row {
