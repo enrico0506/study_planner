@@ -80,12 +80,8 @@ html[data-theme="nocturne"] .account-page-body {
   background: var(--account-surface-muted);
 }
 
-@media (any-hover: hover) and (any-pointer: fine) {
-
-
 .account-back:hover {
   border-color: rgba(99, 102, 241, 0.25);
-}
 }
 
 .account-appbar-title {
@@ -183,15 +179,11 @@ html[data-theme="nocturne"] .account-page-body {
   background: transparent;
 }
 
-@media (any-hover: hover) and (any-pointer: fine) {
-
-
 .account-nav-link:hover,
 .account-nav-link:focus-visible {
   background: var(--account-surface-muted);
   border-color: rgba(99, 102, 241, 0.25);
   outline: none;
-}
 }
 
 .account-content {
@@ -401,12 +393,8 @@ label {
   transition: transform 0.08s ease, border-color 0.12s ease, background 0.12s ease;
 }
 
-@media (any-hover: hover) and (any-pointer: fine) {
-
-
 .account-btn:hover {
   transform: translateY(-1px);
-}
 }
 
 .account-btn:disabled {
@@ -421,13 +409,9 @@ label {
   border-color: var(--account-accent);
 }
 
-@media (any-hover: hover) and (any-pointer: fine) {
-
-
 .account-btn-primary:hover {
   background: #234fce;
   border-color: #234fce;
-}
 }
 
 .account-btn-secondary {
@@ -441,12 +425,8 @@ label {
   color: var(--account-danger);
 }
 
-@media (any-hover: hover) and (any-pointer: fine) {
-
-
 .account-btn-danger:hover {
   background: rgba(239, 68, 68, 0.08);
-}
 }
 
 .btn-spinner {

@@ -100,13 +100,9 @@
   transition: background 0.12s ease, color 0.12s ease, transform 0.08s ease;
 }
 
-@media (any-hover: hover) and (any-pointer: fine) {
-
-
 .insights-modal .today-stats-toggle-btn:hover {
   background: var(--accent-soft);
   transform: translateY(-0.5px);
-}
 }
 
 .insights-modal .today-stats-toggle-btn.is-active {

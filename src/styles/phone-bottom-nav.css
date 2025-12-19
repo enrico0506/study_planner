@@ -35,10 +35,8 @@
     transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
   }
 
-  @media (any-hover: hover) and (any-pointer: fine) {
-    .phone-bottom-nav__btn:hover {
-      background: rgba(79, 139, 255, 0.08);
-    }
+  .phone-bottom-nav__btn:hover {
+    background: rgba(79, 139, 255, 0.08);
   }
 
   .phone-bottom-nav__btn.active {

@@ -86,12 +86,8 @@ body.flashcards-page .deck-list-learn {
   white-space: nowrap;
 }
 
-@media (any-hover: hover) and (any-pointer: fine) {
-
-
 body.flashcards-page .deck-list-learn:hover {
   background: color-mix(in srgb, var(--accent) 22%, var(--surface-strong));
-}
 }
 
 body.flashcards-page .import-actions {
