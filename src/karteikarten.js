@@ -1661,6 +1661,14 @@
     });
 
     if (elements.reviewCard) {
+      on(elements.reviewCard, "click", (event) => {
+        if (!state.currentCard || state.showAnswer) return;
+        if (isInteractiveTarget(event.target)) return;
+        ensureReviewSession();
+        state.showAnswer = true;
+        renderReview();
+      });
+
       let swipeActive = false;
       let swipeStartX = 0;
       let swipeStartY = 0;

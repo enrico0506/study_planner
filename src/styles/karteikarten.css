@@ -49,6 +49,7 @@ body.flashcards-page .deck-card.deck-card-list .deck-list-scroll {
   display: block;
   max-height: max(200px, calc(100vh - 520px));
   overflow: auto;
+  overflow-x: hidden;
   padding-right: 2px;
 }
 
@@ -345,6 +346,15 @@ body.flashcards-page .review-card.review-swipe-repeat::after {
     order: -1;
     width: 100%;
     align-items: flex-start;
+  }
+
+  body.flashcards-page .review-quick-row,
+  body.flashcards-page #startReviewBtn,
+  body.flashcards-page #rebuildQueueBtn,
+  body.flashcards-page #showUpcomingBtn,
+  body.flashcards-page #reviewModeLabel,
+  body.flashcards-page #reviewStats {
+    display: none;
   }
 
   body.flashcards-page .mode-toggle {
