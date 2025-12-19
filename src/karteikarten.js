@@ -32,6 +32,7 @@
     "modeIntervalBtn",
     "reviewDeckSelect",
     "fullReviewBtn",
+    "finishReviewBtn",
     "reviewModeLabel",
     "reviewStats",
     "reviewCard",
@@ -1507,6 +1508,11 @@
         event.preventDefault();
         startReview();
       });
+
+    on(elements.finishReviewBtn, "click", (event) => {
+      event.preventDefault();
+      exitReview();
+    });
 
     on(elements.rebuildQueueBtn, "click", (event) => {
       event.preventDefault();

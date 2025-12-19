@@ -388,6 +388,10 @@ body.flashcards-page .review-card.review-swipe-repeat::after {
     padding: 0;
   }
 
+  body.flashcards-page.flashcards-phone-review .flashcards-header {
+    display: none;
+  }
+
   body.flashcards-page.flashcards-phone-review .flashcards-shell {
     width: 100%;
     min-width: 100%;
@@ -425,6 +429,10 @@ body.flashcards-page .review-card.review-swipe-repeat::after {
     display: none;
   }
 
+  body.flashcards-page.flashcards-phone-review #finishReviewBtn {
+    display: inline-flex;
+  }
+
   body.flashcards-page.flashcards-phone-review .review-card {
     flex: 1;
     display: flex;
@@ -435,6 +443,10 @@ body.flashcards-page .review-card.review-swipe-repeat::after {
     flex: 1;
     min-height: 50vh;
   }
+}
+
+body.flashcards-page #finishReviewBtn {
+  display: none;
 }
 
 body.flashcards-page .card-badge {
