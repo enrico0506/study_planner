@@ -1265,16 +1265,16 @@
       summaryStudyBar.innerHTML = "";
       summaryStudyLegend.innerHTML = "";
 
+      const useIpadCharts =
+        typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
+
       if (!totalMs || !perSubject.length) {
         const emptyBar = document.createElement("div");
         emptyBar.style.width = "100%";
         emptyBar.style.height = "100%";
         emptyBar.style.background = "#e5e7eb";
         summaryStudyBar.appendChild(emptyBar);
-        summaryStudyBar.style.setProperty(
-          "--summary-study-conic",
-          "conic-gradient(#e5e7eb 0 100%)"
-        );
+        summaryStudyBar.style.background = useIpadCharts ? "conic-gradient(#e5e7eb 0 100%)" : "";
         return;
       }
 
@@ -1307,10 +1307,13 @@
         summaryStudyLegend.appendChild(legendItem);
       });
 
-      summaryStudyBar.style.setProperty(
-        "--summary-study-conic",
-        stops.length ? `conic-gradient(${stops.join(", ")})` : "conic-gradient(#e5e7eb 0 100%)"
-      );
+      if (useIpadCharts) {
+        summaryStudyBar.style.background = stops.length
+          ? `conic-gradient(${stops.join(", ")})`
+          : "conic-gradient(#e5e7eb 0 100%)";
+      } else {
+        summaryStudyBar.style.background = "";
+      }
     }
 
     function updateGoalsAndStreaks() {
@@ -1324,15 +1327,23 @@
       )
         return;
 
+      const useIpadCharts =
+        typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
+
       const totals = getDailyTotalsMap(true);
       const weekMs = sumLastNDays(totals, 7);
       const goalMs = Math.max(0, weeklyTargetMinutes || 0) * 60 * 1000;
       const pct = goalMs > 0 ? Math.min(100, (weekMs * 100) / goalMs) : 0;
+      const goalColor = "color-mix(in srgb, var(--accent) 65%, #ffffff)";
 
       weeklyGoalProgressLabel.textContent = formatHoursCompact(weekMs);
       weeklyGoalTotalLabel.textContent = goalMs ? formatHoursCompact(goalMs) : "0h";
       weeklyGoalFill.style.width = goalMs ? pct + "%" : "0%";
-      weeklyGoalFill.parentElement?.style.setProperty("--weekly-goal-pct", pct);
+      if (weeklyGoalFill.parentElement) {
+        weeklyGoalFill.parentElement.style.background = useIpadCharts
+          ? `conic-gradient(${goalColor} ${pct}%, var(--surface-soft) 0)`
+          : "";
+      }
       const remaining = goalMs - weekMs;
       if (!goalMs) {
         weeklyGoalHint.textContent = "Set a target to get a weekly rhythm.";
@@ -1363,10 +1374,14 @@
       }
 
       const avg = totalFiles ? Math.round(sumConf / totalFiles) : 0;
+      const useIpadCharts =
+        typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
 
       summarySubjects.textContent = totalSubjects;
       summaryFiles.textContent = totalFiles;
       summaryLow.textContent = lowCount;
+      if (summarySubjectsHeader) summarySubjectsHeader.textContent = totalSubjects;
+      if (summaryFilesHeader) summaryFilesHeader.textContent = totalFiles;
       summaryConfLabel.textContent = avg + "%";
 
       summaryConfFill.classList.remove("meter-low", "meter-mid", "meter-high");
@@ -1374,8 +1389,13 @@
       summaryConfFill.classList.add(targetClass);
       summaryConfFill.style.width = (totalFiles ? avg : 0) + "%";
       summaryConfFill.style.background = meterGradient(avg);
-      summaryConfFill.parentElement?.style.setProperty("--summary-conf-pct", totalFiles ? avg : 0);
-      summaryConfFill.parentElement?.style.setProperty("--summary-conf-color", meterColor(avg));
+      if (summaryConfFill.parentElement) {
+        const confPct = totalFiles ? avg : 0;
+        const confColor = meterColor(avg);
+        summaryConfFill.parentElement.style.background = useIpadCharts
+          ? `conic-gradient(${confColor} ${confPct}%, var(--surface-soft) 0)`
+          : "";
+      }
 
       updateTodayStudyUI();
       updateGoalsAndStreaks();
