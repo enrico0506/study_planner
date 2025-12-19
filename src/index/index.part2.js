@@ -261,6 +261,7 @@
     function updateRingSegments(container, segments) {
       const ring = ensureRingSvg(container);
       if (!ring) return;
+      ring.track.setAttribute("stroke", "#e5e7eb");
       ring.progress.style.display = "none";
       ring.segments.innerHTML = "";
       let startOffset = 0;
@@ -1338,18 +1339,22 @@
       summaryStudyTodayLabel.textContent = todayLabel;
       if (summaryStudyValue) summaryStudyValue.textContent = todayLabel;
 
-      summaryStudyBar.innerHTML = "";
+      const emptyBlock = summaryStudyBar.querySelector(".summary-study-empty");
+      if (emptyBlock) emptyBlock.remove();
       summaryStudyLegend.innerHTML = "";
 
       const useIpadCharts =
         typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
 
       if (!totalMs || !perSubject.length) {
-        const emptyBar = document.createElement("div");
-        emptyBar.style.width = "100%";
-        emptyBar.style.height = "100%";
-        emptyBar.style.background = "#e5e7eb";
-        summaryStudyBar.appendChild(emptyBar);
+        if (!summaryStudyBar.querySelector(".summary-study-empty")) {
+          const emptyBar = document.createElement("div");
+          emptyBar.className = "summary-study-empty";
+          emptyBar.style.width = "100%";
+          emptyBar.style.height = "100%";
+          emptyBar.style.background = "#e5e7eb";
+          summaryStudyBar.appendChild(emptyBar);
+        }
         if (useIpadCharts) {
           updateRingSingle(summaryStudyBar, 0, "#e5e7eb", "#e5e7eb");
         }
