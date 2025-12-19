@@ -549,19 +549,10 @@
       if (view === "schedule") {
         renderScheduleView();
         if (scheduleView) {
-          const useIpadLayout =
-            typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
-          scheduleView.scrollIntoView({
-            behavior: useIpadLayout ? "auto" : "smooth",
-            block: "start"
-          });
+          scheduleView.scrollIntoView({ behavior: "auto", block: "start" });
         }
         if (typeof window !== "undefined") {
-          const useIpadLayout =
-            typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
-          if (useIpadLayout) {
-            window.scrollTo({ top: 0, behavior: "auto" });
-          }
+          window.scrollTo({ top: 0, behavior: "auto" });
         }
       } else {
         applyTodayExpandedLayout();
@@ -674,40 +665,9 @@
         prepareNoticeModal(input);
       };
 
-      const openWeeklyTargetDefault = () => {
-        const hoursValue = Math.max(
-          1,
-          Math.round((weeklyTargetMinutes || DEFAULT_WEEKLY_TARGET_MINUTES) / 60)
-        );
-        openNoticePrompt("Set weekly target (hours)", String(hoursValue), (value) => {
-          const hours = Number(value);
-          if (!Number.isFinite(hours) || hours <= 0) {
-            showNotice("Please enter hours greater than zero.", "warn");
-            return false;
-          }
-          weeklyTargetMinutes = Math.round(hours * 60);
-          saveFocusConfig();
-          updateGoalsAndStreaks();
-          renderStatsModalContent();
-          renderSmartSuggestions();
-          renderDueSoonLane();
-          showToast("Weekly target updated.", "success");
-          return true;
-        });
-      };
-
-      editGoalBtn.addEventListener("click", () => {
-        const useIpadLayout =
-          typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
-        if (useIpadLayout) openWeeklyTargetPrompt();
-        else openWeeklyTargetDefault();
-      });
+      editGoalBtn.addEventListener("click", openWeeklyTargetPrompt);
       if (weeklyGoalFill && weeklyGoalFill.parentElement) {
-        weeklyGoalFill.parentElement.addEventListener("click", () => {
-          const useIpadLayout =
-            typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
-          if (useIpadLayout) openWeeklyTargetPrompt();
-        });
+        weeklyGoalFill.parentElement.addEventListener("click", openWeeklyTargetPrompt);
       }
 
       applySubjectPaging();
@@ -1025,19 +985,11 @@
     maximizeSubjectsBtn?.addEventListener("click", () => {
       toggleSubjectsMaximize();
     });
-    if (expandPageBtn) {
-      const useIpadLayout =
-        typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
-      if (!useIpadLayout) {
-        expandPageBtn.addEventListener("click", toggleExpand);
-      }
-    }
 	    window.addEventListener("resize", () => {
 	      enforceTodayHeight();
 	      applyDesktopSubjectSizing();
 	      ensureSubjectFourSnap();
 	      applyIpadFocusLayout();
-	      applyIpadDashboardVisibility();
 	    });
     const settingsPrefsSaveBtn = document.getElementById("settingsPrefsSaveBtn");
     settingsPrefsSaveBtn?.addEventListener("click", () => {
@@ -1217,15 +1169,11 @@
     const scrollTopBtn = document.getElementById("scrollTopBtn");
     if (scrollTopBtn) {
       scrollTopBtn.addEventListener("click", () => {
-        const useIpadLayout =
-          typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
-        if (!useIpadLayout) return;
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
     }
 
     applyIpadFocusLayout();
-    applyIpadDashboardVisibility();
 
     if (scheduleTaskCloseBtn) {
       scheduleTaskCloseBtn.addEventListener("click", () => {
@@ -1413,10 +1361,8 @@
       todayDropZone.addEventListener("drop", (event) => {
         event.preventDefault();
         todayDropZone.classList.remove("today-dropzone-active");
-        const useIpadLayout =
-          typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
         let source = dragState;
-        if (!source && useIpadLayout && event.dataTransfer) {
+        if (!source && event.dataTransfer) {
           const payload = event.dataTransfer.getData("application/json");
           if (payload) {
             try {

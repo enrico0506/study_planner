@@ -517,7 +517,7 @@
           actions.appendChild(checkbox);
         }
 
-        if (useCompactTodayActions && !isSlimMode && isThisActive) {
+        if (!isSlimMode && isThisActive) {
           const primaryBtn = document.createElement("button");
           primaryBtn.type = "button";
           primaryBtn.className = "chip-btn chip-btn-primary";
@@ -2311,8 +2311,6 @@
             row.setAttribute("draggable", "true");
             row.dataset.subjectId = subj.id;
             row.dataset.fileId = file.id;
-            const useIpadLayout =
-              typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
 
             const inToday = todayTodos.some(
               (t) => t.subjectId === subj.id && t.fileId === file.id
@@ -2327,12 +2325,7 @@
 
             // Drag handlers
             row.addEventListener("dragstart", (event) => {
-              if (
-                useIpadLayout &&
-                event.target &&
-                event.target.closest &&
-                event.target.closest("[data-no-drag]")
-              ) {
+              if (event.target && event.target.closest && event.target.closest("[data-no-drag]")) {
                 event.preventDefault();
                 return;
               }
@@ -2342,12 +2335,10 @@
                 event.dataTransfer.effectAllowed = "copyMove";
                 // setData required for some browsers to allow drop
                 event.dataTransfer.setData("text/plain", file.id);
-                if (useIpadLayout) {
-                  event.dataTransfer.setData(
-                    "application/json",
-                    JSON.stringify({ subjectId: subj.id, fileId: file.id })
-                  );
-                }
+                event.dataTransfer.setData(
+                  "application/json",
+                  JSON.stringify({ subjectId: subj.id, fileId: file.id })
+                );
               }
             });
 
@@ -2466,6 +2457,8 @@
 
             const rightMeta = document.createElement("div");
             rightMeta.className = "file-actions";
+            const useIpadLayout =
+              typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
 
             const ensureManualAndMove = (delta) => {
               const fileIndex = subj.files.findIndex((f) => f.id === file.id);
@@ -2571,7 +2564,7 @@
             const isPaused =
               isThisActive && activeStudy && activeStudy.paused;
 
-            if (useIpadLayout && !isThisActive && !inToday && !isPhoneTodayPicker()) {
+            if (!isThisActive && !inToday && !isPhoneTodayPicker()) {
               const addFab = document.createElement("button");
               addFab.type = "button";
               addFab.className = "icon-btn file-add-today-fab";
@@ -2723,17 +2716,15 @@
             // Click row to edit in modal
             row.addEventListener("click", (event) => {
               if (event.defaultPrevented) return;
-              if (useIpadLayout) {
-                const target = event.target;
-                const targetElement =
-                  target && target.closest
-                    ? target
-                    : target && target.parentElement
-                    ? target.parentElement
-                    : null;
-                if (targetElement && targetElement.closest("button")) return;
-                if (targetElement && targetElement.closest(".file-add-today-fab")) return;
-              }
+              const target = event.target;
+              const targetElement =
+                target && target.closest
+                  ? target
+                  : target && target.parentElement
+                  ? target.parentElement
+                  : null;
+              if (targetElement && targetElement.closest("button")) return;
+              if (targetElement && targetElement.closest(".file-add-today-fab")) return;
               openFileModalEdit(subj.id, file);
             });
 

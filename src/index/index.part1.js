@@ -148,7 +148,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
     };
     let confidenceMode = "manual"; // "manual" | "perceived"
     let timerModePref = "countdown";
-    let expandState = false;
     let subjectsMaximized = false;
 
     // DOM refs
@@ -159,7 +158,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
     const subjectTable = document.getElementById("subjectTable");
     const tableWrapper = document.querySelector(".table-wrapper");
     const mainArea = document.querySelector("#layoutRow .main-area");
-    const expandPageBtn = document.getElementById("expandPageBtn");
     const emptyHint = document.getElementById("emptyHint");
     const openStatsBtn = document.getElementById("openStatsBtn");
     const todayDropZone = document.getElementById("todayDropZone");
@@ -209,7 +207,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
     const quickJumpDropdown = document.getElementById("quickJumpDropdown");
     const quickJumpTrigger = document.getElementById("quickJumpTrigger");
     const quickJumpPanel = document.getElementById("quickJumpPanel");
-    const scrollTopBtn = document.getElementById("scrollTopBtn");
     const settingsModal = document.getElementById("settingsModal");
     const settingsModalBackdrop = document.getElementById("settingsModalBackdrop");
     const settingsModalCloseBtn = document.getElementById("settingsModalCloseBtn");
@@ -381,7 +378,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
     let focusTimerToggleHome = null;
     let focusSettingsText = null;
     let focusBreakButtonsHome = null;
-    let todayDropZoneText = null;
 
     // Helpers
     function isPhoneLayout() {
@@ -463,33 +459,6 @@ const CVD_SAFE_SUBJECT_COLORS = [
             }
           }
         }
-      }
-    }
-
-    function applyIpadDashboardVisibility() {
-      const useIpadLayout = isIpadLandscapeLayout();
-      const setHidden = (el, hidden) => {
-        if (!el) return;
-        el.hidden = !!hidden;
-      };
-      setHidden(summaryConfValue, !useIpadLayout);
-      setHidden(weeklyGoalValue, !useIpadLayout);
-      setHidden(summaryStudyValue, !useIpadLayout);
-      setHidden(scheduleWeekendToggleBtn, !useIpadLayout);
-      setHidden(scrollTopBtn, !useIpadLayout);
-
-      const subjectMeta =
-        summarySubjectsHeader?.closest?.(".section-title-meta") ||
-        document.querySelector(".section-title-meta");
-      setHidden(subjectMeta, !useIpadLayout);
-
-      if (todayDropZone) {
-        if (todayDropZoneText === null) {
-          todayDropZoneText = todayDropZone.textContent || "";
-        }
-        todayDropZone.textContent = useIpadLayout
-          ? "Drag to add."
-          : todayDropZoneText;
       }
     }
 
@@ -1440,23 +1409,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
       };
     }
 
-    function toggleExpand() {
-      if (isIpadLandscapeLayout()) return;
-      expandState = !expandState;
-      if (expandState) {
-        appRoot.classList.add("app-expanded");
-        if (expandPageBtn) expandPageBtn.textContent = "⤡";
-        document.body.style.overflow = "auto";
-      } else {
-        appRoot.classList.remove("app-expanded");
-        if (expandPageBtn) expandPageBtn.textContent = "⤢";
-        document.body.style.overflow = "hidden";
-      }
-      enforceTodayHeight();
-    }
-
     function toggleSubjectsMaximize(force) {
-      const useIpadLayout = isIpadLandscapeLayout();
       subjectsMaximized = typeof force === "boolean" ? force : !subjectsMaximized;
       if (subjectsMaximized) {
         // fill the viewport and hide Today so subjects take the whole row
@@ -1464,18 +1417,13 @@ const CVD_SAFE_SUBJECT_COLORS = [
         appRoot.classList.add("subjects-maximized");
         layoutRow?.classList.add("today-full");
         if (todaySidebar) todaySidebar.style.display = "none";
-        if (!useIpadLayout) {
-          expandState = true;
-          if (expandPageBtn) expandPageBtn.textContent = "⤡";
-        }
         document.body.style.overflow = "auto";
       } else {
         appRoot.classList.remove("subjects-maximized");
         if (layoutRow) layoutRow.classList.remove("today-full");
         if (todaySidebar) todaySidebar.style.display = "";
-        if (!todayExpanded && !useIpadLayout && !expandState) {
+        if (!todayExpanded) {
           document.body.style.overflow = "hidden";
-          if (expandPageBtn) expandPageBtn.textContent = "⤢";
         }
       }
       applyTodayExpandedLayout();

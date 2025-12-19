@@ -5,6 +5,16 @@
   <title>Study Planner – Karteikarten</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#2f62f4" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5073064276683221"
+     crossorigin="anonymous"></script>
+  <script>
+    (function() {
+      try {
+        const adsDisabled = localStorage.getItem("studyAdsDisabled_v1") === "1";
+        if (adsDisabled) document.documentElement.classList.add("ads-disabled");
+      } catch (e) {}
+    })();
+  </script>
   <script>
     (function() {
       try {
@@ -100,6 +110,7 @@
       <section class="flashcards-main">
         <div class="flashcards-session" id="sessionHeaderMount"></div>
         <div class="review-panel">
+          <div class="review-ad" id="reviewAd" aria-hidden="true"></div>
           <div class="review-head">
             <div>
               <div class="deck-card-title" id="reviewModeLabel">Normaler Durchgang</div>

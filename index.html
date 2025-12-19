@@ -5,6 +5,16 @@
   <title>Study Planner – Confidence Table</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#2f62f4" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5073064276683221"
+     crossorigin="anonymous"></script>
+  <script>
+    (function() {
+      try {
+        const adsDisabled = localStorage.getItem("studyAdsDisabled_v1") === "1";
+        if (adsDisabled) document.documentElement.classList.add("ads-disabled");
+      } catch (e) {}
+    })();
+  </script>
   <script>
     (function() {
       try {
@@ -73,6 +83,7 @@
             Calculated
           </button>
         </div>
+        <button class="btn btn-secondary" id="adsToggleBtn" type="button" aria-pressed="false">Ads: On</button>
         <div class="header-menu" id="headerMenu" aria-label="Menu">
           <button class="header-menu-toggle" id="headerMenuToggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Open menu">
             ...
@@ -344,7 +355,7 @@
         </div>
         <div class="summary-progress-bar">
           <div class="summary-progress-fill meter-low" id="summaryConfFill"></div>
-          <div class="summary-ring-value" id="summaryConfValue" hidden>0%</div>
+          <div class="summary-ring-value" id="summaryConfValue">0%</div>
         </div>
       </div>
       <div class="summary-goal">
@@ -361,7 +372,7 @@
         </div>
         <div class="summary-goal-track">
           <div class="summary-goal-fill" id="weeklyGoalFill"></div>
-          <div class="summary-ring-value" id="weeklyGoalValue" hidden>0 h</div>
+          <div class="summary-ring-value" id="weeklyGoalValue">0 h</div>
         </div>
         <div class="summary-goal-footer">
           <div class="summary-goal-hint" id="weeklyGoalHint">Set a target to get a weekly rhythm.</div>
@@ -384,7 +395,7 @@
           <span id="summaryStudyTodayLabel">0 min</span>
         </div>
           <div class="summary-study-bar" id="summaryStudyBar" role="button" tabindex="0" aria-label="Open today's study stats">
-            <div class="summary-ring-value" id="summaryStudyValue" hidden>0 min</div>
+            <div class="summary-ring-value" id="summaryStudyValue">0 min</div>
           </div>
           <div class="summary-study-legend" id="summaryStudyLegend"></div>
         </div>
@@ -456,7 +467,7 @@
             <div class="section-heading">
                 <div class="section-heading-text">
                   <h2 class="section-title">Subjects</h2>
-                  <div class="section-title-meta" hidden>
+                  <div class="section-title-meta">
                     <span id="summarySubjectsHeader">0</span> subjects ·
                     <span id="summaryFilesHeader">0</span> files
                   </div>
@@ -488,7 +499,7 @@
             <div class="today-header-actions"></div>
           </div>
           <div class="today-dropzone" id="todayDropZone">
-            Drag a file card here to add it to today's todo list.
+            Drag to add.
           </div>
           <div class="today-list" id="todayList"></div>
         </div>
@@ -505,7 +516,7 @@
         </div>
         <div class="schedule-actions">
           <button class="chip-btn chip-btn-primary" id="scheduleTodayBtn" type="button">This week</button>
-          <button class="chip-btn" id="scheduleWeekendToggleBtn" type="button" aria-pressed="false" hidden>Show weekend</button>
+          <button class="chip-btn" id="scheduleWeekendToggleBtn" type="button" aria-pressed="false">Show weekend</button>
           <div class="schedule-nav">
             <button class="schedule-nav-btn" id="schedulePrevWeekBtn" type="button" aria-label="Previous week">‹</button>
             <div class="schedule-range" id="scheduleRangeLabel">This week</div>
@@ -1046,9 +1057,8 @@
     </div>
   </div>
 
-	  <button class="expand-btn" id="expandPageBtn" type="button" aria-label="Toggle expand">⤢</button>
 	  <div id="studyAriaLive" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-	  <button class="scroll-top-btn" id="scrollTopBtn" type="button" aria-label="Scroll to top" hidden>↑</button>
+	  <button class="scroll-top-btn" id="scrollTopBtn" type="button" aria-label="Scroll to top">↑</button>
 
 	  <nav class="phone-bottom-nav" aria-label="Hauptnavigation">
 	    <button class="phone-bottom-nav__btn" type="button" data-mode="board" aria-label="Board">
