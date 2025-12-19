@@ -2578,6 +2578,15 @@
                 event.stopPropagation();
                 openAddTodoModal(subj.id, file);
               });
+              addFab.addEventListener("pointerdown", (event) => {
+                event.stopPropagation();
+              });
+              addFab.addEventListener("touchstart", (event) => {
+                event.stopPropagation();
+              });
+              addFab.addEventListener("touchend", (event) => {
+                event.stopPropagation();
+              });
               addFab.addEventListener("mousedown", (event) => {
                 event.stopPropagation();
               });

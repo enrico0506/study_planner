@@ -408,6 +408,8 @@
     bottom: 8px;
     width: 36px;
     height: 36px;
+    z-index: 2;
+    pointer-events: auto;
     border-radius: 999px;
     border: 1px solid var(--border-strong);
     background: var(--surface-strong);
