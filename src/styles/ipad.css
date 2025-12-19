@@ -228,6 +228,7 @@
     align-items: start;
     gap: 12px;
     padding-bottom: 12px;
+    overflow: hidden;
   }
 
   .focus-main {
@@ -253,6 +254,12 @@
     position: relative;
     padding-top: 28px;
     padding-bottom: 40px;
+  }
+
+  .focus-inline-settings {
+    inset: 12px;
+    max-height: calc(100% - 24px);
+    overflow: auto;
   }
 
   .focus-bottom {
