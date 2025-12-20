@@ -35,18 +35,25 @@
     flex-direction: column;
     align-items: stretch;
     gap: 6px;
+    position: relative;
+    height: 118px;
   }
 
   .summary-progress-bar,
   .summary-goal-track,
   .summary-study-bar {
-    position: relative;
-    width: 100%;
-    height: 16px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--surface-soft) 76%, #ffffff);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 8px 18px rgba(15, 23, 42, 0.07);
+    position: absolute;
+    left: 50%;
+    top: 12px;
+    width: 84px;
+    height: 22px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--surface-soft) 78%, #ffffff);
+    border: 1px solid color-mix(in srgb, var(--border-strong) 45%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78), 0 10px 18px rgba(15, 23, 42, 0.06);
     overflow: hidden;
+    transform: translateX(-50%) rotate(-90deg);
+    transform-origin: center;
   }
 
   .summary-progress-header,
@@ -83,6 +90,10 @@
     color: var(--ink-muted);
     letter-spacing: 0.06em;
     text-transform: uppercase;
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
   }
 
   .summary-progress::after {
@@ -107,14 +118,14 @@
     width: 150px;
     height: 150px;
     padding-top: 34px;
-    padding-bottom: 38px;
+    padding-bottom: 46px;
   }
 
   .focus-timer-toggle {
     position: absolute;
-    top: 6px;
-    left: 6px;
-    right: 6px;
+    top: 8px;
+    left: 8px;
+    right: 8px;
     justify-content: center;
     gap: 6px;
     z-index: 3;
@@ -130,12 +141,13 @@
 
   .focus-bottom {
     position: absolute;
-    left: 10px;
     right: 10px;
-    bottom: 10px;
-    width: auto;
-    display: flex;
-    align-items: flex-end;
+    top: 8px;
+    width: 150px;
+    height: 150px;
+    padding: 0;
+    margin: 0;
+    pointer-events: none;
   }
 
   .focus-bottom .focus-break-btn {
@@ -144,20 +156,28 @@
   }
 
   .focus-break-buttons {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
     display: flex;
     gap: 6px;
-    margin-left: auto;
+    pointer-events: auto;
   }
 
   .focus-break-buttons .focus-break-btn {
     flex: 1;
+    padding: 4px 6px;
+    font-size: 0.66rem;
   }
 
   #openTimerSettingsBtn {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
     font-size: 0;
     line-height: 0;
     padding: 4px;
-    margin-right: auto;
+    pointer-events: auto;
   }
 
   #openTimerSettingsBtn::before {
@@ -167,8 +187,8 @@
   }
 
   .focus-timer-mode-btn {
-    padding: 4px 6px;
-    font-size: 0.66rem;
+    padding: 3px 6px;
+    font-size: 0.64rem;
     border-radius: 9px;
   }
 }
