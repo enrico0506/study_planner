@@ -17,13 +17,82 @@
     margin-bottom: 2px;
   }
 
+  .summary-progress,
+  .summary-study {
+    position: relative;
+    min-height: 64px;
+    padding-right: 24px;
+  }
+
+  .summary-goal {
+    position: relative;
+    padding-right: 28px;
+  }
+
+  .summary-progress-bar,
+  .summary-goal-track,
+  .summary-study-bar {
+    position: absolute;
+    right: 6px;
+    top: 6px;
+    width: 56px;
+    height: 8px;
+    transform: rotate(-90deg);
+    transform-origin: top right;
+  }
+
+  .summary-goal-track {
+    top: 8px;
+  }
+
+  .summary-streak,
+  #editGoalBtn {
+    display: none;
+  }
+
   .focus-label,
   .focus-subtitle {
     display: none;
   }
 
+  .focus-card {
+    position: relative;
+  }
+
+  .focus-right {
+    position: relative;
+  }
+
+  .focus-timer-toggle {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    right: 6px;
+    justify-content: center;
+    gap: 6px;
+    z-index: 2;
+  }
+
   .focus-timer-box {
     width: 150px;
     height: 150px;
+    padding-top: 28px;
+    padding-bottom: 38px;
+  }
+
+  .focus-bottom {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    width: 150px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: stretch;
+  }
+
+  .focus-bottom .focus-break-btn {
+    padding: 6px 8px;
+    font-size: 0.72rem;
   }
 }
