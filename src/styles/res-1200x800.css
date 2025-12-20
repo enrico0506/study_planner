@@ -14,51 +14,45 @@
   }
 
   .summary-top {
-    margin-bottom: 2px;
+    display: none;
   }
 
   .summary-card {
-    position: relative;
-  }
-
-  .summary-progress-bar,
-  .summary-goal-track,
-  .summary-study-bar {
-    position: absolute;
-    top: 12px;
-    right: 14px;
-    width: 88px;
-    height: 14px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--surface-soft) 72%, #ffffff);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 6px 14px rgba(15, 23, 42, 0.06);
-    transform: translateX(0) rotate(-90deg);
-    transform-origin: top right;
-  }
-
-  .summary-progress-bar {
-    transform: translateX(-78px) rotate(-90deg);
-  }
-
-  .summary-goal-track {
-    transform: translateX(-39px) rotate(-90deg);
-  }
-
-  .summary-study-bar {
-    transform: translateX(0) rotate(-90deg);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    align-items: center;
+    padding-top: 16px;
   }
 
   .summary-progress,
   .summary-goal,
   .summary-study {
-    height: 0;
     margin: 0;
     padding: 0;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .summary-progress-bar,
+  .summary-goal-track,
+  .summary-study-bar {
+    position: relative;
+    width: 100%;
+    height: 16px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface-soft) 76%, #ffffff);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 8px 18px rgba(15, 23, 42, 0.07);
+    overflow: hidden;
   }
 
   .summary-progress-header,
   .summary-study-header,
   .summary-goal-footer,
+  .summary-goal-header,
   #summaryConfLabel,
   #weeklyGoalProgressLabel,
   #weeklyGoalTotalLabel,
@@ -75,9 +69,32 @@
 
   .summary-streak,
   #editGoalBtn,
-  .summary-goal-header,
   .summary-study-legend {
     display: none;
+  }
+
+  .summary-progress::after,
+  .summary-goal::after,
+  .summary-study::after {
+    display: block;
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--ink-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .summary-progress::after {
+    content: "Confidence";
+  }
+
+  .summary-goal::after {
+    content: "Goal";
+  }
+
+  .summary-study::after {
+    content: "Today";
   }
 
   .focus-label,
@@ -85,12 +102,12 @@
     display: none;
   }
 
-  .focus-card {
+  .focus-timer-box {
     position: relative;
-  }
-
-  .focus-right {
-    position: relative;
+    width: 150px;
+    height: 150px;
+    padding-top: 34px;
+    padding-bottom: 38px;
   }
 
   .focus-timer-toggle {
@@ -100,14 +117,15 @@
     right: 6px;
     justify-content: center;
     gap: 6px;
-    z-index: 2;
+    z-index: 3;
   }
 
-  .focus-timer-box {
-    width: 150px;
-    height: 150px;
-    padding-top: 28px;
-    padding-bottom: 38px;
+  .focus-timer-display {
+    font-size: 1.8rem;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: clip;
   }
 
   .focus-bottom {
