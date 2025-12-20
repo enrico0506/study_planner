@@ -1,5 +1,5 @@
-@media (width: 1024px) and (height: 768px) {
-  /* iPad layout overrides for exact 1024x768. */
+@media (min-width: 1024px) and (max-width: 1112px) and (min-height: 745px) and (max-height: 784px) {
+  /* iPad layout overrides for 1024x768-range screens. */
   html,
   body {
     height: 100%;
