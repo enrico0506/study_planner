@@ -18,35 +18,44 @@
   }
 
   .summary-progress,
-  .summary-study {
-    position: relative;
-    min-height: 64px;
-    padding-right: 24px;
-  }
-
+  .summary-study,
   .summary-goal {
     position: relative;
-    padding-right: 28px;
+    min-height: 64px;
+    padding-right: 0;
+  }
+
+  .summary-card {
+    position: relative;
   }
 
   .summary-progress-bar,
   .summary-goal-track,
   .summary-study-bar {
     position: absolute;
-    right: 6px;
-    top: 6px;
-    width: 56px;
+    top: 8px;
+    width: 52px;
     height: 8px;
     transform: rotate(-90deg);
     transform-origin: top right;
   }
 
+  .summary-progress-bar {
+    right: 8px;
+  }
+
   .summary-goal-track {
-    top: 8px;
+    right: 24px;
+  }
+
+  .summary-study-bar {
+    right: 40px;
   }
 
   .summary-streak,
-  #editGoalBtn {
+  #editGoalBtn,
+  .summary-goal-header,
+  .summary-study-legend {
     display: none;
   }
 
@@ -94,5 +103,26 @@
   .focus-bottom .focus-break-btn {
     padding: 6px 8px;
     font-size: 0.72rem;
+  }
+
+  .focus-break-buttons {
+    display: flex;
+    gap: 6px;
+  }
+
+  .focus-break-buttons .focus-break-btn {
+    flex: 1;
+  }
+
+  #openTimerSettingsBtn {
+    font-size: 0;
+    line-height: 0;
+    padding: 6px;
+  }
+
+  #openTimerSettingsBtn::before {
+    content: "⚙";
+    font-size: 0.95rem;
+    line-height: 1;
   }
 }
