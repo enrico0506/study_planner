@@ -1,3 +1,29 @@
 @media (width: 1200px) and (height: 800px) {
-  /* Styles for 1200x800. */
+  /* Compact top row cards for 1200x800. */
+  .top-ad-slot {
+    min-height: 160px;
+  }
+
+  .summary-card,
+  .focus-card {
+    padding: 8px 10px 10px;
+  }
+
+  .summary-metrics {
+    display: none;
+  }
+
+  .summary-top {
+    margin-bottom: 2px;
+  }
+
+  .focus-label,
+  .focus-subtitle {
+    display: none;
+  }
+
+  .focus-timer-box {
+    width: 150px;
+    height: 150px;
+  }
 }
