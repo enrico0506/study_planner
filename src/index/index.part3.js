@@ -2564,39 +2564,6 @@
             const isPaused =
               isThisActive && activeStudy && activeStudy.paused;
 
-            if (!isThisActive && !inToday && !isPhoneTodayPicker()) {
-              const addFab = document.createElement("button");
-              addFab.type = "button";
-              addFab.className = "icon-btn file-add-today-fab";
-              addFab.textContent = "+";
-              addFab.title = "Add to Today's focus";
-              addFab.setAttribute("aria-label", "Add to Today's focus");
-              addFab.setAttribute("draggable", "false");
-              addFab.dataset.noDrag = "true";
-              addFab.addEventListener("click", (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                openAddTodoModal(subj.id, file);
-              });
-              addFab.addEventListener("pointerdown", (event) => {
-                event.stopPropagation();
-              });
-              addFab.addEventListener("touchstart", (event) => {
-                event.stopPropagation();
-              });
-              addFab.addEventListener("touchend", (event) => {
-                event.stopPropagation();
-              });
-              addFab.addEventListener("mousedown", (event) => {
-                event.stopPropagation();
-              });
-              addFab.addEventListener("dragstart", (event) => {
-                event.preventDefault();
-              });
-              row.appendChild(addFab);
-              row.classList.add("file-row-has-fab");
-            }
-
 	            if (!subjectsMaximized && !isPhoneTodayPicker()) {
 	              if (!isThisActive) {
 	                const studyBtn = document.createElement("button");
@@ -2724,7 +2691,6 @@
                   ? target.parentElement
                   : null;
               if (targetElement && targetElement.closest("button")) return;
-              if (targetElement && targetElement.closest(".file-add-today-fab")) return;
               openFileModalEdit(subj.id, file);
             });
 

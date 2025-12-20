@@ -398,25 +398,6 @@
     position: relative;
   }
 
-  .file-row.file-row-has-fab .file-actions-row {
-    display: none;
-  }
-
-  .file-add-today-fab {
-    position: absolute;
-    right: 8px;
-    bottom: 8px;
-    width: 36px;
-    height: 36px;
-    z-index: 2;
-    pointer-events: auto;
-    border-radius: 999px;
-    border: 1px solid var(--border-strong);
-    background: var(--surface-strong);
-    color: var(--accent-ink);
-    box-shadow: var(--shadow-soft);
-  }
-
   .schedule-view {
     overflow-x: hidden;
     padding-right: 16px;
