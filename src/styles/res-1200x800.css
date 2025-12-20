@@ -17,14 +17,6 @@
     margin-bottom: 2px;
   }
 
-  .summary-progress,
-  .summary-study,
-  .summary-goal {
-    position: relative;
-    min-height: 64px;
-    padding-right: 0;
-  }
-
   .summary-card {
     position: relative;
   }
@@ -33,7 +25,7 @@
   .summary-goal-track,
   .summary-study-bar {
     position: absolute;
-    top: 8px;
+    top: 10px;
     width: 52px;
     height: 8px;
     transform: rotate(-90deg);
@@ -45,11 +37,24 @@
   }
 
   .summary-goal-track {
-    right: 24px;
+    right: 28px;
   }
 
   .summary-study-bar {
-    right: 40px;
+    right: 48px;
+  }
+
+  .summary-progress-header span:first-child,
+  .summary-study-header span:first-child {
+    display: none;
+  }
+
+  .summary-goal {
+    margin-top: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
   }
 
   .summary-streak,
@@ -91,13 +96,12 @@
 
   .focus-bottom {
     position: absolute;
+    left: 10px;
     right: 10px;
     bottom: 10px;
-    width: 150px;
+    width: auto;
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-    align-items: stretch;
+    align-items: flex-end;
   }
 
   .focus-bottom .focus-break-btn {
@@ -108,6 +112,7 @@
   .focus-break-buttons {
     display: flex;
     gap: 6px;
+    margin-left: auto;
   }
 
   .focus-break-buttons .focus-break-btn {
@@ -118,6 +123,7 @@
     font-size: 0;
     line-height: 0;
     padding: 6px;
+    margin-right: auto;
   }
 
   #openTimerSettingsBtn::before {
