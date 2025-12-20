@@ -465,7 +465,9 @@ const CVD_SAFE_SUBJECT_COLORS = [
     function getDesiredVisibleSubjects() {
       if (
         window.matchMedia &&
-        window.matchMedia("(width: 1200px) and (height: 800px)").matches
+        window.matchMedia(
+          "(min-width: 1113px) and (max-width: 1240px) and (min-height: 785px) and (max-height: 832px)"
+        ).matches
       ) {
         return 3;
       }
