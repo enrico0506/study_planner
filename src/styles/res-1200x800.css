@@ -58,12 +58,44 @@
 
   .summary-progress-header,
   .summary-study-header,
-  .summary-goal-footer,
-  .summary-goal-header,
+  .summary-goal-header {
+    position: absolute;
+    top: 8px;
+    left: 0;
+    right: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .summary-progress-header span:first-child,
+  .summary-study-header span:first-child,
+  .summary-goal-header .summary-label,
+  .summary-goal-header #editGoalBtn {
+    display: none;
+  }
+
   #summaryConfLabel,
   #weeklyGoalProgressLabel,
+  .summary-goal-divider,
   #weeklyGoalTotalLabel,
-  #summaryStudyTodayLabel,
+  #summaryStudyTodayLabel {
+    display: inline;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .summary-goal-header .summary-goal-line {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  .summary-goal-footer,
   #weeklyGoalHint {
     display: none;
   }
