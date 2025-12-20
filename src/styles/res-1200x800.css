@@ -26,26 +26,32 @@
   .summary-study-bar {
     position: absolute;
     top: 10px;
-    width: 52px;
-    height: 8px;
+    width: 64px;
+    height: 12px;
     transform: rotate(-90deg);
     transform-origin: top right;
   }
 
   .summary-progress-bar {
-    right: 8px;
+    left: 6px;
+    transform-origin: top left;
   }
 
   .summary-goal-track {
-    right: 28px;
+    left: calc(50% - 32px);
+    transform-origin: top left;
   }
 
   .summary-study-bar {
-    right: 48px;
+    left: calc(100% - 6px - 64px);
+    transform-origin: top left;
   }
 
   .summary-progress-header span:first-child,
-  .summary-study-header span:first-child {
+  .summary-progress-header span:last-child,
+  .summary-study-header span:first-child,
+  .summary-study-header span:last-child,
+  #weeklyGoalHint {
     display: none;
   }
 
@@ -105,8 +111,8 @@
   }
 
   .focus-bottom .focus-break-btn {
-    padding: 6px 8px;
-    font-size: 0.72rem;
+    padding: 4px 6px;
+    font-size: 0.68rem;
   }
 
   .focus-break-buttons {
@@ -122,13 +128,19 @@
   #openTimerSettingsBtn {
     font-size: 0;
     line-height: 0;
-    padding: 6px;
+    padding: 4px;
     margin-right: auto;
   }
 
   #openTimerSettingsBtn::before {
     content: "⚙";
-    font-size: 0.95rem;
+    font-size: 0.8rem;
     line-height: 1;
+  }
+
+  .focus-timer-mode-btn {
+    padding: 4px 6px;
+    font-size: 0.7rem;
+    border-radius: 10px;
   }
 }
