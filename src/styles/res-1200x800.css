@@ -183,14 +183,9 @@
   }
 
   .focus-bottom {
-    position: absolute;
-    right: 10px;
-    top: 8px;
-    width: 150px;
-    height: 150px;
+    position: static;
     padding: 0;
     margin: 0;
-    pointer-events: none;
   }
 
   .focus-bottom .focus-break-btn {
@@ -200,11 +195,13 @@
 
   .focus-break-buttons {
     position: absolute;
-    right: 8px;
-    bottom: 8px;
+    right: 0;
+    bottom: 0;
+    width: 150px;
+    padding: 0 8px 8px;
     display: flex;
     gap: 6px;
-    pointer-events: auto;
+    z-index: 4;
   }
 
   .focus-break-buttons .focus-break-btn {
