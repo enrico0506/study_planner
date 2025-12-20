@@ -1374,7 +1374,17 @@
           }
         }
         if (!source) return;
-        addTodoForFile(source.subjectId, source.fileId);
+        if (isInTodayList(source.subjectId, source.fileId)) {
+          showNotice("Already in Today’s Focus.", "info");
+          dragState = null;
+          return;
+        }
+        const { file } = resolveFileRef(source.subjectId, source.fileId);
+        if (!file) {
+          dragState = null;
+          return;
+        }
+        openAddTodoModal(source.subjectId, file);
         dragState = null;
       });
     }

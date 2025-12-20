@@ -1339,8 +1339,9 @@
       summaryStudyTodayLabel.textContent = todayLabel;
       if (summaryStudyValue) summaryStudyValue.textContent = todayLabel;
 
-      const emptyBlock = summaryStudyBar.querySelector(".summary-study-empty");
-      if (emptyBlock) emptyBlock.remove();
+      summaryStudyBar
+        .querySelectorAll(".summary-study-empty, .summary-study-segment")
+        .forEach((node) => node.remove());
       summaryStudyLegend.innerHTML = "";
 
       const useIpadCharts =
