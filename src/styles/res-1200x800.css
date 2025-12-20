@@ -4,6 +4,18 @@
     min-height: 160px;
   }
 
+  .layout-row {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 12px;
+  }
+
+  .today-sidebar {
+    position: sticky;
+    width: 300px;
+    max-width: 300px;
+    top: 8px;
+  }
+
   .summary-card,
   .focus-card {
     padding: 8px 10px 10px;

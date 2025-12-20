@@ -463,6 +463,12 @@ const CVD_SAFE_SUBJECT_COLORS = [
     }
 
     function getDesiredVisibleSubjects() {
+      if (
+        window.matchMedia &&
+        window.matchMedia("(width: 1200px) and (height: 800px)").matches
+      ) {
+        return 3;
+      }
       return isIpadLandscapeLayout() ? 3 : DESKTOP_VISIBLE_SUBJECTS;
     }
 
