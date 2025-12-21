@@ -211,7 +211,8 @@ html.ads-disabled ins.adsbygoogle {
    `min-height: 0` is critical for nested grid/flex children so the lower region can scroll
    without forcing the overall page/container taller than the viewport. */
 .page-dashboard .dashboardHeader {
-  margin-bottom: 20px;
+  padding-bottom: 20px;
+  box-sizing: border-box;
 }
 
 @media (min-width: 721px) {
@@ -232,11 +233,10 @@ html.ads-disabled ins.adsbygoogle {
 
   .page-dashboard .dashboardHeader {
     min-height: 0;
-    /* Keep shadows visible between header/body regions. */
-    overflow: visible;
+    /* Prevent header content from overlapping the body at narrower widths. */
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    margin-bottom: 0;
   }
 
   .page-dashboard .dashboardBody {
