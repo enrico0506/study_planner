@@ -23,6 +23,15 @@
     max-width: 1080px;
   }
 
+  .layout-row {
+    grid-template-columns: minmax(0, 1fr) 260px;
+  }
+
+  .today-sidebar {
+    width: 260px;
+    max-width: 260px;
+  }
+
   .top-row {
     grid-template-columns: minmax(0, 1fr) minmax(420px, 1.05fr);
     grid-template-areas: "summary focus";
