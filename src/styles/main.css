@@ -210,7 +210,7 @@ html.ads-disabled ins.adsbygoogle {
 /* Dashboard-only ratio layout (index.html).
    `min-height: 0` is critical for nested grid/flex children so the lower region can scroll
    without forcing the overall page/container taller than the viewport. */
-@media (min-width: 960px) {
+@media (min-width: 721px) {
   .page-dashboard .app:not(.app-expanded) {
     height: calc(100dvh - 24px);
     max-height: calc(100dvh - 24px);

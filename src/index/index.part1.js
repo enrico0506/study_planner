@@ -474,10 +474,23 @@ const COMPACT_WEEK_MQ =
     }
 
     function getDesiredVisibleSubjects() {
-      if (typeof isCompactWeekLayout === "function" && isCompactWeekLayout()) {
-        return 3;
-      }
-      return isIpadLandscapeLayout() ? 3 : DESKTOP_VISIBLE_SUBJECTS;
+      const viewportWidth =
+        typeof window !== "undefined"
+          ? window.innerWidth || document.documentElement?.clientWidth || 0
+          : 0;
+
+      // Responsive subject columns (min 2, max 4) based on full window width.
+      // This value is used both for column sizing and for snap/paging calculations.
+      let desired;
+      if (viewportWidth < 1180) desired = 2;
+      else if (viewportWidth < 1580) desired = 3;
+      else desired = 4;
+
+      // Keep existing special-case layouts in the same band, but still respect 2..4 bounds.
+      if (typeof isCompactWeekLayout === "function" && isCompactWeekLayout()) desired = 3;
+      if (isIpadLandscapeLayout && isIpadLandscapeLayout()) desired = 3;
+
+      return Math.max(2, Math.min(4, desired));
     }
 
     function isPhoneTodayPicker() {
