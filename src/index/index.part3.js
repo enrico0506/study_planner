@@ -1048,6 +1048,8 @@
 	      const phone = isPhoneLayout();
       const useIpadLayout =
         typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
+      const useCompactWeekLayout =
+        typeof isCompactWeekLayout === "function" ? isCompactWeekLayout() : useIpadLayout;
 
       let start;
       let end;
@@ -1069,11 +1071,11 @@
 	      } else {
 	        if (!scheduleWeekStart) scheduleWeekStart = getWeekStart(new Date());
 	        start = new Date(scheduleWeekStart);
-        if (useIpadLayout && scheduleWeekendShifted) {
+        if (useCompactWeekLayout && scheduleWeekendShifted) {
           start.setDate(start.getDate() + 2);
           daysToRender = 5;
         }
-        if (useIpadLayout && !scheduleWeekendShifted) {
+        if (useCompactWeekLayout && !scheduleWeekendShifted) {
           daysToRender = 5;
         }
         end = new Date(start);
@@ -1088,7 +1090,7 @@
       if (!phone) {
         scheduleGrid.classList.toggle(
           "schedule-grid-weekend",
-          useIpadLayout && scheduleWeekendShifted
+          useCompactWeekLayout && scheduleWeekendShifted
         );
       }
 	      const todayKey = getTodayKey();
