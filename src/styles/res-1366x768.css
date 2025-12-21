@@ -16,9 +16,13 @@
     top: 8px;
   }
 
-  .schedule-grid {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+  .schedule-view .schedule-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
     gap: 8px;
+  }
+
+  .schedule-view .schedule-day {
+    min-width: 0;
   }
 
   #scheduleWeekendToggleBtn {
