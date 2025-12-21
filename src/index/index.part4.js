@@ -1150,7 +1150,7 @@
       scheduleWeekendToggleBtn.addEventListener("click", () => {
         if (
           isPhoneLayout() ||
-          !(typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout())
+          !(typeof isCompactWeekLayout === "function" && isCompactWeekLayout())
         )
           return;
         if (!scheduleWeekendShifted) {

@@ -38,6 +38,9 @@ const CVD_SAFE_SUBJECT_COLORS = [
   "#000000" // black
 ];
 
+const COMPACT_WEEK_MQ =
+  "(min-width: 1113px) and (max-width: 1240px) and (min-height: 785px) and (max-height: 832px)";
+
     let subjectColors = [...DEFAULT_SUBJECT_COLORS];
     const THEMES = [
       {
@@ -391,6 +394,13 @@ const CVD_SAFE_SUBJECT_COLORS = [
       );
     }
 
+    function isCompactWeekLayout() {
+      return (
+        isIpadLandscapeLayout() ||
+        (window.matchMedia && window.matchMedia(COMPACT_WEEK_MQ).matches)
+      );
+    }
+
     function applyIpadFocusLayout() {
       const useIpadLayout = isIpadLandscapeLayout();
 
@@ -463,12 +473,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
     }
 
     function getDesiredVisibleSubjects() {
-      if (
-        window.matchMedia &&
-        window.matchMedia(
-          "(min-width: 1113px) and (max-width: 1240px) and (min-height: 785px) and (max-height: 832px)"
-        ).matches
-      ) {
+      if (typeof isCompactWeekLayout === "function" && isCompactWeekLayout()) {
         return 3;
       }
       return isIpadLandscapeLayout() ? 3 : DESKTOP_VISIBLE_SUBJECTS;

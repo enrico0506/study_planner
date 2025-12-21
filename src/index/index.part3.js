@@ -1049,11 +1049,7 @@
       const useIpadLayout =
         typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
       const useCompactWeekLayout =
-        useIpadLayout ||
-        (window.matchMedia &&
-          window.matchMedia(
-            "(min-width: 1113px) and (max-width: 1240px) and (min-height: 785px) and (max-height: 832px)"
-          ).matches);
+        typeof isCompactWeekLayout === "function" ? isCompactWeekLayout() : useIpadLayout;
 
       let start;
       let end;
