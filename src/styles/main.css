@@ -245,6 +245,17 @@ html.ads-disabled ins.adsbygoogle {
     flex: 1 1 auto;
     min-height: 0;
   }
+
+  /* Keep a stable Subjects:Today's focus width ratio while resizing (board view).
+     Scoped to non-maximized + non "today-wide/full" modes so existing view toggles keep working. */
+  .page-dashboard .app:not(.subjects-maximized) #layoutRow.layout-row:not(.today-wide):not(.today-full) {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+  }
+
+  .page-dashboard .app:not(.subjects-maximized) #layoutRow.layout-row:not(.today-wide):not(.today-full) .today-sidebar {
+    width: auto;
+    max-width: none;
+  }
 }
 
     .header-row {
