@@ -222,7 +222,7 @@ html.ads-disabled ins.adsbygoogle {
     height: 100%;
     display: grid;
     grid-template-rows: minmax(320px, 3fr) minmax(0, 7fr);
-    row-gap: 12px;
+    row-gap: 20px;
     min-height: 0;
   }
 
@@ -239,7 +239,7 @@ html.ads-disabled ins.adsbygoogle {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    padding-top: 12px;
+    padding-top: 20px;
     box-sizing: border-box;
   }
 
