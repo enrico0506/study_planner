@@ -222,6 +222,7 @@ html.ads-disabled ins.adsbygoogle {
     height: 100%;
     display: grid;
     grid-template-rows: minmax(320px, 3fr) minmax(0, 7fr);
+    row-gap: 12px;
     min-height: 0;
   }
 
