@@ -1,4 +1,4 @@
-@media (min-width: 1323px) and (max-width: 1365px) and (min-height: 785px) and (max-height: 832px) {
+@media (min-width: 1323px) and (max-width: 1403px) and (min-height: 785px) and (max-height: 832px) {
   /* Compact top row + 5-day schedule + 3-column subjects for 1365x800-range screens. */
   .top-ad-slot {
     min-height: 160px;
