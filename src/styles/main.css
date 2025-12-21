@@ -218,18 +218,18 @@ html.ads-disabled ins.adsbygoogle {
 
 @media (min-width: 1051px) {
   .page-dashboard .app:not(.app-expanded) {
-    height: calc(100dvh - 24px);
-    max-height: calc(100dvh - 24px);
-    min-height: 0;
-    overflow: hidden;
+    /* Let the overall page scroll instead of nested panels. */
+    height: auto;
+    max-height: none;
+    min-height: calc(100dvh - 24px);
+    overflow: visible;
   }
 
   .page-dashboard .dashboardLayout {
-    height: 100%;
     display: grid;
-    grid-template-rows: minmax(max-content, 3fr) minmax(0, 7fr);
+    grid-template-rows: minmax(max-content, 3fr) minmax(max-content, 7fr);
     row-gap: 20px;
-    min-height: 0;
+    min-height: calc(100dvh - 24px);
   }
 
   .page-dashboard .dashboardHeader {
@@ -241,7 +241,7 @@ html.ads-disabled ins.adsbygoogle {
 
   .page-dashboard .dashboardBody {
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
@@ -262,6 +262,15 @@ html.ads-disabled ins.adsbygoogle {
   .page-dashboard .app:not(.subjects-maximized) #layoutRow.layout-row:not(.today-wide):not(.today-full) .today-sidebar {
     width: auto;
     max-width: none;
+  }
+
+  /* Remove nested scrollbars in subjects/today; let the browser handle overflow. */
+  .page-dashboard #layoutRow .main-area,
+  .page-dashboard #layoutRow .today-sidebar,
+  .page-dashboard #layoutRow .today-section,
+  .page-dashboard #todayList {
+    overflow: visible;
+    max-height: none;
   }
 }
 
