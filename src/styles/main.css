@@ -226,10 +226,12 @@ html.ads-disabled ins.adsbygoogle {
   }
 
   .page-dashboard .dashboardLayout {
-    display: grid;
-    grid-template-rows: minmax(max-content, 3fr) minmax(max-content, 7fr);
-    row-gap: 20px;
-    min-height: calc(100dvh - 24px);
+    /* Don't use `fr` tracks here: the page scrolls, and `fr` would create empty space
+       inside the header track (looks like a "huge gap"). */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-height: 0;
   }
 
   .page-dashboard .dashboardHeader {
