@@ -40,8 +40,7 @@ const CVD_SAFE_SUBJECT_COLORS = [
 
 const COMPACT_WEEK_MQ =
   "(min-width: 1113px) and (max-width: 1240px) and (min-height: 785px) and (max-height: 832px), " +
-  "(min-width: 1323px) and (max-width: 1403px) and (min-height: 785px) and (max-height: 832px), " +
-  "(min-width: 1366px) and (max-width: 1403px) and (min-height: 745px) and (max-height: 784px)";
+  "(min-width: 1323px) and (max-width: 1403px) and (min-height: 785px) and (max-height: 832px)";
 
     let subjectColors = [...DEFAULT_SUBJECT_COLORS];
     const THEMES = [
