@@ -207,6 +207,45 @@ html.ads-disabled ins.adsbygoogle {
   overflow: visible;
 }
 
+/* Dashboard-only ratio layout (index.html).
+   `min-height: 0` is critical for nested grid/flex children so the lower region can scroll
+   without forcing the overall page/container taller than the viewport. */
+@media (min-width: 960px) {
+  .page-dashboard .app:not(.app-expanded) {
+    height: calc(100dvh - 24px);
+    max-height: calc(100dvh - 24px);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .page-dashboard .dashboardLayout {
+    height: 100%;
+    display: grid;
+    grid-template-rows: minmax(320px, 3fr) minmax(0, 7fr);
+    min-height: 0;
+  }
+
+  .page-dashboard .dashboardHeader {
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page-dashboard .dashboardBody {
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page-dashboard .dashboardBody > #layoutRow,
+  .page-dashboard .dashboardBody > #scheduleView {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
     .header-row {
       display: flex;
       justify-content: space-between;
