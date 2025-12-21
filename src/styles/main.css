@@ -227,14 +227,14 @@ html.ads-disabled ins.adsbygoogle {
   .page-dashboard .dashboardLayout {
     height: 100%;
     display: grid;
-    grid-template-rows: minmax(320px, 3fr) minmax(0, 7fr);
+    grid-template-rows: minmax(max-content, 3fr) minmax(0, 7fr);
     row-gap: 20px;
     min-height: 0;
   }
 
   .page-dashboard .dashboardHeader {
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
     display: flex;
     flex-direction: column;
   }
