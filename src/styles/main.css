@@ -210,9 +210,10 @@ html.ads-disabled ins.adsbygoogle {
 /* Dashboard-only ratio layout (index.html).
    `min-height: 0` is critical for nested grid/flex children so the lower region can scroll
    without forcing the overall page/container taller than the viewport. */
-.page-dashboard .dashboardHeader {
-  padding-bottom: 20px;
-  box-sizing: border-box;
+.page-dashboard .dashboardLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 @media (min-width: 721px) {
@@ -233,10 +234,11 @@ html.ads-disabled ins.adsbygoogle {
 
   .page-dashboard .dashboardHeader {
     min-height: 0;
-    /* Prevent header content from overlapping the body at narrower widths. */
-    overflow: hidden;
+    /* Allow header to scroll if it grows (e.g. stacked summary+focus on narrow widths). */
+    overflow: auto;
     display: flex;
     flex-direction: column;
+    overscroll-behavior: contain;
   }
 
   .page-dashboard .dashboardBody {
