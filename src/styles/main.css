@@ -216,7 +216,7 @@ html.ads-disabled ins.adsbygoogle {
   gap: 20px;
 }
 
-@media (min-width: 721px) {
+@media (min-width: 1051px) {
   .page-dashboard .app:not(.app-expanded) {
     height: calc(100dvh - 24px);
     max-height: calc(100dvh - 24px);
@@ -234,11 +234,9 @@ html.ads-disabled ins.adsbygoogle {
 
   .page-dashboard .dashboardHeader {
     min-height: 0;
-    /* Allow header to scroll if it grows (e.g. stacked summary+focus on narrow widths). */
-    overflow: auto;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    overscroll-behavior: contain;
   }
 
   .page-dashboard .dashboardBody {
