@@ -518,7 +518,12 @@ const COMPACT_WEEK_MQ =
 	      const visibleSubjects = count >= desiredVisible ? desiredVisible : Math.max(1, count);
 	      const base =
 	        (viewportWidth - gap * Math.max(0, visibleSubjects - 1)) / Math.max(1, visibleSubjects);
-	      const minWidth = subjectsMaximized ? 140 : 190;
+	      const isNarrowDesktop =
+	        window.matchMedia &&
+	        window.matchMedia(
+	          "(min-width: 1404px) and (max-width: 1488px) and (min-height: 883px) and (max-height: 975px)"
+	        ).matches;
+	      const minWidth = subjectsMaximized ? 140 : isNarrowDesktop ? 160 : 190;
 	      // Use floor to guarantee all visible columns fit (avoid 1px overflow from rounding).
 	      const subjectWidth = Math.floor(Math.max(minWidth, base));
 
