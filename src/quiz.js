@@ -631,19 +631,12 @@
           const actions = document.createElement("div");
           actions.className = "quiz-subject-file-actions";
 
-          const startBtn = document.createElement("button");
-          startBtn.className = "chip-btn";
-          startBtn.type = "button";
-          startBtn.textContent = hasBank ? "Start quiz" : "Import & start";
-          startBtn.addEventListener("click", () => startTaskQuiz(subj, file, hasBank));
-          actions.appendChild(startBtn);
-
           const addBtn = document.createElement("button");
           addBtn.className = "chip-btn chip-btn-primary";
           addBtn.type = "button";
-          addBtn.textContent = "Add quiz CSV";
+          addBtn.textContent = "Start quiz";
           addBtn.addEventListener("click", () =>
-            startTaskCsvImport(subj, file)
+            startTaskQuiz(subj, file, hasBank)
           );
           actions.appendChild(addBtn);
 
