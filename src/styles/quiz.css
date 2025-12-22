@@ -393,7 +393,7 @@
 }
 
 .quiz-subject-file {
-  padding: 8px 10px;
+  padding: 12px 12px;
   border-radius: 10px;
   border: 1px solid rgba(228, 232, 239, 0.9);
   background: rgba(255, 255, 255, 0.9);
@@ -401,7 +401,8 @@
   font-weight: 600;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
+  gap: 10px;
+  align-items: center;
 }
 
 .quiz-subject-file .pill {
@@ -417,9 +418,13 @@
 .quiz-subject-file-actions {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.quiz-subject-meta {
+  margin-bottom: 6px;
 }
 
 .quiz-subjects-card .subject-table {

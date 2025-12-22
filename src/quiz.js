@@ -577,17 +577,11 @@
     return DEFAULT_SUBJECT_COLORS[idx % DEFAULT_SUBJECT_COLORS.length];
   }
 
-  function averageConfidence(files) {
-    const arr = Array.isArray(files) ? files : [];
-    if (!arr.length) return null;
-    const total = arr.reduce((acc, f) => acc + (Number(f && f.confidence) || 0), 0);
-    return Math.round(total / arr.length);
-  }
-
   function renderSubjects() {
     if (!els.quizSubjectTable) return;
     const subjects = loadSubjects();
     els.quizSubjectTable.innerHTML = "";
+    const hasBank = Object.keys(bank).length > 0;
 
     if (!subjects.length) {
       els.quizSubjectsEmpty?.classList.remove("hidden");
@@ -616,24 +610,7 @@
 
       const meta = document.createElement("div");
       meta.className = "quiz-subject-meta";
-      const fileCount = `${files.length} ${files.length === 1 ? "item" : "items"}`;
-      meta.textContent = fileCount;
-      const avgConf = averageConfidence(files);
-      if (avgConf != null) {
-        const pill = document.createElement("span");
-        pill.className = "pill";
-        pill.textContent = `${avgConf}% conf`;
-        meta.appendChild(pill);
-      }
-
-      const meter = document.createElement("div");
-      meter.className = "subject-meter";
-      const fill = document.createElement("div");
-      fill.className = "subject-meter-fill";
-      const pct = avgConf == null ? 0 : Math.max(0, Math.min(100, avgConf));
-      fill.style.width = `${pct}%`;
-      fill.classList.add(pct < 40 ? "meter-low" : pct < 75 ? "meter-mid" : "meter-high");
-      meter.appendChild(fill);
+      meta.textContent = `${files.length} ${files.length === 1 ? "item" : "items"}`;
 
       const fileList = document.createElement("div");
       fileList.className = "quiz-subject-file-list";
@@ -654,12 +631,12 @@
           const actions = document.createElement("div");
           actions.className = "quiz-subject-file-actions";
 
-          if (typeof file.confidence === "number") {
-            const confPill = document.createElement("span");
-            confPill.className = "pill";
-            confPill.textContent = `${Math.round(file.confidence)}%`;
-            actions.appendChild(confPill);
-          }
+          const startBtn = document.createElement("button");
+          startBtn.className = "chip-btn";
+          startBtn.type = "button";
+          startBtn.textContent = hasBank ? "Start quiz" : "Import & start";
+          startBtn.addEventListener("click", () => startTaskQuiz(subj, file, hasBank));
+          actions.appendChild(startBtn);
 
           const addBtn = document.createElement("button");
           addBtn.className = "chip-btn chip-btn-primary";
@@ -678,7 +655,6 @@
 
       col.appendChild(header);
       col.appendChild(meta);
-      col.appendChild(meter);
       col.appendChild(fileList);
       els.quizSubjectTable.appendChild(col);
     });
@@ -709,6 +685,24 @@
     };
     hiddenCsvInput.value = "";
     hiddenCsvInput.click();
+  }
+
+  function startTaskQuiz(subj, file, hasBank) {
+    if (!subj || !file) return;
+    currentSubjectRef = {
+      subjectId: subj.id,
+      fileId: file.id,
+      subjectName: subj.name || "Subject",
+      fileName: file.name || "Task",
+    };
+    if (!hasBank) {
+      startTaskCsvImport(subj, file);
+      return;
+    }
+    if (els.quizSelect && els.quizSelect.options.length) {
+      els.quizSelect.selectedIndex = 0;
+    }
+    startQuiz();
   }
 
   function recordQuizSession() {
