@@ -409,6 +409,18 @@
   margin-left: auto;
 }
 
+.quiz-subjects-card .subject-table {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  background: transparent;
+}
+
+.quiz-subjects-card .subject-column {
+  min-width: 0;
+  max-width: none;
+}
+
 .hidden {
   display: none !important;
 }
