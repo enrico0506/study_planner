@@ -1,96 +1,96 @@
 (() => {
+  /**
+   * Quiz hub: session-first flow with library, CSV import, resume, confidence, weak areas.
+   * Local-first storage with optional server sync (latest set).
+   */
   const els = {
-    csvFile: document.getElementById("csvFile"),
-    quizSelect: document.getElementById("quizSelect"),
-    startBtn: document.getElementById("startBtn"),
-    resetBtn: document.getElementById("resetBtn"),
-    importStatus: document.getElementById("importStatus"),
+    importedSelect: document.getElementById("importedSelect"),
+    topicSelect: document.getElementById("topicSelect"),
+    sourceBtns: Array.from(document.querySelectorAll(".seg-btn[data-source]")),
+    modeBtns: Array.from(document.querySelectorAll(".seg-btn[data-mode]")),
+    sizeBtns: Array.from(document.querySelectorAll("#sizeGroup .seg-btn")),
     shuffleQuestions: document.getElementById("shuffleQuestions"),
     shuffleAnswers: document.getElementById("shuffleAnswers"),
-    importCard: document.getElementById("importCard"),
-    quizCard: document.getElementById("quizCard"),
-    resultCard: document.getElementById("resultCard"),
-    quizTitle: document.getElementById("quizTitle"),
-    quizMeta: document.getElementById("quizMeta"),
-    scoreText: document.getElementById("scoreText"),
+    sessionTimer: document.getElementById("sessionTimer"),
+    startBtn: document.getElementById("startSessionBtn"),
+    summaryStrip: document.getElementById("summaryStrip"),
+    summaryMeta: document.getElementById("summaryMeta"),
+    summaryMode: document.getElementById("summaryMode"),
+    resumeHint: document.getElementById("resumeHint"),
+    resumeText: document.getElementById("resumeText"),
+    resumeBtn: document.getElementById("resumeBtn"),
+    discardResumeBtn: document.getElementById("discardResumeBtn"),
+    continueSessionBtn: document.getElementById("continueSessionBtn"),
+    openImportBtn: document.getElementById("openImportBtn"),
+    openLibraryBtn: document.getElementById("openLibraryBtn"),
+    importPanel: document.getElementById("importPanel"),
+    csvDropzone: document.getElementById("csvDropzone"),
+    pickCsvBtn: document.getElementById("pickCsvBtn"),
+    csvFile: document.getElementById("csvFile"),
+    importStatus: document.getElementById("importStatus"),
+    previewList: document.getElementById("previewList"),
+    csvHelp: document.getElementById("csvHelp"),
+    importedList: document.getElementById("importedList"),
+    importedSearch: document.getElementById("importedSearch"),
+    libraryBody: document.getElementById("libraryBody"),
+    toggleLibraryBtn: document.getElementById("toggleLibraryBtn"),
+    topicList: document.getElementById("topicList"),
+    topicSearch: document.getElementById("topicSearch"),
+    topicSort: document.getElementById("topicSort"),
+    sessionSummary: document.getElementById("sessionSummary"),
+    runTitle: document.getElementById("runTitle"),
+    runMeta: document.getElementById("runMeta"),
+    runTimer: document.getElementById("runTimer"),
+    flagBtn: document.getElementById("flagBtn"),
     progressBar: document.getElementById("progressBar"),
     qCounter: document.getElementById("qCounter"),
     questionText: document.getElementById("questionText"),
-    hintBtn: document.getElementById("hintBtn"),
-    hintText: document.getElementById("hintText"),
     choices: document.getElementById("choices"),
     feedback: document.getElementById("feedback"),
+    confidenceRow: document.getElementById("confidenceRow"),
+    confidenceBtns: Array.from(document.querySelectorAll("#confidenceRow .seg-btn")),
     prevBtn: document.getElementById("prevBtn"),
     nextBtn: document.getElementById("nextBtn"),
     finishBtn: document.getElementById("finishBtn"),
+    resultCard: document.getElementById("resultCard"),
     resultSummary: document.getElementById("resultSummary"),
+    metricAccuracy: document.getElementById("metricAccuracy"),
+    metricTime: document.getElementById("metricTime"),
+    metricAvg: document.getElementById("metricAvg"),
+    weakAreasList: document.getElementById("weakAreasList"),
     reviewList: document.getElementById("reviewList"),
-    restartBtn: document.getElementById("restartBtn"),
-    backToImportBtn: document.getElementById("backToImportBtn"),
-    toggleSubjectsBtn: document.getElementById("toggleSubjectsBtn"),
-    quizSubjectsBody: document.getElementById("quizSubjectsBody"),
-    quizSubjectsEmpty: document.getElementById("quizSubjectsEmpty"),
-    quizSubjectTable: document.getElementById("quizSubjectTable"),
+    reviewIncorrectBtn: document.getElementById("reviewIncorrectBtn"),
+    retryFlaggedBtn: document.getElementById("retryFlaggedBtn"),
+    newSessionBtn: document.getElementById("newSessionBtn"),
+    librarySection: document.querySelector(".quiz-library"),
   };
 
-  if (!els.csvFile || !els.quizCard) return;
+  if (!els.importedSelect) return;
 
-  const QUIZ_STORAGE_KEY = "studyQuizSavedCsv_v1";
-  const SUBJECTS_KEY = "studySubjects_v1";
-  const SUBJECT_VIS_KEY = "studyQuizSubjectsVisible_v1";
-  const COLOR_PALETTE_KEY = "studyColorPalette_v1";
-  const DEFAULT_SUBJECT_COLORS = [
-    "#4f8bff",
-    "#4ec58a",
-    "#f77fb3",
-    "#f6a23c",
-    "#b18bff",
-    "#37c6c0",
-    "#f17575",
-    "#f4c74f",
-  ];
+  const QUIZ_DATA_KEY = "studyQuizData_v2";
+  const QUIZ_STATS_KEY = "studyQuizStats_v1";
+  const QUIZ_SESSION_KEY = "studyQuizActiveSession_v1";
+  const QUIZ_LIBRARY_STATE_KEY = "studyQuizLibraryState_v1";
+  const QUIZ_SOURCE_KEY = "studyQuizSource_v1";
   const STORAGE = (window.StudyPlanner && window.StudyPlanner.Storage) || null;
 
-  let bank = {};
-  let currentQuizName = "";
-  let questions = [];
-  let idx = 0;
-  let answers = [];
-  let score = 0;
-  let pendingImportTarget = null; // { subjectId, fileId, subjectName, fileName }
-  let currentSubjectRef = null; // { subjectId, fileId, subjectName, fileName }
-  let activeSessionStartMs = null;
+  const state = {
+    data: { sets: [], topics: [] },
+    stats: {},
+    session: null,
+    mode: "study",
+    source: "imported",
+    size: "10",
+    libraryCollapsed: true,
+    selectedTopicIds: new Set(),
+    subjects: [],
+    timerHandle: null,
+  };
 
-  const hiddenCsvInput = document.createElement("input");
-  hiddenCsvInput.type = "file";
-  hiddenCsvInput.accept = ".csv,text/csv";
-  hiddenCsvInput.style.display = "none";
-  document.body.appendChild(hiddenCsvInput);
-
-  function setStatus(msg, type = "info") {
-    const palette = {
-      info: {
-        border: "var(--border-subtle)",
-        bg: "rgba(255, 255, 255, 0.8)",
-        color: "var(--ink-muted)",
-      },
-      ok: {
-        border: "#22c55e",
-        bg: "color-mix(in srgb, #22c55e 10%, #ecfdf3)",
-        color: "#166534",
-      },
-      error: {
-        border: "#ef4444",
-        bg: "color-mix(in srgb, #ef4444 10%, #fff1f2)",
-        color: "#991b1b",
-      },
-    };
-    const style = palette[type] || palette.info;
-    els.importStatus.textContent = msg;
-    els.importStatus.style.borderColor = style.border;
-    els.importStatus.style.background = style.bg;
-    els.importStatus.style.color = style.color;
-  }
+  const csvTemplate = `quiz;question_no;question;choice_A;choice_B;choice_C;choice_D;correct_letter;hint
+Sample Set;1;What is the capital of France?;Paris;Berlin;Madrid;Rome;A;Eiffel Tower city
+Sample Set;2;2 + 2 = ?;3;4;5;;B;Basic math
+Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
 
   function getJSON(key, fallback) {
     if (STORAGE && STORAGE.getJSON) return STORAGE.getJSON(key, fallback);
@@ -123,14 +123,9 @@
           subjectRef: subjectRef || null,
         }),
       });
-      if (res.status === 401) return false;
-      if (!res.ok) {
-        console.warn("Quiz save failed", await res.text());
-        return false;
-      }
+      if (!res.ok) return false;
       return true;
-    } catch (err) {
-      console.warn("Quiz save failed", err);
+    } catch {
       return false;
     }
   }
@@ -138,75 +133,149 @@
   async function loadRemoteQuizSet() {
     try {
       const res = await fetch("/api/quiz-sets/latest");
-      if (res.status === 401) return false;
       if (!res.ok) return false;
       const data = await res.json();
       if (!data || !data.quizSet || !data.quizSet.csvText) return false;
-      const subjectRef =
-        data.quizSet.subjectId || data.quizSet.fileId
-          ? {
-              subjectId: data.quizSet.subjectId || null,
-              fileId: data.quizSet.fileId || null,
-              subjectName: data.quizSet.subjectName || "",
-              fileName: data.quizSet.fileName || "",
-            }
-          : null;
-      const built = buildQuestionBank(data.quizSet.csvText);
-      applyImportResult(built, {
-        fileName: data.quizSet.name || "Saved quiz",
-        sourceText: data.quizSet.csvText,
-        fromSaved: true,
-        subjectRef,
+      const set = parseCsvToSet(data.quizSet.csvText, data.quizSet.name || "Saved quiz", {
+        subjectRef:
+          data.quizSet.subjectId || data.quizSet.fileId
+            ? {
+                subjectId: data.quizSet.subjectId,
+                fileId: data.quizSet.fileId,
+                subjectName: data.quizSet.subjectName || "",
+                fileName: data.quizSet.fileName || "",
+              }
+            : null,
       });
+      addSet(set);
       return true;
-    } catch (err) {
-      console.warn("Quiz load failed", err);
+    } catch {
       return false;
     }
   }
 
-  function normalizeHeader(h) {
-    return String(h || "").trim().toLowerCase().replace(/\s+/g, "_");
+  function uid(prefix = "id") {
+    return `${prefix}_${Math.random().toString(16).slice(2, 10)}`;
   }
 
-  function stripBOM(s) {
-    if (!s) return s;
-    return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s;
+  function loadSubjects() {
+    const list = getJSON("studySubjects_v1", []);
+    state.subjects = Array.isArray(list) ? list : [];
   }
 
-  function countDelimiterOutsideQuotes(line, delim) {
-    let inQuotes = false;
-    let count = 0;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') {
-        if (inQuotes && line[i + 1] === '"') i++;
-        else inQuotes = !inQuotes;
-      } else if (!inQuotes && ch === delim) {
-        count++;
-      }
+  function computeSubjectMetrics() {
+    const byId = {};
+    state.data.sets.forEach((set) => {
+      set.questions.forEach((q) => {
+        if (!q.subjectId) return;
+        const st = state.stats[q.id] || {};
+        if (!byId[q.subjectId]) byId[q.subjectId] = { seen: 0, correct: 0, last: 0 };
+        byId[q.subjectId].seen += st.timesSeen || 0;
+        byId[q.subjectId].correct += st.timesCorrect || 0;
+        byId[q.subjectId].last = Math.max(byId[q.subjectId].last, st.lastSeenAt || 0);
+      });
+    });
+    state.subjects = state.subjects.map((s) => {
+      const m = byId[s.id] || null;
+      return {
+        ...s,
+        quizAccuracy: m && m.seen ? Math.round((m.correct * 100) / m.seen) : null,
+        quizLast: m ? m.last : 0,
+      };
+    });
+  }
+
+  function migrateData() {
+    const legacy = getJSON("studyQuizSavedCsv_v1", null);
+    if (!legacy || !legacy.text) return null;
+    const set = parseCsvToSet(legacy.text, legacy.name || "Imported set", {
+      subjectRef: legacy.subjectRef || null,
+    });
+    set.updatedAt = Date.now();
+    setJSON(QUIZ_DATA_KEY, { sets: [set] });
+    localStorage.removeItem("studyQuizSavedCsv_v1");
+    return set;
+  }
+
+  function loadData() {
+    const stored = getJSON(QUIZ_DATA_KEY, null);
+    if (stored && Array.isArray(stored.sets)) {
+      state.data = stored;
+    } else {
+      const migrated = migrateData();
+      state.data = migrated ? { sets: [migrated] } : { sets: [] };
     }
-    return count;
+    state.stats = getJSON(QUIZ_STATS_KEY, {});
+    state.libraryCollapsed = !!getJSON(QUIZ_LIBRARY_STATE_KEY, { collapsed: false }).collapsed;
+    const savedSource = getJSON(QUIZ_SOURCE_KEY, null);
+    if (savedSource) {
+      state.source = savedSource.source || state.source;
+      state.mode = savedSource.mode || state.mode;
+      state.size = savedSource.size || state.size;
+      if (Array.isArray(savedSource.topicIds)) state.selectedTopicIds = new Set(savedSource.topicIds);
+    }
+    computeSubjectMetrics();
   }
 
-  function detectDelimiter(firstLine) {
+  function saveData() {
+    setJSON(QUIZ_DATA_KEY, state.data);
+  }
+
+  function saveStats() {
+    setJSON(QUIZ_STATS_KEY, state.stats);
+    computeSubjectMetrics();
+  }
+
+  function saveLibraryState() {
+    setJSON(QUIZ_LIBRARY_STATE_KEY, { collapsed: state.libraryCollapsed });
+  }
+
+  function saveSourceState() {
+    setJSON(QUIZ_SOURCE_KEY, {
+      source: state.source,
+      mode: state.mode,
+      size: state.size,
+      topicIds: Array.from(state.selectedTopicIds),
+    });
+  }
+
+  function formatMs(ms) {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+
+  function formatDuration(ms) {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    if (total < 60) return `${total}s`;
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return s ? `${m}m ${s}s` : `${m}m`;
+  }
+
+  function setStatus(msg, tone = "info") {
+    if (!els.importStatus) return;
+    els.importStatus.textContent = msg;
+    els.importStatus.dataset.tone = tone;
+  }
+
+  function detectDelimiter(line) {
     const candidates = [";", ",", "\t"];
-    const counts = candidates.map((d) => countDelimiterOutsideQuotes(firstLine, d));
+    const counts = candidates.map((d) => (line.match(new RegExp(`\\${d}`, "g")) || []).length);
     let best = 0;
-    for (let i = 1; i < candidates.length; i++) if (counts[i] > counts[best]) best = i;
+    for (let i = 1; i < counts.length; i++) if (counts[i] > counts[best]) best = i;
     return candidates[best];
   }
 
   function parseCSV(text) {
-    const raw = stripBOM(text).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    const raw = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
     const firstLine = raw.split("\n").find((l) => l.trim().length > 0) || "";
     const delim = detectDelimiter(firstLine);
-
     const rows = [];
     let row = [];
     let field = "";
     let inQuotes = false;
-
     for (let i = 0; i < raw.length; i++) {
       const ch = raw[i];
       const next = raw[i + 1];
@@ -238,9 +307,8 @@
     return { rows: rows.filter((r) => r.some((c) => String(c).trim() !== "")), delimiter: delim };
   }
 
-  function toIntOrNull(x) {
-    const n = Number(String(x).trim());
-    return Number.isFinite(n) ? n : null;
+  function normalizeHeader(h) {
+    return String(h || "").trim().toLowerCase().replace(/\s+/g, "_");
   }
 
   function letterToIndex(letter) {
@@ -249,612 +317,892 @@
     return Object.prototype.hasOwnProperty.call(map, L) ? map[L] : null;
   }
 
-  function shuffleArray(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-  }
-
-  function escapeHTML(s) {
-    return String(s).replace(/[&<>"']/g, (c) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;",
-    }[c]));
-  }
-
-  function buildQuestionBank(csvText) {
+  function parseCsvToSet(csvText, name = "Imported set", { subjectRef = null } = {}) {
     const { rows, delimiter } = parseCSV(csvText);
-    if (rows.length < 2) throw new Error("CSV needs a header and at least one question.");
-
+    if (rows.length < 2) throw new Error("CSV needs header + at least one question.");
     const header = rows[0].map(normalizeHeader);
     const dataRows = rows.slice(1);
-
     const get = (obj, ...keys) => {
       for (const k of keys) if (obj[k] != null && String(obj[k]).trim() !== "") return obj[k];
       return "";
     };
 
-    const bankLocal = {};
-
-    for (let r = 0; r < dataRows.length; r++) {
-      const row = dataRows[r];
+    const questions = [];
+    dataRows.forEach((row, idx) => {
       const obj = {};
       for (let c = 0; c < header.length; c++) obj[header[c]] = row[c] ?? "";
-
-      const quizName = String(get(obj, "quiz", "quiz_name", "set", "set_name") || "Standard").trim() || "Standard";
-      const question = String(get(obj, "question", "frage", "prompt", "q")).trim();
-
-      const a = String(get(obj, "choice_a", "a", "antwort_a")).trim();
-      const b = String(get(obj, "choice_b", "b", "antwort_b")).trim();
-      const c = String(get(obj, "choice_c", "c", "antwort_c")).trim();
-      const d = String(get(obj, "choice_d", "d", "antwort_d")).trim();
-
-      const hint = String(get(obj, "hint", "hinweis", "clue", "tip")).trim();
-
+      const prompt = String(get(obj, "question", "frage", "prompt", "q")).trim();
+      const a = String(get(obj, "choice_a", "a")).trim();
+      const b = String(get(obj, "choice_b", "b")).trim();
+      const c = String(get(obj, "choice_c", "c")).trim();
+      const d = String(get(obj, "choice_d", "d")).trim();
+      const choices = [a, b, c, d].filter((x) => x !== "");
+      if (!prompt) return;
+      if (choices.length < 2) throw new Error(`Row ${idx + 2}: need at least 2 choices.`);
       let correctIndex = null;
-
-      const ciRaw = get(obj, "correct_index", "korrekt_index");
-      if (String(ciRaw).trim() !== "") {
-        const n = toIntOrNull(ciRaw);
-        if (n !== null) correctIndex = n;
-      }
-      if (correctIndex === null) {
+      const ci = get(obj, "correct_index", "korrekt_index");
+      if (String(ci).trim() !== "" && Number.isFinite(Number(ci))) correctIndex = Number(ci);
+      if (correctIndex == null) {
         const cl = get(obj, "correct_letter", "korrekt_buchstabe");
         const li = letterToIndex(cl);
-        if (li !== null) correctIndex = li;
+        if (li != null) correctIndex = li;
       }
-      if (correctIndex === null) {
-        const ct = String(get(obj, "correct_text", "korrekt_text")).trim();
-        if (ct) {
-          const choices = [a, b, c, d];
-          const found = choices.findIndex((x) => String(x).trim() === ct);
-          if (found >= 0) correctIndex = found;
-        }
-      }
-
-      const rawChoices = [a, b, c, d];
-      const presentChoices = rawChoices.map((t, i) => ({ t, i })).filter((x) => x.t.trim() !== "");
-
-      if (!question) continue;
-      if (presentChoices.length < 2) throw new Error(`Row ${r + 2}: Question has fewer than 2 answer options.`);
-      if (correctIndex === null) throw new Error(`Row ${r + 2}: Missing correct answer (correct_index, correct_letter, or correct_text).`);
-
-      const mappedCorrectPos = presentChoices.findIndex((x) => x.i === correctIndex);
-      if (mappedCorrectPos < 0) throw new Error(`Row ${r + 2}: Correct answer points to an empty option.`);
-
-      const q = {
-        quiz: quizName,
-        question,
-        hint,
-        choices: presentChoices.map((x) => x.t),
-        correctIndex: mappedCorrectPos,
-      };
-      if (!bankLocal[quizName]) bankLocal[quizName] = [];
-      bankLocal[quizName].push(q);
-    }
-
-    const quizNames = Object.keys(bankLocal);
-    if (quizNames.length === 0) throw new Error("No valid questions found. Check headers and columns.");
-    quizNames.sort((x, y) => x.localeCompare(y, "de"));
-    return { bank: bankLocal, quizNames, delimiter };
-  }
-
-  function persistSavedImport(data) {
-    setJSON(QUIZ_STORAGE_KEY, {
-      name: data.name || "Saved CSV",
-      text: data.text || "",
-      delimiter: data.delimiter || ";",
-      quizNames: data.quizNames || [],
-      totalQuestions: data.totalQuestions || 0,
-      savedAt: Date.now(),
+      if (correctIndex == null) throw new Error(`Row ${idx + 2}: missing correct answer.`);
+      if (correctIndex >= choices.length) throw new Error(`Row ${idx + 2}: correct points to empty option.`);
+      questions.push({
+        id: uid("q"),
+        prompt,
+        choices,
+        correctIndex,
+        hint: String(obj.hint || obj.clue || "").trim(),
+        setName: name,
+        subjectId: subjectRef?.subjectId || null,
+        subjectName: subjectRef?.subjectName || "",
+      });
     });
+
+    if (!questions.length) throw new Error("No valid questions found.");
+    return {
+      id: uid("set"),
+      name,
+      csvText,
+      delimiter,
+      questions,
+      quizNames: [],
+      totalQuestions: questions.length,
+      subjectRef,
+      updatedAt: Date.now(),
+      lastScore: null,
+      lastUsedAt: null,
+    };
   }
 
-  function applyImportResult(
-    built,
-    { fileName = "CSV import", sourceText = null, fromSaved = false, subjectRef = null } = {}
-  ) {
-    bank = built.bank;
-    currentSubjectRef = subjectRef || null;
+  function renderCsvHelp() {
+    if (els.csvHelp) els.csvHelp.textContent = csvTemplate;
+  }
 
-    els.quizSelect.innerHTML = "";
-    built.quizNames.forEach((name) => {
+  function renderImportedSelect() {
+    els.importedSelect.innerHTML = "";
+    state.data.sets.forEach((set) => {
       const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      els.quizSelect.appendChild(opt);
+      opt.value = set.id;
+      opt.textContent = `${set.name} (${set.totalQuestions})`;
+      els.importedSelect.appendChild(opt);
     });
+  }
 
-    els.quizSelect.disabled = false;
-    els.startBtn.disabled = false;
-    els.resetBtn.disabled = false;
-
-    const totalQuestions = Object.values(bank).reduce((acc, arr) => acc + arr.length, 0);
-    const delimText = built.delimiter === "\t" ? "\\t" : built.delimiter;
-    const prefix = fromSaved ? "Restored saved import" : "Import successful";
-    const linkNote = subjectRef ? ` Linked to ${subjectRef.subjectName || "subject"} — ${subjectRef.fileName || "task"}.` : "";
-    setStatus(
-      `${prefix}: ${built.quizNames.length} set(s), ${totalQuestions} question(s). Delimiter: "${delimText}". Source: ${fileName || "CSV"}.${linkNote}`,
-      "ok"
-    );
-
-    if (sourceText && !fromSaved) {
-      persistSavedImport({
-        name: fileName,
-        text: sourceText,
-        delimiter: built.delimiter,
-        quizNames: built.quizNames,
-        totalQuestions,
-        subjectRef,
+  function renderTopics() {
+    const container = els.topicSelect;
+    if (!container) return;
+    container.innerHTML = "";
+    state.subjects.forEach((subj) => {
+      const wrap = document.createElement("label");
+      wrap.className = "topic-pill";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.value = subj.id;
+      input.checked = state.selectedTopicIds.has(subj.id);
+      input.addEventListener("change", () => {
+        if (input.checked) state.selectedTopicIds.add(subj.id);
+        else state.selectedTopicIds.delete(subj.id);
+        saveSourceState();
+        renderSummary();
       });
-      void saveRemoteQuizSet({
-        name: fileName,
-        csvText: sourceText,
-        quizNames: built.quizNames,
-        totalQuestions,
-        subjectRef,
+      wrap.appendChild(input);
+      wrap.append(subj.name || "Subject");
+      container.appendChild(wrap);
+    });
+  }
+
+  function renderLibraryTopics() {
+    const list = els.topicList;
+    if (!list) return;
+    list.innerHTML = "";
+    const term = (els.topicSearch?.value || "").toLowerCase();
+    const sort = els.topicSort?.value || "az";
+    const subjects = state.subjects.slice();
+    subjects.sort((a, b) => {
+      if (sort === "az") return (a.name || "").localeCompare(b.name || "");
+      if (sort === "recent")
+        return (b.quizLast || 0) - (a.quizLast || 0);
+      if (sort === "weak")
+        return (a.quizAccuracy || 0) - (b.quizAccuracy || 0);
+      return 0;
+    });
+    const filtered = subjects.filter((s) => (s.name || "").toLowerCase().includes(term));
+    if (!filtered.length) {
+      const div = document.createElement("div");
+      div.className = "empty";
+      div.textContent = "No topics match.";
+      list.appendChild(div);
+      return;
+    }
+    filtered.forEach((subj) => {
+      const card = document.createElement("div");
+      card.className = "library-card topic-card";
+      const row = document.createElement("div");
+      row.className = "library-row";
+      const name = document.createElement("div");
+      name.className = "library-title";
+      name.textContent = subj.name || "Subject";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = state.selectedTopicIds.has(subj.id);
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) state.selectedTopicIds.add(subj.id);
+        else state.selectedTopicIds.delete(subj.id);
+        saveSourceState();
+        renderTopics();
+        renderSummary();
+      });
+      row.appendChild(name);
+      row.appendChild(checkbox);
+      const meta = document.createElement("div");
+      meta.className = "library-meta";
+      meta.textContent = subj.quizAccuracy != null ? `Accuracy ${subj.quizAccuracy}%` : "No data";
+      card.appendChild(row);
+      card.appendChild(meta);
+      list.appendChild(card);
+    });
+  }
+
+  function renderImportedList() {
+    const list = els.importedList;
+    if (!list) return;
+    list.innerHTML = "";
+    const term = (els.importedSearch?.value || "").toLowerCase();
+    const filtered = state.data.sets.filter((s) => (s.name || "").toLowerCase().includes(term));
+    if (!filtered.length) {
+      const div = document.createElement("div");
+      div.className = "empty";
+      div.textContent = "No imported sets.";
+      list.appendChild(div);
+      return;
+    }
+    filtered.forEach((set) => {
+      const card = document.createElement("div");
+      card.className = "library-card";
+      const row = document.createElement("div");
+      row.className = "library-row";
+      const title = document.createElement("div");
+      title.className = "library-title";
+      title.textContent = set.name;
+      const meta = document.createElement("div");
+      meta.className = "library-meta";
+      meta.textContent = `${set.totalQuestions} questions • Updated ${new Date(set.updatedAt || Date.now()).toLocaleDateString()}`;
+      row.appendChild(title);
+      card.appendChild(row);
+      card.appendChild(meta);
+      const actions = document.createElement("div");
+      actions.className = "library-actions-row";
+      const previewBtn = document.createElement("button");
+      previewBtn.className = "chip-btn";
+      previewBtn.textContent = "Preview";
+      previewBtn.addEventListener("click", () => previewSet(set));
+      actions.appendChild(previewBtn);
+      const renameBtn = document.createElement("button");
+      renameBtn.className = "chip-btn";
+      renameBtn.textContent = "Rename";
+      renameBtn.addEventListener("click", () => renameSet(set.id));
+      actions.appendChild(renameBtn);
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "chip-btn";
+      removeBtn.textContent = "Remove";
+      removeBtn.addEventListener("click", () => removeSet(set.id));
+      actions.appendChild(removeBtn);
+      card.appendChild(actions);
+      list.appendChild(card);
+    });
+  }
+
+  function previewSet(set) {
+    const preview = set.questions.slice(0, 3).map((q, idx) => `${idx + 1}) ${q.prompt}`).join("\n");
+    alert(`Preview: ${set.name}\n\n${preview}`);
+  }
+
+  function renameSet(id) {
+    const set = state.data.sets.find((s) => s.id === id);
+    if (!set) return;
+    const next = prompt("Rename set", set.name || "");
+    if (next == null) return;
+    set.name = next || set.name;
+    set.updatedAt = Date.now();
+    saveData();
+    renderImportedSelect();
+    renderImportedList();
+    renderSummary();
+  }
+
+  function removeSet(id) {
+    if (!confirm("Remove this set?")) return;
+    state.data.sets = state.data.sets.filter((s) => s.id !== id);
+    saveData();
+    renderImportedSelect();
+    renderImportedList();
+    renderSummary();
+  }
+
+  function renderSummary() {
+    const set = state.data.sets.find((s) => s.id === els.importedSelect?.value);
+    const sourceLabel =
+      state.source === "imported"
+        ? set ? set.name : "No set"
+        : state.source === "topics"
+          ? `${state.selectedTopicIds.size || 0} topic(s)`
+          : state.source === "mixed"
+            ? `${set ? set.name + " + " : ""}${state.selectedTopicIds.size} topic(s)`
+            : "Weak areas";
+    els.summaryMeta.textContent = sourceLabel;
+    els.summaryMode.textContent = `${state.mode} • ${state.size} • Q-shuffle ${els.shuffleQuestions.checked ? "on" : "off"} • A-shuffle ${els.shuffleAnswers.checked ? "on" : "off"}`;
+  }
+
+  function validateSource() {
+    if (state.source === "imported" && !els.importedSelect.value) return false;
+    if (state.source === "topics" && !state.selectedTopicIds.size) return false;
+    if (state.source === "mixed" && !els.importedSelect.value && !state.selectedTopicIds.size) return false;
+    return true;
+  }
+
+  function updateSummaryStrip() {
+    renderSummary();
+    els.startBtn.disabled = !validateSource();
+  }
+
+  function calcAvailableQuestions(source) {
+    let pool = [];
+    const set = state.data.sets.find((s) => s.id === els.importedSelect.value);
+    if (source === "imported" && set) pool = set.questions;
+    if (source === "topics") {
+      const ids = new Set(state.selectedTopicIds);
+      state.data.sets.forEach((s) => {
+        if (s.subjectRef && ids.has(s.subjectRef.subjectId)) pool.push(...s.questions);
       });
     }
-  }
-
-  function restoreSavedImport() {
-    const saved = getJSON(QUIZ_STORAGE_KEY, null);
-    if (!saved || !saved.text) return false;
-    try {
-      const built = buildQuestionBank(saved.text);
-      applyImportResult(built, {
-        fileName: saved.name || "Saved CSV",
-        fromSaved: true,
-        subjectRef: saved.subjectRef || null,
+    if (source === "mixed") {
+      if (set) pool.push(...set.questions);
+      const ids = new Set(state.selectedTopicIds);
+      state.data.sets.forEach((s) => {
+        if (s.subjectRef && ids.has(s.subjectRef.subjectId)) pool.push(...s.questions);
       });
-      return true;
-    } catch (err) {
-      console.error(err);
-      setStatus(`Saved import could not be loaded. Please re-import. (${err.message})`, "error");
-      return false;
     }
+    if (source === "weak") {
+      state.data.sets.forEach((s) => pool.push(...s.questions));
+    }
+    return pool;
   }
 
-  function showImport() {
-    els.importCard.classList.remove("hidden");
-    els.quizCard.classList.add("hidden");
-    els.resultCard.classList.add("hidden");
-  }
-
-  function showQuiz() {
-    els.importCard.classList.add("hidden");
-    els.quizCard.classList.remove("hidden");
-    els.resultCard.classList.add("hidden");
-  }
-
-  function showResults() {
-    els.importCard.classList.add("hidden");
-    els.quizCard.classList.add("hidden");
-    els.resultCard.classList.remove("hidden");
-  }
-
-  function resetAll() {
-    bank = {};
-    currentQuizName = "";
-    questions = [];
-    answers = [];
-    idx = 0;
-    score = 0;
-    currentSubjectRef = null;
-    activeSessionStartMs = null;
-    els.quizSelect.innerHTML = `<option value="">Import first…</option>`;
-    els.quizSelect.disabled = true;
-    els.startBtn.disabled = true;
-    els.resetBtn.disabled = true;
-    els.csvFile.value = "";
-    setStatus("Ready. Import a CSV to begin.", "info");
-    showImport();
-  }
-
-  function renderQuestion() {
-    const q = questions[idx];
-    const a = answers[idx];
-
-    els.quizTitle.textContent = currentQuizName;
-    els.quizMeta.textContent = `${questions.length} question${questions.length === 1 ? "" : "s"}`;
-    els.qCounter.textContent = `Question ${idx + 1} / ${questions.length}`;
-    els.questionText.textContent = q.question;
-
-    const hasHint = !!(q.hint && q.hint.trim());
-    els.hintBtn.disabled = !hasHint;
-    els.hintText.textContent = hasHint ? q.hint : "";
-    els.hintText.classList.add("hidden");
-
-    els.progressBar.style.width = `${Math.round((idx / questions.length) * 100)}%`;
-    els.scoreText.textContent = `${score} / ${questions.length}`;
-
-    els.prevBtn.disabled = idx === 0;
-    els.nextBtn.disabled = true;
-    els.feedback.textContent = "";
-    els.choices.innerHTML = "";
-
-    let displayChoices = q.choices.map((text, originalIndex) => ({ text, originalIndex }));
-    let map = displayChoices.map((x) => x.originalIndex);
-
-    if (els.shuffleAnswers.checked) {
-      if (a && Array.isArray(a.shuffledMap)) {
-        map = a.shuffledMap.slice();
-        displayChoices = map.map((originalIndex) => ({ text: q.choices[originalIndex], originalIndex }));
-      } else {
-        const indices = q.choices.map((_, i) => i);
-        shuffleArray(indices);
-        map = indices;
-        displayChoices = map.map((originalIndex) => ({ text: q.choices[originalIndex], originalIndex }));
-        if (a) a.shuffledMap = map.slice();
+  function pickQuestions(pool) {
+    if (!pool.length) return [];
+    const size = state.size === "all" ? pool.length : Math.min(Number(state.size), pool.length);
+    let ordered = pool.slice();
+    if (state.source === "weak" || state.mode === "weak") {
+      const weighted = [];
+      ordered.forEach((q) => {
+        const st = state.stats[q.id] || {};
+        const acc = st.timesSeen ? st.timesCorrect / st.timesSeen : 0;
+        const confLow = (st.confidenceCounts?.low || 0);
+        const weight = (1 - acc) * 2 + confLow * 0.5 + (st.lastAnsweredCorrect ? 0 : 1);
+        weighted.push({ q, w: Math.max(0.1, weight) });
+      });
+      const picked = [];
+      for (let i = 0; i < size; i++) {
+        const totalW = weighted.reduce((acc, x) => acc + x.w, 0);
+        if (!totalW) break;
+        let r = Math.random() * totalW;
+        let chosen = weighted[0];
+        for (const item of weighted) {
+          r -= item.w;
+          if (r <= 0) {
+            chosen = item;
+            break;
+          }
+        }
+        picked.push(chosen.q);
       }
-    } else if (a) {
-      a.shuffledMap = null;
+      return picked;
     }
+    if (els.shuffleQuestions.checked) shuffleArray(ordered);
+    return ordered.slice(0, size);
+  }
 
-    displayChoices.forEach((cObj, displayIndex) => {
+  function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  }
+
+  function startSession(fromQuestions = null) {
+    const pool = fromQuestions || calcAvailableQuestions(state.source);
+    const questions = fromQuestions ? pool.slice() : pickQuestions(pool);
+    if (!questions.length) {
+      alert("No questions available for this selection.");
+      return;
+    }
+    const session = {
+      id: uid("sess"),
+      mode: state.mode,
+      source: state.source,
+      settings: {
+        size: state.size,
+        shuffleQuestions: !!els.shuffleQuestions.checked,
+        shuffleAnswers: !!els.shuffleAnswers.checked,
+        timer: !!els.sessionTimer.checked,
+      },
+      questions: questions.map((q) => ({
+        ...q,
+        shuffledAnswers: null,
+      })),
+      answers: [],
+      flagged: new Set(),
+      currentIndex: 0,
+      startedAt: Date.now(),
+      elapsedMs: 0,
+    };
+    state.session = session;
+    saveSessionState();
+    renderSession();
+    showRunner();
+    startTimer();
+  }
+
+  function saveSessionState() {
+    if (!state.session) {
+      localStorage.removeItem(QUIZ_SESSION_KEY);
+      return;
+    }
+    const payload = {
+      ...state.session,
+      flagged: Array.from(state.session.flagged || []),
+    };
+    setJSON(QUIZ_SESSION_KEY, payload);
+  }
+
+  function loadSessionState() {
+    const saved = getJSON(QUIZ_SESSION_KEY, null);
+    if (!saved) return;
+    saved.flagged = new Set(saved.flagged || []);
+    state.session = saved;
+    els.resumeHint.hidden = false;
+    els.resumeText.textContent = `Progress ${saved.currentIndex}/${saved.questions.length}`;
+    els.continueSessionBtn.hidden = false;
+    if (state.session.settings?.timer) startTimer();
+  }
+
+  function discardResume() {
+    state.session = null;
+    stopTimer();
+    localStorage.removeItem(QUIZ_SESSION_KEY);
+    els.resumeHint.hidden = true;
+    els.continueSessionBtn.hidden = true;
+  }
+
+  function showRunner() {
+    els.resultCard?.classList.add("hidden");
+    document.getElementById("quizRunner")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function startTimer() {
+    if (state.timerHandle) clearInterval(state.timerHandle);
+    if (!state.session || !state.session.settings.timer) {
+      els.runTimer.textContent = "00:00";
+      return;
+    }
+    const base = state.session.startedAt || Date.now();
+    state.timerHandle = setInterval(() => {
+      const now = Date.now();
+      const elapsed = now - base;
+      els.runTimer.textContent = formatMs(elapsed);
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (state.timerHandle) clearInterval(state.timerHandle);
+    state.timerHandle = null;
+  }
+
+  function renderSession() {
+    const s = state.session;
+    if (!s) return;
+    const q = s.questions[s.currentIndex];
+    if (!q) return;
+    els.runTitle.textContent = q.setName || "Session";
+    els.runMeta.textContent = `${s.currentIndex + 1}/${s.questions.length}`;
+    els.qCounter.textContent = `Question ${s.currentIndex + 1} of ${s.questions.length}`;
+    els.questionText.textContent = q.prompt;
+    els.feedback.textContent = "";
+    els.confidenceRow.classList.add("hidden");
+    els.choices.innerHTML = "";
+    const answer = s.answers[s.currentIndex];
+    let displayChoices = q.choices.map((text, idx) => ({ text, idx }));
+    if (s.settings.shuffleAnswers) {
+      if (answer && answer.shuffled) displayChoices = answer.shuffled;
+      else {
+        const copy = displayChoices.slice();
+        shuffleArray(copy);
+        displayChoices = copy;
+        if (answer) answer.shuffled = displayChoices;
+      }
+    }
+    displayChoices.forEach((choice, displayIdx) => {
       const btn = document.createElement("button");
       btn.className = "quiz-choice";
       btn.type = "button";
-      btn.dataset.displayIndex = String(displayIndex);
-      btn.textContent = cObj.text;
-
-      if (a && a.selectedDisplayIndex != null) {
-        const isCorrect = displayIndex === a.correctDisplayIndex;
-        const isSelected = displayIndex === a.selectedDisplayIndex;
-        if (isCorrect) btn.classList.add("correct");
-        if (isSelected && !isCorrect) btn.classList.add("wrong");
+      btn.dataset.displayIdx = String(displayIdx);
+      btn.textContent = choice.text;
+      if (answer && answer.selected != null) {
+        const correctDisplay = displayChoices.findIndex((c) => c.idx === q.correctIndex);
+        if (displayIdx === correctDisplay) btn.classList.add("correct");
+        if (displayIdx === answer.selected && displayIdx !== correctDisplay) btn.classList.add("wrong");
         btn.disabled = true;
-        els.nextBtn.disabled = false;
-        els.feedback.textContent = a.isCorrect ? "Correct." : "Incorrect.";
-        els.progressBar.style.width = `${Math.round(((idx + 1) / questions.length) * 100)}%`;
       } else {
-        btn.addEventListener("click", () => selectAnswer(displayIndex, map, q));
+        btn.addEventListener("click", () => selectAnswer(displayIdx));
       }
       els.choices.appendChild(btn);
     });
+    updateProgress();
+    updateNavButtons();
+    updateFlagUi();
+    renderSessionSummaryStrip();
   }
 
-  function selectAnswer(selectedDisplayIndex, map, q) {
-    const selectedOriginal = map[selectedDisplayIndex];
-    const correctOriginal = q.correctIndex;
-    const correctDisplayIndex = map.findIndex((originalIndex) => originalIndex === correctOriginal);
-    const isCorrect = selectedOriginal === correctOriginal;
+  function updateProgress() {
+    const s = state.session;
+    if (!s) return;
+    const pct = Math.round((s.currentIndex / s.questions.length) * 100);
+    els.progressBar.style.width = `${pct}%`;
+  }
 
-    answers[idx] = {
-      selectedDisplayIndex,
-      correctDisplayIndex,
+  function updateNavButtons() {
+    const s = state.session;
+    if (!s) return;
+    els.prevBtn.disabled = s.currentIndex === 0;
+    const ans = s.answers[s.currentIndex];
+    els.nextBtn.disabled = !ans;
+  }
+
+  function updateFlagUi() {
+    const s = state.session;
+    if (!s) return;
+    const flagged = s.flagged.has(s.questions[s.currentIndex].id);
+    els.flagBtn.classList.toggle("chip-btn-primary", flagged);
+    els.flagBtn.textContent = flagged ? "Flagged" : "Flag";
+  }
+
+  function selectAnswer(displayIdx) {
+    const s = state.session;
+    if (!s) return;
+    const q = s.questions[s.currentIndex];
+    let displayChoices = q.choices.map((text, idx) => ({ text, idx }));
+    if (s.settings.shuffleAnswers && s.answers[s.currentIndex]?.shuffled) {
+      displayChoices = s.answers[s.currentIndex].shuffled;
+    } else if (s.settings.shuffleAnswers) {
+      shuffleArray(displayChoices);
+    }
+    const selectedOriginal = displayChoices[displayIdx].idx;
+    const correctDisplay = displayChoices.findIndex((c) => c.idx === q.correctIndex);
+    const isCorrect = selectedOriginal === q.correctIndex;
+    s.answers[s.currentIndex] = {
+      selected: displayIdx,
+      correctDisplay,
       isCorrect,
-      shuffledMap: els.shuffleAnswers.checked ? map.slice() : null,
+      shuffled: s.settings.shuffleAnswers ? displayChoices : null,
+      answeredAt: Date.now(),
     };
-    if (isCorrect) score++;
-
+    if (s.mode === "study") {
+      els.feedback.textContent = isCorrect ? "Correct." : "Incorrect.";
+      els.confidenceRow.classList.remove("hidden");
+    } else {
+      els.feedback.textContent = "";
+    }
     els.choices.querySelectorAll(".quiz-choice").forEach((btn) => {
       btn.disabled = true;
-      const di = Number(btn.dataset.displayIndex);
-      if (di === correctDisplayIndex) btn.classList.add("correct");
-      if (di === selectedDisplayIndex && di !== correctDisplayIndex) btn.classList.add("wrong");
+      const di = Number(btn.dataset.displayIdx);
+      if (di === correctDisplay) btn.classList.add("correct");
+      if (di === displayIdx && di !== correctDisplay) btn.classList.add("wrong");
     });
-
-    els.feedback.textContent = isCorrect ? "Correct." : "Incorrect.";
-    els.nextBtn.disabled = false;
-    els.scoreText.textContent = `${score} / ${questions.length}`;
-    els.progressBar.style.width = `${Math.round(((idx + 1) / questions.length) * 100)}%`;
-  }
-
-  function startQuiz() {
-    currentQuizName = els.quizSelect.value || Object.keys(bank)[0];
-    questions = (bank[currentQuizName] || []).slice();
-    if (els.shuffleQuestions.checked) shuffleArray(questions);
-
-    idx = 0;
-    score = 0;
-    activeSessionStartMs = Date.now();
-    answers = questions.map(() => ({
-      selectedDisplayIndex: null,
-      correctDisplayIndex: null,
-      isCorrect: null,
-      shuffledMap: null,
-    }));
-
-    showQuiz();
-    renderQuestion();
-  }
-
-  function finishQuiz() {
-    const total = questions.length;
-    const pct = total ? Math.round((score / total) * 100) : 0;
-    els.resultSummary.textContent = `You answered ${score} of ${total} correctly (${pct}%).`;
-
-    recordQuizSession();
-
-    els.reviewList.innerHTML = "";
-    const wrong = [];
-    for (let i = 0; i < questions.length; i++) {
-      const q = questions[i];
-      const a = answers[i];
-      if (!a || a.isCorrect === true) continue;
-
-      const map = Array.isArray(a.shuffledMap) ? a.shuffledMap : q.choices.map((_, j) => j);
-      const correctDisplayIndex = a.correctDisplayIndex ?? map.findIndex((x) => x === q.correctIndex);
-      const selectedDisplayIndex = a.selectedDisplayIndex;
-
-      const correctText = q.choices[map[correctDisplayIndex]];
-      const selectedText = selectedDisplayIndex == null ? "(no answer)" : q.choices[map[selectedDisplayIndex]];
-      wrong.push({ i, q, selectedText, correctText });
-    }
-
-    if (wrong.length === 0) {
-      els.reviewList.innerHTML = `<p class="quiz-help">No incorrect answers. Nice work.</p>`;
-    } else {
-      wrong.forEach((w) => {
-        const div = document.createElement("div");
-        div.className = "quiz-review-item";
-        div.innerHTML = `
-          <strong>Question ${w.i + 1}: ${escapeHTML(w.q.question)}</strong>
-          <div class="line">Your answer: ${escapeHTML(w.selectedText)}</div>
-          <div class="line">Correct: ${escapeHTML(w.correctText)}</div>
-          ${w.q.hint ? `<div class="line">Hint: ${escapeHTML(w.q.hint)}</div>` : ""}
-        `;
-        els.reviewList.appendChild(div);
-      });
-    }
-    showResults();
+    updateNavButtons();
+    saveSessionState();
   }
 
   function goNext() {
-    if (idx < questions.length - 1) {
-      idx++;
-      renderQuestion();
+    const s = state.session;
+    if (!s) return;
+    if (s.currentIndex < s.questions.length - 1) {
+      s.currentIndex += 1;
+      saveSessionState();
+      renderSession();
     } else {
-      finishQuiz();
+      finishSession();
     }
   }
 
   function goPrev() {
-    if (idx > 0) {
-      idx--;
-      renderQuestion();
+    const s = state.session;
+    if (!s) return;
+    if (s.currentIndex > 0) {
+      s.currentIndex -= 1;
+      saveSessionState();
+      renderSession();
     }
   }
 
-  function loadSubjects() {
-    const list = getJSON(SUBJECTS_KEY, []);
-    return Array.isArray(list) ? list : [];
-  }
-
-  function loadSubjectPalette() {
-    const colors = getJSON(COLOR_PALETTE_KEY, null);
-    return Array.isArray(colors) && colors.length ? colors : DEFAULT_SUBJECT_COLORS;
-  }
-
-  function subjectColor(subj, idx) {
-    const palette = loadSubjectPalette();
-    if (subj && subj.color) return subj.color;
-    if (palette[idx % palette.length]) return palette[idx % palette.length];
-    return DEFAULT_SUBJECT_COLORS[idx % DEFAULT_SUBJECT_COLORS.length];
-  }
-
-  function renderSubjects() {
-    if (!els.quizSubjectTable) return;
-    const subjects = loadSubjects();
-    els.quizSubjectTable.innerHTML = "";
-    const hasBank = Object.keys(bank).length > 0;
-
-    if (!subjects.length) {
-      els.quizSubjectsEmpty?.classList.remove("hidden");
-      els.quizSubjectsBody?.classList.add("hidden");
-      return;
-    }
-
-    els.quizSubjectsEmpty?.classList.add("hidden");
-    els.quizSubjectsBody?.classList.remove("hidden");
-
-    subjects.forEach((subj, idx) => {
-      const files = Array.isArray(subj.files) ? subj.files : [];
-      const col = document.createElement("div");
-      col.className = "subject-column";
-
-      const header = document.createElement("div");
-      header.className = "subject-header";
-      const name = document.createElement("div");
-      name.textContent = subj.name || "Subject";
-      const dot = document.createElement("span");
-      dot.className = "subject-color-dot";
-      dot.style.background = subjectColor(subj, idx);
-      dot.title = "Subject color";
-      header.appendChild(name);
-      header.appendChild(dot);
-
-      const meta = document.createElement("div");
-      meta.className = "quiz-subject-meta";
-      meta.textContent = `${files.length} ${files.length === 1 ? "item" : "items"}`;
-
-      const fileList = document.createElement("div");
-      fileList.className = "quiz-subject-file-list";
-      if (!files.length) {
-        const empty = document.createElement("div");
-        empty.className = "quiz-subject-file";
-        empty.textContent = "No tasks/files yet.";
-        fileList.appendChild(empty);
-      } else {
-        files.forEach((file) => {
-          const row = document.createElement("div");
-          row.className = "quiz-subject-file";
-
-          const nameWrap = document.createElement("div");
-          nameWrap.className = "quiz-subject-file-name";
-          nameWrap.textContent = file.name || "Untitled file";
-
-          const actions = document.createElement("div");
-          actions.className = "quiz-subject-file-actions";
-
-          const addBtn = document.createElement("button");
-          addBtn.className = "chip-btn chip-btn-primary";
-          addBtn.type = "button";
-          addBtn.textContent = "Start quiz";
-          addBtn.addEventListener("click", () =>
-            startTaskQuiz(subj, file, hasBank)
-          );
-          actions.appendChild(addBtn);
-
-          row.appendChild(nameWrap);
-          row.appendChild(actions);
-          fileList.appendChild(row);
-        });
+  function finishSession() {
+    const s = state.session;
+    if (!s) return;
+    const end = Date.now();
+    stopTimer();
+    const elapsedMs = end - s.startedAt;
+    const total = s.questions.length;
+    const correct = s.answers.filter((a) => a && a.isCorrect).length;
+    const incorrectIds = [];
+    const flaggedIds = Array.from(s.flagged || []);
+    s.questions.forEach((q, idx) => {
+      const ans = s.answers[idx];
+      if (!ans || !ans.isCorrect) incorrectIds.push(q.id);
+      updateStats(q, ans, end - (ans?.answeredAt || end));
+    });
+    saveStats();
+    s.completedAt = end;
+    s.elapsedMs = elapsedMs;
+    s.result = {
+      accuracy: total ? Math.round((correct * 100) / total) : 0,
+      total,
+      correct,
+      incorrectIds,
+      flaggedIds,
+    };
+    renderResults();
+    saveSessionState();
+    state.data.sets.forEach((set) => {
+      if (s.questions.find((q) => q.setName === set.name)) {
+        set.lastUsedAt = end;
+        set.lastScore = s.result.accuracy;
       }
-
-      col.appendChild(header);
-      col.appendChild(meta);
-      col.appendChild(fileList);
-      els.quizSubjectTable.appendChild(col);
     });
+    saveData();
+    renderLibraryTopics();
   }
 
-  function setSubjectsVisible(show, { persist = true } = {}) {
-    const shouldShow = !!show;
-    const hasSubjects = !!(els.quizSubjectTable && els.quizSubjectTable.children.length);
-    if (els.quizSubjectsBody) els.quizSubjectsBody.classList.toggle("hidden", !shouldShow || !hasSubjects);
-    if (els.quizSubjectsEmpty) els.quizSubjectsEmpty.classList.toggle("hidden", !shouldShow || hasSubjects);
-    if (els.toggleSubjectsBtn) els.toggleSubjectsBtn.textContent = shouldShow ? "Hide subjects" : "Show subjects";
-    if (persist) setJSON(SUBJECT_VIS_KEY, { visible: shouldShow });
-  }
-
-  function applySavedSubjectVisibility() {
-    const saved = getJSON(SUBJECT_VIS_KEY, { visible: true });
-    const visible = saved && typeof saved.visible === "boolean" ? saved.visible : true;
-    setSubjectsVisible(visible, { persist: false });
-  }
-
-  function startTaskCsvImport(subj, file) {
-    if (!subj || !file) return;
-    pendingImportTarget = {
-      subjectId: subj.id,
-      fileId: file.id,
-      subjectName: subj.name || "Subject",
-      fileName: file.name || "Task",
+  function updateStats(question, answer, timeMs) {
+    if (!question) return;
+    const st = state.stats[question.id] || {
+      timesSeen: 0,
+      timesCorrect: 0,
+      lastSeenAt: 0,
+      confidenceCounts: { low: 0, med: 0, high: 0 },
     };
-    hiddenCsvInput.value = "";
-    hiddenCsvInput.click();
+    st.timesSeen += 1;
+    if (answer && answer.isCorrect) st.timesCorrect += 1;
+    st.lastSeenAt = Date.now();
+    st.lastAnsweredCorrect = !!(answer && answer.isCorrect);
+    const t = Number(timeMs) || 0;
+    if (t > 0) {
+      const prevTotal = st.avgTimeMs ? st.avgTimeMs * (st.timesSeen - 1) : 0;
+      st.avgTimeMs = Math.round((prevTotal + t) / st.timesSeen);
+    }
+    if (answer && answer.confidence) {
+      st.confidenceCounts[answer.confidence] = (st.confidenceCounts[answer.confidence] || 0) + 1;
+      st.lastConfidence = answer.confidence;
+    }
+    state.stats[question.id] = st;
   }
 
-  function startTaskQuiz(subj, file, hasBank) {
-    if (!subj || !file) return;
-    currentSubjectRef = {
-      subjectId: subj.id,
-      fileId: file.id,
-      subjectName: subj.name || "Subject",
-      fileName: file.name || "Task",
-    };
-    if (!hasBank) {
-      startTaskCsvImport(subj, file);
+  function renderResults() {
+    const s = state.session;
+    if (!s || !s.result) return;
+    els.resultCard.classList.remove("hidden");
+    els.resultSummary.textContent = `${s.result.correct}/${s.result.total} correct · ${s.result.accuracy}%`;
+    els.metricAccuracy.textContent = `${s.result.accuracy}%`;
+    els.metricTime.textContent = formatDuration(s.elapsedMs || 0);
+    const avg = s.result.total ? Math.round((s.elapsedMs || 0) / s.result.total) : 0;
+    els.metricAvg.textContent = `${Math.round(avg / 1000)}s`;
+    renderWeakAreas();
+    renderReviewList();
+    discardResume();
+  }
+
+  function renderWeakAreas() {
+    const list = els.weakAreasList;
+    if (!list) return;
+    list.innerHTML = "";
+    const bySubject = {};
+    state.session.questions.forEach((q, idx) => {
+      const subj = q.subjectName || "General";
+      const key = subj;
+      if (!bySubject[key]) bySubject[key] = { total: 0, incorrect: 0 };
+      bySubject[key].total += 1;
+      if (!state.session.answers[idx]?.isCorrect) bySubject[key].incorrect += 1;
+    });
+    const items = Object.entries(bySubject).map(([name, data]) => ({
+      name,
+      acc: data.total ? Math.round(((data.total - data.incorrect) * 100) / data.total) : 0,
+    }));
+    items.sort((a, b) => a.acc - b.acc);
+    const top = items.slice(0, 3);
+    if (!top.length) {
+      const div = document.createElement("div");
+      div.className = "quiz-help";
+      div.textContent = "No weak areas yet.";
+      list.appendChild(div);
       return;
     }
-    if (els.quizSelect && els.quizSelect.options.length) {
-      els.quizSelect.selectedIndex = 0;
-    }
-    startQuiz();
-  }
-
-  function recordQuizSession() {
-    if (!currentSubjectRef || !activeSessionStartMs) return;
-    const now = Date.now();
-    const elapsedMs = Math.max(0, now - activeSessionStartMs);
-    const durationMinutes = Math.max(1, Math.round(elapsedMs / 60000));
-    const sj = window.StudyPlanner && window.StudyPlanner.SessionJournal;
-    if (!sj || typeof sj.appendSession !== "function") return;
-    sj.appendSession({
-      id: `quiz_${now.toString(16)}`,
-      startedAt: new Date(activeSessionStartMs).toISOString(),
-      endedAt: new Date(now).toISOString(),
-      durationMinutes,
-      kind: "study",
-      subjectId: currentSubjectRef.subjectId || null,
-      fileId: currentSubjectRef.fileId || null,
-      tag: "quiz"
+    top.forEach((item) => {
+      const row = document.createElement("div");
+      row.className = "weak-row";
+      row.textContent = `${item.name}: ${item.acc}% accuracy`;
+      list.appendChild(row);
     });
-    activeSessionStartMs = null;
   }
 
-  els.csvFile.addEventListener("change", async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    try {
-      setStatus(`Reading file: ${file.name} ...`, "info");
-      const text = await file.text();
-      const built = buildQuestionBank(text);
-      applyImportResult(built, { fileName: file.name, sourceText: text });
-    } catch (err) {
-      console.error(err);
-      setStatus(`Import failed: ${err.message}`, "error");
-      els.quizSelect.disabled = true;
-      els.startBtn.disabled = true;
+  function renderReviewList() {
+    els.reviewList.innerHTML = "";
+    const wrong = [];
+    state.session.questions.forEach((q, idx) => {
+      const ans = state.session.answers[idx];
+      if (!ans || !ans.isCorrect) {
+        const choices = ans?.shuffled || q.choices.map((text, idx) => ({ text, idx }));
+        const correctDisplay = choices.findIndex((c) => c.idx === q.correctIndex);
+        const correctText = choices[correctDisplay]?.text || q.choices[q.correctIndex];
+        const selectedText =
+          ans && ans.selected != null ? choices[ans.selected]?.text || "(none)" : "(none)";
+        wrong.push({ q, correctText, selectedText });
+      }
+    });
+    if (!wrong.length) {
+      els.reviewList.innerHTML = `<p class="quiz-help">All correct. Great job.</p>`;
+      return;
     }
-  });
+    wrong.forEach((w) => {
+      const div = document.createElement("div");
+      div.className = "quiz-review-item";
+      div.innerHTML = `
+        <strong>${w.q.prompt}</strong>
+        <div class="line">Your answer: ${w.selectedText}</div>
+        <div class="line">Correct: ${w.correctText}</div>
+        ${w.q.hint ? `<div class="line">Hint: ${w.q.hint}</div>` : ""}
+      `;
+      els.reviewList.appendChild(div);
+    });
+  }
 
-  els.startBtn.addEventListener("click", startQuiz);
-  els.resetBtn.addEventListener("click", resetAll);
-  els.hintBtn.addEventListener("click", () => els.hintText.classList.toggle("hidden"));
-  els.nextBtn.addEventListener("click", goNext);
-  els.prevBtn.addEventListener("click", goPrev);
-  els.finishBtn.addEventListener("click", finishQuiz);
-  els.restartBtn.addEventListener("click", () => startQuiz());
-  els.backToImportBtn.addEventListener("click", () => showImport());
-  els.toggleSubjectsBtn?.addEventListener("click", () => {
-    const hasSubjects = !!(els.quizSubjectTable && els.quizSubjectTable.children.length);
-    const isVisible = hasSubjects
-      ? !els.quizSubjectsBody?.classList.contains("hidden")
-      : !els.quizSubjectsEmpty?.classList.contains("hidden");
-    setSubjectsVisible(!isVisible);
-  });
+  function startIncorrectReview() {
+    if (!state.session || !state.session.result) return;
+    const ids = state.session.result.incorrectIds;
+    if (!ids.length) return;
+    const questions = state.session.questions.filter((q) => ids.includes(q.id));
+    startSession(questions);
+  }
 
-  document.addEventListener("keydown", (ev) => {
-    if (els.quizCard.classList.contains("hidden")) return;
-    if (ev.key === "ArrowRight" && !els.nextBtn.disabled) goNext();
-    if (ev.key === "ArrowLeft") goPrev();
-  });
+  function startFlaggedRetry() {
+    if (!state.session) return;
+    const ids = Array.from(state.session.flagged || []);
+    if (!ids.length) return;
+    const questions = state.session.questions.filter((q) => ids.includes(q.id));
+    startSession(questions);
+  }
 
-  hiddenCsvInput.addEventListener("change", async (e) => {
+  function toggleFlag() {
+    const s = state.session;
+    if (!s) return;
+    const q = s.questions[s.currentIndex];
+    if (s.flagged.has(q.id)) s.flagged.delete(q.id);
+    else s.flagged.add(q.id);
+    saveSessionState();
+    updateFlagUi();
+  }
+
+  function applyConfidence(conf) {
+    const s = state.session;
+    if (!s || s.mode !== "study") return;
+    const ans = s.answers[s.currentIndex];
+    if (!ans) return;
+    ans.confidence = conf;
+    saveSessionState();
+    els.confidenceRow.classList.add("hidden");
+  }
+
+  function handleShortcut(ev) {
+    if (!state.session) return;
+    const activeElement = document.activeElement;
+    const isInput =
+      activeElement &&
+      (activeElement.tagName === "INPUT" ||
+        activeElement.tagName === "TEXTAREA" ||
+        activeElement.tagName === "SELECT");
+    if (isInput) return;
+    if (ev.key >= "1" && ev.key <= "4") {
+      const idx = Number(ev.key) - 1;
+      const btn = els.choices.querySelector(`.quiz-choice[data-display-idx="${idx}"]`);
+      if (btn && !btn.disabled) btn.click();
+    }
+    if (ev.key === "Enter") {
+      if (!els.nextBtn.disabled) goNext();
+    }
+    if (ev.key.toLowerCase() === "f") {
+      toggleFlag();
+    }
+    if (ev.key === "Escape") {
+      alert("Shortcuts: 1-4 answer, Enter next, F flag, Esc help.");
+    }
+  }
+
+  function attachEvents() {
+    els.sourceBtns.forEach((btn) =>
+      btn.addEventListener("click", () => {
+        els.sourceBtns.forEach((b) => b.classList.remove("seg-active"));
+        btn.classList.add("seg-active");
+        state.source = btn.dataset.source;
+        saveSourceState();
+        updateSummaryStrip();
+      })
+    );
+    els.modeBtns.forEach((btn) =>
+      btn.addEventListener("click", () => {
+        els.modeBtns.forEach((b) => b.classList.remove("seg-active"));
+        btn.classList.add("seg-active");
+        state.mode = btn.dataset.mode;
+        saveSourceState();
+        updateSummaryStrip();
+      })
+    );
+    els.sizeBtns.forEach((btn) =>
+      btn.addEventListener("click", () => {
+        els.sizeBtns.forEach((b) => b.classList.remove("seg-active"));
+        btn.classList.add("seg-active");
+        state.size = btn.dataset.size;
+        saveSourceState();
+        updateSummaryStrip();
+      })
+    );
+    ["shuffleQuestions", "shuffleAnswers", "sessionTimer"].forEach((key) => {
+      els[key]?.addEventListener("change", () => updateSummaryStrip());
+    });
+    els.importedSelect.addEventListener("change", () => {
+      saveSourceState();
+      updateSummaryStrip();
+    });
+    els.startBtn.addEventListener("click", () => startSession());
+    els.prevBtn.addEventListener("click", goPrev);
+    els.nextBtn.addEventListener("click", goNext);
+    els.finishBtn.addEventListener("click", finishSession);
+    els.flagBtn.addEventListener("click", toggleFlag);
+    els.resumeBtn?.addEventListener("click", () => {
+      renderSession();
+      showRunner();
+    });
+    els.discardResumeBtn?.addEventListener("click", discardResume);
+    els.continueSessionBtn?.addEventListener("click", () => {
+      renderSession();
+      showRunner();
+    });
+    els.reviewIncorrectBtn?.addEventListener("click", startIncorrectReview);
+    els.retryFlaggedBtn?.addEventListener("click", startFlaggedRetry);
+    els.newSessionBtn?.addEventListener("click", () => {
+      els.resultCard.classList.add("hidden");
+      document.getElementById("sessionBuilder")?.scrollIntoView({ behavior: "smooth" });
+    });
+    els.pickCsvBtn?.addEventListener("click", () => els.csvFile?.click());
+    els.csvFile?.addEventListener("change", handleCsvInput);
+    els.csvDropzone?.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      els.csvDropzone.classList.add("dragover");
+    });
+    els.csvDropzone?.addEventListener("dragleave", () => {
+      els.csvDropzone.classList.remove("dragover");
+    });
+    els.csvDropzone?.addEventListener("drop", (e) => {
+      e.preventDefault();
+      els.csvDropzone.classList.remove("dragover");
+      const file = e.dataTransfer?.files?.[0];
+      if (file) handleCsvFile(file);
+    });
+    els.importedSearch?.addEventListener("input", renderImportedList);
+    els.topicSearch?.addEventListener("input", renderLibraryTopics);
+    els.topicSort?.addEventListener("change", renderLibraryTopics);
+    els.toggleLibraryBtn?.addEventListener("click", () => {
+      state.libraryCollapsed = !state.libraryCollapsed;
+      els.libraryBody.hidden = state.libraryCollapsed;
+      els.toggleLibraryBtn.textContent = state.libraryCollapsed ? "Expand" : "Collapse";
+      saveLibraryState();
+    });
+    els.openImportBtn?.addEventListener("click", () => els.importPanel?.setAttribute("open", "open"));
+    els.openLibraryBtn?.addEventListener("click", () => {
+      els.librarySection?.scrollIntoView({ behavior: "smooth" });
+    });
+    els.confidenceBtns.forEach((btn) => {
+      btn.addEventListener("click", () => applyConfidence(btn.dataset.conf));
+    });
+    document.addEventListener("keydown", handleShortcut);
+  }
+
+  function handleCsvInput(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
+    handleCsvFile(file);
+  }
+
+  async function handleCsvFile(file) {
     try {
-      const target = pendingImportTarget;
-      pendingImportTarget = null;
-      setStatus(`Reading file: ${file.name} ...`, "info");
+      setStatus(`Importing ${file.name}…`, "info");
       const text = await file.text();
-      const built = buildQuestionBank(text);
-      applyImportResult(built, {
-        fileName: file.name,
-        sourceText: text,
-        subjectRef: target || null,
+      const set = parseCsvToSet(text, file.name.replace(/\.[^/.]+$/, ""), { subjectRef: null });
+      addSet(set);
+      setStatus(`Imported ${set.name} (${set.totalQuestions} questions).`, "ok");
+      renderPreview(set);
+      await saveRemoteQuizSet({
+        name: set.name,
+        csvText: set.csvText,
+        quizNames: set.quizNames,
+        totalQuestions: set.totalQuestions,
+        subjectRef: set.subjectRef,
       });
     } catch (err) {
       console.error(err);
-      setStatus(`Import failed: ${err.message}`, "error");
+      setStatus(err.message || "Import failed", "error");
     }
-  });
-
-  window.addEventListener("storage", (event) => {
-    if (event.key === SUBJECTS_KEY || event.key === COLOR_PALETTE_KEY) {
-      renderSubjects();
-      applySavedSubjectVisibility();
-    }
-    if (event.key === QUIZ_STORAGE_KEY) {
-      restoreSavedImport();
-    }
-  });
-
-  async function init() {
-    resetAll();
-    const remoteLoaded = await loadRemoteQuizSet();
-    if (!remoteLoaded) restoreSavedImport();
-    renderSubjects();
-    applySavedSubjectVisibility();
   }
 
-  void init();
+  function addSet(set) {
+    state.data.sets.unshift(set);
+    saveData();
+    computeSubjectMetrics();
+    renderImportedSelect();
+    renderImportedList();
+    renderLibraryTopics();
+    updateSummaryStrip();
+  }
+
+  function renderPreview(set) {
+    els.previewList.innerHTML = "";
+    set.questions.slice(0, 3).forEach((q, idx) => {
+      const div = document.createElement("div");
+      div.className = "preview-item";
+      div.innerHTML = `<strong>${idx + 1}) ${q.prompt}</strong><div>${q.choices.join(" · ")}</div>`;
+      els.previewList.appendChild(div);
+    });
+  }
+
+  async function init() {
+    renderCsvHelp();
+    loadSubjects();
+    loadData();
+    renderImportedSelect();
+    renderTopics();
+    renderImportedList();
+    renderLibraryTopics();
+    updateSummaryStrip();
+    loadSessionState();
+    attachEvents();
+    els.libraryBody.hidden = state.libraryCollapsed;
+    if (els.toggleLibraryBtn) els.toggleLibraryBtn.textContent = state.libraryCollapsed ? "Expand" : "Collapse";
+    const remoteLoaded = await loadRemoteQuizSet();
+    if (remoteLoaded) {
+      renderImportedSelect();
+      renderImportedList();
+      updateSummaryStrip();
+    }
+  }
+
+  init();
 })();

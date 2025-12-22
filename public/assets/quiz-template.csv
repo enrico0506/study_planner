@@ -1,0 +1,4 @@
+quiz;question_no;question;choice_A;choice_B;choice_C;choice_D;correct_letter;hint
+Sample Set;1;What is the capital of France?;Paris;Berlin;Madrid;Rome;A;Eiffel Tower city
+Sample Set;2;2 + 2 = ?;3;4;5;;B;Basic math
+Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air
