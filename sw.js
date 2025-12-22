@@ -1,6 +1,6 @@
 /* Study Planner service worker: app-shell caching + offline navigation fallback. */
 (() => {
-  const VERSION = "v9";
+  const VERSION = "v10";
   const SHELL_CACHE = `study-planner-shell-${VERSION}`;
   const RUNTIME_CACHE = `study-planner-runtime-${VERSION}`;
 
@@ -10,6 +10,7 @@
     "/calendar.html",
     "/stundenplan.html",
     "/karteikarten.html",
+    "/quiz.html",
     "/account.html",
     "/study-confidence-table.html",
     "/offline.html",
@@ -45,6 +46,7 @@
     "/src/calendar.js",
     "/src/stundenplan.js",
     "/src/karteikarten.js",
+    "/src/quiz.js",
     "/src/account.js",
     "/src/shared/sessionHeader.js",
     "/src/index/index.part1.js",
@@ -67,6 +69,7 @@
     "/src/styles/exam-mode.css",
     "/src/styles/insights.css",
     "/src/styles/karteikarten.css",
+    "/src/styles/quiz.css",
     "/src/styles/stundenplan.css"
   ];
 

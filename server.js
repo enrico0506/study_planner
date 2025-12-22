@@ -152,6 +152,7 @@ app.get("/index.html", (_req, res) => sendHtml(res, "index.html"));
 app.get("/calendar.html", (_req, res) => sendHtml(res, "calendar.html"));
 app.get("/stundenplan.html", (_req, res) => sendHtml(res, "stundenplan.html"));
 app.get("/karteikarten.html", (_req, res) => sendHtml(res, "karteikarten.html"));
+app.get("/quiz.html", (_req, res) => sendHtml(res, "quiz.html"));
 app.get("/account.html", (_req, res) => sendHtml(res, "account.html"));
 app.get("/study-confidence-table.html", (_req, res) =>
   sendHtml(res, "study-confidence-table.html")
