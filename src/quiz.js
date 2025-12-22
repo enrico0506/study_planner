@@ -27,9 +27,29 @@
     reviewList: document.getElementById("reviewList"),
     restartBtn: document.getElementById("restartBtn"),
     backToImportBtn: document.getElementById("backToImportBtn"),
+    toggleSubjectsBtn: document.getElementById("toggleSubjectsBtn"),
+    quizSubjectsBody: document.getElementById("quizSubjectsBody"),
+    quizSubjectsEmpty: document.getElementById("quizSubjectsEmpty"),
+    quizSubjectTable: document.getElementById("quizSubjectTable"),
   };
 
   if (!els.csvFile || !els.quizCard) return;
+
+  const QUIZ_STORAGE_KEY = "studyQuizSavedCsv_v1";
+  const SUBJECTS_KEY = "studySubjects_v1";
+  const SUBJECT_VIS_KEY = "studyQuizSubjectsVisible_v1";
+  const COLOR_PALETTE_KEY = "studyColorPalette_v1";
+  const DEFAULT_SUBJECT_COLORS = [
+    "#4f8bff",
+    "#4ec58a",
+    "#f77fb3",
+    "#f6a23c",
+    "#b18bff",
+    "#37c6c0",
+    "#f17575",
+    "#f4c74f",
+  ];
+  const STORAGE = (window.StudyPlanner && window.StudyPlanner.Storage) || null;
 
   let bank = {};
   let currentQuizName = "";
@@ -61,6 +81,24 @@
     els.importStatus.style.borderColor = style.border;
     els.importStatus.style.background = style.bg;
     els.importStatus.style.color = style.color;
+  }
+
+  function getJSON(key, fallback) {
+    if (STORAGE && STORAGE.getJSON) return STORAGE.getJSON(key, fallback);
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      return JSON.parse(raw);
+    } catch {
+      return fallback;
+    }
+  }
+
+  function setJSON(key, value) {
+    if (STORAGE && STORAGE.setJSON) return STORAGE.setJSON(key, value, { debounceMs: 0 });
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch {}
   }
 
   function normalizeHeader(h) {
@@ -240,6 +278,65 @@
     if (quizNames.length === 0) throw new Error("No valid questions found. Check headers and columns.");
     quizNames.sort((x, y) => x.localeCompare(y, "de"));
     return { bank: bankLocal, quizNames, delimiter };
+  }
+
+  function persistSavedImport(data) {
+    setJSON(QUIZ_STORAGE_KEY, {
+      name: data.name || "Saved CSV",
+      text: data.text || "",
+      delimiter: data.delimiter || ";",
+      quizNames: data.quizNames || [],
+      totalQuestions: data.totalQuestions || 0,
+      savedAt: Date.now(),
+    });
+  }
+
+  function applyImportResult(built, { fileName = "CSV import", sourceText = null, fromSaved = false } = {}) {
+    bank = built.bank;
+
+    els.quizSelect.innerHTML = "";
+    built.quizNames.forEach((name) => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      els.quizSelect.appendChild(opt);
+    });
+
+    els.quizSelect.disabled = false;
+    els.startBtn.disabled = false;
+    els.resetBtn.disabled = false;
+
+    const totalQuestions = Object.values(bank).reduce((acc, arr) => acc + arr.length, 0);
+    const delimText = built.delimiter === "\t" ? "\\t" : built.delimiter;
+    const prefix = fromSaved ? "Restored saved import" : "Import successful";
+    setStatus(
+      `${prefix}: ${built.quizNames.length} set(s), ${totalQuestions} question(s). Delimiter: "${delimText}". Source: ${fileName || "CSV"}.`,
+      "ok"
+    );
+
+    if (sourceText && !fromSaved) {
+      persistSavedImport({
+        name: fileName,
+        text: sourceText,
+        delimiter: built.delimiter,
+        quizNames: built.quizNames,
+        totalQuestions,
+      });
+    }
+  }
+
+  function restoreSavedImport() {
+    const saved = getJSON(QUIZ_STORAGE_KEY, null);
+    if (!saved || !saved.text) return false;
+    try {
+      const built = buildQuestionBank(saved.text);
+      applyImportResult(built, { fileName: saved.name || "Saved CSV", fromSaved: true });
+      return true;
+    } catch (err) {
+      console.error(err);
+      setStatus(`Saved import could not be loaded. Please re-import. (${err.message})`, "error");
+      return false;
+    }
   }
 
   function showImport() {
@@ -439,6 +536,131 @@
     }
   }
 
+  function loadSubjects() {
+    const list = getJSON(SUBJECTS_KEY, []);
+    return Array.isArray(list) ? list : [];
+  }
+
+  function loadSubjectPalette() {
+    const colors = getJSON(COLOR_PALETTE_KEY, null);
+    return Array.isArray(colors) && colors.length ? colors : DEFAULT_SUBJECT_COLORS;
+  }
+
+  function subjectColor(subj, idx) {
+    const palette = loadSubjectPalette();
+    if (subj && subj.color) return subj.color;
+    if (palette[idx % palette.length]) return palette[idx % palette.length];
+    return DEFAULT_SUBJECT_COLORS[idx % DEFAULT_SUBJECT_COLORS.length];
+  }
+
+  function averageConfidence(files) {
+    const arr = Array.isArray(files) ? files : [];
+    if (!arr.length) return null;
+    const total = arr.reduce((acc, f) => acc + (Number(f && f.confidence) || 0), 0);
+    return Math.round(total / arr.length);
+  }
+
+  function renderSubjects() {
+    if (!els.quizSubjectTable) return;
+    const subjects = loadSubjects();
+    els.quizSubjectTable.innerHTML = "";
+
+    if (!subjects.length) {
+      els.quizSubjectsEmpty?.classList.remove("hidden");
+      els.quizSubjectsBody?.classList.add("hidden");
+      return;
+    }
+
+    els.quizSubjectsEmpty?.classList.add("hidden");
+    els.quizSubjectsBody?.classList.remove("hidden");
+
+    subjects.forEach((subj, idx) => {
+      const files = Array.isArray(subj.files) ? subj.files : [];
+      const col = document.createElement("div");
+      col.className = "subject-column";
+
+      const header = document.createElement("div");
+      header.className = "subject-header";
+      const name = document.createElement("div");
+      name.textContent = subj.name || "Subject";
+      const dot = document.createElement("span");
+      dot.className = "subject-color-dot";
+      dot.style.background = subjectColor(subj, idx);
+      dot.title = "Subject color";
+      header.appendChild(name);
+      header.appendChild(dot);
+
+      const meta = document.createElement("div");
+      meta.className = "quiz-subject-meta";
+      const fileCount = `${files.length} ${files.length === 1 ? "item" : "items"}`;
+      meta.textContent = fileCount;
+      const avgConf = averageConfidence(files);
+      if (avgConf != null) {
+        const pill = document.createElement("span");
+        pill.className = "pill";
+        pill.textContent = `${avgConf}% conf`;
+        meta.appendChild(pill);
+      }
+
+      const meter = document.createElement("div");
+      meter.className = "subject-meter";
+      const fill = document.createElement("div");
+      fill.className = "subject-meter-fill";
+      const pct = avgConf == null ? 0 : Math.max(0, Math.min(100, avgConf));
+      fill.style.width = `${pct}%`;
+      fill.classList.add(pct < 40 ? "meter-low" : pct < 75 ? "meter-mid" : "meter-high");
+      meter.appendChild(fill);
+
+      const fileList = document.createElement("div");
+      fileList.className = "quiz-subject-file-list";
+      files.slice(0, 3).forEach((file) => {
+        const row = document.createElement("div");
+        row.className = "quiz-subject-file";
+        row.textContent = file.name || "Untitled file";
+        if (typeof file.confidence === "number") {
+          const confPill = document.createElement("span");
+          confPill.className = "pill";
+          confPill.textContent = `${Math.round(file.confidence)}%`;
+          row.appendChild(confPill);
+        }
+        fileList.appendChild(row);
+      });
+      if (files.length > 3) {
+        const more = document.createElement("div");
+        more.className = "quiz-subject-file";
+        more.textContent = `+${files.length - 3} more`;
+        fileList.appendChild(more);
+      }
+      if (!files.length) {
+        const empty = document.createElement("div");
+        empty.className = "quiz-subject-file";
+        empty.textContent = "No files yet.";
+        fileList.appendChild(empty);
+      }
+
+      col.appendChild(header);
+      col.appendChild(meta);
+      col.appendChild(meter);
+      col.appendChild(fileList);
+      els.quizSubjectTable.appendChild(col);
+    });
+  }
+
+  function setSubjectsVisible(show, { persist = true } = {}) {
+    const shouldShow = !!show;
+    const hasSubjects = !!(els.quizSubjectTable && els.quizSubjectTable.children.length);
+    if (els.quizSubjectsBody) els.quizSubjectsBody.classList.toggle("hidden", !shouldShow || !hasSubjects);
+    if (els.quizSubjectsEmpty) els.quizSubjectsEmpty.classList.toggle("hidden", !shouldShow || hasSubjects);
+    if (els.toggleSubjectsBtn) els.toggleSubjectsBtn.textContent = shouldShow ? "Hide subjects" : "Show subjects";
+    if (persist) setJSON(SUBJECT_VIS_KEY, { visible: shouldShow });
+  }
+
+  function applySavedSubjectVisibility() {
+    const saved = getJSON(SUBJECT_VIS_KEY, { visible: true });
+    const visible = saved && typeof saved.visible === "boolean" ? saved.visible : true;
+    setSubjectsVisible(visible, { persist: false });
+  }
+
   els.csvFile.addEventListener("change", async (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -446,26 +668,7 @@
       setStatus(`Reading file: ${file.name} ...`, "info");
       const text = await file.text();
       const built = buildQuestionBank(text);
-      bank = built.bank;
-
-      els.quizSelect.innerHTML = "";
-      built.quizNames.forEach((name) => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        els.quizSelect.appendChild(opt);
-      });
-
-      els.quizSelect.disabled = false;
-      els.startBtn.disabled = false;
-      els.resetBtn.disabled = false;
-
-      const totalQuestions = Object.values(bank).reduce((acc, arr) => acc + arr.length, 0);
-      const delimText = built.delimiter === "\t" ? "\\t" : built.delimiter;
-      setStatus(
-        `Import successful: ${built.quizNames.length} set(s), ${totalQuestions} question(s). Delimiter: "${delimText}".`,
-        "ok"
-      );
+      applyImportResult(built, { fileName: file.name, sourceText: text });
     } catch (err) {
       console.error(err);
       setStatus(`Import failed: ${err.message}`, "error");
@@ -482,6 +685,13 @@
   els.finishBtn.addEventListener("click", finishQuiz);
   els.restartBtn.addEventListener("click", () => startQuiz());
   els.backToImportBtn.addEventListener("click", () => showImport());
+  els.toggleSubjectsBtn?.addEventListener("click", () => {
+    const hasSubjects = !!(els.quizSubjectTable && els.quizSubjectTable.children.length);
+    const isVisible = hasSubjects
+      ? !els.quizSubjectsBody?.classList.contains("hidden")
+      : !els.quizSubjectsEmpty?.classList.contains("hidden");
+    setSubjectsVisible(!isVisible);
+  });
 
   document.addEventListener("keydown", (ev) => {
     if (els.quizCard.classList.contains("hidden")) return;
@@ -489,5 +699,22 @@
     if (ev.key === "ArrowLeft") goPrev();
   });
 
-  resetAll();
+  window.addEventListener("storage", (event) => {
+    if (event.key === SUBJECTS_KEY || event.key === COLOR_PALETTE_KEY) {
+      renderSubjects();
+      applySavedSubjectVisibility();
+    }
+    if (event.key === QUIZ_STORAGE_KEY) {
+      restoreSavedImport();
+    }
+  });
+
+  function init() {
+    resetAll();
+    restoreSavedImport();
+    renderSubjects();
+    applySavedSubjectVisibility();
+  }
+
+  init();
 })();

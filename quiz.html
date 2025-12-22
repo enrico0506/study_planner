@@ -205,6 +205,25 @@ Quiz 1;1;Was ist ...?;Aussage 1;Aussage 2;Aussage 3;;A;Denke an ...</pre>
           <div class="quiz-details-body" id="reviewList"></div>
         </details>
       </section>
+
+      <section class="quiz-card quiz-subjects-card">
+        <div class="quiz-card-head">
+          <div>
+            <p class="eyebrow">Subjects</p>
+            <h2>Your subjects (read only)</h2>
+            <p class="subtitle">Same grid as the board, handy while quizzing. Toggle visibility if you want more focus.</p>
+          </div>
+          <div class="quiz-buttons">
+            <button class="chip-btn" id="toggleSubjectsBtn" type="button">Hide subjects</button>
+          </div>
+        </div>
+        <div class="quiz-subjects-body" id="quizSubjectsBody">
+          <div class="table-wrapper">
+            <div class="subject-table" id="quizSubjectTable"></div>
+          </div>
+        </div>
+        <div class="quiz-subjects-empty hidden" id="quizSubjectsEmpty">No subjects yet. Create some on the Board to see them here.</div>
+      </section>
     </div>
   </div>
 
