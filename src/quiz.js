@@ -58,6 +58,8 @@
   let answers = [];
   let score = 0;
   let pendingImportTarget = null; // { subjectId, fileId, subjectName, fileName }
+  let currentSubjectRef = null; // { subjectId, fileId, subjectName, fileName }
+  let activeSessionStartMs = null;
 
   const hiddenCsvInput = document.createElement("input");
   hiddenCsvInput.type = "file";
@@ -303,6 +305,7 @@
     { fileName = "CSV import", sourceText = null, fromSaved = false, subjectRef = null } = {}
   ) {
     bank = built.bank;
+    currentSubjectRef = subjectRef || null;
 
     els.quizSelect.innerHTML = "";
     built.quizNames.forEach((name) => {
@@ -380,6 +383,8 @@
     answers = [];
     idx = 0;
     score = 0;
+    currentSubjectRef = null;
+    activeSessionStartMs = null;
     els.quizSelect.innerHTML = `<option value="">Import first…</option>`;
     els.quizSelect.disabled = true;
     els.startBtn.disabled = true;
@@ -486,6 +491,7 @@
 
     idx = 0;
     score = 0;
+    activeSessionStartMs = Date.now();
     answers = questions.map(() => ({
       selectedDisplayIndex: null,
       correctDisplayIndex: null,
@@ -501,6 +507,8 @@
     const total = questions.length;
     const pct = total ? Math.round((score / total) * 100) : 0;
     els.resultSummary.textContent = `You answered ${score} of ${total} correctly (${pct}%).`;
+
+    recordQuizSession();
 
     els.reviewList.innerHTML = "";
     const wrong = [];
@@ -701,6 +709,26 @@
     };
     hiddenCsvInput.value = "";
     hiddenCsvInput.click();
+  }
+
+  function recordQuizSession() {
+    if (!currentSubjectRef || !activeSessionStartMs) return;
+    const now = Date.now();
+    const elapsedMs = Math.max(0, now - activeSessionStartMs);
+    const durationMinutes = Math.max(1, Math.round(elapsedMs / 60000));
+    const sj = window.StudyPlanner && window.StudyPlanner.SessionJournal;
+    if (!sj || typeof sj.appendSession !== "function") return;
+    sj.appendSession({
+      id: `quiz_${now.toString(16)}`,
+      startedAt: new Date(activeSessionStartMs).toISOString(),
+      endedAt: new Date(now).toISOString(),
+      durationMinutes,
+      kind: "study",
+      subjectId: currentSubjectRef.subjectId || null,
+      fileId: currentSubjectRef.fileId || null,
+      tag: "quiz"
+    });
+    activeSessionStartMs = null;
   }
 
   els.csvFile.addEventListener("change", async (e) => {
