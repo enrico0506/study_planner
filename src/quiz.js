@@ -27,6 +27,7 @@
     csvDropzone: document.getElementById("csvDropzone"),
     pickCsvBtn: document.getElementById("pickCsvBtn"),
     csvFile: document.getElementById("csvFile"),
+    importSubjectSelect: document.getElementById("importSubjectSelect"),
     importStatus: document.getElementById("importStatus"),
     previewList: document.getElementById("previewList"),
     csvHelp: document.getElementById("csvHelp"),
@@ -412,6 +413,18 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
       wrap.append(subj.name || "Subject");
       container.appendChild(wrap);
     });
+
+    if (els.importSubjectSelect) {
+      const current = els.importSubjectSelect.value;
+      els.importSubjectSelect.innerHTML = `<option value="">No link</option>`;
+      state.subjects.forEach((subj) => {
+        const opt = document.createElement("option");
+        opt.value = subj.id;
+        opt.textContent = subj.name || "Subject";
+        if (current && current === subj.id) opt.selected = true;
+        els.importSubjectSelect.appendChild(opt);
+      });
+    }
   }
 
   function renderLibraryTopics() {
@@ -1146,7 +1159,9 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
     try {
       setStatus(`Importing ${file.name}…`, "info");
       const text = await file.text();
-      const set = parseCsvToSet(text, file.name.replace(/\.[^/.]+$/, ""), { subjectRef: null });
+      const set = parseCsvToSet(text, file.name.replace(/\.[^/.]+$/, ""), {
+        subjectRef: getImportSubjectRef(),
+      });
       addSet(set);
       setStatus(`Imported ${set.name} (${set.totalQuestions} questions).`, "ok");
       renderPreview(set);
@@ -1171,6 +1186,18 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
     renderImportedList();
     renderLibraryTopics();
     updateSummaryStrip();
+  }
+
+  function getImportSubjectRef() {
+    const id = els.importSubjectSelect?.value || "";
+    if (!id) return null;
+    const subj = state.subjects.find((s) => s.id === id);
+    return {
+      subjectId: id,
+      subjectName: subj?.name || "",
+      fileId: null,
+      fileName: "",
+    };
   }
 
   function renderPreview(set) {
