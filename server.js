@@ -256,6 +256,16 @@ function formatDbError(err) {
   return null;
 }
 
+const QUIZ_MAX_BYTES = 600_000; // ~600 KB safety cap per CSV
+
+function coerceQuizNames(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((x) => String(x || "").trim())
+    .filter(Boolean)
+    .slice(0, 50);
+}
+
 app.get("/api/me", async (req, res) => {
   if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
@@ -694,6 +704,92 @@ app.post("/api/state/restore", requireAuth, async (req, res) => {
     } catch {}
     console.error(err);
     res.status(500).json({ error: "Failed to restore version" });
+  }
+});
+
+// Quiz CSV storage (server-side)
+app.get("/api/quiz-sets/latest", requireAuth, async (req, res) => {
+  try {
+    const pool = getPool();
+    const result = await pool.query(
+      `
+        select id, name, csv_text, quiz_names, total_questions, subject_id, subject_name, file_id, file_name, updated_at
+        from quiz_sets
+        where user_id = $1
+        order by updated_at desc
+        limit 1
+      `,
+      [req.user.id]
+    );
+    const row = result.rows[0];
+    if (!row) return res.json({ quizSet: null });
+    res.json({
+      quizSet: {
+        id: row.id,
+        name: row.name,
+        csvText: row.csv_text,
+        quizNames: row.quiz_names || [],
+        totalQuestions: row.total_questions || 0,
+        subjectId: row.subject_id,
+        subjectName: row.subject_name,
+        fileId: row.file_id,
+        fileName: row.file_name,
+        updatedAt: row.updated_at
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    const dbMsg = formatDbError(err);
+    if (dbMsg) return res.status(500).json({ error: dbMsg });
+    res.status(500).json({ error: "Failed to load quiz set" });
+  }
+});
+
+app.post("/api/quiz-sets", requireAuth, async (req, res) => {
+  const name = String(req.body?.name || "Quiz set").trim().slice(0, 180) || "Quiz set";
+  const csvText = String(req.body?.csvText || "");
+  if (!csvText) return res.status(400).json({ error: "csvText required" });
+  const bytes = Buffer.byteLength(csvText, "utf8");
+  if (bytes > QUIZ_MAX_BYTES) return res.status(413).json({ error: "CSV too large" });
+
+  const quizNames = coerceQuizNames(req.body?.quizNames);
+  const totalQuestions = Number(req.body?.totalQuestions) || 0;
+  const subjectRef = req.body?.subjectRef || {};
+  const subjectId = subjectRef.subjectId ? String(subjectRef.subjectId).slice(0, 120) : null;
+  const fileId = subjectRef.fileId ? String(subjectRef.fileId).slice(0, 120) : null;
+  const subjectName = subjectRef.subjectName ? String(subjectRef.subjectName).slice(0, 240) : null;
+  const fileName = subjectRef.fileName ? String(subjectRef.fileName).slice(0, 240) : null;
+
+  try {
+    const pool = getPool();
+    const inserted = await pool.query(
+      `
+        insert into quiz_sets (user_id, name, csv_text, quiz_names, total_questions, subject_id, subject_name, file_id, file_name, updated_at)
+        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, now())
+        returning id, updated_at
+      `,
+      [
+        req.user.id,
+        name,
+        csvText,
+        quizNames,
+        Math.max(0, totalQuestions),
+        subjectId,
+        subjectName,
+        fileId,
+        fileName
+      ]
+    );
+    res.status(201).json({
+      ok: true,
+      id: inserted.rows[0]?.id || null,
+      updatedAt: inserted.rows[0]?.updated_at || null
+    });
+  } catch (err) {
+    console.error(err);
+    const dbMsg = formatDbError(err);
+    if (dbMsg) return res.status(500).json({ error: dbMsg });
+    res.status(500).json({ error: "Failed to save quiz set" });
   }
 });
 

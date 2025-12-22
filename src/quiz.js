@@ -110,6 +110,61 @@
     } catch {}
   }
 
+  async function saveRemoteQuizSet({ name, csvText, quizNames, totalQuestions, subjectRef }) {
+    try {
+      const res = await fetch("/api/quiz-sets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          csvText,
+          quizNames,
+          totalQuestions,
+          subjectRef: subjectRef || null,
+        }),
+      });
+      if (res.status === 401) return false;
+      if (!res.ok) {
+        console.warn("Quiz save failed", await res.text());
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.warn("Quiz save failed", err);
+      return false;
+    }
+  }
+
+  async function loadRemoteQuizSet() {
+    try {
+      const res = await fetch("/api/quiz-sets/latest");
+      if (res.status === 401) return false;
+      if (!res.ok) return false;
+      const data = await res.json();
+      if (!data || !data.quizSet || !data.quizSet.csvText) return false;
+      const subjectRef =
+        data.quizSet.subjectId || data.quizSet.fileId
+          ? {
+              subjectId: data.quizSet.subjectId || null,
+              fileId: data.quizSet.fileId || null,
+              subjectName: data.quizSet.subjectName || "",
+              fileName: data.quizSet.fileName || "",
+            }
+          : null;
+      const built = buildQuestionBank(data.quizSet.csvText);
+      applyImportResult(built, {
+        fileName: data.quizSet.name || "Saved quiz",
+        sourceText: data.quizSet.csvText,
+        fromSaved: true,
+        subjectRef,
+      });
+      return true;
+    } catch (err) {
+      console.warn("Quiz load failed", err);
+      return false;
+    }
+  }
+
   function normalizeHeader(h) {
     return String(h || "").trim().toLowerCase().replace(/\s+/g, "_");
   }
@@ -333,6 +388,13 @@
         name: fileName,
         text: sourceText,
         delimiter: built.delimiter,
+        quizNames: built.quizNames,
+        totalQuestions,
+        subjectRef,
+      });
+      void saveRemoteQuizSet({
+        name: fileName,
+        csvText: sourceText,
         quizNames: built.quizNames,
         totalQuestions,
         subjectRef,
@@ -786,12 +848,13 @@
     }
   });
 
-  function init() {
+  async function init() {
     resetAll();
-    restoreSavedImport();
+    const remoteLoaded = await loadRemoteQuizSet();
+    if (!remoteLoaded) restoreSavedImport();
     renderSubjects();
     applySavedSubjectVisibility();
   }
 
-  init();
+  void init();
 })();

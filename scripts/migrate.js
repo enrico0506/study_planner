@@ -77,6 +77,28 @@ async function main() {
       where used_at is null;
   `);
 
+  await client.query(`
+    create table if not exists quiz_sets (
+      id bigserial primary key,
+      user_id bigint not null references users(id) on delete cascade,
+      name text not null,
+      csv_text text not null,
+      quiz_names text[] not null default '{}',
+      total_questions integer not null default 0,
+      subject_id text null,
+      file_id text null,
+      subject_name text null,
+      file_name text null,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now()
+    );
+  `);
+
+  await client.query(`
+    create index if not exists quiz_sets_user_updated_idx
+      on quiz_sets(user_id, updated_at desc);
+  `);
+
   console.log("Migration complete.");
 }
 
