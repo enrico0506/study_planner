@@ -399,10 +399,9 @@
   background: rgba(255, 255, 255, 0.9);
   color: var(--ink);
   font-weight: 600;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  align-items: center;
 }
 
 .quiz-subject-file .pill {
@@ -416,11 +415,11 @@
 }
 
 .quiz-subject-file-actions {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .quiz-subject-meta {
