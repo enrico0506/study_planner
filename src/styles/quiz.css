@@ -399,9 +399,8 @@
   background: rgba(255, 255, 255, 0.9);
   color: var(--ink);
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
 }
 
@@ -409,16 +408,32 @@
   margin-left: auto;
 }
 
+.quiz-subject-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quiz-subject-file-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .quiz-subjects-card .subject-table {
   grid-auto-flow: row;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   background: transparent;
+  width: 100%;
 }
 
 .quiz-subjects-card .subject-column {
   min-width: 0;
   max-width: none;
+  height: auto;
 }
 
 .hidden {

@@ -57,6 +57,13 @@
   let idx = 0;
   let answers = [];
   let score = 0;
+  let pendingImportTarget = null; // { subjectId, fileId, subjectName, fileName }
+
+  const hiddenCsvInput = document.createElement("input");
+  hiddenCsvInput.type = "file";
+  hiddenCsvInput.accept = ".csv,text/csv";
+  hiddenCsvInput.style.display = "none";
+  document.body.appendChild(hiddenCsvInput);
 
   function setStatus(msg, type = "info") {
     const palette = {
@@ -291,7 +298,10 @@
     });
   }
 
-  function applyImportResult(built, { fileName = "CSV import", sourceText = null, fromSaved = false } = {}) {
+  function applyImportResult(
+    built,
+    { fileName = "CSV import", sourceText = null, fromSaved = false, subjectRef = null } = {}
+  ) {
     bank = built.bank;
 
     els.quizSelect.innerHTML = "";
@@ -309,8 +319,9 @@
     const totalQuestions = Object.values(bank).reduce((acc, arr) => acc + arr.length, 0);
     const delimText = built.delimiter === "\t" ? "\\t" : built.delimiter;
     const prefix = fromSaved ? "Restored saved import" : "Import successful";
+    const linkNote = subjectRef ? ` Linked to ${subjectRef.subjectName || "subject"} — ${subjectRef.fileName || "task"}.` : "";
     setStatus(
-      `${prefix}: ${built.quizNames.length} set(s), ${totalQuestions} question(s). Delimiter: "${delimText}". Source: ${fileName || "CSV"}.`,
+      `${prefix}: ${built.quizNames.length} set(s), ${totalQuestions} question(s). Delimiter: "${delimText}". Source: ${fileName || "CSV"}.${linkNote}`,
       "ok"
     );
 
@@ -321,6 +332,7 @@
         delimiter: built.delimiter,
         quizNames: built.quizNames,
         totalQuestions,
+        subjectRef,
       });
     }
   }
@@ -330,7 +342,11 @@
     if (!saved || !saved.text) return false;
     try {
       const built = buildQuestionBank(saved.text);
-      applyImportResult(built, { fileName: saved.name || "Saved CSV", fromSaved: true });
+      applyImportResult(built, {
+        fileName: saved.name || "Saved CSV",
+        fromSaved: true,
+        subjectRef: saved.subjectRef || null,
+      });
       return true;
     } catch (err) {
       console.error(err);
@@ -613,29 +629,43 @@
 
       const fileList = document.createElement("div");
       fileList.className = "quiz-subject-file-list";
-      files.slice(0, 3).forEach((file) => {
-        const row = document.createElement("div");
-        row.className = "quiz-subject-file";
-        row.textContent = file.name || "Untitled file";
-        if (typeof file.confidence === "number") {
-          const confPill = document.createElement("span");
-          confPill.className = "pill";
-          confPill.textContent = `${Math.round(file.confidence)}%`;
-          row.appendChild(confPill);
-        }
-        fileList.appendChild(row);
-      });
-      if (files.length > 3) {
-        const more = document.createElement("div");
-        more.className = "quiz-subject-file";
-        more.textContent = `+${files.length - 3} more`;
-        fileList.appendChild(more);
-      }
       if (!files.length) {
         const empty = document.createElement("div");
         empty.className = "quiz-subject-file";
-        empty.textContent = "No files yet.";
+        empty.textContent = "No tasks/files yet.";
         fileList.appendChild(empty);
+      } else {
+        files.forEach((file) => {
+          const row = document.createElement("div");
+          row.className = "quiz-subject-file";
+
+          const nameWrap = document.createElement("div");
+          nameWrap.className = "quiz-subject-file-name";
+          nameWrap.textContent = file.name || "Untitled file";
+
+          const actions = document.createElement("div");
+          actions.className = "quiz-subject-file-actions";
+
+          if (typeof file.confidence === "number") {
+            const confPill = document.createElement("span");
+            confPill.className = "pill";
+            confPill.textContent = `${Math.round(file.confidence)}%`;
+            actions.appendChild(confPill);
+          }
+
+          const addBtn = document.createElement("button");
+          addBtn.className = "chip-btn chip-btn-primary";
+          addBtn.type = "button";
+          addBtn.textContent = "Add quiz CSV";
+          addBtn.addEventListener("click", () =>
+            startTaskCsvImport(subj, file)
+          );
+          actions.appendChild(addBtn);
+
+          row.appendChild(nameWrap);
+          row.appendChild(actions);
+          fileList.appendChild(row);
+        });
       }
 
       col.appendChild(header);
@@ -659,6 +689,18 @@
     const saved = getJSON(SUBJECT_VIS_KEY, { visible: true });
     const visible = saved && typeof saved.visible === "boolean" ? saved.visible : true;
     setSubjectsVisible(visible, { persist: false });
+  }
+
+  function startTaskCsvImport(subj, file) {
+    if (!subj || !file) return;
+    pendingImportTarget = {
+      subjectId: subj.id,
+      fileId: file.id,
+      subjectName: subj.name || "Subject",
+      fileName: file.name || "Task",
+    };
+    hiddenCsvInput.value = "";
+    hiddenCsvInput.click();
   }
 
   els.csvFile.addEventListener("change", async (e) => {
@@ -697,6 +739,26 @@
     if (els.quizCard.classList.contains("hidden")) return;
     if (ev.key === "ArrowRight" && !els.nextBtn.disabled) goNext();
     if (ev.key === "ArrowLeft") goPrev();
+  });
+
+  hiddenCsvInput.addEventListener("change", async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+      const target = pendingImportTarget;
+      pendingImportTarget = null;
+      setStatus(`Reading file: ${file.name} ...`, "info");
+      const text = await file.text();
+      const built = buildQuestionBank(text);
+      applyImportResult(built, {
+        fileName: file.name,
+        sourceText: text,
+        subjectRef: target || null,
+      });
+    } catch (err) {
+      console.error(err);
+      setStatus(`Import failed: ${err.message}`, "error");
+    }
   });
 
   window.addEventListener("storage", (event) => {
