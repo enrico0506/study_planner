@@ -711,7 +711,11 @@
   els.manageClose?.addEventListener("click", closeManageModal);
   els.manageModal?.querySelector(".quiz-modal-backdrop")?.addEventListener("click", closeManageModal);
   els.manageSave?.addEventListener("click", () => {
-    if (els.manageName) renameQuiz(els.manageName.value.trim());
+    const newName = (els.manageName?.value || "").trim();
+    if (newName && manageTarget && newName !== manageTarget) {
+      renameQuiz(newName);
+      manageTarget = newName;
+    }
     if (manageTarget) {
       saveLinksForQuiz(manageTarget, els.manageSubject?.value || "", els.manageTask?.value || "");
     }
