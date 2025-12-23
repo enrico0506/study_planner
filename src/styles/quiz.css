@@ -199,6 +199,7 @@
   padding: 12px;
   text-align: center;
   background: #fff;
+  cursor: pointer;
 }
 
 .dropzone.dragover {
@@ -234,6 +235,15 @@
   border-radius: 12px;
   padding: 10px;
   white-space: pre-wrap;
+}
+
+.quiz-file-input {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .quiz-runner {
