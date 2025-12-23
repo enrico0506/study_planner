@@ -267,6 +267,32 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
     els.importStatus.dataset.tone = tone;
   }
 
+  function ensureImportPanelOpen() {
+    if (!els.importPanel) return;
+    els.importPanel.setAttribute("open", "open");
+    els.importPanel.classList.add("import-highlight");
+    setTimeout(() => els.importPanel.classList.remove("import-highlight"), 900);
+    els.importPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function triggerCsvPicker() {
+    if (!els.csvFile) return;
+    els.csvFile.value = "";
+    try {
+      if (typeof els.csvFile.showPicker === "function") {
+        els.csvFile.showPicker();
+        return;
+      }
+    } catch (err) {
+      // fall back to click below
+    }
+    try {
+      els.csvFile.click();
+    } catch (err) {
+      setStatus("File picker could not open. Try another browser.", "error");
+    }
+  }
+
   function detectDelimiter(line) {
     const candidates = [";", ",", "\t"];
     const counts = candidates.map((d) => (line.match(new RegExp(`\\${d}`, "g")) || []).length);
@@ -1140,7 +1166,11 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
       els.resultCard.classList.add("hidden");
       document.getElementById("sessionBuilder")?.scrollIntoView({ behavior: "smooth" });
     });
-    els.pickCsvBtn?.addEventListener("click", () => els.csvFile?.click());
+    els.pickCsvBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      ensureImportPanelOpen();
+      triggerCsvPicker();
+    });
     els.csvFile?.addEventListener("change", handleCsvInput);
     els.csvDropzone?.addEventListener("dragover", (e) => {
       e.preventDefault();
@@ -1155,39 +1185,32 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
       const file = e.dataTransfer?.files?.[0];
       if (file) handleCsvFile(file);
     });
-    els.csvDropzone?.addEventListener("click", () => {
-      if (!els.csvFile) return;
-      els.csvFile.value = "";
-      els.csvFile.click();
+    els.csvDropzone?.addEventListener("click", (e) => {
+      // If the transparent file input handled the click, let the native picker open.
+      if (e.target === els.csvFile) return;
+      ensureImportPanelOpen();
+      triggerCsvPicker();
     });
     els.importedSearch?.addEventListener("input", renderImportedList);
     els.topicSearch?.addEventListener("input", renderLibraryTopics);
     els.topicSort?.addEventListener("change", renderLibraryTopics);
-    const openImportPanel = () => {
-      if (els.importPanel) {
-        els.importPanel.setAttribute("open", "open");
-        els.importPanel.classList.add("import-highlight");
-        setTimeout(() => els.importPanel.classList.remove("import-highlight"), 900);
-        els.importPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-      if (els.csvFile) {
-        els.csvFile.value = "";
-        els.csvFile.click();
-      } else if (els.pickCsvBtn) {
-        els.pickCsvBtn.focus();
-      }
-    };
-    els.openImportBtn?.addEventListener("click", openImportPanel);
+    els.openImportBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      ensureImportPanelOpen();
+      triggerCsvPicker();
+    });
     els.openImportBtn2?.addEventListener("click", (e) => {
       e.preventDefault();
-      openImportPanel();
+      ensureImportPanelOpen();
+      triggerCsvPicker();
     });
     document.addEventListener("click", (e) => {
       const target = e.target;
       if (!target) return;
       if (target.id === "openImportBtn" || target.id === "openImportBtn2") {
         e.preventDefault();
-        openImportPanel();
+        ensureImportPanelOpen();
+        triggerCsvPicker();
       }
     });
     els.importSubjectSelect?.addEventListener("change", () => {
