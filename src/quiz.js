@@ -295,12 +295,12 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
       fallbackPicker.type = "file";
       fallbackPicker.accept = ".csv,text/csv";
       fallbackPicker.setAttribute("aria-label", "Choose CSV file");
-      fallbackPicker.style.position = "fixed";
+      // Keep it in DOM but visually hidden to satisfy browsers that dislike display:none inputs being clicked programmatically.
+      fallbackPicker.style.position = "absolute";
+      fallbackPicker.style.left = "-9999px";
+      fallbackPicker.style.width = "0";
+      fallbackPicker.style.height = "0";
       fallbackPicker.style.opacity = "0";
-      fallbackPicker.style.pointerEvents = "none";
-      fallbackPicker.style.width = "1px";
-      fallbackPicker.style.height = "1px";
-      fallbackPicker.style.left = "-10px";
       fallbackPicker.addEventListener("change", (e) => {
         const file = e.target?.files && e.target.files[0];
         if (file) handleCsvFile(file);
@@ -327,6 +327,7 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
       warnInsecureContext(err?.message || "secure picker failed");
     }
     try {
+      picker.focus();
       picker.click();
     } catch (err) {
       setStatus("File picker could not open. Try another browser.", "error");
