@@ -223,6 +223,29 @@ Quiz 1;1;Was ist ...?;Aussage 1;Aussage 2;Aussage 3;;A;Denke an ...</pre>
     </div>
   </div>
 
+  <div class="quiz-modal" id="quizManageModal" aria-hidden="true">
+    <div class="quiz-modal-backdrop"></div>
+    <div class="quiz-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="quizManageTitle">
+      <div class="quiz-modal-head">
+        <div>
+          <p class="eyebrow">Options</p>
+          <h3 id="quizManageTitle">Edit quiz</h3>
+        </div>
+        <button class="chip-btn" id="quizManageClose" type="button">Close</button>
+      </div>
+      <div class="quiz-modal-body">
+        <label class="quiz-label">Name
+          <input type="text" id="quizManageName" class="quiz-input" />
+        </label>
+        <div class="quiz-help">Rename your saved quiz or remove it from the library.</div>
+      </div>
+      <div class="quiz-modal-actions">
+        <button class="btn" id="quizManageSave" type="button">Save</button>
+        <button class="btn btn-secondary" id="quizManageDelete" type="button">Remove</button>
+      </div>
+    </div>
+  </div>
+
   <script src="./src/a11y-utils.js" defer></script>
   <script src="./src/page-menu.js" defer></script>
   <script src="./src/quiz.js" defer></script>

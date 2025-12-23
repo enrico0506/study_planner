@@ -53,6 +53,10 @@
   background: rgba(255, 255, 255, 0.9);
   cursor: pointer;
   transition: border-color 0.15s ease, transform 0.12s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .saved-item:hover {
@@ -72,6 +76,62 @@
 .saved-item-meta {
   font-size: 12px;
   color: var(--ink-muted);
+}
+
+.saved-item-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.quiz-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+}
+
+.quiz-modal.is-open {
+  display: flex;
+}
+
+.quiz-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.quiz-modal-dialog {
+  position: relative;
+  width: min(420px, 92vw);
+  background: var(--card-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.quiz-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.quiz-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quiz-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .quiz-card {

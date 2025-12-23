@@ -28,6 +28,11 @@
     restartBtn: document.getElementById("restartBtn"),
     backToImportBtn: document.getElementById("backToImportBtn"),
     savedQuizList: document.getElementById("savedQuizList"),
+    manageModal: document.getElementById("quizManageModal"),
+    manageName: document.getElementById("quizManageName"),
+    manageSave: document.getElementById("quizManageSave"),
+    manageDelete: document.getElementById("quizManageDelete"),
+    manageClose: document.getElementById("quizManageClose"),
   };
 
   if (!els.csvFile || !els.quizCard) return;
@@ -35,6 +40,7 @@
   const STORAGE_KEY = "studyQuizBank_v1";
   let savedBank = {};
   let bank = {};
+  let manageTarget = "";
   let currentQuizName = "";
   let questions = [];
   let idx = 0;
@@ -124,22 +130,77 @@
       const item = document.createElement("div");
       item.className = "saved-item";
       if (currentQuizName === name) item.classList.add("active");
+      const infoWrap = document.createElement("div");
+      infoWrap.addEventListener("click", () => {
+        currentQuizName = name;
+        els.quizSelect.value = name;
+        renderSavedList();
+        updateStartDisabled();
+      });
       const title = document.createElement("div");
       title.className = "saved-item-title";
       title.textContent = name;
       const meta = document.createElement("div");
       meta.className = "saved-item-meta";
       meta.textContent = `${savedBank[name].length} question${savedBank[name].length === 1 ? "" : "s"}`;
-      item.appendChild(title);
-      item.appendChild(meta);
-      item.addEventListener("click", () => {
-        currentQuizName = name;
-        els.quizSelect.value = name;
-        renderSavedList();
-        updateStartDisabled();
+      infoWrap.appendChild(title);
+      infoWrap.appendChild(meta);
+      item.appendChild(infoWrap);
+
+      const actions = document.createElement("div");
+      actions.className = "saved-item-actions";
+      const manageBtn = document.createElement("button");
+      manageBtn.className = "chip-btn";
+      manageBtn.type = "button";
+      manageBtn.textContent = "Optionen";
+      manageBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        openManageModal(name);
       });
+      actions.appendChild(manageBtn);
+      item.appendChild(actions);
+
       els.savedQuizList.appendChild(item);
     });
+  }
+
+  function openManageModal(name) {
+    manageTarget = name;
+    if (els.manageName) els.manageName.value = name;
+    if (els.manageModal) els.manageModal.classList.add("is-open");
+  }
+
+  function closeManageModal() {
+    manageTarget = "";
+    if (els.manageModal) els.manageModal.classList.remove("is-open");
+  }
+
+  function renameQuiz(newName) {
+    if (!manageTarget || !newName || newName === manageTarget) return;
+    if (savedBank[newName]) {
+      alert("A quiz with that name already exists.");
+      return;
+    }
+    savedBank[newName] = savedBank[manageTarget];
+    delete savedBank[manageTarget];
+    if (currentQuizName === manageTarget) currentQuizName = newName;
+    saveBank();
+    renderQuizSelect();
+    renderSavedList();
+    closeManageModal();
+  }
+
+  function deleteQuiz() {
+    if (!manageTarget) return;
+    if (!confirm("Remove this quiz from the library?")) return;
+    delete savedBank[manageTarget];
+    if (currentQuizName === manageTarget) currentQuizName = "";
+    saveBank();
+    bank = { ...savedBank };
+    renderQuizSelect();
+    renderSavedList();
+    updateStartDisabled();
+    closeManageModal();
   }
 
   function updateStartDisabled() {
@@ -573,6 +634,12 @@
   els.finishBtn.addEventListener("click", finishQuiz);
   els.restartBtn.addEventListener("click", () => startQuiz());
   els.backToImportBtn.addEventListener("click", () => showImport());
+  els.manageClose?.addEventListener("click", closeManageModal);
+  els.manageModal?.querySelector(".quiz-modal-backdrop")?.addEventListener("click", closeManageModal);
+  els.manageSave?.addEventListener("click", () => {
+    if (els.manageName) renameQuiz(els.manageName.value.trim());
+  });
+  els.manageDelete?.addEventListener("click", deleteQuiz);
 
   document.addEventListener("keydown", (ev) => {
     if (els.quizCard.classList.contains("hidden")) return;
