@@ -1188,7 +1188,7 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
     });
     els.openImportBtn?.addEventListener("click", () => {
       if (els.importPanel) {
-        els.importPanel.setAttribute("open", "open");
+        els.importPanel.open = true;
         els.importPanel.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     });
