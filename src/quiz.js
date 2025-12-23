@@ -565,11 +565,17 @@
       if (a && a.selectedDisplayIndex != null) {
         const isCorrect = displayIndex === a.correctDisplayIndex;
         const isSelected = displayIndex === a.selectedDisplayIndex;
-        if (isCorrect) btn.classList.add("correct");
-        if (isSelected && !isCorrect) btn.classList.add("wrong");
+        if (!examMode) {
+          if (isCorrect) btn.classList.add("correct");
+          if (isSelected && !isCorrect) btn.classList.add("wrong");
+        }
         btn.disabled = true;
         els.nextBtn.disabled = false;
-        els.feedback.textContent = a.isCorrect ? "Correct." : "Incorrect.";
+        if (!examMode) {
+          els.feedback.textContent = a.isCorrect ? "Correct." : "Incorrect.";
+        } else {
+          els.feedback.textContent = "";
+        }
         els.progressBar.style.width = `${Math.round(((idx + 1) / questions.length) * 100)}%`;
       } else {
         btn.addEventListener("click", () => selectAnswer(displayIndex, map, q));
@@ -594,23 +600,26 @@
 
     els.choices.querySelectorAll(".quiz-choice").forEach((btn) => {
       btn.disabled = true;
-      const di = Number(btn.dataset.displayIndex);
-      if (di === correctDisplayIndex) btn.classList.add("correct");
-      if (di === selectedDisplayIndex && di !== correctDisplayIndex) btn.classList.add("wrong");
+      if (!examMode) {
+        const di = Number(btn.dataset.displayIndex);
+        if (di === correctDisplayIndex) btn.classList.add("correct");
+        if (di === selectedDisplayIndex && di !== correctDisplayIndex) btn.classList.add("wrong");
+      }
     });
 
     els.feedback.textContent = examMode ? "" : isCorrect ? "Correct." : "Incorrect.";
     els.nextBtn.disabled = false;
     if (!examMode) {
       els.scoreText.textContent = `${score} / ${questions.length}`;
-      els.progressBar.style.width = `${Math.round(((idx + 1) / questions.length) * 100)}%`;
     }
+    els.progressBar.style.width = `${Math.round(((idx + 1) / questions.length) * 100)}%`;
   }
 
   function startQuiz() {
     currentQuizName = els.quizSelect.value || Object.keys(bank)[0];
     questions = (bank[currentQuizName]?.questions || []).slice();
     shuffleArray(questions);
+    examMode = !!els.modeExam?.checked;
 
     idx = 0;
     score = 0;
@@ -717,6 +726,9 @@
     currentQuizName = els.quizSelect.value;
     renderSavedList();
     updateStartDisabled();
+  });
+  els.modeExam?.addEventListener("change", () => {
+    examMode = !!els.modeExam.checked;
   });
   els.resetBtn.addEventListener("click", resetAll);
   els.hintBtn.addEventListener("click", () => els.hintText.classList.toggle("hidden"));
