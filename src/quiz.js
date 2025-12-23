@@ -1177,6 +1177,12 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
       const file = e.dataTransfer?.files?.[0];
       if (file) handleCsvFile(file);
     });
+    els.csvDropzone?.addEventListener("click", () => {
+      if (els.csvFile) {
+        els.csvFile.value = "";
+        els.csvFile.click();
+      }
+    });
     els.importedSearch?.addEventListener("input", renderImportedList);
     els.topicSearch?.addEventListener("input", renderLibraryTopics);
     els.topicSort?.addEventListener("change", renderLibraryTopics);
