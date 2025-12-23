@@ -206,6 +206,7 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
       const migrated = migrateData();
       state.data = migrated ? { sets: [migrated] } : { sets: [] };
     }
+    dedupeSets();
     state.stats = getJSON(QUIZ_STATS_KEY, {});
     state.libraryCollapsed = !!getJSON(QUIZ_LIBRARY_STATE_KEY, { collapsed: false }).collapsed;
     const savedSource = getJSON(QUIZ_SOURCE_KEY, null);
@@ -1194,6 +1195,7 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
   }
 
   function addSet(set) {
+    replaceDuplicates(set);
     state.data.sets.unshift(set);
     saveData();
     computeSubjectMetrics();
@@ -1235,6 +1237,27 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
     renderImportedList();
     renderLibraryTopics();
     renderSummary();
+  }
+
+  function replaceDuplicates(nextSet) {
+    state.data.sets = state.data.sets.filter((s) => {
+      if (s.id === nextSet.id) return false;
+      const sameCsv = s.csvText && nextSet.csvText && s.csvText === nextSet.csvText;
+      const sameNameCount = s.name === nextSet.name && s.totalQuestions === nextSet.totalQuestions;
+      return !(sameCsv || sameNameCount);
+    });
+  }
+
+  function dedupeSets() {
+    const seen = [];
+    const unique = [];
+    state.data.sets.forEach((set) => {
+      const key = set.csvText ? `csv:${set.csvText.length}:${set.name}` : `name:${set.name}:${set.totalQuestions}`;
+      if (seen.includes(key)) return;
+      seen.push(key);
+      unique.push(set);
+    });
+    state.data.sets = unique;
   }
 
   function renderPreview(set) {
