@@ -27,10 +27,13 @@
     reviewList: document.getElementById("reviewList"),
     restartBtn: document.getElementById("restartBtn"),
     backToImportBtn: document.getElementById("backToImportBtn"),
+    savedQuizList: document.getElementById("savedQuizList"),
   };
 
   if (!els.csvFile || !els.quizCard) return;
 
+  const STORAGE_KEY = "studyQuizBank_v1";
+  let savedBank = {};
   let bank = {};
   let currentQuizName = "";
   let questions = [];
@@ -61,6 +64,89 @@
     els.importStatus.style.borderColor = style.border;
     els.importStatus.style.background = style.bg;
     els.importStatus.style.color = style.color;
+  }
+
+  function loadSavedBank() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (err) {
+      console.warn("Could not load saved quizzes", err);
+      return {};
+    }
+  }
+
+  function saveBank() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedBank));
+    } catch (err) {
+      console.warn("Could not save quizzes", err);
+    }
+  }
+
+  function renderQuizSelect() {
+    if (!els.quizSelect) return;
+    els.quizSelect.innerHTML = "";
+    const names = Object.keys(savedBank).sort((a, b) => a.localeCompare(b));
+    if (!names.length) {
+      els.quizSelect.innerHTML = `<option value="">Import first…</option>`;
+      els.quizSelect.disabled = true;
+      els.startBtn.disabled = true;
+      renderSavedList();
+      return;
+    }
+    names.forEach((name) => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = `${name} (${savedBank[name].length} q)`;
+      if (currentQuizName === name) opt.selected = true;
+      els.quizSelect.appendChild(opt);
+    });
+    els.quizSelect.disabled = false;
+    updateStartDisabled();
+    renderSavedList();
+  }
+
+  function renderSavedList() {
+    if (!els.savedQuizList) return;
+    els.savedQuizList.innerHTML = "";
+    const names = Object.keys(savedBank).sort((a, b) => a.localeCompare(b));
+    if (!names.length) {
+      const empty = document.createElement("div");
+      empty.className = "quiz-help";
+      empty.textContent = "No saved quizzes yet. Import a CSV to keep it here.";
+      els.savedQuizList.appendChild(empty);
+      return;
+    }
+    names.forEach((name) => {
+      const item = document.createElement("div");
+      item.className = "saved-item";
+      if (currentQuizName === name) item.classList.add("active");
+      const title = document.createElement("div");
+      title.className = "saved-item-title";
+      title.textContent = name;
+      const meta = document.createElement("div");
+      meta.className = "saved-item-meta";
+      meta.textContent = `${savedBank[name].length} question${savedBank[name].length === 1 ? "" : "s"}`;
+      item.appendChild(title);
+      item.appendChild(meta);
+      item.addEventListener("click", () => {
+        currentQuizName = name;
+        els.quizSelect.value = name;
+        renderSavedList();
+        updateStartDisabled();
+      });
+      els.savedQuizList.appendChild(item);
+    });
+  }
+
+  function updateStartDisabled() {
+    const selected = els.quizSelect.value;
+    const has = selected && savedBank[selected];
+    els.startBtn.disabled = !has;
+    els.resetBtn.disabled = !Object.keys(savedBank).length;
   }
 
   function normalizeHeader(h) {
@@ -261,17 +347,21 @@
   }
 
   function resetAll() {
-    bank = {};
+    bank = { ...savedBank };
     currentQuizName = "";
     questions = [];
     answers = [];
     idx = 0;
     score = 0;
-    els.quizSelect.innerHTML = `<option value="">Import first…</option>`;
-    els.quizSelect.disabled = true;
-    els.startBtn.disabled = true;
-    els.resetBtn.disabled = true;
-    els.csvFile.value = "";
+    renderQuizSelect();
+    const names = Object.keys(savedBank).sort((a, b) => a.localeCompare(b));
+    if (names.length) {
+      currentQuizName = names[0];
+      els.quizSelect.value = currentQuizName;
+      renderSavedList();
+    }
+    els.resetBtn.disabled = !Object.keys(savedBank).length;
+    if (els.csvFile) els.csvFile.value = "";
     setStatus("Ready. Import a CSV to begin.", "info");
     showImport();
   }
@@ -446,35 +536,36 @@
       setStatus(`Reading file: ${file.name} ...`, "info");
       const text = await file.text();
       const built = buildQuestionBank(text);
-      bank = built.bank;
-
-      els.quizSelect.innerHTML = "";
-      built.quizNames.forEach((name) => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        els.quizSelect.appendChild(opt);
+      Object.entries(built.bank).forEach(([name, questions]) => {
+        savedBank[name] = questions;
       });
+      bank = { ...savedBank };
+      currentQuizName = built.quizNames[0] || currentQuizName;
+      saveBank();
+      renderQuizSelect();
+      if (currentQuizName) els.quizSelect.value = currentQuizName;
+      updateStartDisabled();
 
-      els.quizSelect.disabled = false;
-      els.startBtn.disabled = false;
-      els.resetBtn.disabled = false;
-
-      const totalQuestions = Object.values(bank).reduce((acc, arr) => acc + arr.length, 0);
+      const totalQuestions = Object.values(savedBank).reduce((acc, arr) => acc + arr.length, 0);
       const delimText = built.delimiter === "\t" ? "\\t" : built.delimiter;
       setStatus(
         `Import successful: ${built.quizNames.length} set(s), ${totalQuestions} question(s). Delimiter: "${delimText}".`,
         "ok"
       );
+      if (e.target) e.target.value = "";
     } catch (err) {
       console.error(err);
       setStatus(`Import failed: ${err.message}`, "error");
-      els.quizSelect.disabled = true;
-      els.startBtn.disabled = true;
+      updateStartDisabled();
     }
   });
 
   els.startBtn.addEventListener("click", startQuiz);
+  els.quizSelect.addEventListener("change", () => {
+    currentQuizName = els.quizSelect.value;
+    renderSavedList();
+    updateStartDisabled();
+  });
   els.resetBtn.addEventListener("click", resetAll);
   els.hintBtn.addEventListener("click", () => els.hintText.classList.toggle("hidden"));
   els.nextBtn.addEventListener("click", goNext);
@@ -489,5 +580,8 @@
     if (ev.key === "ArrowLeft") goPrev();
   });
 
+  savedBank = loadSavedBank();
+  bank = { ...savedBank };
+  renderQuizSelect();
   resetAll();
 })();

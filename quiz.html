@@ -100,12 +100,26 @@
     </div>
 
     <div class="quiz-layout">
-      <section class="quiz-card" id="importCard">
-        <div class="quiz-card-head">
-          <div>
-            <p class="eyebrow">Import</p>
-            <h2>Bring your questions</h2>
-            <p class="subtitle">Upload a CSV, pick a quiz set, and choose how you want to shuffle.</p>
+      <aside class="quiz-sidebar">
+        <div class="quiz-card">
+          <div class="quiz-card-head">
+            <div>
+              <p class="eyebrow">Library</p>
+              <h3>Saved quizzes</h3>
+              <p class="subtitle">Click a set to select it.</p>
+            </div>
+          </div>
+          <div id="savedQuizList" class="saved-list"></div>
+        </div>
+      </aside>
+
+      <main class="quiz-main">
+        <section class="quiz-card" id="importCard">
+          <div class="quiz-card-head">
+            <div>
+              <p class="eyebrow">Import</p>
+              <h2>Bring your questions</h2>
+              <p class="subtitle">Upload a CSV, pick a quiz set, and choose how you want to shuffle.</p>
           </div>
           <div class="quiz-pill">Local CSV • Offline</div>
         </div>
@@ -147,9 +161,9 @@
 Quiz 1;1;Was ist ...?;Aussage 1;Aussage 2;Aussage 3;;A;Denke an ...</pre>
           </div>
         </details>
-      </section>
+        </section>
 
-      <section class="quiz-card hidden" id="quizCard" aria-live="polite">
+        <section class="quiz-card hidden" id="quizCard" aria-live="polite">
         <div class="quiz-stage-head">
           <div>
             <p class="eyebrow">Session</p>
@@ -185,9 +199,9 @@ Quiz 1;1;Was ist ...?;Aussage 1;Aussage 2;Aussage 3;;A;Denke an ...</pre>
             <button class="chip-btn chip-btn-primary" id="finishBtn" type="button">Finish</button>
           </div>
         </article>
-      </section>
+        </section>
 
-      <section class="quiz-card hidden" id="resultCard">
+        <section class="quiz-card hidden" id="resultCard">
         <div class="quiz-card-head">
           <div>
             <p class="eyebrow">Review</p>
@@ -204,7 +218,8 @@ Quiz 1;1;Was ist ...?;Aussage 1;Aussage 2;Aussage 3;;A;Denke an ...</pre>
           <summary>Incorrect answers</summary>
           <div class="quiz-details-body" id="reviewList"></div>
         </details>
-      </section>
+        </section>
+      </main>
     </div>
   </div>
 
