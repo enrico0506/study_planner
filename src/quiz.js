@@ -6,7 +6,6 @@
     resetBtn: document.getElementById("resetBtn"),
     importStatus: document.getElementById("importStatus"),
     shuffleQuestions: document.getElementById("shuffleQuestions"),
-    shuffleAnswers: document.getElementById("shuffleAnswers"),
     importCard: document.getElementById("importCard"),
     quizCard: document.getElementById("quizCard"),
     resultCard: document.getElementById("resultCard"),
@@ -543,19 +542,16 @@
     let displayChoices = q.choices.map((text, originalIndex) => ({ text, originalIndex }));
     let map = displayChoices.map((x) => x.originalIndex);
 
-    if (els.shuffleAnswers.checked) {
-      if (a && Array.isArray(a.shuffledMap)) {
-        map = a.shuffledMap.slice();
-        displayChoices = map.map((originalIndex) => ({ text: q.choices[originalIndex], originalIndex }));
-      } else {
-        const indices = q.choices.map((_, i) => i);
-        shuffleArray(indices);
-        map = indices;
-        displayChoices = map.map((originalIndex) => ({ text: q.choices[originalIndex], originalIndex }));
-        if (a) a.shuffledMap = map.slice();
-      }
-    } else if (a) {
-      a.shuffledMap = null;
+    // Always shuffle answers
+    if (a && Array.isArray(a.shuffledMap)) {
+      map = a.shuffledMap.slice();
+      displayChoices = map.map((originalIndex) => ({ text: q.choices[originalIndex], originalIndex }));
+    } else {
+      const indices = q.choices.map((_, i) => i);
+      shuffleArray(indices);
+      map = indices;
+      displayChoices = map.map((originalIndex) => ({ text: q.choices[originalIndex], originalIndex }));
+      if (a) a.shuffledMap = map.slice();
     }
 
     displayChoices.forEach((cObj, displayIndex) => {
@@ -591,7 +587,7 @@
       selectedDisplayIndex,
       correctDisplayIndex,
       isCorrect,
-      shuffledMap: els.shuffleAnswers.checked ? map.slice() : null,
+      shuffledMap: map.slice(),
     };
     if (isCorrect) score++;
 
