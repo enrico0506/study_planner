@@ -422,6 +422,13 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
       container.appendChild(wrap);
     });
 
+    if (!state.subjects.length) {
+      const msg = document.createElement("div");
+      msg.className = "quiz-help";
+      msg.textContent = "No topics found. Create subjects on the board to select them here.";
+      container.appendChild(msg);
+    }
+
     if (els.importSubjectSelect) {
       const current = els.importSubjectSelect.value;
       els.importSubjectSelect.innerHTML = `<option value="">No link</option>`;
@@ -1178,10 +1185,9 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
       if (file) handleCsvFile(file);
     });
     els.csvDropzone?.addEventListener("click", () => {
-      if (els.csvFile) {
-        els.csvFile.value = "";
-        els.csvFile.click();
-      }
+      if (!els.csvFile) return;
+      els.csvFile.value = "";
+      els.csvFile.click();
     });
     els.importedSearch?.addEventListener("input", renderImportedList);
     els.topicSearch?.addEventListener("input", renderLibraryTopics);
