@@ -1170,9 +1170,11 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
         setTimeout(() => els.importPanel.classList.remove("import-highlight"), 900);
         els.importPanel.scrollIntoView({ behavior: "smooth", block: "start" });
       }
-      if (els.pickCsvBtn) els.pickCsvBtn.focus();
       if (els.csvFile) {
         els.csvFile.value = "";
+        els.csvFile.click();
+      } else if (els.pickCsvBtn) {
+        els.pickCsvBtn.focus();
       }
     };
     els.openImportBtn?.addEventListener("click", openImportPanel);
