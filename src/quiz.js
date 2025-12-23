@@ -268,6 +268,8 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
   }
 
   let warnedInsecure = false;
+  let fallbackPicker = null;
+
   function warnInsecureContext(detail) {
     if (warnedInsecure) return;
     warnedInsecure = true;
@@ -285,12 +287,37 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
     els.importPanel.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  function getPickerInput() {
+    // Prefer the visible dropzone input; fall back to a hidden, body-mounted input when the panel is closed.
+    if (els.csvFile && els.csvFile.offsetParent !== null) return els.csvFile;
+    if (!fallbackPicker) {
+      fallbackPicker = document.createElement("input");
+      fallbackPicker.type = "file";
+      fallbackPicker.accept = ".csv,text/csv";
+      fallbackPicker.setAttribute("aria-label", "Choose CSV file");
+      fallbackPicker.style.position = "fixed";
+      fallbackPicker.style.opacity = "0";
+      fallbackPicker.style.pointerEvents = "none";
+      fallbackPicker.style.width = "1px";
+      fallbackPicker.style.height = "1px";
+      fallbackPicker.style.left = "-10px";
+      fallbackPicker.addEventListener("change", (e) => {
+        const file = e.target?.files && e.target.files[0];
+        if (file) handleCsvFile(file);
+        e.target.value = "";
+      });
+      document.body.appendChild(fallbackPicker);
+    }
+    return fallbackPicker;
+  }
+
   function triggerCsvPicker() {
-    if (!els.csvFile) return;
-    els.csvFile.value = "";
+    const picker = getPickerInput();
+    if (!picker) return;
+    picker.value = "";
     try {
-      if (window.isSecureContext && typeof els.csvFile.showPicker === "function") {
-        els.csvFile.showPicker();
+      if (window.isSecureContext && typeof picker.showPicker === "function") {
+        picker.showPicker();
         return;
       }
       if (!window.isSecureContext) {
@@ -300,7 +327,7 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
       warnInsecureContext(err?.message || "secure picker failed");
     }
     try {
-      els.csvFile.click();
+      picker.click();
     } catch (err) {
       setStatus("File picker could not open. Try another browser.", "error");
     }
