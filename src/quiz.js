@@ -1293,6 +1293,11 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
     handleCsvFile(file);
     // Allow selecting the same file again later
     if (els.csvFile) els.csvFile.value = "";
+    if (e.target && e.target !== els.csvFile) {
+      try {
+        e.target.value = "";
+      } catch (err) {}
+    }
   }
 
   async function handleCsvFile(file) {
@@ -1411,20 +1416,29 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
   }
 
   async function init() {
-    renderCsvHelp();
-    loadSubjects();
-    loadData();
-    renderImportedSelect();
-    renderTopics();
-    renderImportedList();
-    updateSummaryStrip();
-    loadSessionState();
-    attachEvents();
-    const remoteLoaded = await loadRemoteQuizSet();
-    if (remoteLoaded) {
+    try {
+      renderCsvHelp();
+      loadSubjects();
+      loadData();
       renderImportedSelect();
+      renderTopics();
       renderImportedList();
       updateSummaryStrip();
+      loadSessionState();
+    } catch (err) {
+      console.error("Quiz init error", err);
+      setStatus("Quiz init hit an issue. Import is still available.", "error");
+    }
+    attachEvents();
+    try {
+      const remoteLoaded = await loadRemoteQuizSet();
+      if (remoteLoaded) {
+        renderImportedSelect();
+        renderImportedList();
+        updateSummaryStrip();
+      }
+    } catch (err) {
+      console.warn("Remote quiz load failed", err);
     }
   }
 
