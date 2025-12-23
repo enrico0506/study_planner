@@ -81,7 +81,19 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return {};
       const parsed = JSON.parse(raw);
-      return parsed && typeof parsed === "object" ? parsed : {};
+      if (!parsed || typeof parsed !== "object") return {};
+      const result = {};
+      Object.entries(parsed).forEach(([name, value]) => {
+        if (Array.isArray(value)) {
+          result[name] = { questions: value, meta: {} };
+        } else if (value && typeof value === "object") {
+          result[name] = {
+            questions: Array.isArray(value.questions) ? value.questions : [],
+            meta: value.meta || {},
+          };
+        }
+      });
+      return result;
     } catch (err) {
       console.warn("Could not load saved quizzes", err);
       return {};
@@ -105,7 +117,11 @@
 
   function saveBank() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedBank));
+      const serializable = {};
+      Object.entries(savedBank).forEach(([name, data]) => {
+        serializable[name] = { questions: data.questions || [], meta: data.meta || {} };
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
     } catch (err) {
       console.warn("Could not save quizzes", err);
     }
@@ -125,7 +141,8 @@
     names.forEach((name) => {
       const opt = document.createElement("option");
       opt.value = name;
-      opt.textContent = `${name} (${savedBank[name].length} q)`;
+      const count = (savedBank[name].questions || []).length;
+      opt.textContent = `${name} (${count} q)`;
       if (currentQuizName === name) opt.selected = true;
       els.quizSelect.appendChild(opt);
     });
@@ -161,11 +178,13 @@
       title.textContent = name;
       const meta = document.createElement("div");
       meta.className = "saved-item-meta";
-      const subjColor = getSubjectColor(savedBank[name]._meta?.subjectId);
-      const subjectTag = savedBank[name]._meta?.subjectId
-        ? `<span class="subject-chip" style="${subjColor ? `background:${subjColor}22;border-color:${subjColor}44;` : ""}">${savedBank[name]._meta.subjectName || "Subject"}</span>`
+      const m = savedBank[name].meta || {};
+      const subjColor = getSubjectColor(m.subjectId);
+      const subjectTag = m.subjectId
+        ? `<span class="subject-chip" style="${subjColor ? `background:${subjColor}22;border-color:${subjColor}44;` : ""}">${m.subjectName || "Subject"}</span>`
         : "";
-      meta.innerHTML = `${savedBank[name].length} question${savedBank[name].length === 1 ? "" : "s"} ${subjectTag}`;
+      const count = (savedBank[name].questions || []).length;
+      meta.innerHTML = `${count} question${count === 1 ? "" : "s"} ${subjectTag}`;
       infoWrap.appendChild(title);
       infoWrap.appendChild(meta);
       item.appendChild(infoWrap);
@@ -191,7 +210,7 @@
     manageTarget = name;
     if (els.manageName) els.manageName.value = name;
     populateSubjectSelects();
-    const meta = savedBank[name]?._meta || {};
+    const meta = savedBank[name]?.meta || {};
     if (els.manageSubject) els.manageSubject.value = meta.subjectId || "";
     populateTaskSelect(meta.subjectId || "", meta.fileId || "");
     if (els.manageModal) els.manageModal.classList.add("is-open");
@@ -208,9 +227,9 @@
       alert("A quiz with that name already exists.");
       return;
     }
-    const prevMeta = savedBank[manageTarget]?._meta;
+    const prevMeta = savedBank[manageTarget]?.meta;
     savedBank[newName] = savedBank[manageTarget];
-    if (prevMeta) savedBank[newName]._meta = prevMeta;
+    if (prevMeta) savedBank[newName].meta = prevMeta;
     delete savedBank[manageTarget];
     if (currentQuizName === manageTarget) currentQuizName = newName;
     saveBank();
@@ -265,7 +284,7 @@
     const files = Array.isArray(subj?.files) ? subj.files : [];
     const file = files.find((f) => f.id === fileId);
     if (!savedBank[name]) return;
-    savedBank[name]._meta = {
+    savedBank[name].meta = {
       subjectId: subjectId || "",
       subjectName: subj?.name || "",
       fileId: fileId || "",
@@ -277,7 +296,7 @@
 
   function updateStartDisabled() {
     const selected = els.quizSelect.value;
-    const has = selected && savedBank[selected];
+    const has = selected && savedBank[selected] && (savedBank[selected].questions || []).length;
     els.startBtn.disabled = !has;
     els.resetBtn.disabled = !Object.keys(savedBank).length;
   }
@@ -591,7 +610,7 @@
 
   function startQuiz() {
     currentQuizName = els.quizSelect.value || Object.keys(bank)[0];
-    questions = (bank[currentQuizName] || []).slice();
+    questions = (bank[currentQuizName]?.questions || []).slice();
     if (els.shuffleQuestions.checked) shuffleArray(questions);
 
     idx = 0;
@@ -670,9 +689,8 @@
       const text = await file.text();
       const built = buildQuestionBank(text);
       Object.entries(built.bank).forEach(([name, questions]) => {
-        const existingMeta = savedBank[name]?._meta;
-        savedBank[name] = questions;
-        if (existingMeta) savedBank[name]._meta = existingMeta;
+        const existingMeta = savedBank[name]?.meta;
+        savedBank[name] = { questions, meta: existingMeta || {} };
       });
       bank = { ...savedBank };
       currentQuizName = built.quizNames[0] || currentQuizName;
@@ -681,7 +699,7 @@
       if (currentQuizName) els.quizSelect.value = currentQuizName;
       updateStartDisabled();
 
-      const totalQuestions = Object.values(savedBank).reduce((acc, arr) => acc + arr.length, 0);
+      const totalQuestions = Object.values(savedBank).reduce((acc, obj) => acc + (obj.questions || []).length, 0);
       const delimText = built.delimiter === "\t" ? "\\t" : built.delimiter;
       setStatus(
         `Import successful: ${built.quizNames.length} set(s), ${totalQuestions} question(s). Delimiter: "${delimText}".`,
