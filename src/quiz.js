@@ -508,6 +508,21 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
       card.appendChild(meta);
       const actions = document.createElement("div");
       actions.className = "library-actions-row";
+      const linkSelect = document.createElement("select");
+      linkSelect.className = "quiz-input";
+      linkSelect.style.minWidth = "180px";
+      linkSelect.innerHTML = `<option value="">No topic link</option>`;
+      state.subjects.forEach((subj) => {
+        const opt = document.createElement("option");
+        opt.value = subj.id;
+        opt.textContent = subj.name || "Subject";
+        if (set.subjectRef && set.subjectRef.subjectId === subj.id) opt.selected = true;
+        linkSelect.appendChild(opt);
+      });
+      linkSelect.addEventListener("change", () => {
+        updateSetSubject(set.id, linkSelect.value || "");
+      });
+      actions.appendChild(linkSelect);
       const previewBtn = document.createElement("button");
       previewBtn.className = "chip-btn";
       previewBtn.textContent = "Preview";
@@ -1198,6 +1213,28 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
       fileId: null,
       fileName: "",
     };
+  }
+
+  function updateSetSubject(setId, subjectId) {
+    const set = state.data.sets.find((s) => s.id === setId);
+    if (!set) return;
+    if (!subjectId) {
+      set.subjectRef = null;
+    } else {
+      const subj = state.subjects.find((s) => s.id === subjectId);
+      set.subjectRef = {
+        subjectId,
+        subjectName: subj?.name || "",
+        fileId: null,
+        fileName: "",
+      };
+    }
+    set.updatedAt = Date.now();
+    saveData();
+    computeSubjectMetrics();
+    renderImportedList();
+    renderLibraryTopics();
+    renderSummary();
   }
 
   function renderPreview(set) {
