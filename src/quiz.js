@@ -5,7 +5,6 @@
     startBtn: document.getElementById("startBtn"),
     resetBtn: document.getElementById("resetBtn"),
     importStatus: document.getElementById("importStatus"),
-    shuffleQuestions: document.getElementById("shuffleQuestions"),
     importCard: document.getElementById("importCard"),
     quizCard: document.getElementById("quizCard"),
     resultCard: document.getElementById("resultCard"),
@@ -44,6 +43,7 @@
   let bank = {};
   let manageTarget = "";
   let subjects = [];
+  let examMode = false;
   let currentQuizName = "";
   let questions = [];
   let idx = 0;
@@ -298,6 +298,7 @@
     const has = selected && savedBank[selected] && (savedBank[selected].questions || []).length;
     els.startBtn.disabled = !has;
     els.resetBtn.disabled = !Object.keys(savedBank).length;
+    examMode = !!els.modeExam?.checked;
   }
 
   function normalizeHeader(h) {
@@ -598,16 +599,18 @@
       if (di === selectedDisplayIndex && di !== correctDisplayIndex) btn.classList.add("wrong");
     });
 
-    els.feedback.textContent = isCorrect ? "Correct." : "Incorrect.";
+    els.feedback.textContent = examMode ? "" : isCorrect ? "Correct." : "Incorrect.";
     els.nextBtn.disabled = false;
-    els.scoreText.textContent = `${score} / ${questions.length}`;
-    els.progressBar.style.width = `${Math.round(((idx + 1) / questions.length) * 100)}%`;
+    if (!examMode) {
+      els.scoreText.textContent = `${score} / ${questions.length}`;
+      els.progressBar.style.width = `${Math.round(((idx + 1) / questions.length) * 100)}%`;
+    }
   }
 
   function startQuiz() {
     currentQuizName = els.quizSelect.value || Object.keys(bank)[0];
     questions = (bank[currentQuizName]?.questions || []).slice();
-    if (els.shuffleQuestions.checked) shuffleArray(questions);
+    shuffleArray(questions);
 
     idx = 0;
     score = 0;
