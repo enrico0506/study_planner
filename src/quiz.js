@@ -28,6 +28,7 @@
     pickCsvBtn: document.getElementById("pickCsvBtn"),
     csvFile: document.getElementById("csvFile"),
     importSubjectSelect: document.getElementById("importSubjectSelect"),
+    importFileSelect: document.getElementById("importFileSelect"),
     importStatus: document.getElementById("importStatus"),
     previewList: document.getElementById("previewList"),
     csvHelp: document.getElementById("csvHelp"),
@@ -162,6 +163,12 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
   function loadSubjects() {
     const list = getJSON("studySubjects_v1", []);
     state.subjects = Array.isArray(list) ? list : [];
+  }
+
+  function getFilesForSubject(subjectId) {
+    if (!subjectId) return [];
+    const subj = state.subjects.find((s) => s.id === subjectId);
+    return Array.isArray(subj?.files) ? subj.files : [];
   }
 
   function computeSubjectMetrics() {
@@ -425,7 +432,22 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
         if (current && current === subj.id) opt.selected = true;
         els.importSubjectSelect.appendChild(opt);
       });
+      renderImportFiles(els.importSubjectSelect.value || "");
     }
+  }
+
+  function renderImportFiles(subjectId) {
+    if (!els.importFileSelect) return;
+    const files = getFilesForSubject(subjectId);
+    const current = els.importFileSelect.value;
+    els.importFileSelect.innerHTML = `<option value="">No task</option>`;
+    files.forEach((file) => {
+      const opt = document.createElement("option");
+      opt.value = file.id;
+      opt.textContent = file.name || "Task";
+      if (current && current === file.id) opt.selected = true;
+      els.importFileSelect.appendChild(opt);
+    });
   }
 
   function renderLibraryTopics() {
@@ -521,9 +543,18 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
         linkSelect.appendChild(opt);
       });
       linkSelect.addEventListener("change", () => {
-        updateSetSubject(set.id, linkSelect.value || "");
+        updateSetSubject(set.id, linkSelect.value || "", "");
+        renderLibrarySetsFiles(fileSelect, linkSelect.value || "", set.subjectRef?.fileId || "");
       });
       actions.appendChild(linkSelect);
+      const fileSelect = document.createElement("select");
+      fileSelect.className = "quiz-input";
+      fileSelect.style.minWidth = "160px";
+      renderLibrarySetsFiles(fileSelect, set.subjectRef?.subjectId || "", set.subjectRef?.fileId || "");
+      fileSelect.addEventListener("change", () => {
+        updateSetSubject(set.id, linkSelect.value || "", fileSelect.value || "");
+      });
+      actions.appendChild(fileSelect);
       const previewBtn = document.createElement("button");
       previewBtn.className = "chip-btn";
       previewBtn.textContent = "Preview";
@@ -1159,6 +1190,9 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
     els.openLibraryBtn?.addEventListener("click", () => {
       els.librarySection?.scrollIntoView({ behavior: "smooth" });
     });
+    els.importSubjectSelect?.addEventListener("change", () => {
+      renderImportFiles(els.importSubjectSelect.value || "");
+    });
     els.confidenceBtns.forEach((btn) => {
       btn.addEventListener("click", () => applyConfidence(btn.dataset.conf));
     });
@@ -1207,28 +1241,31 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
 
   function getImportSubjectRef() {
     const id = els.importSubjectSelect?.value || "";
+    const fileId = els.importFileSelect?.value || "";
     if (!id) return null;
     const subj = state.subjects.find((s) => s.id === id);
+    const file = getFilesForSubject(id).find((f) => f.id === fileId);
     return {
       subjectId: id,
       subjectName: subj?.name || "",
-      fileId: null,
-      fileName: "",
+      fileId: file ? file.id : null,
+      fileName: file ? file.name || "" : "",
     };
   }
 
-  function updateSetSubject(setId, subjectId) {
+  function updateSetSubject(setId, subjectId, fileId = "") {
     const set = state.data.sets.find((s) => s.id === setId);
     if (!set) return;
     if (!subjectId) {
       set.subjectRef = null;
     } else {
       const subj = state.subjects.find((s) => s.id === subjectId);
+      const file = getFilesForSubject(subjectId).find((f) => f.id === fileId);
       set.subjectRef = {
         subjectId,
         subjectName: subj?.name || "",
-        fileId: null,
-        fileName: "",
+        fileId: file ? file.id : null,
+        fileName: file ? file.name || "",
       };
     }
     set.updatedAt = Date.now();
@@ -1237,6 +1274,19 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
     renderImportedList();
     renderLibraryTopics();
     renderSummary();
+  }
+
+  function renderLibrarySetsFiles(selectEl, subjectId, selectedFileId) {
+    if (!selectEl) return;
+    const files = getFilesForSubject(subjectId);
+    selectEl.innerHTML = `<option value="">No task</option>`;
+    files.forEach((f) => {
+      const opt = document.createElement("option");
+      opt.value = f.id;
+      opt.textContent = f.name || "Task";
+      if (selectedFileId && selectedFileId === f.id) opt.selected = true;
+      selectEl.appendChild(opt);
+    });
   }
 
   function replaceDuplicates(nextSet) {
