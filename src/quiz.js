@@ -22,7 +22,7 @@
     discardResumeBtn: document.getElementById("discardResumeBtn"),
     continueSessionBtn: document.getElementById("continueSessionBtn"),
     openImportBtn: document.getElementById("openImportBtn"),
-    openLibraryBtn: document.getElementById("openLibraryBtn"),
+    openImportBtn2: document.getElementById("openImportBtn2"),
     importPanel: document.getElementById("importPanel"),
     csvDropzone: document.getElementById("csvDropzone"),
     pickCsvBtn: document.getElementById("pickCsvBtn"),
@@ -34,11 +34,9 @@
     csvHelp: document.getElementById("csvHelp"),
     importedList: document.getElementById("importedList"),
     importedSearch: document.getElementById("importedSearch"),
-    libraryBody: document.getElementById("libraryBody"),
-    toggleLibraryBtn: document.getElementById("toggleLibraryBtn"),
-    topicList: document.getElementById("topicList"),
     topicSearch: document.getElementById("topicSearch"),
     topicSort: document.getElementById("topicSort"),
+    leftSetList: document.getElementById("leftSetList"),
     sessionSummary: document.getElementById("sessionSummary"),
     runTitle: document.getElementById("runTitle"),
     runMeta: document.getElementById("runMeta"),
@@ -457,134 +455,107 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
     });
   }
 
-  function renderLibraryTopics() {
-    const list = els.topicList;
-    if (!list) return;
-    list.innerHTML = "";
-    const term = (els.topicSearch?.value || "").toLowerCase();
-    const sort = els.topicSort?.value || "az";
-    const subjects = state.subjects.slice();
-    subjects.sort((a, b) => {
-      if (sort === "az") return (a.name || "").localeCompare(b.name || "");
-      if (sort === "recent")
-        return (b.quizLast || 0) - (a.quizLast || 0);
-      if (sort === "weak")
-        return (a.quizAccuracy || 0) - (b.quizAccuracy || 0);
-      return 0;
-    });
-    const filtered = subjects.filter((s) => (s.name || "").toLowerCase().includes(term));
-    if (!filtered.length) {
-      const div = document.createElement("div");
-      div.className = "empty";
-      div.textContent = "No topics match.";
-      list.appendChild(div);
-      return;
-    }
-    filtered.forEach((subj) => {
-      const card = document.createElement("div");
-      card.className = "library-card topic-card";
-      const row = document.createElement("div");
-      row.className = "library-row";
-      const name = document.createElement("div");
-      name.className = "library-title";
-      name.textContent = subj.name || "Subject";
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.checked = state.selectedTopicIds.has(subj.id);
-      checkbox.addEventListener("change", () => {
-        if (checkbox.checked) state.selectedTopicIds.add(subj.id);
-        else state.selectedTopicIds.delete(subj.id);
-        saveSourceState();
-        renderTopics();
-        renderSummary();
-      });
-      row.appendChild(name);
-      row.appendChild(checkbox);
-      const meta = document.createElement("div");
-      meta.className = "library-meta";
-      meta.textContent = subj.quizAccuracy != null ? `Accuracy ${subj.quizAccuracy}%` : "No data";
-      card.appendChild(row);
-      card.appendChild(meta);
-      list.appendChild(card);
-    });
-  }
+  function renderLibraryTopics() {}
 
   function renderImportedList() {
     const list = els.importedList;
-    if (!list) return;
-    list.innerHTML = "";
+    const left = els.leftSetList;
+    if (list) list.innerHTML = "";
+    if (left) left.innerHTML = "";
     const term = (els.importedSearch?.value || "").toLowerCase();
     const filtered = state.data.sets.filter((s) => (s.name || "").toLowerCase().includes(term));
-    if (!filtered.length) {
-      const div = document.createElement("div");
-      div.className = "empty";
-      div.textContent = "No imported sets.";
-      list.appendChild(div);
-      return;
-    }
-    filtered.forEach((set) => {
-      const card = document.createElement("div");
-      card.className = "library-card";
-      const row = document.createElement("div");
-      row.className = "library-row";
-      const title = document.createElement("div");
-      title.className = "library-title";
-      title.textContent = set.name;
-      const meta = document.createElement("div");
-      meta.className = "library-meta";
-      meta.textContent = `${set.totalQuestions} questions • Updated ${new Date(set.updatedAt || Date.now()).toLocaleDateString()}`;
-      row.appendChild(title);
-      card.appendChild(row);
-      card.appendChild(meta);
-      const actions = document.createElement("div");
-      actions.className = "library-actions-row";
-      const linkSelect = document.createElement("select");
-      linkSelect.className = "quiz-input";
-      linkSelect.style.minWidth = "180px";
-      linkSelect.innerHTML = `<option value="">No topic link</option>`;
-      state.subjects.forEach((subj) => {
-        const opt = document.createElement("option");
-        opt.value = subj.id;
-        opt.textContent = subj.name || "Subject";
-        if (set.subjectRef && set.subjectRef.subjectId === subj.id) opt.selected = true;
-        linkSelect.appendChild(opt);
+    const targets = [list, left].filter(Boolean);
+    targets.forEach((target) => {
+      if (!filtered.length) {
+        const div = document.createElement("div");
+        div.className = "empty";
+        div.textContent = "No imported sets.";
+        target.appendChild(div);
+        return;
+      }
+      filtered.forEach((set) => {
+        const card = document.createElement("div");
+        card.className = target === left ? "quiz-left-item" : "library-card";
+        const row = document.createElement("div");
+        row.className = "library-row";
+        const title = document.createElement("div");
+        title.className = "library-title";
+        title.textContent = set.name;
+        const meta = document.createElement("div");
+        meta.className = "library-meta";
+        meta.textContent = `${set.totalQuestions} questions • Updated ${new Date(set.updatedAt || Date.now()).toLocaleDateString()}`;
+        row.appendChild(title);
+        card.appendChild(row);
+        card.appendChild(meta);
+        if (target !== left) {
+          const actions = document.createElement("div");
+          actions.className = "library-actions-row";
+          const linkSelect = document.createElement("select");
+          linkSelect.className = "quiz-input";
+          linkSelect.style.minWidth = "180px";
+          linkSelect.innerHTML = `<option value="">No topic link</option>`;
+          state.subjects.forEach((subj) => {
+            const opt = document.createElement("option");
+            opt.value = subj.id;
+            opt.textContent = subj.name || "Subject";
+            if (set.subjectRef && set.subjectRef.subjectId === subj.id) opt.selected = true;
+            linkSelect.appendChild(opt);
+          });
+          linkSelect.addEventListener("change", () => {
+            updateSetSubject(set.id, linkSelect.value || "", "");
+            renderLibrarySetsFiles(fileSelect, linkSelect.value || "", set.subjectRef?.fileId || "");
+          });
+          actions.appendChild(linkSelect);
+          const fileSelect = document.createElement("select");
+          fileSelect.className = "quiz-input";
+          fileSelect.style.minWidth = "160px";
+          renderLibrarySetsFiles(fileSelect, set.subjectRef?.subjectId || "", set.subjectRef?.fileId || "");
+          fileSelect.addEventListener("change", () => {
+            updateSetSubject(set.id, linkSelect.value || "", fileSelect.value || "");
+          });
+          actions.appendChild(fileSelect);
+          const previewBtn = document.createElement("button");
+          previewBtn.className = "chip-btn";
+          previewBtn.textContent = "Preview";
+          previewBtn.addEventListener("click", () => previewSet(set));
+          actions.appendChild(previewBtn);
+          const renameBtn = document.createElement("button");
+          renameBtn.className = "chip-btn";
+          renameBtn.textContent = "Rename";
+          renameBtn.addEventListener("click", () => renameSet(set.id));
+          actions.appendChild(renameBtn);
+          const removeBtn = document.createElement("button");
+          removeBtn.className = "chip-btn";
+          removeBtn.textContent = "Remove";
+          removeBtn.addEventListener("click", () => removeSet(set.id));
+          actions.appendChild(removeBtn);
+          card.appendChild(actions);
+        } else {
+          card.addEventListener("click", () => {
+            selectSet(set.id);
+          });
+        }
+        target.appendChild(card);
       });
-      linkSelect.addEventListener("change", () => {
-        updateSetSubject(set.id, linkSelect.value || "", "");
-        renderLibrarySetsFiles(fileSelect, linkSelect.value || "", set.subjectRef?.fileId || "");
-      });
-      actions.appendChild(linkSelect);
-      const fileSelect = document.createElement("select");
-      fileSelect.className = "quiz-input";
-      fileSelect.style.minWidth = "160px";
-      renderLibrarySetsFiles(fileSelect, set.subjectRef?.subjectId || "", set.subjectRef?.fileId || "");
-      fileSelect.addEventListener("change", () => {
-        updateSetSubject(set.id, linkSelect.value || "", fileSelect.value || "");
-      });
-      actions.appendChild(fileSelect);
-      const previewBtn = document.createElement("button");
-      previewBtn.className = "chip-btn";
-      previewBtn.textContent = "Preview";
-      previewBtn.addEventListener("click", () => previewSet(set));
-      actions.appendChild(previewBtn);
-      const renameBtn = document.createElement("button");
-      renameBtn.className = "chip-btn";
-      renameBtn.textContent = "Rename";
-      renameBtn.addEventListener("click", () => renameSet(set.id));
-      actions.appendChild(renameBtn);
-      const removeBtn = document.createElement("button");
-      removeBtn.className = "chip-btn";
-      removeBtn.textContent = "Remove";
-      removeBtn.addEventListener("click", () => removeSet(set.id));
-      actions.appendChild(removeBtn);
-      card.appendChild(actions);
-      list.appendChild(card);
     });
   }
 
   function previewSet(set) {
     const preview = set.questions.slice(0, 3).map((q, idx) => `${idx + 1}) ${q.prompt}`).join("\n");
     alert(`Preview: ${set.name}\n\n${preview}`);
+  }
+
+  function selectSet(setId) {
+    if (!setId) return;
+    els.importedSelect.value = setId;
+    const btn = els.sourceBtns.find((b) => b.dataset.source === "imported");
+    if (btn) {
+      els.sourceBtns.forEach((b) => b.classList.remove("seg-active"));
+      btn.classList.add("seg-active");
+      state.source = "imported";
+    }
+    saveSourceState();
+    updateSummaryStrip();
   }
 
   function renameSet(id) {
@@ -1192,25 +1163,13 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
     els.importedSearch?.addEventListener("input", renderImportedList);
     els.topicSearch?.addEventListener("input", renderLibraryTopics);
     els.topicSort?.addEventListener("change", renderLibraryTopics);
-    els.toggleLibraryBtn?.addEventListener("click", () => {
-      state.libraryCollapsed = !state.libraryCollapsed;
-      els.libraryBody.hidden = state.libraryCollapsed;
-      els.toggleLibraryBtn.textContent = state.libraryCollapsed ? "Expand" : "Collapse";
-      saveLibraryState();
-    });
     els.openImportBtn?.addEventListener("click", () => {
       if (els.importPanel) {
         els.importPanel.open = true;
         els.importPanel.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     });
-    els.openLibraryBtn?.addEventListener("click", () => {
-      state.libraryCollapsed = false;
-      if (els.libraryBody) els.libraryBody.hidden = false;
-      if (els.toggleLibraryBtn) els.toggleLibraryBtn.textContent = "Collapse";
-      saveLibraryState();
-      els.librarySection?.scrollIntoView({ behavior: "smooth" });
-    });
+    els.openImportBtn2?.addEventListener("click", () => els.openImportBtn?.click());
     els.importSubjectSelect?.addEventListener("change", () => {
       renderImportFiles(els.importSubjectSelect.value || "");
       if (!els.importSubjectSelect.value && els.importFileSelect) els.importFileSelect.value = "";
@@ -1352,12 +1311,9 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
     renderImportedSelect();
     renderTopics();
     renderImportedList();
-    renderLibraryTopics();
     updateSummaryStrip();
     loadSessionState();
     attachEvents();
-    els.libraryBody.hidden = state.libraryCollapsed;
-    if (els.toggleLibraryBtn) els.toggleLibraryBtn.textContent = state.libraryCollapsed ? "Expand" : "Collapse";
     const remoteLoaded = await loadRemoteQuizSet();
     if (remoteLoaded) {
       renderImportedSelect();

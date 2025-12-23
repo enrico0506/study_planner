@@ -69,233 +69,213 @@
       </div>
       <div class="header-actions quiz-header-actions">
         <button class="btn btn-secondary" id="openImportBtn" type="button">Import</button>
-        <button class="btn btn-secondary" id="openLibraryBtn" type="button">Manage sets</button>
         <button class="btn btn-secondary" id="continueSessionBtn" type="button" hidden>Continue last session</button>
         <a class="btn btn-secondary header-calendar-btn" href="index.html">← Back to board</a>
       </div>
     </header>
 
-    <div class="quiz-layout">
-      <section class="quiz-card quiz-builder" id="sessionBuilder">
-        <div class="quiz-card-head">
-          <div>
-            <p class="eyebrow">Session builder</p>
-            <h2>Prepare your session</h2>
-            <p class="subtitle">Pick sources, tweak settings, and start with one clear action.</p>
-          </div>
-          <div class="quiz-summary" id="sessionSummary"></div>
-        </div>
-
-        <div class="quiz-builder-grid">
-          <div class="quiz-section">
-            <div class="section-title">1) Source</div>
-            <div class="segmented" role="tablist">
-              <button class="seg-btn seg-active" data-source="imported" type="button">Imported set</button>
-              <button class="seg-btn" data-source="topics" type="button">Topics</button>
-              <button class="seg-btn" data-source="mixed" type="button">Mixed</button>
-              <button class="seg-btn" data-source="weak" type="button" title="Weighted by weak areas">Weak areas</button>
-            </div>
-            <div class="source-controls">
-              <label class="quiz-label" for="importedSelect">Imported sets</label>
-              <select id="importedSelect" class="quiz-input"></select>
-              <div class="quiz-help">Choose one set or switch to Topics/Mixed to combine.</div>
-            </div>
-            <div class="source-controls">
-              <div class="quiz-label">Topics</div>
-              <div class="topic-select" id="topicSelect"></div>
-              <div class="quiz-help">Select one or more subjects. Mixed mode will include imported sets + selected topics.</div>
-            </div>
-          </div>
-
-          <div class="quiz-section">
-            <div class="section-title">2) Settings</div>
-            <div class="setting-row">
-              <label>Mode</label>
-              <div class="segmented">
-                <button class="seg-btn seg-active" data-mode="study" type="button">Study</button>
-                <button class="seg-btn" data-mode="exam" type="button">Exam</button>
-                <button class="seg-btn" data-mode="weak" type="button" title="Weighted toward weak areas">Weak areas</button>
-              </div>
-            </div>
-            <div class="setting-row">
-              <label>Session size</label>
-              <div class="segmented" id="sizeGroup">
-                <button class="seg-btn seg-active" data-size="10" type="button">10</button>
-                <button class="seg-btn" data-size="20" type="button">20</button>
-                <button class="seg-btn" data-size="50" type="button">50</button>
-                <button class="seg-btn" data-size="all" type="button">All</button>
-              </div>
-            </div>
-            <div class="setting-row toggles">
-              <label><input type="checkbox" id="shuffleQuestions" /> Shuffle questions</label>
-              <label><input type="checkbox" id="shuffleAnswers" /> Shuffle answers</label>
-              <label><input type="checkbox" id="sessionTimer" /> Session timer</label>
-            </div>
-          </div>
-
-          <div class="quiz-section">
-            <div class="section-title">3) Start</div>
-            <div class="summary-strip" id="summaryStrip">
-              <div class="summary-meta" id="summaryMeta">No set selected</div>
-              <div class="summary-meta" id="summaryMode">Study • 10 questions • Shuffle on</div>
-              <button class="btn" id="startSessionBtn" type="button">Start session</button>
-            </div>
-            <div class="resume-hint" id="resumeHint" hidden>
-              <span class="pill">Resumable</span>
-              <span id="resumeText"></span>
-              <div class="resume-actions">
-                <button class="chip-btn chip-btn-primary" id="resumeBtn" type="button">Continue</button>
-                <button class="chip-btn" id="discardResumeBtn" type="button">Discard</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <details class="quiz-import-panel" id="importPanel">
-          <summary>CSV import & preview</summary>
-          <div class="import-grid">
+    <div class="quiz-two-col">
+      <aside class="quiz-list-panel">
+        <div class="quiz-card quiz-list-card">
+          <div class="quiz-card-head">
             <div>
-              <div class="dropzone" id="csvDropzone">
-                <p class="drop-text">Drag & drop CSV here or</p>
-                <button class="chip-btn chip-btn-primary" id="pickCsvBtn" type="button">Choose file</button>
-                <input type="file" id="csvFile" accept=".csv,text/csv" aria-label="Choose CSV file" class="quiz-file-input" />
+              <p class="eyebrow">Quizzes</p>
+              <h2>Your sets</h2>
+            </div>
+            <button class="chip-btn" id="openImportBtn2" type="button">Import</button>
+          </div>
+          <input type="search" id="importedSearch" class="quiz-input" placeholder="Search sets…" />
+          <div id="leftSetList" class="library-list"></div>
+        </div>
+      </aside>
+
+      <main class="quiz-main-panel">
+        <section class="quiz-card quiz-builder" id="sessionBuilder">
+          <div class="quiz-card-head">
+            <div>
+              <p class="eyebrow">Session builder</p>
+              <h2>Prepare your session</h2>
+              <p class="subtitle">Pick sources, tweak settings, and start with one clear action.</p>
+            </div>
+            <div class="quiz-summary" id="sessionSummary"></div>
+          </div>
+
+          <div class="quiz-builder-grid">
+            <div class="quiz-section">
+              <div class="section-title">1) Source</div>
+              <div class="segmented" role="tablist">
+                <button class="seg-btn seg-active" data-source="imported" type="button">Imported set</button>
+                <button class="seg-btn" data-source="topics" type="button">Topics</button>
+                <button class="seg-btn" data-source="mixed" type="button">Mixed</button>
+                <button class="seg-btn" data-source="weak" type="button" title="Weighted by weak areas">Weak areas</button>
               </div>
-              <label class="quiz-label" for="importSubjectSelect">Link to topic (optional)</label>
-              <select id="importSubjectSelect" class="quiz-input">
-                <option value="">No link</option>
-              </select>
-              <label class="quiz-label" for="importFileSelect">Link to task/file (optional)</label>
-              <select id="importFileSelect" class="quiz-input">
-                <option value="">No task</option>
-              </select>
-              <div class="quiz-help">
-                Auto-detects semicolon/comma/tab. Max ~600 KB. <a href="/assets/quiz-template.csv" download>Download template</a>
+              <div class="source-controls">
+                <label class="quiz-label" for="importedSelect">Imported sets</label>
+                <select id="importedSelect" class="quiz-input"></select>
+                <div class="quiz-help">Choose one set or switch to Topics/Mixed to combine.</div>
               </div>
-              <div class="status-pill" id="importStatus" role="status" aria-live="polite"></div>
-            </div>
-            <div class="import-preview">
-              <div class="section-title">Preview</div>
-              <div id="previewList" class="preview-list"></div>
-            </div>
-            <div class="import-help">
-              <div class="section-title">CSV format</div>
-              <pre class="quiz-code" id="csvHelp"></pre>
-            </div>
-          </div>
-        </details>
-      </section>
-
-      <section class="quiz-card quiz-runner" id="quizRunner" aria-live="polite">
-        <div class="quiz-runner-head">
-          <div>
-            <p class="eyebrow">In session</p>
-            <h2 id="runTitle">Session</h2>
-            <p class="subtitle" id="runMeta">No session started</p>
-          </div>
-          <div class="quiz-runner-actions">
-            <span class="pill" id="runTimer">00:00</span>
-            <button class="chip-btn" id="flagBtn" type="button">Flag</button>
-          </div>
-        </div>
-        <div class="quiz-progress">
-          <div class="quiz-progress-bar" id="progressBar" style="width:0%"></div>
-        </div>
-        <article class="quiz-question" id="questionCard">
-          <div class="quiz-question-head">
-            <span class="quiz-pill" id="qCounter">Question</span>
-            <div class="quiz-mode-badges" id="modeBadges"></div>
-          </div>
-          <h3 class="quiz-question-text" id="questionText">Start a session to see questions.</h3>
-          <div class="quiz-choices" id="choices"></div>
-          <div class="confidence-row hidden" id="confidenceRow">
-            <div class="quiz-help">How confident were you?</div>
-            <div class="segmented">
-              <button class="seg-btn" data-conf="low" type="button">Low</button>
-              <button class="seg-btn" data-conf="med" type="button">Medium</button>
-              <button class="seg-btn" data-conf="high" type="button">High</button>
-            </div>
-          </div>
-          <div class="quiz-feedback" id="feedback"></div>
-          <div class="quiz-nav">
-            <button class="btn btn-secondary" id="prevBtn" type="button" disabled>Back</button>
-            <button class="btn" id="nextBtn" type="button" disabled>Next</button>
-            <button class="chip-btn chip-btn-primary" id="finishBtn" type="button">Finish</button>
-          </div>
-          <div class="quiz-help shortcut-hint">Shortcuts: 1-4 to answer, Enter to submit, F to flag, Esc for help.</div>
-        </article>
-      </section>
-
-      <section class="quiz-card quiz-results hidden" id="resultCard">
-        <div class="quiz-card-head">
-          <div>
-            <p class="eyebrow">Results</p>
-            <h2>Session recap</h2>
-            <p class="subtitle" id="resultSummary">—</p>
-          </div>
-          <div class="quiz-buttons">
-            <button class="btn" id="reviewIncorrectBtn" type="button">Review incorrect</button>
-            <button class="btn btn-secondary" id="retryFlaggedBtn" type="button">Retry flagged</button>
-            <button class="btn btn-secondary" id="newSessionBtn" type="button">New session</button>
-          </div>
-        </div>
-        <div class="results-grid">
-          <div class="result-metric">
-            <div class="metric-label">Accuracy</div>
-            <div class="metric-value" id="metricAccuracy">0%</div>
-          </div>
-          <div class="result-metric">
-            <div class="metric-label">Total time</div>
-            <div class="metric-value" id="metricTime">0:00</div>
-          </div>
-          <div class="result-metric">
-            <div class="metric-label">Avg/question</div>
-            <div class="metric-value" id="metricAvg">0s</div>
-          </div>
-        </div>
-        <div class="weak-areas">
-          <div class="section-title">Top weak topics</div>
-          <div id="weakAreasList" class="weak-areas-list"></div>
-        </div>
-        <details class="quiz-details" open>
-          <summary>Review (incorrect answers)</summary>
-          <div class="quiz-details-body" id="reviewList"></div>
-        </details>
-      </section>
-
-      <section class="quiz-card quiz-library">
-        <div class="library-head">
-          <div>
-            <p class="eyebrow">Library</p>
-            <h2>Sets & topics</h2>
-          </div>
-          <button class="chip-btn" id="toggleLibraryBtn" type="button">Collapse</button>
-        </div>
-        <div class="library-body" id="libraryBody">
-          <div class="library-section">
-            <div class="library-headline">
-              <div class="section-title">Imported sets</div>
-              <div class="library-actions">
-                <input type="search" id="importedSearch" class="quiz-input" placeholder="Search sets…" />
+              <div class="source-controls">
+                <div class="quiz-label">Topics</div>
+                <div class="topic-select" id="topicSelect"></div>
+                <div class="quiz-help">Select one or more subjects. Mixed mode will include imported sets + selected topics.</div>
               </div>
             </div>
-            <div id="importedList" class="library-list"></div>
+
+            <div class="quiz-section">
+              <div class="section-title">2) Settings</div>
+              <div class="setting-row">
+                <label>Mode</label>
+                <div class="segmented">
+                  <button class="seg-btn seg-active" data-mode="study" type="button">Study</button>
+                  <button class="seg-btn" data-mode="exam" type="button">Exam</button>
+                  <button class="seg-btn" data-mode="weak" type="button" title="Weighted toward weak areas">Weak areas</button>
+                </div>
+              </div>
+              <div class="setting-row">
+                <label>Session size</label>
+                <div class="segmented" id="sizeGroup">
+                  <button class="seg-btn seg-active" data-size="10" type="button">10</button>
+                  <button class="seg-btn" data-size="20" type="button">20</button>
+                  <button class="seg-btn" data-size="50" type="button">50</button>
+                  <button class="seg-btn" data-size="all" type="button">All</button>
+                </div>
+              </div>
+              <div class="setting-row toggles">
+                <label><input type="checkbox" id="shuffleQuestions" /> Shuffle questions</label>
+                <label><input type="checkbox" id="shuffleAnswers" /> Shuffle answers</label>
+                <label><input type="checkbox" id="sessionTimer" /> Session timer</label>
+              </div>
+            </div>
+
+            <div class="quiz-section">
+              <div class="section-title">3) Start</div>
+              <div class="summary-strip" id="summaryStrip">
+                <div class="summary-meta" id="summaryMeta">No set selected</div>
+                <div class="summary-meta" id="summaryMode">Study • 10 questions • Shuffle on</div>
+                <button class="btn" id="startSessionBtn" type="button">Start session</button>
+              </div>
+              <div class="resume-hint" id="resumeHint" hidden>
+                <span class="pill">Resumable</span>
+                <span id="resumeText"></span>
+                <div class="resume-actions">
+                  <button class="chip-btn chip-btn-primary" id="resumeBtn" type="button">Continue</button>
+                  <button class="chip-btn" id="discardResumeBtn" type="button">Discard</button>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="library-section">
-            <div class="library-headline">
-              <div class="section-title">Topics</div>
-              <div class="library-actions">
-                <input type="search" id="topicSearch" class="quiz-input" placeholder="Search topics…" />
-                <select id="topicSort" class="quiz-input">
-                  <option value="az">A–Z</option>
-                  <option value="recent">Most recent</option>
-                  <option value="weak">Lowest accuracy</option>
+
+          <details class="quiz-import-panel" id="importPanel">
+            <summary>CSV import & preview</summary>
+            <div class="import-grid">
+              <div>
+                <div class="dropzone" id="csvDropzone">
+                  <p class="drop-text">Drag & drop CSV here or</p>
+                  <button class="chip-btn chip-btn-primary" id="pickCsvBtn" type="button">Choose file</button>
+                  <input type="file" id="csvFile" accept=".csv,text/csv" aria-label="Choose CSV file" class="quiz-file-input" />
+                </div>
+                <label class="quiz-label" for="importSubjectSelect">Link to topic (optional)</label>
+                <select id="importSubjectSelect" class="quiz-input">
+                  <option value="">No link</option>
                 </select>
+                <label class="quiz-label" for="importFileSelect">Link to task/file (optional)</label>
+                <select id="importFileSelect" class="quiz-input">
+                  <option value="">No task</option>
+                </select>
+                <div class="quiz-help">
+                  Auto-detects semicolon/comma/tab. Max ~600 KB. <a href="/assets/quiz-template.csv" download>Download template</a>
+                </div>
+                <div class="status-pill" id="importStatus" role="status" aria-live="polite"></div>
+              </div>
+              <div class="import-preview">
+                <div class="section-title">Preview</div>
+                <div id="previewList" class="preview-list"></div>
+              </div>
+              <div class="import-help">
+                <div class="section-title">CSV format</div>
+                <pre class="quiz-code" id="csvHelp"></pre>
               </div>
             </div>
-            <div id="topicList" class="library-list"></div>
+          </details>
+        </section>
+
+        <section class="quiz-card quiz-runner" id="quizRunner" aria-live="polite">
+          <div class="quiz-runner-head">
+            <div>
+              <p class="eyebrow">In session</p>
+              <h2 id="runTitle">Session</h2>
+              <p class="subtitle" id="runMeta">No session started</p>
+            </div>
+            <div class="quiz-runner-actions">
+              <span class="pill" id="runTimer">00:00</span>
+              <button class="chip-btn" id="flagBtn" type="button">Flag</button>
+            </div>
           </div>
-        </div>
-      </section>
+          <div class="quiz-progress">
+            <div class="quiz-progress-bar" id="progressBar" style="width:0%"></div>
+          </div>
+          <article class="quiz-question" id="questionCard">
+            <div class="quiz-question-head">
+              <span class="quiz-pill" id="qCounter">Question</span>
+              <div class="quiz-mode-badges" id="modeBadges"></div>
+            </div>
+            <h3 class="quiz-question-text" id="questionText">Start a session to see questions.</h3>
+            <div class="quiz-choices" id="choices"></div>
+            <div class="confidence-row hidden" id="confidenceRow">
+              <div class="quiz-help">How confident were you?</div>
+              <div class="segmented">
+                <button class="seg-btn" data-conf="low" type="button">Low</button>
+                <button class="seg-btn" data-conf="med" type="button">Medium</button>
+                <button class="seg-btn" data-conf="high" type="button">High</button>
+              </div>
+            </div>
+            <div class="quiz-feedback" id="feedback"></div>
+            <div class="quiz-nav">
+              <button class="btn btn-secondary" id="prevBtn" type="button" disabled>Back</button>
+              <button class="btn" id="nextBtn" type="button" disabled>Next</button>
+              <button class="chip-btn chip-btn-primary" id="finishBtn" type="button">Finish</button>
+            </div>
+            <div class="quiz-help shortcut-hint">Shortcuts: 1-4 to answer, Enter to submit, F to flag, Esc for help.</div>
+          </article>
+        </section>
+
+        <section class="quiz-card quiz-results hidden" id="resultCard">
+          <div class="quiz-card-head">
+            <div>
+              <p class="eyebrow">Results</p>
+              <h2>Session recap</h2>
+              <p class="subtitle" id="resultSummary">—</p>
+            </div>
+            <div class="quiz-buttons">
+              <button class="btn" id="reviewIncorrectBtn" type="button">Review incorrect</button>
+              <button class="btn btn-secondary" id="retryFlaggedBtn" type="button">Retry flagged</button>
+              <button class="btn btn-secondary" id="newSessionBtn" type="button">New session</button>
+            </div>
+          </div>
+          <div class="results-grid">
+            <div class="result-metric">
+              <div class="metric-label">Accuracy</div>
+              <div class="metric-value" id="metricAccuracy">0%</div>
+            </div>
+            <div class="result-metric">
+              <div class="metric-label">Total time</div>
+              <div class="metric-value" id="metricTime">0:00</div>
+            </div>
+            <div class="result-metric">
+              <div class="metric-label">Avg/question</div>
+              <div class="metric-value" id="metricAvg">0s</div>
+            </div>
+          </div>
+          <div class="weak-areas">
+            <div class="section-title">Top weak topics</div>
+            <div id="weakAreasList" class="weak-areas-list"></div>
+          </div>
+          <details class="quiz-details" open>
+            <summary>Review (incorrect answers)</summary>
+            <div class="quiz-details-body" id="reviewList"></div>
+          </details>
+        </section>
+      </main>
     </div>
   </div>
 
