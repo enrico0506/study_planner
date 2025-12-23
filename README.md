@@ -14,6 +14,7 @@ Lightweight study board with subjects/files, Pomodoro timer, today's focus list,
 ## Run
 - Open `index.html` directly in a browser (no build step; data in `localStorage`).
 - For PWA testing / installability, use Node/Express (serves `/manifest.webmanifest`, `/sw.js`, `/icons/*` correctly): `npm install` then `npm start` (defaults to port `10000`).
+- CSV import (Quiz & Karteikarten): works via the built-in file picker; best served over `http://localhost` (via `npm start`) or HTTPS so browsers allow the native picker. The app falls back to the standard `<input type="file">` flow when opened from `file://`, but localhost is recommended.
 - Optional: (re)generate PWA icons: `npm run gen:icons` (also runs automatically on `npm install`).
 
 ## PWA (Installable App)

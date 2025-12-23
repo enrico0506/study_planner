@@ -267,6 +267,16 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
     els.importStatus.dataset.tone = tone;
   }
 
+  let warnedInsecure = false;
+  function warnInsecureContext(detail) {
+    if (warnedInsecure) return;
+    warnedInsecure = true;
+    console.warn(
+      `Quiz import: ${detail || "file chooser may be blocked"} – run via npm start / localhost or https for best support.`
+    );
+    setStatus("Import works best via localhost (npm start). Falling back to standard picker…", "info");
+  }
+
   function ensureImportPanelOpen() {
     if (!els.importPanel) return;
     els.importPanel.setAttribute("open", "open");
@@ -279,12 +289,15 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
     if (!els.csvFile) return;
     els.csvFile.value = "";
     try {
-      if (typeof els.csvFile.showPicker === "function") {
+      if (window.isSecureContext && typeof els.csvFile.showPicker === "function") {
         els.csvFile.showPicker();
         return;
       }
+      if (!window.isSecureContext) {
+        warnInsecureContext("not a secure context");
+      }
     } catch (err) {
-      // fall back to click below
+      warnInsecureContext(err?.message || "secure picker failed");
     }
     try {
       els.csvFile.click();
