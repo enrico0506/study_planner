@@ -1186,12 +1186,22 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
       els.toggleLibraryBtn.textContent = state.libraryCollapsed ? "Expand" : "Collapse";
       saveLibraryState();
     });
-    els.openImportBtn?.addEventListener("click", () => els.importPanel?.setAttribute("open", "open"));
+    els.openImportBtn?.addEventListener("click", () => {
+      if (els.importPanel) {
+        els.importPanel.setAttribute("open", "open");
+        els.importPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
     els.openLibraryBtn?.addEventListener("click", () => {
+      state.libraryCollapsed = false;
+      if (els.libraryBody) els.libraryBody.hidden = false;
+      if (els.toggleLibraryBtn) els.toggleLibraryBtn.textContent = "Collapse";
+      saveLibraryState();
       els.librarySection?.scrollIntoView({ behavior: "smooth" });
     });
     els.importSubjectSelect?.addEventListener("change", () => {
       renderImportFiles(els.importSubjectSelect.value || "");
+      if (!els.importSubjectSelect.value && els.importFileSelect) els.importFileSelect.value = "";
     });
     els.confidenceBtns.forEach((btn) => {
       btn.addEventListener("click", () => applyConfidence(btn.dataset.conf));
