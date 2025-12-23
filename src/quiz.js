@@ -43,7 +43,6 @@
   let bank = {};
   let manageTarget = "";
   let subjects = [];
-  let examMode = false;
   let currentQuizName = "";
   let questions = [];
   let idx = 0;
@@ -298,7 +297,6 @@
     const has = selected && savedBank[selected] && (savedBank[selected].questions || []).length;
     els.startBtn.disabled = !has;
     els.resetBtn.disabled = !Object.keys(savedBank).length;
-    examMode = !!els.modeExam?.checked;
   }
 
   function normalizeHeader(h) {
@@ -565,17 +563,11 @@
       if (a && a.selectedDisplayIndex != null) {
         const isCorrect = displayIndex === a.correctDisplayIndex;
         const isSelected = displayIndex === a.selectedDisplayIndex;
-        if (!examMode) {
-          if (isCorrect) btn.classList.add("correct");
-          if (isSelected && !isCorrect) btn.classList.add("wrong");
-        }
+      if (isCorrect) btn.classList.add("correct");
+      if (isSelected && !isCorrect) btn.classList.add("wrong");
         btn.disabled = true;
         els.nextBtn.disabled = false;
-        if (!examMode) {
-          els.feedback.textContent = a.isCorrect ? "Correct." : "Incorrect.";
-        } else {
-          els.feedback.textContent = "";
-        }
+        els.feedback.textContent = a.isCorrect ? "Correct." : "Incorrect.";
         els.progressBar.style.width = `${Math.round(((idx + 1) / questions.length) * 100)}%`;
       } else {
         btn.addEventListener("click", () => selectAnswer(displayIndex, map, q));
@@ -600,18 +592,14 @@
 
     els.choices.querySelectorAll(".quiz-choice").forEach((btn) => {
       btn.disabled = true;
-      if (!examMode) {
-        const di = Number(btn.dataset.displayIndex);
-        if (di === correctDisplayIndex) btn.classList.add("correct");
-        if (di === selectedDisplayIndex && di !== correctDisplayIndex) btn.classList.add("wrong");
-      }
+      const di = Number(btn.dataset.displayIndex);
+      if (di === correctDisplayIndex) btn.classList.add("correct");
+      if (di === selectedDisplayIndex && di !== correctDisplayIndex) btn.classList.add("wrong");
     });
 
-    els.feedback.textContent = examMode ? "" : isCorrect ? "Correct." : "Incorrect.";
+    els.feedback.textContent = isCorrect ? "Correct." : "Incorrect.";
     els.nextBtn.disabled = false;
-    if (!examMode) {
-      els.scoreText.textContent = `${score} / ${questions.length}`;
-    }
+    els.scoreText.textContent = `${score} / ${questions.length}`;
     els.progressBar.style.width = `${Math.round(((idx + 1) / questions.length) * 100)}%`;
   }
 
@@ -619,8 +607,6 @@
     currentQuizName = els.quizSelect.value || Object.keys(bank)[0];
     questions = (bank[currentQuizName]?.questions || []).slice();
     shuffleArray(questions);
-    examMode = !!els.modeExam?.checked;
-
     idx = 0;
     score = 0;
     answers = questions.map(() => ({
@@ -726,9 +712,6 @@
     currentQuizName = els.quizSelect.value;
     renderSavedList();
     updateStartDisabled();
-  });
-  els.modeExam?.addEventListener("change", () => {
-    examMode = !!els.modeExam.checked;
   });
   els.resetBtn.addEventListener("click", resetAll);
   els.hintBtn.addEventListener("click", () => els.hintText.classList.toggle("hidden"));
