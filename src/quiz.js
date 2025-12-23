@@ -1257,12 +1257,12 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
     els.topicSearch?.addEventListener("input", renderLibraryTopics);
     els.topicSort?.addEventListener("change", renderLibraryTopics);
     els.openImportBtn?.addEventListener("click", (e) => {
-      e.preventDefault();
+      if (e.target && e.target.tagName === "INPUT") return; // let native file input open
       ensureImportPanelOpen();
       triggerCsvPicker();
     });
     els.openImportBtn2?.addEventListener("click", (e) => {
-      e.preventDefault();
+      if (e.target && e.target.tagName === "INPUT") return;
       ensureImportPanelOpen();
       triggerCsvPicker();
     });
@@ -1270,7 +1270,6 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
       const target = e.target;
       if (!target) return;
       if (target.id === "openImportBtn" || target.id === "openImportBtn2") {
-        e.preventDefault();
         ensureImportPanelOpen();
         triggerCsvPicker();
       }
