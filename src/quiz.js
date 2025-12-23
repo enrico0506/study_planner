@@ -312,6 +312,24 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
     return fallbackPicker;
   }
 
+  function attachInlinePicker(btn) {
+    if (!btn) return;
+    if (btn.querySelector("input[type='file']")) return;
+    btn.style.position = btn.style.position || "relative";
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".csv,text/csv";
+    input.setAttribute("aria-label", "Import CSV");
+    Object.assign(input.style, {
+      position: "absolute",
+      inset: "0",
+      opacity: "0",
+      cursor: "pointer",
+    });
+    input.addEventListener("change", handleCsvInput);
+    btn.appendChild(input);
+  }
+
   function triggerCsvPicker() {
     const picker = getPickerInput();
     if (!picker) return;
@@ -1154,6 +1172,8 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
   }
 
   function attachEvents() {
+    attachInlinePicker(els.openImportBtn);
+    attachInlinePicker(els.openImportBtn2);
     els.sourceBtns.forEach((btn) =>
       btn.addEventListener("click", () => {
         els.sourceBtns.forEach((b) => b.classList.remove("seg-active"));
