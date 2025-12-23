@@ -208,7 +208,9 @@
       alert("A quiz with that name already exists.");
       return;
     }
+    const prevMeta = savedBank[manageTarget]?._meta;
     savedBank[newName] = savedBank[manageTarget];
+    if (prevMeta) savedBank[newName]._meta = prevMeta;
     delete savedBank[manageTarget];
     if (currentQuizName === manageTarget) currentQuizName = newName;
     saveBank();
@@ -668,7 +670,9 @@
       const text = await file.text();
       const built = buildQuestionBank(text);
       Object.entries(built.bank).forEach(([name, questions]) => {
+        const existingMeta = savedBank[name]?._meta;
         savedBank[name] = questions;
+        if (existingMeta) savedBank[name]._meta = existingMeta;
       });
       bank = { ...savedBank };
       currentQuizName = built.quizNames[0] || currentQuizName;

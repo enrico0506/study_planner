@@ -195,6 +195,23 @@
   box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
+.quiz-import {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quiz-sidebar .chip-btn {
+  position: relative;
+}
+
+.quiz-sidebar .chip-btn input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
 .quiz-import-grid {
   margin-top: 12px;
   display: grid;
