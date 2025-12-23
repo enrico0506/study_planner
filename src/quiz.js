@@ -1216,7 +1216,7 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
   }
 
   function handleCsvInput(e) {
-    const file = e.target.files && e.target.files[0];
+    const file = e.target?.files && e.target.files[0];
     if (!file) {
       setStatus("No file selected", "error");
       return;
