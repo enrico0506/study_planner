@@ -1169,6 +1169,9 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
         els.importPanel.scrollIntoView({ behavior: "smooth", block: "start" });
       }
       if (els.pickCsvBtn) els.pickCsvBtn.focus();
+      if (els.csvFile) {
+        els.csvFile.value = "";
+      }
     };
     els.openImportBtn?.addEventListener("click", openImportPanel);
     els.openImportBtn2?.addEventListener("click", openImportPanel);
@@ -1189,6 +1192,8 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
       return;
     }
     handleCsvFile(file);
+    // Allow selecting the same file again later
+    if (els.csvFile) els.csvFile.value = "";
   }
 
   async function handleCsvFile(file) {
