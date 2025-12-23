@@ -1182,6 +1182,14 @@ Sample Set;3;Which element has symbol O?;Gold;Oxygen;Iron;Silver;B;Air`;
       e.preventDefault();
       openImportPanel();
     });
+    document.addEventListener("click", (e) => {
+      const target = e.target;
+      if (!target) return;
+      if (target.id === "openImportBtn" || target.id === "openImportBtn2") {
+        e.preventDefault();
+        openImportPanel();
+      }
+    });
     els.importSubjectSelect?.addEventListener("change", () => {
       renderImportFiles(els.importSubjectSelect.value || "");
       if (!els.importSubjectSelect.value && els.importFileSelect) els.importFileSelect.value = "";
