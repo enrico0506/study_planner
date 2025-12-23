@@ -108,6 +108,12 @@
               <h3>Saved quizzes</h3>
               <p class="subtitle">Click a set to select it.</p>
             </div>
+            <div class="quiz-import">
+              <label class="chip-btn">
+                <span>Quiz hinzufügen</span>
+                <input type="file" id="csvFile" accept=".csv,text/csv" />
+              </label>
+            </div>
           </div>
           <div id="savedQuizList" class="saved-list"></div>
         </div>
@@ -120,16 +126,11 @@
               <p class="eyebrow">Import</p>
               <h2>Bring your questions</h2>
               <p class="subtitle">Upload a CSV, pick a quiz set, and choose how you want to shuffle.</p>
+            </div>
+            <div class="quiz-pill">Local CSV • Offline</div>
           </div>
-          <div class="quiz-pill">Local CSV • Offline</div>
-        </div>
 
         <div class="quiz-import-grid">
-          <div class="quiz-field">
-            <label class="quiz-label" for="csvFile">CSV file</label>
-            <input id="csvFile" class="quiz-input" type="file" accept=".csv,text/csv" />
-            <p class="quiz-help">Semicolon, comma, or tab separators are detected automatically.</p>
-          </div>
           <div class="quiz-field">
             <label class="quiz-label" for="quizSelect">Quiz set</label>
             <select id="quizSelect" class="quiz-input" disabled>
