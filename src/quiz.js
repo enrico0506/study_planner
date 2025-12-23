@@ -33,14 +33,18 @@
     manageSave: document.getElementById("quizManageSave"),
     manageDelete: document.getElementById("quizManageDelete"),
     manageClose: document.getElementById("quizManageClose"),
+    manageSubject: document.getElementById("quizManageSubject"),
+    manageTask: document.getElementById("quizManageTask"),
   };
 
   if (!els.csvFile || !els.quizCard) return;
 
   const STORAGE_KEY = "studyQuizBank_v1";
+  const SUBJECTS_KEY = "studySubjects_v1";
   let savedBank = {};
   let bank = {};
   let manageTarget = "";
+  let subjects = [];
   let currentQuizName = "";
   let questions = [];
   let idx = 0;
@@ -82,6 +86,21 @@
       console.warn("Could not load saved quizzes", err);
       return {};
     }
+  }
+
+  function loadSubjects() {
+    try {
+      const raw = localStorage.getItem(SUBJECTS_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      subjects = Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+      subjects = [];
+    }
+  }
+
+  function getSubjectColor(subjectId) {
+    const subj = subjects.find((s) => s.id === subjectId);
+    return subj?.color || "";
   }
 
   function saveBank() {
@@ -142,7 +161,11 @@
       title.textContent = name;
       const meta = document.createElement("div");
       meta.className = "saved-item-meta";
-      meta.textContent = `${savedBank[name].length} question${savedBank[name].length === 1 ? "" : "s"}`;
+      const subjColor = getSubjectColor(savedBank[name]._meta?.subjectId);
+      const subjectTag = savedBank[name]._meta?.subjectId
+        ? `<span class="subject-chip" style="${subjColor ? `background:${subjColor}22;border-color:${subjColor}44;` : ""}">${savedBank[name]._meta.subjectName || "Subject"}</span>`
+        : "";
+      meta.innerHTML = `${savedBank[name].length} question${savedBank[name].length === 1 ? "" : "s"} ${subjectTag}`;
       infoWrap.appendChild(title);
       infoWrap.appendChild(meta);
       item.appendChild(infoWrap);
@@ -167,6 +190,10 @@
   function openManageModal(name) {
     manageTarget = name;
     if (els.manageName) els.manageName.value = name;
+    populateSubjectSelects();
+    const meta = savedBank[name]?._meta || {};
+    if (els.manageSubject) els.manageSubject.value = meta.subjectId || "";
+    populateTaskSelect(meta.subjectId || "", meta.fileId || "");
     if (els.manageModal) els.manageModal.classList.add("is-open");
   }
 
@@ -201,6 +228,49 @@
     renderSavedList();
     updateStartDisabled();
     closeManageModal();
+  }
+
+  function populateSubjectSelects() {
+    if (!els.manageSubject) return;
+    const current = els.manageSubject.value;
+    els.manageSubject.innerHTML = `<option value="">No subject</option>`;
+    subjects.forEach((s) => {
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = s.name || "Subject";
+      if (current && current === s.id) opt.selected = true;
+      els.manageSubject.appendChild(opt);
+    });
+  }
+
+  function populateTaskSelect(subjectId, selectedFileId = "") {
+    if (!els.manageTask) return;
+    els.manageTask.innerHTML = `<option value="">No task</option>`;
+    if (!subjectId) return;
+    const subj = subjects.find((s) => s.id === subjectId);
+    const files = Array.isArray(subj?.files) ? subj.files : [];
+    files.forEach((f) => {
+      const opt = document.createElement("option");
+      opt.value = f.id;
+      opt.textContent = f.name || "Task";
+      if (selectedFileId && selectedFileId === f.id) opt.selected = true;
+      els.manageTask.appendChild(opt);
+    });
+  }
+
+  function saveLinksForQuiz(name, subjectId, fileId) {
+    const subj = subjects.find((s) => s.id === subjectId);
+    const files = Array.isArray(subj?.files) ? subj.files : [];
+    const file = files.find((f) => f.id === fileId);
+    if (!savedBank[name]) return;
+    savedBank[name]._meta = {
+      subjectId: subjectId || "",
+      subjectName: subj?.name || "",
+      fileId: fileId || "",
+      fileName: file?.name || "",
+    };
+    saveBank();
+    renderSavedList();
   }
 
   function updateStartDisabled() {
@@ -638,8 +708,15 @@
   els.manageModal?.querySelector(".quiz-modal-backdrop")?.addEventListener("click", closeManageModal);
   els.manageSave?.addEventListener("click", () => {
     if (els.manageName) renameQuiz(els.manageName.value.trim());
+    if (manageTarget) {
+      saveLinksForQuiz(manageTarget, els.manageSubject?.value || "", els.manageTask?.value || "");
+    }
+    closeManageModal();
   });
   els.manageDelete?.addEventListener("click", deleteQuiz);
+  els.manageSubject?.addEventListener("change", () => {
+    populateTaskSelect(els.manageSubject.value || "", "");
+  });
 
   document.addEventListener("keydown", (ev) => {
     if (els.quizCard.classList.contains("hidden")) return;
@@ -648,6 +725,7 @@
   });
 
   savedBank = loadSavedBank();
+  loadSubjects();
   bank = { ...savedBank };
   renderQuizSelect();
   resetAll();
