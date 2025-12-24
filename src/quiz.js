@@ -33,6 +33,8 @@
     manageClose: document.getElementById("quizManageClose"),
     manageSubject: document.getElementById("quizManageSubject"),
     manageTask: document.getElementById("quizManageTask"),
+    totalToday: document.getElementById("quizTotalToday"),
+    sessionTimer: document.getElementById("quizSessionTimer"),
   };
 
   if (!els.csvFile || !els.quizCard) return;
@@ -43,6 +45,8 @@
   let bank = {};
   let manageTarget = "";
   let subjects = [];
+  let quizStartedAt = 0;
+  let sessionTimerHandle = null;
   let currentQuizName = "";
   let questions = [];
   let idx = 0;
@@ -111,6 +115,81 @@
   function getSubjectColor(subjectId) {
     const subj = subjects.find((s) => s.id === subjectId);
     return subj?.color || "";
+  }
+
+  function appendSession(entry) {
+    const key = "studySessions_v1";
+    try {
+      const SJ = window.StudyPlanner?.SessionJournal;
+      if (SJ && typeof SJ.appendSession === "function") {
+        SJ.appendSession(entry);
+        return;
+      }
+    } catch {}
+    try {
+      const raw = localStorage.getItem(key);
+      const list = raw ? JSON.parse(raw) : [];
+      const arr = Array.isArray(list) ? list : [];
+      arr.push(entry);
+      while (arr.length > 2500) arr.shift();
+      localStorage.setItem(key, JSON.stringify(arr));
+    } catch (err) {
+      console.warn("Could not append session", err);
+    }
+  }
+
+  function loadTodayMinutes() {
+    try {
+      const raw = localStorage.getItem("studySessions_v1");
+      const list = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(list)) return 0;
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      let sum = 0;
+      list.forEach((s) => {
+        const end = s && s.endedAt ? new Date(s.endedAt).getTime() : null;
+        if (!end || end < startOfDay.getTime()) return;
+        sum += Math.max(0, Math.round(Number(s.durationMinutes) || 0));
+      });
+      return sum;
+    } catch {
+      return 0;
+    }
+  }
+
+  function renderTodayTotal() {
+    if (!els.totalToday) return;
+    const min = loadTodayMinutes();
+    if (min < 60) {
+      els.totalToday.textContent = `${min}m`;
+    } else {
+      const h = Math.floor(min / 60);
+      const r = min % 60;
+      els.totalToday.textContent = r ? `${h}h ${r}m` : `${h}h`;
+    }
+  }
+
+  function startSessionTimer() {
+    if (!els.sessionTimer) return;
+    if (sessionTimerHandle) clearInterval(sessionTimerHandle);
+    const base = quizStartedAt || Date.now();
+    const fmt = (ms) => {
+      const total = Math.max(0, Math.floor(ms / 1000));
+      const m = Math.floor(total / 60);
+      const s = total % 60;
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    };
+    els.sessionTimer.textContent = "00:00";
+    sessionTimerHandle = setInterval(() => {
+      const now = Date.now();
+      els.sessionTimer.textContent = fmt(now - base);
+    }, 1000);
+  }
+
+  function stopSessionTimer() {
+    if (sessionTimerHandle) clearInterval(sessionTimerHandle);
+    sessionTimerHandle = null;
+    if (els.sessionTimer) els.sessionTimer.textContent = "00:00";
   }
 
   function saveBank() {
@@ -503,6 +582,8 @@
     answers = [];
     idx = 0;
     score = 0;
+    quizStartedAt = 0;
+    stopSessionTimer();
     renderQuizSelect();
     const names = Object.keys(savedBank).sort((a, b) => a.localeCompare(b));
     if (names.length) {
@@ -607,6 +688,8 @@
     currentQuizName = els.quizSelect.value || Object.keys(bank)[0];
     questions = (bank[currentQuizName]?.questions || []).slice();
     shuffleArray(questions);
+    quizStartedAt = Date.now();
+    startSessionTimer();
     idx = 0;
     score = 0;
     answers = questions.map(() => ({
@@ -656,6 +739,29 @@
         els.reviewList.appendChild(div);
       });
     }
+    const endedAt = Date.now();
+    const startedAt = quizStartedAt || endedAt;
+    const durationMs = Math.max(0, endedAt - startedAt);
+    const durationMinutes = Math.max(1, Math.round(durationMs / 60000));
+    const meta = bank[currentQuizName]?.meta || {};
+    appendSession({
+      id: `sess_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+      startedAt: new Date(startedAt).toISOString(),
+      endedAt: new Date(endedAt).toISOString(),
+      durationMinutes,
+      kind: "quiz",
+      subjectId: meta.subjectId || null,
+      fileId: meta.fileId || null,
+      assignmentId: null,
+      recapText: "",
+      effectivenessRating: null,
+      tag: "",
+      confidenceBefore: null,
+      confidenceAfter: null,
+    });
+    quizStartedAt = 0;
+    stopSessionTimer();
+    renderTodayTotal();
     showResults();
   }
 
@@ -713,6 +819,7 @@
     renderSavedList();
     updateStartDisabled();
   });
+  renderTodayTotal();
   els.resetBtn.addEventListener("click", resetAll);
   els.hintBtn.addEventListener("click", () => els.hintText.classList.toggle("hidden"));
   els.nextBtn.addEventListener("click", goNext);
