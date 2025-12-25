@@ -94,6 +94,7 @@ body::-webkit-scrollbar,
       --meter-high: linear-gradient(90deg, #22c55e, #16a34a);
       --study-bar-bg: #e8ecf7;
       --study-bar-radius: 999px;
+      --header-size: clamp(200px, 27dvh, 360px);
       font-family: "Manrope", "Space Grotesk", sans-serif;
       background: var(--page-bg);
       color: var(--ink);
@@ -220,8 +221,11 @@ html.ads-disabled ins.adsbygoogle {
 .plannerHeader {
   display: flex;
   flex-direction: column;
-  height: clamp(200px, 27dvh, 360px);
-  flex: 0 0 auto;
+  flex: 0 0 var(--header-size);
+  min-height: var(--header-size);
+  height: var(--header-size);
+  max-height: var(--header-size);
+  flex-shrink: 0;
   overflow: hidden;
   contain: layout paint;
   position: relative;
@@ -235,7 +239,7 @@ html.ads-disabled ins.adsbygoogle {
 .plannerLower {
   display: block;
   min-height: 0;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   overflow: visible;
   position: relative;
   z-index: 1;
@@ -2647,6 +2651,42 @@ body.session-header-mounted #focusCard {
   flex: 1;
   min-height: 0;
   overflow: visible;
+}
+
+/* --- Layout safety overrides: prevent internal vertical scroll/overlap --- */
+.plannerLower,
+.plannerLower .layout-row,
+.plannerLower .main-area,
+.plannerLower .table-wrapper,
+.plannerLower .today-sidebar,
+.plannerLower .today-section,
+.plannerLower #todayList,
+.plannerLower #subjectTable {
+  max-height: none !important;
+  height: auto;
+  overflow-y: visible !important;
+}
+
+.plannerLower .today-sidebar {
+  position: static !important;
+  top: auto !important;
+  margin-top: 0 !important;
+}
+
+.plannerLower .table-wrapper {
+  overflow-x: auto;
+}
+
+/* Guard against sticky/positioned elements from responsive overrides */
+.plannerLower .today-sidebar,
+.plannerLower .today-section,
+.plannerLower .layout-row,
+.plannerLower .main-area {
+  position: static !important;
+}
+
+.plannerLower .layout-row {
+  margin-top: 0 !important;
 }
 
 .today-list.today-list-grid {
