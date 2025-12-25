@@ -20,6 +20,7 @@
     feedback: document.getElementById("feedback"),
     prevBtn: document.getElementById("prevBtn"),
     nextBtn: document.getElementById("nextBtn"),
+    pauseBtn: document.getElementById("pauseBtn"),
     finishBtn: document.getElementById("finishBtn"),
     resultSummary: document.getElementById("resultSummary"),
     reviewList: document.getElementById("reviewList"),
@@ -47,6 +48,9 @@
   let subjects = [];
   let quizStartedAt = 0;
   let sessionTimerHandle = null;
+  let sessionResumeAt = 0;
+  let activeElapsedMs = 0;
+  let isPaused = false;
   let currentQuizName = "";
   let questions = [];
   let idx = 0;
@@ -169,27 +173,85 @@
     }
   }
 
-  function startSessionTimer() {
-    if (!els.sessionTimer) return;
-    if (sessionTimerHandle) clearInterval(sessionTimerHandle);
-    const base = quizStartedAt || Date.now();
-    const fmt = (ms) => {
-      const total = Math.max(0, Math.floor(ms / 1000));
-      const m = Math.floor(total / 60);
-      const s = total % 60;
-      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-    };
-    els.sessionTimer.textContent = "00:00";
-    sessionTimerHandle = setInterval(() => {
-      const now = Date.now();
-      els.sessionTimer.textContent = fmt(now - base);
-    }, 1000);
+  function formatDuration(ms) {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
 
-  function stopSessionTimer() {
+  function clearSessionTimerInterval() {
     if (sessionTimerHandle) clearInterval(sessionTimerHandle);
     sessionTimerHandle = null;
-    if (els.sessionTimer) els.sessionTimer.textContent = "00:00";
+  }
+
+  function getActiveDurationMs() {
+    const running = !isPaused && sessionResumeAt ? Date.now() - sessionResumeAt : 0;
+    return activeElapsedMs + running;
+  }
+
+  function updateSessionTimerDisplay() {
+    if (!els.sessionTimer) return;
+    els.sessionTimer.textContent = formatDuration(getActiveDurationMs());
+  }
+
+  function startSessionTimer() {
+    if (!els.sessionTimer) return;
+    clearSessionTimerInterval();
+    if (!sessionResumeAt) sessionResumeAt = Date.now();
+    updateSessionTimerDisplay();
+    sessionTimerHandle = setInterval(updateSessionTimerDisplay, 1000);
+  }
+
+  function stopSessionTimer(resetDisplay = true) {
+    clearSessionTimerInterval();
+    if (resetDisplay && els.sessionTimer) els.sessionTimer.textContent = "00:00";
+  }
+
+  function updatePauseButton() {
+    if (!els.pauseBtn) return;
+    const show = quizStartedAt && !els.quizCard.classList.contains("hidden");
+    els.pauseBtn.classList.toggle("hidden", !show);
+    els.pauseBtn.textContent = isPaused ? "Resume" : "Pause";
+    els.pauseBtn.setAttribute("aria-pressed", isPaused ? "true" : "false");
+    els.pauseBtn.classList.toggle("is-paused", isPaused);
+    els.pauseBtn.disabled = !quizStartedAt;
+  }
+
+  function applyPauseState() {
+    if (isPaused) {
+      els.quizCard?.classList.add("is-paused");
+      els.feedback.textContent = "Session paused.";
+      els.hintBtn.disabled = true;
+      els.prevBtn.disabled = true;
+      els.nextBtn.disabled = true;
+      els.choices.querySelectorAll("button").forEach((btn) => (btn.disabled = true));
+    } else {
+      els.quizCard?.classList.remove("is-paused");
+    }
+  }
+
+  function pauseQuiz() {
+    if (isPaused || !quizStartedAt) return;
+    activeElapsedMs += Math.max(0, Date.now() - sessionResumeAt);
+    sessionResumeAt = 0;
+    isPaused = true;
+    clearSessionTimerInterval();
+    updateSessionTimerDisplay();
+    applyPauseState();
+    updatePauseButton();
+  }
+
+  function resumeQuiz() {
+    if (!isPaused || !quizStartedAt) return;
+    const hintWasVisible = !els.hintText.classList.contains("hidden");
+    isPaused = false;
+    sessionResumeAt = Date.now();
+    startSessionTimer();
+    renderQuestion();
+    if (hintWasVisible) els.hintText.classList.remove("hidden");
+    applyPauseState();
+    updatePauseButton();
   }
 
   function saveBank() {
@@ -583,7 +645,12 @@
     idx = 0;
     score = 0;
     quizStartedAt = 0;
+    sessionResumeAt = 0;
+    activeElapsedMs = 0;
+    isPaused = false;
     stopSessionTimer();
+    applyPauseState();
+    updatePauseButton();
     renderQuizSelect();
     const names = Object.keys(savedBank).sort((a, b) => a.localeCompare(b));
     if (names.length) {
@@ -658,6 +725,7 @@
   }
 
   function selectAnswer(selectedDisplayIndex, map, q) {
+    if (isPaused) return;
     const selectedOriginal = map[selectedDisplayIndex];
     const correctOriginal = q.correctIndex;
     const correctDisplayIndex = map.findIndex((originalIndex) => originalIndex === correctOriginal);
@@ -689,6 +757,9 @@
     questions = (bank[currentQuizName]?.questions || []).slice();
     shuffleArray(questions);
     quizStartedAt = Date.now();
+    sessionResumeAt = quizStartedAt;
+    activeElapsedMs = 0;
+    isPaused = false;
     startSessionTimer();
     idx = 0;
     score = 0;
@@ -700,6 +771,8 @@
     }));
 
     showQuiz();
+    applyPauseState();
+    updatePauseButton();
     renderQuestion();
   }
 
@@ -741,7 +814,7 @@
     }
     const endedAt = Date.now();
     const startedAt = quizStartedAt || endedAt;
-    const durationMs = Math.max(0, endedAt - startedAt);
+    const durationMs = Math.max(0, getActiveDurationMs());
     const durationMinutes = Math.max(1, Math.round(durationMs / 60000));
     const meta = bank[currentQuizName]?.meta || {};
     appendSession({
@@ -760,12 +833,18 @@
       confidenceAfter: null,
     });
     quizStartedAt = 0;
+    sessionResumeAt = 0;
+    activeElapsedMs = 0;
+    isPaused = false;
     stopSessionTimer();
+    applyPauseState();
+    updatePauseButton();
     renderTodayTotal();
     showResults();
   }
 
   function goNext() {
+    if (isPaused) return;
     if (idx < questions.length - 1) {
       idx++;
       renderQuestion();
@@ -775,6 +854,7 @@
   }
 
   function goPrev() {
+    if (isPaused) return;
     if (idx > 0) {
       idx--;
       renderQuestion();
@@ -824,6 +904,7 @@
   els.hintBtn.addEventListener("click", () => els.hintText.classList.toggle("hidden"));
   els.nextBtn.addEventListener("click", goNext);
   els.prevBtn.addEventListener("click", goPrev);
+  els.pauseBtn?.addEventListener("click", () => (isPaused ? resumeQuiz() : pauseQuiz()));
   els.finishBtn.addEventListener("click", finishQuiz);
   els.restartBtn.addEventListener("click", () => startQuiz());
   els.backToImportBtn.addEventListener("click", () => showImport());
