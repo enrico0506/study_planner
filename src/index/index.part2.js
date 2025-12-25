@@ -1299,34 +1299,12 @@
 
     function enforceTodayHeight() {
       if (!todaySidebar) return;
-      if (layoutRow && layoutRow.classList.contains("today-full")) {
-        todaySidebar.style.maxHeight = "";
-        todaySidebar.style.height = "";
-        const list = document.getElementById("todayList");
-        if (list) {
-          list.style.maxHeight = "";
-          list.style.overflowY = "";
-        }
-        return;
-      }
-      const tableH = tableWrapper ? (tableWrapper.clientHeight || tableWrapper.offsetHeight || 0) : 0;
-      const mainH = mainArea ? (mainArea.clientHeight || mainArea.offsetHeight || 0) : 0;
-      const layoutH = layoutRow ? (layoutRow.clientHeight || layoutRow.offsetHeight || 0) : 0;
-      const available =
-        (tableH && mainH ? Math.min(tableH, mainH) : tableH || mainH) || layoutH || 0;
-      if (!available) return;
-      todaySidebar.style.maxHeight = available + "px";
-      todaySidebar.style.height = available + "px";
+      todaySidebar.style.maxHeight = "";
+      todaySidebar.style.height = "";
       const list = document.getElementById("todayList");
-      const header = todaySidebar.querySelector(".today-header");
-      const drop = document.getElementById("todayDropZone");
-      const headerH = header ? header.offsetHeight : 0;
-      const dropH = drop ? drop.offsetHeight : 0;
-      const padding = 60;
       if (list) {
-        const listAvailable = available - headerH - dropH - padding;
-        list.style.maxHeight = Math.max(180, listAvailable) + "px";
-        list.style.overflowY = "auto";
+        list.style.maxHeight = "";
+        list.style.overflowY = "";
       }
     }
 

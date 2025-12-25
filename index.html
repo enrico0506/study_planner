@@ -343,204 +343,210 @@
       </div>
     </div>
 
-    <!-- Top row: Summary + Focus -->
-    <div class="top-row">
-      <div class="top-ad-slot" aria-label="Advertisement column"></div>
-      <!-- Summary -->
-      <div class="summary-card">
-        <div class="summary-top">
-          <div class="summary-metrics">
-            <div class="summary-block">
-              <div class="summary-label">Subjects</div>
-              <div class="summary-value" id="summarySubjects">0</div>
-            </div>
-            <div class="summary-block">
-              <div class="summary-label">Files</div>
-              <div class="summary-value" id="summaryFiles">0</div>
-            </div>
-            <div class="summary-block">
-              <div class="summary-label">Low confidence (&lt; 40%)</div>
-              <div class="summary-value" id="summaryLow">0</div>
-            </div>
-          </div>
-        </div>
-      <div class="summary-progress">
-        <div class="summary-progress-header">
-          <span>Overall confidence</span>
-          <span id="summaryConfLabel">0%</span>
-        </div>
-        <div class="summary-progress-bar">
-          <div class="summary-progress-fill meter-low" id="summaryConfFill"></div>
-          <div class="summary-ring-value" id="summaryConfValue">0%</div>
-        </div>
-      </div>
-      <div class="summary-goal">
-        <div class="summary-goal-header">
-          <div>
-            <div class="summary-label">Weekly target</div>
-            <div class="summary-goal-line">
-              <span class="summary-goal-amount" id="weeklyGoalProgressLabel">0 h</span>
-              <span class="summary-goal-divider">/</span>
-              <span class="summary-goal-total" id="weeklyGoalTotalLabel">0 h</span>
-            </div>
-          </div>
-          <button class="chip-btn chip-btn-primary" id="editGoalBtn" type="button">Set goal</button>
-        </div>
-        <div class="summary-goal-track">
-          <div class="summary-goal-fill" id="weeklyGoalFill"></div>
-          <div class="summary-ring-value" id="weeklyGoalValue">0 h</div>
-        </div>
-        <div class="summary-goal-footer">
-          <div class="summary-goal-hint" id="weeklyGoalHint">Set a target to get a weekly rhythm.</div>
-          <div class="summary-streak">
-            <div class="summary-streak-icon">🔥</div>
-            <div class="summary-streak-text">
-              <div class="summary-streak-label">Daily streak</div>
-              <div class="summary-streak-value">
-                <span id="streakCurrentLabel">0 days</span>
-                <span class="summary-streak-sep">·</span>
-                <span id="streakBestLabel">Best 0</span>
+    <div class="plannerPage">
+      <section class="plannerHeader">
+        <!-- Top row: Summary + Focus -->
+        <div class="top-row">
+          <div class="top-ad-slot" aria-label="Advertisement column"></div>
+          <!-- Summary -->
+          <div class="summary-card">
+            <div class="summary-top">
+              <div class="summary-metrics">
+                <div class="summary-block">
+                  <div class="summary-label">Subjects</div>
+                  <div class="summary-value" id="summarySubjects">0</div>
+                </div>
+                <div class="summary-block">
+                  <div class="summary-label">Files</div>
+                  <div class="summary-value" id="summaryFiles">0</div>
+                </div>
+                <div class="summary-block">
+                  <div class="summary-label">Low confidence (&lt; 40%)</div>
+                  <div class="summary-value" id="summaryLow">0</div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-      <div class="summary-study">
-        <div class="summary-study-header">
-          <span>Today's study time</span>
-          <span id="summaryStudyTodayLabel">0 min</span>
-        </div>
-          <div class="summary-study-bar" id="summaryStudyBar" role="button" tabindex="0" aria-label="Open today's study stats">
-            <div class="summary-ring-value" id="summaryStudyValue">0 min</div>
-          </div>
-          <div class="summary-study-legend" id="summaryStudyLegend"></div>
-        </div>
-	      </div>
-
-      <!-- Focus timer -->
-      <div class="focus-card" id="focusCard">
-        <div class="focus-main">
-          <div class="focus-left">
-            <div class="focus-label">Focus session</div>
-            <div class="focus-title" id="focusSessionTitle">No active session</div>
-            <div class="focus-subtitle" id="focusSessionSubtitle">
-              Click “Study” on a file or start a break below.
+          <div class="summary-progress">
+            <div class="summary-progress-header">
+              <span>Overall confidence</span>
+              <span id="summaryConfLabel">0%</span>
             </div>
-            <div class="focus-session-controls" id="focusSessionControls">
-              <span style="font-size:0.75rem;color:#9ca3af;">No controls – start a session.</span>
+            <div class="summary-progress-bar">
+              <div class="summary-progress-fill meter-low" id="summaryConfFill"></div>
+              <div class="summary-ring-value" id="summaryConfValue">0%</div>
             </div>
           </div>
-          <div class="focus-right">
-            <div class="focus-timer-toggle" role="group" aria-label="Timer mode">
-              <button class="focus-timer-mode-btn focus-timer-active" id="timerModeCountdownBtn" type="button" data-mode="countdown">Countdown</button>
-              <button class="focus-timer-mode-btn" id="timerModeStopwatchBtn" type="button" data-mode="stopwatch">Stopwatch</button>
+          <div class="summary-goal">
+            <div class="summary-goal-header">
+              <div>
+                <div class="summary-label">Weekly target</div>
+                <div class="summary-goal-line">
+                  <span class="summary-goal-amount" id="weeklyGoalProgressLabel">0 h</span>
+                  <span class="summary-goal-divider">/</span>
+                  <span class="summary-goal-total" id="weeklyGoalTotalLabel">0 h</span>
+                </div>
+              </div>
+              <button class="chip-btn chip-btn-primary" id="editGoalBtn" type="button">Set goal</button>
             </div>
-            <div class="focus-timer-box">
-              <div class="focus-timer-label-small" id="focusTimerLabel">Countdown</div>
-              <div class="focus-timer-display" id="focusTimerDisplay">00:00:00</div>
+            <div class="summary-goal-track">
+              <div class="summary-goal-fill" id="weeklyGoalFill"></div>
+              <div class="summary-ring-value" id="weeklyGoalValue">0 h</div>
             </div>
-          </div>
-        </div>
-        <div class="focus-bottom">
-          <button class="focus-break-btn" id="openTimerSettingsBtn" type="button">Timer settings</button>
-          <div class="focus-break-buttons">
-            <button class="focus-break-btn" id="startShortBreakBtn" type="button">Short break</button>
-            <button class="focus-break-btn" id="startLongBreakBtn" type="button">Long break</button>
-          </div>
-        </div>
-      <div class="focus-inline-settings" id="timerInlinePanel" hidden>
-        <div class="focus-inline-title">Adjust your timers</div>
-        <div class="focus-inline-grid">
-          <label>
-            Study (minutes)
-            <input type="number" id="timerInlineStudy" min="1" />
-          </label>
-          <label>
-            Short break
-            <input type="number" id="timerInlineShort" min="1" />
-          </label>
-          <label>
-            Long break
-            <input type="number" id="timerInlineLong" min="1" />
-          </label>
-        </div>
-        <div class="focus-inline-actions">
-          <button class="btn btn-secondary" id="timerInlineCancel" type="button">Cancel</button>
-          <button class="btn" id="timerInlineSave" type="button">Save</button>
-        </div>
-      </div>
-    </div>
-    </div>
-
-    <!-- Controls placeholder -->
-    <div class="controls"></div>
-
-    <div class="layout-row" id="layoutRow">
-      <div class="main-area">
-        <!-- Table -->
-        <div class="table-wrapper">
-          <div class="subject-scroll">
-            <div class="section-heading">
-                <div class="section-heading-text">
-                  <h2 class="section-title">Subjects</h2>
-                  <div class="section-title-meta">
-                    <span id="summarySubjectsHeader">0</span> subjects ·
-                    <span id="summaryFilesHeader">0</span> files
+            <div class="summary-goal-footer">
+              <div class="summary-goal-hint" id="weeklyGoalHint">Set a target to get a weekly rhythm.</div>
+              <div class="summary-streak">
+                <div class="summary-streak-icon">🔥</div>
+                <div class="summary-streak-text">
+                  <div class="summary-streak-label">Daily streak</div>
+                  <div class="summary-streak-value">
+                    <span id="streakCurrentLabel">0 days</span>
+                    <span class="summary-streak-sep">·</span>
+                    <span id="streakBestLabel">Best 0</span>
                   </div>
                 </div>
-              <div class="section-actions">
-                <button class="subject-nav-btn mobile-menu-only" id="subjectBackBtn" type="button" aria-label="Back">←</button>
-                <button class="subject-nav-btn mobile-menu-only" id="subjectPrevBtn" type="button" aria-label="Previous subject">‹</button>
-                <div class="subject-nav-label mobile-menu-only" id="subjectNavLabel" aria-hidden="true"></div>
-                <button class="subject-nav-btn mobile-menu-only" id="subjectNextBtn" type="button" aria-label="Next subject">›</button>
-                <button class="subject-scroll-head-btn" id="subjectScrollLeftBtn" type="button" aria-label="Scroll subjects left">‹</button>
-                <button class="subject-scroll-head-btn" id="subjectScrollRightBtn" type="button" aria-label="Scroll subjects right">›</button>
-                <button class="section-max-btn" id="maximizeSubjectsBtn" type="button" aria-pressed="false" aria-label="Maximize subjects">⤢</button>
               </div>
             </div>
-            <div id="subjectTable" class="subject-table"></div>
           </div>
-        </div>
-        <div class="empty-hint" id="emptyHint">
-          No subjects yet. Use “Add subject” on the right to create your first subject.
-        </div>
-      </div>
-
-      <aside class="today-sidebar">
-        <div class="today-section">
-          <div class="today-header">
-            <div class="today-header-text">
-              <h2>Today's focus</h2>
+          <div class="summary-study">
+            <div class="summary-study-header">
+              <span>Today's study time</span>
+              <span id="summaryStudyTodayLabel">0 min</span>
             </div>
-            <div class="today-header-actions"></div>
-          </div>
-          <div class="today-dropzone" id="todayDropZone">
-            Drag to add.
-          </div>
-          <div class="today-list" id="todayList"></div>
-        </div>
-      </aside>
-    </div>
+              <div class="summary-study-bar" id="summaryStudyBar" role="button" tabindex="0" aria-label="Open today's study stats">
+                <div class="summary-ring-value" id="summaryStudyValue">0 min</div>
+              </div>
+              <div class="summary-study-legend" id="summaryStudyLegend"></div>
+            </div>
+  	      </div>
 
-    <div class="schedule-view" id="scheduleView" hidden>
-      <div class="schedule-bar">
-        <div>
-          <div class="schedule-title">Daily focus timeline</div>
-          <div class="schedule-subtitle">
-            Each column is a day. Today mirrors "Today's focus"; past days keep their history.
+          <!-- Focus timer -->
+          <div class="focus-card" id="focusCard">
+            <div class="focus-main">
+              <div class="focus-left">
+                <div class="focus-label">Focus session</div>
+                <div class="focus-title" id="focusSessionTitle">No active session</div>
+                <div class="focus-subtitle" id="focusSessionSubtitle">
+                  Click “Study” on a file or start a break below.
+                </div>
+                <div class="focus-session-controls" id="focusSessionControls">
+                  <span style="font-size:0.75rem;color:#9ca3af;">No controls – start a session.</span>
+                </div>
+              </div>
+              <div class="focus-right">
+                <div class="focus-timer-toggle" role="group" aria-label="Timer mode">
+                  <button class="focus-timer-mode-btn focus-timer-active" id="timerModeCountdownBtn" type="button" data-mode="countdown">Countdown</button>
+                  <button class="focus-timer-mode-btn" id="timerModeStopwatchBtn" type="button" data-mode="stopwatch">Stopwatch</button>
+                </div>
+                <div class="focus-timer-box">
+                  <div class="focus-timer-label-small" id="focusTimerLabel">Countdown</div>
+                  <div class="focus-timer-display" id="focusTimerDisplay">00:00:00</div>
+                </div>
+              </div>
+            </div>
+            <div class="focus-bottom">
+              <button class="focus-break-btn" id="openTimerSettingsBtn" type="button">Timer settings</button>
+              <div class="focus-break-buttons">
+                <button class="focus-break-btn" id="startShortBreakBtn" type="button">Short break</button>
+                <button class="focus-break-btn" id="startLongBreakBtn" type="button">Long break</button>
+              </div>
+            </div>
+          <div class="focus-inline-settings" id="timerInlinePanel" hidden>
+            <div class="focus-inline-title">Adjust your timers</div>
+            <div class="focus-inline-grid">
+              <label>
+                Study (minutes)
+                <input type="number" id="timerInlineStudy" min="1" />
+              </label>
+              <label>
+                Short break
+                <input type="number" id="timerInlineShort" min="1" />
+              </label>
+              <label>
+                Long break
+                <input type="number" id="timerInlineLong" min="1" />
+              </label>
+            </div>
+            <div class="focus-inline-actions">
+              <button class="btn btn-secondary" id="timerInlineCancel" type="button">Cancel</button>
+              <button class="btn" id="timerInlineSave" type="button">Save</button>
+            </div>
           </div>
         </div>
-        <div class="schedule-actions">
-          <button class="chip-btn chip-btn-primary" id="scheduleTodayBtn" type="button">This week</button>
-          <button class="chip-btn" id="scheduleWeekendToggleBtn" type="button" aria-pressed="false">Show weekend</button>
-          <div class="schedule-nav">
-            <button class="schedule-nav-btn" id="schedulePrevWeekBtn" type="button" aria-label="Previous week">‹</button>
-            <div class="schedule-range" id="scheduleRangeLabel">This week</div>
-            <button class="schedule-nav-btn" id="scheduleNextWeekBtn" type="button" aria-label="Next week">›</button>
-          </div>
         </div>
-      </div>
-      <div class="schedule-grid" id="scheduleGrid"></div>
+      </section>
+
+      <section class="plannerLower">
+        <!-- Controls placeholder -->
+        <div class="controls"></div>
+
+        <div class="layout-row" id="layoutRow">
+          <div class="main-area">
+            <!-- Table -->
+            <div class="table-wrapper">
+              <div class="subject-scroll">
+                <div class="section-heading">
+                    <div class="section-heading-text">
+                      <h2 class="section-title">Subjects</h2>
+                      <div class="section-title-meta">
+                        <span id="summarySubjectsHeader">0</span> subjects ·
+                        <span id="summaryFilesHeader">0</span> files
+                      </div>
+                    </div>
+                  <div class="section-actions">
+                    <button class="subject-nav-btn mobile-menu-only" id="subjectBackBtn" type="button" aria-label="Back">←</button>
+                    <button class="subject-nav-btn mobile-menu-only" id="subjectPrevBtn" type="button" aria-label="Previous subject">‹</button>
+                    <div class="subject-nav-label mobile-menu-only" id="subjectNavLabel" aria-hidden="true"></div>
+                    <button class="subject-nav-btn mobile-menu-only" id="subjectNextBtn" type="button" aria-label="Next subject">›</button>
+                    <button class="subject-scroll-head-btn" id="subjectScrollLeftBtn" type="button" aria-label="Scroll subjects left">‹</button>
+                    <button class="subject-scroll-head-btn" id="subjectScrollRightBtn" type="button" aria-label="Scroll subjects right">›</button>
+                    <button class="section-max-btn" id="maximizeSubjectsBtn" type="button" aria-pressed="false" aria-label="Maximize subjects">⤢</button>
+                  </div>
+                </div>
+                <div id="subjectTable" class="subject-table"></div>
+              </div>
+            </div>
+            <div class="empty-hint" id="emptyHint">
+              No subjects yet. Use “Add subject” on the right to create your first subject.
+            </div>
+          </div>
+
+          <aside class="today-sidebar">
+            <div class="today-section">
+              <div class="today-header">
+                <div class="today-header-text">
+                  <h2>Today's focus</h2>
+                </div>
+                <div class="today-header-actions"></div>
+              </div>
+              <div class="today-dropzone" id="todayDropZone">
+                Drag to add.
+              </div>
+              <div class="today-list" id="todayList"></div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="schedule-view" id="scheduleView" hidden>
+          <div class="schedule-bar">
+            <div>
+              <div class="schedule-title">Daily focus timeline</div>
+              <div class="schedule-subtitle">
+                Each column is a day. Today mirrors "Today's focus"; past days keep their history.
+              </div>
+            </div>
+            <div class="schedule-actions">
+              <button class="chip-btn chip-btn-primary" id="scheduleTodayBtn" type="button">This week</button>
+              <button class="chip-btn" id="scheduleWeekendToggleBtn" type="button" aria-pressed="false">Show weekend</button>
+              <div class="schedule-nav">
+                <button class="schedule-nav-btn" id="schedulePrevWeekBtn" type="button" aria-label="Previous week">‹</button>
+                <div class="schedule-range" id="scheduleRangeLabel">This week</div>
+                <button class="schedule-nav-btn" id="scheduleNextWeekBtn" type="button" aria-label="Next week">›</button>
+              </div>
+            </div>
+          </div>
+          <div class="schedule-grid" id="scheduleGrid"></div>
+        </div>
+      </section>
     </div>
 
     <!-- Add-to-Today Modal -->

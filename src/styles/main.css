@@ -122,10 +122,12 @@ body::-webkit-scrollbar,
       --meter-high: linear-gradient(90deg, #0072B2, #0072B2);
     }
 
-    html,
-    body {
-      height: 100%;
-    }
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow-y: auto;
+}
 
 body {
   margin: 0;
@@ -135,7 +137,8 @@ body {
   background-repeat: no-repeat;
   background-size: cover;
   color: var(--ink);
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: visible;
   box-sizing: border-box;
 }
 
@@ -198,6 +201,46 @@ html.ads-disabled ins.adsbygoogle {
   display: flex;
   flex-direction: column;
   overflow: visible;
+}
+
+.plannerPage {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  isolation: isolate;
+}
+
+.plannerHeader,
+.plannerLower {
+  width: 100%;
+  min-height: 0;
+}
+
+.plannerHeader {
+  display: flex;
+  flex-direction: column;
+  height: clamp(200px, 27dvh, 360px);
+  flex: 0 0 auto;
+  overflow: hidden;
+  contain: layout paint;
+  position: relative;
+  z-index: 2;
+}
+
+.plannerHeader > .top-row {
+  flex: 1 1 auto;
+}
+
+.plannerLower {
+  display: block;
+  min-height: 0;
+  flex: 0 0 auto;
+  overflow: visible;
+  position: relative;
+  z-index: 1;
+  margin-top: 0;
+  transform: none;
 }
 
 
@@ -1151,6 +1194,19 @@ body.session-header-mounted #focusCard {
       }
     }
 
+    @media (max-height: 720px) {
+      .top-row {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "summary"
+          "focus";
+      }
+
+      .top-ad-slot {
+        display: none;
+      }
+    }
+
     /* Summary card */
 
     .summary-card {
@@ -1773,7 +1829,7 @@ body.session-header-mounted #focusCard {
   display: grid;
   grid-template-columns: minmax(0, 2.7fr) minmax(280px, 360px);
   gap: clamp(12px, 1.2vw, 18px);
-  align-items: flex-start;
+  align-items: stretch;
   padding-bottom: 12px;
   box-sizing: border-box;
   flex: 1;
@@ -1781,7 +1837,10 @@ body.session-header-mounted #focusCard {
 }
 
 .app.app-expanded .layout-row {
-  align-items: flex-start;
+  align-items: stretch;
+}
+.subjects-maximized .plannerHeader {
+  display: none;
 }
 .subjects-maximized .layout-row {
   grid-template-columns: minmax(0, 1fr);
@@ -1934,23 +1993,24 @@ body.session-header-mounted #focusCard {
       min-height: 0;
       padding-bottom: 16px;
       box-sizing: border-box;
-      max-height: 100%;
-      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      overflow: visible;
     }
 
 .today-sidebar {
   min-width: 0;
   width: 100%;
   max-width: none;
-  position: sticky;
-  top: 12px;
+  position: static;
+  top: auto;
   align-self: stretch;
-  max-height: 100%;
+  max-height: none;
   min-height: 0;
-  height: 100%;
+  height: auto;
   display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow: visible;
     }
 
     .layout-row.today-full .main-area {
@@ -1961,7 +2021,9 @@ body.session-header-mounted #focusCard {
       width: 100%;
       max-width: none;
       position: static;
-      max-height: 100%;
+      max-height: none;
+      height: auto;
+      overflow: visible;
     }
 
 .subjects-maximized .layout-row.today-full .main-area {
@@ -1976,7 +2038,9 @@ body.session-header-mounted #focusCard {
       width: 100%;
       max-width: none;
       position: static;
-      max-height: 100%;
+      max-height: none;
+      height: auto;
+      overflow: visible;
     }
 
     .today-suggestions {
@@ -2100,13 +2164,13 @@ body.session-header-mounted #focusCard {
     }
 
     .layout-row.today-wide .main-area {
-      max-height: 80vh;
-      overflow: auto;
+      max-height: none;
+      overflow: visible;
     }
 
     .layout-row.today-wide .table-wrapper {
-      max-height: 70vh;
-      overflow: auto;
+      max-height: none;
+      overflow: visible;
     }
 
     @media (max-width: 1200px) {
@@ -2137,8 +2201,8 @@ body.session-header-mounted #focusCard {
       border-radius: var(--radius-md);
       padding: 14px 16px 18px;
       box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
-      max-height: 100%;
-      overflow: auto;
+      max-height: none;
+      overflow: visible;
     }
 
     .schedule-bar {
@@ -2518,10 +2582,9 @@ body.session-header-mounted #focusCard {
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow: visible;
       flex: 1;
       min-height: 0;
-      max-height: 100%;
       padding-bottom: 16px;
     }
 
@@ -2583,7 +2646,7 @@ body.session-header-mounted #focusCard {
   gap: 8px;
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
 }
 
 .today-list.today-list-grid {
@@ -3316,11 +3379,16 @@ body.session-header-mounted #focusCard {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   overflow-x: auto;
+  overflow-y: visible;
   box-sizing: border-box;
   padding: 4px;
   width: 100%;
   cursor: grab;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .subject-scroll-nav {
@@ -3487,6 +3555,8 @@ body.session-header-mounted #focusCard {
   gap: 4px;
   min-width: 100%;
   width: max-content;
+  flex: 1;
+  min-height: 0;
 }
 
 .subject-table {
