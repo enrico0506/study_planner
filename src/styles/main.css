@@ -3470,24 +3470,11 @@ body.session-header-mounted #focusCard {
   }
 
   .subject-table {
-    grid-auto-columns: clamp(240px, 22vw, 320px);
+    grid-auto-columns: clamp(240px, 24vw, 300px);
   }
 
   .subject-table .subject-column {
     scroll-snap-align: start;
-  }
-}
-
-/* Make subject columns roomier on narrower desktops so fewer show at once and stay readable. */
-@media (max-width: 1280px) {
-  .subject-table {
-    grid-auto-columns: minmax(300px, 42vw);
-  }
-}
-
-@media (max-width: 1080px) {
-  .subject-table {
-    grid-auto-columns: minmax(340px, 48vw);
   }
 }
 
