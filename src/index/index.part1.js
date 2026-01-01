@@ -405,26 +405,46 @@ const COMPACT_WEEK_MQ =
       );
     }
 
-	    function isCompactWeekLayout() {
-	      return (
-	        isIpadLandscapeLayout() ||
-	        (window.matchMedia && window.matchMedia(COMPACT_WEEK_MQ).matches)
-	      );
-	    }
+    function isCompactWeekLayout() {
+      return (
+        isIpadLandscapeLayout() ||
+        (window.matchMedia && window.matchMedia(COMPACT_WEEK_MQ).matches)
+      );
+    }
 
 	    // Header auto-compaction: when the fixed-height header overflows, switch to a compact layout.
 	    const HEADER_COMPACT_ATTR = "data-header-compact"; // set on <html>
+	    const HEADER_COMPACT_TOLERANCE = 4; // px of overflow before we react (prevents flicker near the boundary)
+	    const HEADER_COMPACT_CLEAR_STREAK = 2; // require this many clean passes before exiting compact mode
 	    let headerCompactRaf = 0;
+	    let headerCompactLevel = 0; // 0 = normal, 1/2 = compact
+	    let headerCompactClearCount = 0;
 
-	    function hasVerticalOverflow(el) {
+	    function hasVerticalOverflow(el, tolerance = HEADER_COMPACT_TOLERANCE) {
 	      if (!el) return false;
 	      if (el.clientHeight <= 0) return false;
-	      return el.scrollHeight - el.clientHeight > 1;
+	      return el.scrollHeight - el.clientHeight > tolerance;
 	    }
 
-	    function headerNeedsCompaction() {
-	      const focusMain = focusCard ? focusCard.querySelector(".focus-main") : null;
-	      return hasVerticalOverflow(summaryCard) || hasVerticalOverflow(focusMain);
+	    function measureHeaderCompactLevel(rootEl) {
+	      if (!summaryCard || !focusCard) return 0;
+	      const focusMain = focusCard.querySelector(".focus-main");
+
+	      // Measure the default layout (no compact attr).
+	      rootEl.removeAttribute(HEADER_COMPACT_ATTR);
+	      const overflowInDefault =
+	        hasVerticalOverflow(summaryCard) || hasVerticalOverflow(focusMain);
+	      if (!overflowInDefault) {
+	        return 0;
+	      }
+
+	      // Measure the compact layout; if it still overflows, escalate to level 2.
+	      rootEl.setAttribute(HEADER_COMPACT_ATTR, "1");
+	      const overflowInCompact =
+	        hasVerticalOverflow(summaryCard) || hasVerticalOverflow(focusMain);
+	      rootEl.removeAttribute(HEADER_COMPACT_ATTR);
+
+	      return overflowInCompact ? 2 : 1;
 	    }
 
 	    function updateHeaderCompactMode() {
@@ -432,21 +452,32 @@ const COMPACT_WEEK_MQ =
 	      // Phone layout has its own rules; keep this behavior for non-phone devices and narrow desktop windows.
 	      if (isPhoneDevice()) {
 	        document.documentElement.removeAttribute(HEADER_COMPACT_ATTR);
+	        headerCompactLevel = 0;
+	        headerCompactClearCount = 0;
 	        return;
 	      }
 
 	      const root = document.documentElement;
-	      // Always decide based on the "normal" header (no compact attr) to avoid oscillation.
-	      root.removeAttribute(HEADER_COMPACT_ATTR);
+	      const desiredLevel = measureHeaderCompactLevel(root);
 
-	      if (!headerNeedsCompaction()) {
-	        return;
+	      // Add hysteresis when leaving compact mode to avoid rapid toggling near the overflow boundary.
+	      if (desiredLevel === 0 && headerCompactLevel > 0) {
+	        headerCompactClearCount += 1;
+	        if (headerCompactClearCount < HEADER_COMPACT_CLEAR_STREAK) {
+	          root.setAttribute(HEADER_COMPACT_ATTR, String(headerCompactLevel));
+	          return;
+	        }
+	      } else {
+	        headerCompactClearCount = 0;
 	      }
 
-	      root.setAttribute(HEADER_COMPACT_ATTR, "1");
-	      if (!headerNeedsCompaction()) return;
+	      headerCompactLevel = desiredLevel;
 
-	      root.setAttribute(HEADER_COMPACT_ATTR, "2");
+	      if (desiredLevel > 0) {
+	        root.setAttribute(HEADER_COMPACT_ATTR, String(desiredLevel));
+	      } else {
+	        root.removeAttribute(HEADER_COMPACT_ATTR);
+	      }
 	    }
 
 	    function requestHeaderCompactUpdate() {
