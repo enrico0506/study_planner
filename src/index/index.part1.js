@@ -306,12 +306,13 @@ const COMPACT_WEEK_MQ =
         return div;
       })();
 
-    // Summary refs
-    const summarySubjects = document.getElementById("summarySubjects");
-    const summaryFiles = document.getElementById("summaryFiles");
-    const summaryLow = document.getElementById("summaryLow");
-    const summarySubjectsHeader = document.getElementById("summarySubjectsHeader");
-    const summaryFilesHeader = document.getElementById("summaryFilesHeader");
+	    // Summary refs
+	    const summaryCard = document.getElementById("summaryCard");
+	    const summarySubjects = document.getElementById("summarySubjects");
+	    const summaryFiles = document.getElementById("summaryFiles");
+	    const summaryLow = document.getElementById("summaryLow");
+	    const summarySubjectsHeader = document.getElementById("summarySubjectsHeader");
+	    const summaryFilesHeader = document.getElementById("summaryFilesHeader");
     const summaryConfLabel = document.getElementById("summaryConfLabel");
     const summaryConfFill = document.getElementById("summaryConfFill");
     const summaryConfValue = document.getElementById("summaryConfValue");
@@ -328,12 +329,12 @@ const COMPACT_WEEK_MQ =
     const streakBestLabel = document.getElementById("streakBestLabel");
     const editGoalBtn = document.getElementById("editGoalBtn");
 
-    // Focus timer refs
-    const focusCard = document.getElementById("focusCard");
-    const focusSessionTitle = document.getElementById("focusSessionTitle");
-    const focusSessionSubtitle = document.getElementById("focusSessionSubtitle");
-    const focusTimerDisplay = document.getElementById("focusTimerDisplay");
-    const focusSessionControls = document.getElementById("focusSessionControls");
+	    // Focus timer refs
+	    const focusCard = document.getElementById("focusCard");
+	    const focusSessionTitle = document.getElementById("focusSessionTitle");
+	    const focusSessionSubtitle = document.getElementById("focusSessionSubtitle");
+	    const focusTimerDisplay = document.getElementById("focusTimerDisplay");
+	    const focusSessionControls = document.getElementById("focusSessionControls");
     const openTimerSettingsBtn = document.getElementById("openTimerSettingsBtn");
     const focusTimerBox = document.querySelector(".focus-timer-box");
     const focusTimerToggle = document.querySelector(".focus-timer-toggle");
@@ -383,10 +384,19 @@ const COMPACT_WEEK_MQ =
     let focusSettingsText = null;
     let focusBreakButtonsHome = null;
 
-    // Helpers
-    function isPhoneLayout() {
-      return window.matchMedia && window.matchMedia("(max-width: 720px)").matches;
-    }
+	    // Helpers
+	    function isPhoneLayout() {
+	      return window.matchMedia && window.matchMedia("(max-width: 720px)").matches;
+	    }
+
+	    function isPhoneDevice() {
+	      if (!window.matchMedia) return false;
+	      return (
+	        window.matchMedia("(max-width: 720px)").matches &&
+	        window.matchMedia("(hover: none)").matches &&
+	        window.matchMedia("(pointer: coarse)").matches
+	      );
+	    }
 
     function isIpadLandscapeLayout() {
       return (
@@ -395,12 +405,93 @@ const COMPACT_WEEK_MQ =
       );
     }
 
-    function isCompactWeekLayout() {
-      return (
-        isIpadLandscapeLayout() ||
-        (window.matchMedia && window.matchMedia(COMPACT_WEEK_MQ).matches)
-      );
-    }
+	    function isCompactWeekLayout() {
+	      return (
+	        isIpadLandscapeLayout() ||
+	        (window.matchMedia && window.matchMedia(COMPACT_WEEK_MQ).matches)
+	      );
+	    }
+
+	    // Header auto-compaction: when the fixed-height header overflows, switch to a compact layout.
+	    const HEADER_COMPACT_ATTR = "data-header-compact"; // set on <html>
+	    let headerCompactRaf = 0;
+
+	    function hasVerticalOverflow(el) {
+	      if (!el) return false;
+	      if (el.clientHeight <= 0) return false;
+	      return el.scrollHeight - el.clientHeight > 1;
+	    }
+
+	    function headerNeedsCompaction() {
+	      const focusMain = focusCard ? focusCard.querySelector(".focus-main") : null;
+	      return hasVerticalOverflow(summaryCard) || hasVerticalOverflow(focusMain);
+	    }
+
+	    function updateHeaderCompactMode() {
+	      if (!summaryCard || !focusCard) return;
+	      // Phone layout has its own rules; keep this behavior for non-phone devices and narrow desktop windows.
+	      if (isPhoneDevice()) {
+	        document.documentElement.removeAttribute(HEADER_COMPACT_ATTR);
+	        return;
+	      }
+
+	      const root = document.documentElement;
+	      // Always decide based on the "normal" header (no compact attr) to avoid oscillation.
+	      root.removeAttribute(HEADER_COMPACT_ATTR);
+
+	      if (!headerNeedsCompaction()) {
+	        return;
+	      }
+
+	      root.setAttribute(HEADER_COMPACT_ATTR, "1");
+	      if (!headerNeedsCompaction()) return;
+
+	      root.setAttribute(HEADER_COMPACT_ATTR, "2");
+	    }
+
+	    function requestHeaderCompactUpdate() {
+	      if (headerCompactRaf) return;
+	      headerCompactRaf = requestAnimationFrame(() => {
+	        headerCompactRaf = 0;
+	        updateHeaderCompactMode();
+	      });
+	    }
+
+	    // Allow other modules to trigger a recalculation after major UI updates.
+	    window.requestHeaderCompactUpdate = requestHeaderCompactUpdate;
+
+	    (function bindHeaderCompactObservers() {
+	      if (!summaryCard || !focusCard) return;
+
+	      window.addEventListener("resize", requestHeaderCompactUpdate);
+
+	      if (window.ResizeObserver) {
+	        const ro = new ResizeObserver(() => requestHeaderCompactUpdate());
+	        ro.observe(summaryCard);
+	        ro.observe(focusCard);
+	      }
+
+	      if (window.MutationObserver) {
+	        const mo = new MutationObserver((mutations) => {
+	          // Ignore timer tick mutations to avoid doing layout work every second.
+	          if (
+	            focusTimerDisplay &&
+	            mutations.length &&
+	            mutations.every((m) => {
+	              const target = m.target && m.target.nodeType === Node.TEXT_NODE ? m.target.parentElement : m.target;
+	              return target && focusTimerDisplay.contains(target);
+	            })
+	          ) {
+	            return;
+	          }
+	          requestHeaderCompactUpdate();
+	        });
+	        mo.observe(summaryCard, { childList: true, subtree: true, characterData: true });
+	        mo.observe(focusCard, { childList: true, subtree: true, characterData: true });
+	      }
+
+	      requestHeaderCompactUpdate();
+	    })();
 
     function applyIpadFocusLayout() {
       const useIpadLayout = isIpadLandscapeLayout();
