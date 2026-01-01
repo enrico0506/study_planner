@@ -399,10 +399,13 @@ const COMPACT_WEEK_MQ =
 	    }
 
     function isIpadLandscapeLayout() {
-      return (
-        window.matchMedia &&
-        window.matchMedia("(max-width: 1024px) and (orientation: landscape) and (aspect-ratio: 4 / 3)").matches
-      );
+      if (!window.matchMedia) return false;
+      // Avoid triggering "iPad" layout on desktop windows resized to 4:3.
+      const isTouchLikeDevice = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+      if (!isTouchLikeDevice) return false;
+      return window.matchMedia(
+        "(max-width: 1024px) and (orientation: landscape) and (aspect-ratio: 4 / 3)"
+      ).matches;
     }
 
     function isCompactWeekLayout() {
@@ -412,13 +415,15 @@ const COMPACT_WEEK_MQ =
       );
     }
 
-	    // Header auto-compaction: when the fixed-height header overflows, switch to a compact layout.
-	    const HEADER_COMPACT_ATTR = "data-header-compact"; // set on <html>
-	    const HEADER_COMPACT_TOLERANCE = 4; // px of overflow before we react (prevents flicker near the boundary)
-	    const HEADER_COMPACT_CLEAR_STREAK = 2; // require this many clean passes before exiting compact mode
-	    let headerCompactRaf = 0;
-	    let headerCompactLevel = 0; // 0 = normal, 1/2 = compact
-	    let headerCompactClearCount = 0;
+		    // Header auto-compaction: when the fixed-height header overflows, switch to a compact layout.
+		    const HEADER_COMPACT_ATTR = "data-header-compact"; // set on <html>
+		    const HEADER_COMPACT_TOLERANCE = 4; // px of overflow before we react (prevents flicker near the boundary)
+		    const HEADER_COMPACT_EXIT_DELAY_MS = 260; // require stable fit time before exiting compact mode
+		    const HEADER_COMPACT_RESIZE_GRACE_MS = 180; // don't de-compact while the user is actively resizing
+		    let headerCompactRaf = 0;
+		    let headerCompactLevel = 0; // 0 = normal, 1/2 = compact
+		    let headerCompactExitArmedAt = 0;
+		    let headerCompactResizeUntil = 0;
 
 	    function hasVerticalOverflow(el, tolerance = HEADER_COMPACT_TOLERANCE) {
 	      if (!el) return false;
@@ -447,38 +452,47 @@ const COMPACT_WEEK_MQ =
 	      return overflowInCompact ? 2 : 1;
 	    }
 
-	    function updateHeaderCompactMode() {
-	      if (!summaryCard || !focusCard) return;
-	      // Phone layout has its own rules; keep this behavior for non-phone devices and narrow desktop windows.
-	      if (isPhoneDevice()) {
-	        document.documentElement.removeAttribute(HEADER_COMPACT_ATTR);
-	        headerCompactLevel = 0;
-	        headerCompactClearCount = 0;
-	        return;
-	      }
+		    function updateHeaderCompactMode() {
+		      if (!summaryCard || !focusCard) return;
+		      // Phone layout has its own rules; keep this behavior for non-phone devices and narrow desktop windows.
+		      if (isPhoneDevice()) {
+		        document.documentElement.removeAttribute(HEADER_COMPACT_ATTR);
+		        headerCompactLevel = 0;
+		        headerCompactExitArmedAt = 0;
+		        headerCompactResizeUntil = 0;
+		        return;
+		      }
 
-	      const root = document.documentElement;
-	      const desiredLevel = measureHeaderCompactLevel(root);
+		      const root = document.documentElement;
+		      const desiredLevel = measureHeaderCompactLevel(root);
+		      const now = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
+		      const resizeActive = now < headerCompactResizeUntil;
 
-	      // Add hysteresis when leaving compact mode to avoid rapid toggling near the overflow boundary.
-	      if (desiredLevel === 0 && headerCompactLevel > 0) {
-	        headerCompactClearCount += 1;
-	        if (headerCompactClearCount < HEADER_COMPACT_CLEAR_STREAK) {
-	          root.setAttribute(HEADER_COMPACT_ATTR, String(headerCompactLevel));
-	          return;
-	        }
-	      } else {
-	        headerCompactClearCount = 0;
-	      }
+		      // Avoid thrashing near the boundary:
+		      // - Enter compact immediately when overflow appears.
+		      // - Exit compact only after a short stable period, and never while the user is actively resizing.
+		      let nextLevel = desiredLevel;
+		      if (nextLevel < headerCompactLevel) {
+		        if (resizeActive) {
+		          nextLevel = headerCompactLevel;
+		        } else {
+		          if (!headerCompactExitArmedAt) headerCompactExitArmedAt = now;
+		          if (now - headerCompactExitArmedAt < HEADER_COMPACT_EXIT_DELAY_MS) {
+		            nextLevel = headerCompactLevel;
+		          }
+		        }
+		      } else {
+		        headerCompactExitArmedAt = 0;
+		      }
 
-	      headerCompactLevel = desiredLevel;
+		      headerCompactLevel = nextLevel;
 
-	      if (desiredLevel > 0) {
-	        root.setAttribute(HEADER_COMPACT_ATTR, String(desiredLevel));
-	      } else {
-	        root.removeAttribute(HEADER_COMPACT_ATTR);
-	      }
-	    }
+		      if (nextLevel > 0) {
+		        root.setAttribute(HEADER_COMPACT_ATTR, String(nextLevel));
+		      } else {
+		        root.removeAttribute(HEADER_COMPACT_ATTR);
+		      }
+		    }
 
 	    function requestHeaderCompactUpdate() {
 	      if (headerCompactRaf) return;
@@ -491,10 +505,17 @@ const COMPACT_WEEK_MQ =
 	    // Allow other modules to trigger a recalculation after major UI updates.
 	    window.requestHeaderCompactUpdate = requestHeaderCompactUpdate;
 
-	    (function bindHeaderCompactObservers() {
-	      if (!summaryCard || !focusCard) return;
+		    (function bindHeaderCompactObservers() {
+		      if (!summaryCard || !focusCard) return;
 
-	      window.addEventListener("resize", requestHeaderCompactUpdate);
+		      window.addEventListener("resize", () => {
+		        const now = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
+		        headerCompactResizeUntil = Math.max(
+		          headerCompactResizeUntil,
+		          now + HEADER_COMPACT_RESIZE_GRACE_MS
+		        );
+		        requestHeaderCompactUpdate();
+		      });
 
 	      if (window.ResizeObserver) {
 	        const ro = new ResizeObserver(() => requestHeaderCompactUpdate());
