@@ -415,83 +415,144 @@ const COMPACT_WEEK_MQ =
       );
     }
 
-		    // Header auto-compaction: when the fixed-height header overflows, switch to a compact layout.
+		    // Header auto-compaction: keep the fixed-height header usable by switching to compact styles
+		    // when the content overflows. This must be stable (no flicker) even when mutations/observers fire.
 		    const HEADER_COMPACT_ATTR = "data-header-compact"; // set on <html>
-		    const HEADER_COMPACT_TOLERANCE = 4; // px of overflow before we react (prevents flicker near the boundary)
-		    const HEADER_COMPACT_EXIT_DELAY_MS = 260; // require stable fit time before exiting compact mode
-		    const HEADER_COMPACT_RESIZE_GRACE_MS = 180; // don't de-compact while the user is actively resizing
+		    const HEADER_COMPACT_TOLERANCE = 4; // px of overflow before we react
+		    const HEADER_COMPACT_EXIT_DELAY_MS = 520; // require stable fit time before trying to exit compact mode
+		    const HEADER_COMPACT_EXIT_COOLDOWN_MS = 2500; // after a failed exit attempt, wait before trying again
+		    const HEADER_COMPACT_EXIT_RETRY_GROW_PX = 24; // also require the viewport to grow before retrying a failed exit
+		    const HEADER_COMPACT_EXIT_SLACK_L1 = 28; // px of free space required before trying 1 -> 0
+		    const HEADER_COMPACT_EXIT_SLACK_L2 = 14; // px of free space required before trying 2 -> 1
+		    const HEADER_COMPACT_TEST_SETTLE_MS = 140; // wait for layout after switching levels
+		    const HEADER_COMPACT_RESIZE_GRACE_MS = 240; // don't change levels while the user is actively resizing
 		    let headerCompactRaf = 0;
 		    let headerCompactLevel = 0; // 0 = normal, 1/2 = compact
 		    let headerCompactExitArmedAt = 0;
+		    let headerCompactExitCooldownUntil = 0;
+		    let headerCompactExitBlockedAt = null; // { level, width, height }
 		    let headerCompactResizeUntil = 0;
+		    let headerCompactTest = null; // { fromLevel, startedAt }
 
-	    function hasVerticalOverflow(el, tolerance = HEADER_COMPACT_TOLERANCE) {
-	      if (!el) return false;
-	      if (el.clientHeight <= 0) return false;
-	      return el.scrollHeight - el.clientHeight > tolerance;
-	    }
+		    function hasVerticalOverflow(el, tolerance = HEADER_COMPACT_TOLERANCE) {
+		      if (!el) return false;
+		      if (el.clientHeight <= 0) return false;
+		      return el.scrollHeight - el.clientHeight > tolerance;
+		    }
 
-	    function measureHeaderCompactLevel(rootEl) {
-	      if (!summaryCard || !focusCard) return 0;
-	      const focusMain = focusCard.querySelector(".focus-main");
+		    function getOverflowDelta(el) {
+		      if (!el) return 0;
+		      if (el.clientHeight <= 0) return 0;
+		      return el.scrollHeight - el.clientHeight;
+		    }
 
-	      // Measure the default layout (no compact attr).
-	      rootEl.removeAttribute(HEADER_COMPACT_ATTR);
-	      const overflowInDefault =
-	        hasVerticalOverflow(summaryCard) || hasVerticalOverflow(focusMain);
-	      if (!overflowInDefault) {
-	        return 0;
-	      }
+		    function getHeaderOverflowMetrics() {
+		      if (!summaryCard || !focusCard) return null;
+		      const focusMain = focusCard.querySelector(".focus-main");
+		      const deltas = [getOverflowDelta(summaryCard), getOverflowDelta(focusMain)];
+		      const maxDelta = Math.max(...deltas);
+		      const isOverflowing = maxDelta > HEADER_COMPACT_TOLERANCE;
+		      const slack = isOverflowing ? 0 : Math.min(...deltas.map((d) => (d < 0 ? -d : 0)));
+		      return { isOverflowing, slack };
+		    }
 
-	      // Measure the compact layout; if it still overflows, escalate to level 2.
-	      rootEl.setAttribute(HEADER_COMPACT_ATTR, "1");
-	      const overflowInCompact =
-	        hasVerticalOverflow(summaryCard) || hasVerticalOverflow(focusMain);
-	      rootEl.removeAttribute(HEADER_COMPACT_ATTR);
-
-	      return overflowInCompact ? 2 : 1;
-	    }
+		    function applyHeaderCompactLevel(nextLevel) {
+		      if (nextLevel === headerCompactLevel) return;
+		      headerCompactLevel = nextLevel;
+		      headerCompactExitArmedAt = 0;
+		      const root = document.documentElement;
+		      if (nextLevel > 0) root.setAttribute(HEADER_COMPACT_ATTR, String(nextLevel));
+		      else root.removeAttribute(HEADER_COMPACT_ATTR);
+		    }
 
 		    function updateHeaderCompactMode() {
 		      if (!summaryCard || !focusCard) return;
-		      // Phone layout has its own rules; keep this behavior for non-phone devices and narrow desktop windows.
+		      // Phone layout has its own rules; keep this behavior for non-phone devices.
 		      if (isPhoneDevice()) {
 		        document.documentElement.removeAttribute(HEADER_COMPACT_ATTR);
 		        headerCompactLevel = 0;
 		        headerCompactExitArmedAt = 0;
+		        headerCompactExitCooldownUntil = 0;
 		        headerCompactResizeUntil = 0;
+		        headerCompactTest = null;
 		        return;
 		      }
 
-		      const root = document.documentElement;
-		      const desiredLevel = measureHeaderCompactLevel(root);
-		      const now = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
+		      const now =
+		        typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
 		      const resizeActive = now < headerCompactResizeUntil;
 
-		      // Avoid thrashing near the boundary:
-		      // - Enter compact immediately when overflow appears.
-		      // - Exit compact only after a short stable period, and never while the user is actively resizing.
-		      let nextLevel = desiredLevel;
-		      if (nextLevel < headerCompactLevel) {
-		        if (resizeActive) {
-		          nextLevel = headerCompactLevel;
-		        } else {
-		          if (!headerCompactExitArmedAt) headerCompactExitArmedAt = now;
-		          if (now - headerCompactExitArmedAt < HEADER_COMPACT_EXIT_DELAY_MS) {
-		            nextLevel = headerCompactLevel;
-		          }
+		      const metrics = getHeaderOverflowMetrics();
+		      if (!metrics) return;
+
+		      // If we're testing a downshift, wait a moment for layout to settle and then decide.
+		      if (headerCompactTest) {
+		        if (now - headerCompactTest.startedAt < HEADER_COMPACT_TEST_SETTLE_MS) {
+		          return;
 		        }
-		      } else {
+		        if (metrics.isOverflowing) {
+		          applyHeaderCompactLevel(headerCompactTest.fromLevel);
+		          headerCompactExitCooldownUntil = now + HEADER_COMPACT_EXIT_COOLDOWN_MS;
+		          headerCompactExitBlockedAt = {
+		            level: headerCompactTest.fromLevel,
+		            width: window.innerWidth,
+		            height: window.innerHeight
+		          };
+		        }
+		        headerCompactTest = null;
+		        return;
+		      }
+
+		      // Escalate immediately if we overflow in the current mode.
+		      if (metrics.isOverflowing) {
 		        headerCompactExitArmedAt = 0;
+		        if (headerCompactLevel === 0) {
+		          applyHeaderCompactLevel(1);
+		          requestHeaderCompactUpdate();
+		          return;
+		        }
+		        if (headerCompactLevel === 1) {
+		          applyHeaderCompactLevel(2);
+		          requestHeaderCompactUpdate();
+		        }
+		        return;
 		      }
 
-		      headerCompactLevel = nextLevel;
-
-		      if (nextLevel > 0) {
-		        root.setAttribute(HEADER_COMPACT_ATTR, String(nextLevel));
-		      } else {
-		        root.removeAttribute(HEADER_COMPACT_ATTR);
+		      // No overflow: optionally de-escalate, but be conservative to avoid flicker.
+		      if (headerCompactLevel === 0) return;
+		      if (resizeActive) return;
+		      if (now < headerCompactExitCooldownUntil) return;
+		      if (
+		        headerCompactExitBlockedAt &&
+		        headerCompactExitBlockedAt.level === headerCompactLevel &&
+		        window.innerWidth < headerCompactExitBlockedAt.width + HEADER_COMPACT_EXIT_RETRY_GROW_PX &&
+		        window.innerHeight < headerCompactExitBlockedAt.height + HEADER_COMPACT_EXIT_RETRY_GROW_PX
+		      ) {
+		        return;
 		      }
+		      if (
+		        headerCompactExitBlockedAt &&
+		        headerCompactExitBlockedAt.level === headerCompactLevel &&
+		        (window.innerWidth >= headerCompactExitBlockedAt.width + HEADER_COMPACT_EXIT_RETRY_GROW_PX ||
+		          window.innerHeight >= headerCompactExitBlockedAt.height + HEADER_COMPACT_EXIT_RETRY_GROW_PX)
+		      ) {
+		        headerCompactExitBlockedAt = null;
+		      }
+
+		      const requiredSlack =
+		        headerCompactLevel >= 2 ? HEADER_COMPACT_EXIT_SLACK_L2 : HEADER_COMPACT_EXIT_SLACK_L1;
+		      if (metrics.slack < requiredSlack) {
+		        headerCompactExitArmedAt = 0;
+		        return;
+		      }
+
+		      if (!headerCompactExitArmedAt) headerCompactExitArmedAt = now;
+		      if (now - headerCompactExitArmedAt < HEADER_COMPACT_EXIT_DELAY_MS) return;
+
+		      const toLevel = headerCompactLevel >= 2 ? 1 : 0;
+		      headerCompactTest = { fromLevel: headerCompactLevel, startedAt: now };
+		      applyHeaderCompactLevel(toLevel);
+		      setTimeout(() => requestHeaderCompactUpdate(), HEADER_COMPACT_TEST_SETTLE_MS + 10);
 		    }
 
 	    function requestHeaderCompactUpdate() {
