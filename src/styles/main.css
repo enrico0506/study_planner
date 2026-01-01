@@ -204,6 +204,14 @@ html.ads-disabled ins.adsbygoogle {
   overflow: visible;
 }
 
+/* Keep the planner header from collapsing once its cards hit their minimum widths.
+   When the viewport is narrower than this, the page will scroll horizontally instead of shrinking the cards. */
+@media (min-width: 721px) {
+  .app {
+    min-width: 774px;
+  }
+}
+
 .plannerPage {
   min-height: 100dvh;
   display: flex;
@@ -8007,45 +8015,39 @@ body.timetable-page {
     padding: 0;
     margin: 0;
     width: 100%;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: auto 1fr;
     align-items: center;
     gap: 8px;
   }
 
-  .focus-bottom .focus-break-btn {
-    padding: 4px 6px;
-    font-size: 0.68rem;
-  }
-
   .focus-break-buttons {
-    position: absolute;
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
-    width: auto;
+    position: static;
+    width: 100%;
     padding: 0;
-    display: flex;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-    justify-content: center;
-    z-index: 4;
+    justify-content: stretch;
   }
 
   .focus-break-buttons .focus-break-btn {
-    flex: 1;
+    width: 100%;
     padding: 4px 6px;
     font-size: 0.66rem;
   }
 
   #openTimerSettingsBtn {
-    position: absolute;
-    left: 10px;
-    bottom: 14px;
+    position: static;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: grid;
+    place-items: center;
     font-size: 0;
     line-height: 0;
-    padding: 4px;
     pointer-events: auto;
-    z-index: 5;
   }
 
   #openTimerSettingsBtn::before {
@@ -8103,17 +8105,29 @@ body.timetable-page {
 
 /* Extra guard for very short heights: keep timer actions aligned without overflow */
 @media (max-height: 740px) {
+  .focus-bottom {
+    gap: 6px;
+  }
+
+  #openTimerSettingsBtn {
+    width: 30px;
+    height: 30px;
+  }
+
   .focus-break-buttons {
-    left: 12px;
-    right: 12px;
-    bottom: 32px;
-    width: auto;
+    gap: 6px;
+  }
+
+  .focus-break-buttons .focus-break-btn {
+    font-size: 0.62rem;
+  }
+
+  .focus-break-buttons {
     justify-content: center;
   }
 
   #openTimerSettingsBtn {
-    bottom: 36px;
-    left: 10px;
+    justify-self: start;
   }
 }
 
@@ -8309,45 +8323,39 @@ html[data-header-compact] .plannerHeader .focus-bottom {
   padding: 0;
   margin: 0;
   width: 100%;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: auto 1fr;
   align-items: center;
   gap: 8px;
 }
 
-html[data-header-compact] .plannerHeader .focus-bottom .focus-break-btn {
-  padding: 4px 6px;
-  font-size: 0.68rem;
-}
-
 html[data-header-compact] .plannerHeader .focus-break-buttons {
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 12px;
-  width: auto;
+  position: static;
+  width: 100%;
   padding: 0;
-  display: flex;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  justify-content: center;
-  z-index: 4;
+  justify-content: stretch;
 }
 
 html[data-header-compact] .plannerHeader .focus-break-buttons .focus-break-btn {
-  flex: 1;
+  width: 100%;
   padding: 4px 6px;
   font-size: 0.66rem;
 }
 
 html[data-header-compact] .plannerHeader #openTimerSettingsBtn {
-  position: absolute;
-  left: 10px;
-  bottom: 14px;
+  position: static;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
   font-size: 0;
   line-height: 0;
-  padding: 4px;
   pointer-events: auto;
-  z-index: 5;
 }
 
 html[data-header-compact] .plannerHeader #openTimerSettingsBtn::before {
@@ -8430,15 +8438,9 @@ html[data-header-compact="2"] .plannerHeader .focus-timer-toggle {
   right: 6px;
 }
 
-html[data-header-compact="2"] .plannerHeader .focus-break-buttons {
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
-}
-
 html[data-header-compact="2"] .plannerHeader #openTimerSettingsBtn {
-  bottom: 12px;
-  left: 8px;
+  width: 30px;
+  height: 30px;
 }
 
 html[data-header-compact="2"] .plannerHeader .focus-break-buttons .focus-break-btn {
