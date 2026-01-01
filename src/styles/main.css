@@ -1849,7 +1849,7 @@ body.session-header-mounted #focusCard {
 
 .layout-row {
   display: grid;
-  grid-template-columns: minmax(0, 2.7fr) minmax(280px, 360px);
+  grid-template-columns: minmax(0, 2.7fr) clamp(240px, 24vw, 360px);
   gap: clamp(12px, 1.2vw, 18px);
   align-items: stretch;
   padding-bottom: 12px;
@@ -1861,7 +1861,7 @@ body.session-header-mounted #focusCard {
 /* Keep Subjects + Today's focus side-by-side on non-phone layouts.
    When the viewport gets narrow, preserve proportions and allow horizontal overflow instead of stacking. */
 .app:not(.subjects-maximized) #layoutRow.layout-row:not(.today-wide):not(.today-full) {
-  grid-template-columns: minmax(0, 2.7fr) minmax(280px, 360px);
+  grid-template-columns: minmax(0, 2.7fr) clamp(240px, 24vw, 360px);
   gap: clamp(12px, 1.2vw, 18px);
 }
 
@@ -3444,11 +3444,11 @@ body.session-header-mounted #focusCard {
 
     /* Table / columns */
 
-.table-wrapper {
-  margin-top: 4px;
-  border-radius: var(--radius-md);
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+	.table-wrapper {
+	  margin-top: 4px;
+	  border-radius: var(--radius-md);
+	  background: #ffffff;
+	  border: 1px solid #e5e7eb;
   overflow-x: auto;
   overflow-y: visible;
   box-sizing: border-box;
@@ -3459,7 +3459,23 @@ body.session-header-mounted #focusCard {
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 0;
+	  min-height: 0;
+	}
+
+@media (min-width: 721px) {
+  /* Keep subject cards aligned on resize: snap each column to the start edge. */
+  .table-wrapper {
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0 clamp(10px, 1.2vw, 16px);
+  }
+
+  .subject-table {
+    grid-auto-columns: clamp(240px, 24vw, 300px);
+  }
+
+  .subject-table .subject-column {
+    scroll-snap-align: start;
+  }
 }
 
 .subject-scroll-nav {
