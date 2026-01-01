@@ -595,12 +595,11 @@ const COMPACT_WEEK_MQ =
       }
     }
 
-    function getDesiredVisibleSubjects() {
-      if (typeof isCompactWeekLayout === "function" && isCompactWeekLayout()) {
-        return 3;
-      }
-      return isIpadLandscapeLayout() ? 3 : DESKTOP_VISIBLE_SUBJECTS;
-    }
+	    function getDesiredVisibleSubjects() {
+	      const isLikelyTouchDevice =
+	        window.matchMedia && window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+	      return isLikelyTouchDevice && isIpadLandscapeLayout() ? 3 : DESKTOP_VISIBLE_SUBJECTS;
+	    }
 
     function isPhoneTodayPicker() {
       return (
