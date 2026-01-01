@@ -183,7 +183,7 @@ html.ads-disabled ins.adsbygoogle {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   box-shadow: var(--panel-shadow);
-  min-height: 220px;
+  min-height: 0;
 }
 
 .app {
@@ -233,6 +233,9 @@ html.ads-disabled ins.adsbygoogle {
   min-height: var(--header-size);
   height: var(--header-size);
   max-height: var(--header-size);
+  padding-top: 6px;
+  padding-bottom: 12px;
+  box-sizing: border-box;
   flex-shrink: 0;
   overflow: hidden;
   contain: layout paint;
@@ -1161,19 +1164,18 @@ body.session-header-mounted #focusCard {
 
     /* Top row: summary + focus */
 
-		    .top-row {
-		      display: grid;
-		      grid-template-columns: minmax(300px, 1fr) minmax(420px, 1.05fr);
-		      grid-template-areas: "summary focus";
-		      gap: 10px;
-		      align-items: stretch;
-		      margin-top: 6px;
-		      margin-bottom: 12px;
-		      min-height: 0;
-		      overflow-x: auto;
-		      overflow-y: hidden;
-		      overscroll-behavior-x: contain;
-		    }
+			    .top-row {
+			      display: grid;
+			      grid-template-rows: minmax(0, 1fr);
+			      grid-template-columns: minmax(300px, 1fr) minmax(420px, 1.05fr);
+			      grid-template-areas: "summary focus";
+			      gap: 10px;
+			      align-items: stretch;
+			      min-height: 0;
+			      overflow-x: auto;
+			      overflow-y: hidden;
+			      overscroll-behavior-x: contain;
+			    }
 
 	    .summary-card {
 	      grid-area: summary;
