@@ -1152,15 +1152,18 @@ body.session-header-mounted #focusCard {
 
     /* Top row: summary + focus */
 
-    .top-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(420px, 1.05fr);
-      grid-template-areas: "summary focus";
-      gap: 10px;
-      align-items: stretch;
-      margin-top: 6px;
-      margin-bottom: 12px;
-    }
+	    .top-row {
+	      display: grid;
+	      grid-template-columns: minmax(300px, 1fr) minmax(420px, 1.05fr);
+	      grid-template-areas: "summary focus";
+	      gap: 10px;
+	      align-items: stretch;
+	      margin-top: 6px;
+	      margin-bottom: 12px;
+	      overflow-x: auto;
+	      overflow-y: hidden;
+	      overscroll-behavior-x: contain;
+	    }
 
     .summary-card {
       grid-area: summary;
@@ -1174,11 +1177,11 @@ body.session-header-mounted #focusCard {
       grid-area: ad;
     }
 
-    @media (min-width: 1060px) and (max-width: 1839px) {
-      .top-row {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-        grid-template-areas: "ad summary focus";
-      }
+	    @media (min-width: 1060px) and (max-width: 1839px) {
+	      .top-row {
+	        grid-template-columns: minmax(200px, 1fr) minmax(300px, 1fr) minmax(420px, 1fr);
+	        grid-template-areas: "ad summary focus";
+	      }
 
       .top-ad-slot {
         display: block;
@@ -1186,29 +1189,11 @@ body.session-header-mounted #focusCard {
     }
 
     @media (max-width: 1050px) {
-      .top-row {
-        grid-template-columns: 1fr;
-        grid-template-areas:
-          "summary"
-          "focus";
-      }
-
-      .top-ad-slot {
-        display: none;
-      }
+      /* header layout unchanged; preserve default top-row */
     }
 
     @media (max-height: 720px) {
-      .top-row {
-        grid-template-columns: 1fr;
-        grid-template-areas:
-          "summary"
-          "focus";
-      }
-
-      .top-ad-slot {
-        display: none;
-      }
+      /* header layout unchanged; preserve default top-row */
     }
 
     /* Summary card */
@@ -2688,6 +2673,7 @@ body.session-header-mounted #focusCard {
 .plannerLower .layout-row {
   margin-top: 0 !important;
 }
+
 
 .today-list.today-list-grid {
       display: grid;
@@ -7831,6 +7817,280 @@ body.timetable-page {
 @media (max-width: 1080px) {
   .calendar-layout {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Compact header mode (res-1200x800 visuals) triggered only by viewport height */
+@media (max-height: 850px) {
+  .summary-card,
+  .focus-card {
+    padding: 8px 10px 10px;
+  }
+
+  .summary-metrics,
+  .summary-top,
+  .summary-streak,
+  .summary-study-legend,
+  #weeklyGoalHint,
+  .summary-goal-footer,
+  #editGoalBtn,
+  .focus-label,
+  .focus-subtitle {
+    display: none;
+  }
+
+  .summary-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 12px;
+  }
+
+  .summary-progress,
+  .summary-goal,
+  .summary-study {
+    margin: 0;
+    padding: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .summary-progress-bar,
+  .summary-goal-track,
+  .summary-study-bar {
+    position: relative;
+    width: 100%;
+    height: 12px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface-soft) 78%, #ffffff);
+    border: 1px solid color-mix(in srgb, var(--border-strong) 45%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78), 0 8px 16px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+  }
+
+  .summary-progress-header,
+  .summary-study-header,
+  .summary-goal-header {
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 4px;
+    pointer-events: none;
+  }
+
+  .summary-progress-header::before,
+  .summary-study-header::before,
+  .summary-goal-header::before {
+    display: inline;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--ink-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .summary-progress-header::before {
+    content: "Confidence";
+  }
+
+  .summary-study-header::before {
+    content: "Today";
+  }
+
+  .summary-goal-header::before {
+    content: "Goal";
+  }
+
+  .summary-progress-header span:first-child,
+  .summary-study-header span:first-child,
+  .summary-goal-header .summary-label,
+  .summary-goal-header #editGoalBtn {
+    display: none;
+  }
+
+  #summaryConfLabel,
+  #weeklyGoalProgressLabel,
+  .summary-goal-divider,
+  #weeklyGoalTotalLabel,
+  #summaryStudyTodayLabel {
+    display: inline;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .summary-goal-header .summary-goal-line {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  .summary-goal {
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .focus-card {
+    position: relative;
+  }
+
+  .focus-timer-box {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    padding-top: 40px;
+    padding-bottom: 60px;
+  }
+
+  .focus-right {
+    position: relative;
+    width: 150px;
+    min-width: 150px;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .focus-timer-toggle {
+    position: absolute;
+    top: 10px;
+    left: 8px;
+    right: 8px;
+    justify-content: center;
+    gap: 6px;
+    z-index: 3;
+  }
+
+  .focus-timer-display {
+    font-size: 1.65rem;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: clip;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .focus-bottom {
+    position: static;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .focus-bottom .focus-break-btn {
+    padding: 4px 6px;
+    font-size: 0.68rem;
+  }
+
+  .focus-break-buttons {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+    padding: 0;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    z-index: 4;
+  }
+
+  .focus-break-buttons .focus-break-btn {
+    flex: 1;
+    padding: 4px 6px;
+    font-size: 0.66rem;
+  }
+
+  #openTimerSettingsBtn {
+    position: absolute;
+    left: 10px;
+    bottom: 14px;
+    font-size: 0;
+    line-height: 0;
+    padding: 4px;
+    pointer-events: auto;
+    z-index: 5;
+  }
+
+  #openTimerSettingsBtn::before {
+    content: "⚙";
+    font-size: 0.8rem;
+    line-height: 1;
+  }
+
+  .focus-timer-mode-btn {
+    padding: 3px 6px;
+    font-size: 0.64rem;
+    border-radius: 9px;
+  }
+
+  /* COMPACT focus card: put session controls under the clock */
+  #focusCard .focus-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 150px;
+    grid-template-areas:
+      "left right"
+      "left controls";
+    column-gap: 12px;
+    row-gap: 10px;
+    align-items: start;
+  }
+
+  #focusCard .focus-left {
+    grid-area: left;
+    min-width: 0;
+  }
+
+  #focusCard .focus-right {
+    grid-area: right;
+    width: 150px;
+    min-width: 150px;
+  }
+
+  #focusCard #focusSessionControls {
+    grid-area: controls;
+    justify-self: stretch;
+    align-self: start;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  #focusCard #focusSessionControls button,
+  #focusCard #focusSessionControls .focus-main-btn,
+  #focusCard #focusSessionControls .focus-break-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Extra guard for very short heights: keep timer actions aligned without overflow */
+@media (max-height: 740px) {
+  .focus-break-buttons {
+    left: 12px;
+    right: 12px;
+    bottom: 32px;
+    width: auto;
+    justify-content: center;
+  }
+
+  #openTimerSettingsBtn {
+    bottom: 36px;
+    left: 10px;
   }
 }
 

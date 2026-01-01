@@ -77,32 +77,18 @@
     display: none !important;
   }
 
-  /* Reorder top row: Focus first, stats second */
-  .top-row {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
   .top-row .summary-card {
     padding: 12px;
   }
 
   .top-row .summary-metrics {
+    display: grid;
     grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
     gap: 10px;
   }
 
   .top-row .focus-card {
     padding: 12px;
-  }
-
-  .top-row .focus-card {
-    order: 0;
-  }
-
-  .top-row .summary-card {
-    order: 1;
   }
 
   /* Keep subjects after stats */
@@ -377,5 +363,23 @@
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: flex-end;
+  }
+}
+
+/* Phone-only: stack focus + daily stats vertically. */
+@media (max-width: 720px) and (hover: none) and (pointer: coarse) {
+  /* Reorder top row: Focus first, stats second */
+  .top-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .top-row .focus-card {
+    order: 0;
+  }
+
+  .top-row .summary-card {
+    order: 1;
   }
 }

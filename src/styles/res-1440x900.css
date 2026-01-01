@@ -32,12 +32,5 @@
     max-width: 260px;
   }
 
-  .top-row {
-    grid-template-columns: minmax(0, 1fr) minmax(420px, 1.05fr);
-    grid-template-areas: "summary focus";
-  }
-
-  .top-ad-slot {
-    display: none !important;
-  }
+  /* header left untouched */
 }

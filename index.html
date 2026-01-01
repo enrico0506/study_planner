@@ -41,7 +41,6 @@
   <link rel="stylesheet" href="./src/styles/enhancements.css" />
   <link rel="stylesheet" href="./src/styles/notes.css" />
   <link rel="stylesheet" href="./src/styles/insights.css" />
-  <link rel="stylesheet" href="./src/styles/res-1024x768.css" />
   <link rel="stylesheet" href="./src/styles/res-1200x800.css" />
   <link rel="stylesheet" href="./src/styles/res-1280x720.css" />
   <link rel="stylesheet" href="./src/styles/res-1365x800.css" />
@@ -63,16 +62,21 @@
   <script defer src="./src/shared/sessionHeader.js"></script>
 </head>
 <body>
-  <aside class="ad-column ad-column-left" aria-label="Advertisement column"></aside>
-  <aside class="ad-column ad-column-right" aria-label="Advertisement column"></aside>
-  <div class="app" id="appRoot">
-    <div id="sessionHeaderMount"></div>
-    <div class="header-row">
+  <!-- SECTION: Ads Columns -->
+  <aside class="ad-column ad-column-left" aria-label="Advertisement column" data-section="ads-left"></aside>
+  <aside class="ad-column ad-column-right" aria-label="Advertisement column" data-section="ads-right"></aside>
+
+  <!-- SECTION: App Root -->
+  <div class="app" id="appRoot" data-section="app-root">
+    <div id="sessionHeaderMount" data-section="session-header-mount"></div>
+
+    <!-- SECTION: Main Header Bar -->
+    <div class="header-row" id="mainHeaderBar" data-section="header-bar">
       <div class="header-main">
         <h1>Study Planner</h1>
       </div>
       <div class="header-actions">
-        <div class="view-toggle" role="tablist" aria-label="Choose view">
+        <div class="view-toggle" role="tablist" aria-label="Choose view" data-section="view-toggle">
           <button class="view-toggle-btn view-toggle-active" id="viewBoardBtn" type="button" aria-selected="true">
             Board
           </button>
@@ -80,18 +84,18 @@
             Daily schedule
           </button>
         </div>
-        <div class="header-quick-dropdown" id="quickJumpDropdown">
+        <div class="header-quick-dropdown" id="quickJumpDropdown" data-section="study-hubs-dropdown">
           <button class="header-quick-trigger" id="quickJumpTrigger" type="button" aria-haspopup="true" aria-expanded="false">
             <span class="header-quick-label">Study hubs</span>
             <span class="header-quick-caret" aria-hidden="true">⌄</span>
           </button>
-	          <div class="header-quick-panel" id="quickJumpPanel">
-	            <a class="header-quick-item" href="./calendar.html">Calendar</a>
-	            <a class="header-quick-item" href="./stundenplan.html">Stundenplan</a>
-	            <a class="header-quick-item" href="./karteikarten.html">Karteikarten</a>
-	          </div>
-	        </div>
-        <div class="confidence-toggle" role="group" aria-label="Confidence mode">
+		          <div class="header-quick-panel" id="quickJumpPanel">
+		            <a class="header-quick-item" href="./calendar.html">Calendar</a>
+		            <a class="header-quick-item" href="./stundenplan.html">Stundenplan</a>
+		            <a class="header-quick-item" href="./karteikarten.html">Karteikarten</a>
+		          </div>
+		        </div>
+        <div class="confidence-toggle" role="group" aria-label="Confidence mode" data-section="confidence-toggle">
           <button class="confidence-toggle-btn confidence-toggle-active" id="manualConfBtn" type="button" data-mode="manual">
             Your confidence
           </button>
@@ -100,7 +104,7 @@
           </button>
         </div>
         <button class="btn btn-secondary" id="adsToggleBtn" type="button" aria-pressed="false">Ads: On</button>
-        <div class="header-menu" id="headerMenu" aria-label="Menu">
+        <div class="header-menu" id="headerMenu" aria-label="Menu" data-section="header-menu">
           <button class="header-menu-toggle" id="headerMenuToggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Open menu">
             ...
           </button>
@@ -133,7 +137,8 @@
 	      </div>
 	    </div>
 
-    <div class="settings-modal" id="settingsModal" aria-hidden="true">
+    <!-- SECTION: Settings Modal -->
+    <div class="settings-modal" id="settingsModal" aria-hidden="true" data-section="settings-modal">
       <div class="settings-backdrop" id="settingsModalBackdrop"></div>
       <div class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
         <div class="settings-head">
@@ -343,13 +348,15 @@
       </div>
     </div>
 
-    <div class="plannerPage">
-      <section class="plannerHeader">
+    <!-- SECTION: Planner Page -->
+    <div class="plannerPage" id="plannerPage" data-section="planner-page">
+      <!-- SECTION: Planner Header (Summary + Focus) -->
+      <section class="plannerHeader" id="plannerHeaderSection" data-section="planner-header">
         <!-- Top row: Summary + Focus -->
         <div class="top-row">
           <div class="top-ad-slot" aria-label="Advertisement column"></div>
           <!-- Summary -->
-          <div class="summary-card">
+          <div class="summary-card" id="summaryCard" data-section="daily-stats">
             <div class="summary-top">
               <div class="summary-metrics">
                 <div class="summary-block">
@@ -420,7 +427,7 @@
   	      </div>
 
           <!-- Focus timer -->
-          <div class="focus-card" id="focusCard">
+          <div class="focus-card" id="focusCard" data-section="focus-session">
             <div class="focus-main">
               <div class="focus-left">
                 <div class="focus-label">Focus session</div>
@@ -475,14 +482,15 @@
         </div>
       </section>
 
-      <section class="plannerLower">
+      <!-- SECTION: Planner Lower (Subjects + Today + Schedule) -->
+      <section class="plannerLower" id="plannerLowerSection" data-section="planner-lower">
         <!-- Controls placeholder -->
         <div class="controls"></div>
 
-        <div class="layout-row" id="layoutRow">
-          <div class="main-area">
+        <div class="layout-row" id="layoutRow" data-section="layout-row">
+          <div class="main-area" data-section="subjects-area">
             <!-- Table -->
-            <div class="table-wrapper">
+            <div class="table-wrapper" data-section="subjects-table">
               <div class="subject-scroll">
                 <div class="section-heading">
                     <div class="section-heading-text">
@@ -510,7 +518,7 @@
             </div>
           </div>
 
-          <aside class="today-sidebar">
+          <aside class="today-sidebar" id="todaySidebar" data-section="today-sidebar">
             <div class="today-section">
               <div class="today-header">
                 <div class="today-header-text">
@@ -526,7 +534,7 @@
           </aside>
         </div>
 
-        <div class="schedule-view" id="scheduleView" hidden>
+        <div class="schedule-view" id="scheduleView" hidden data-section="schedule-view">
           <div class="schedule-bar">
             <div>
               <div class="schedule-title">Daily focus timeline</div>
@@ -550,7 +558,7 @@
     </div>
 
     <!-- Add-to-Today Modal -->
-    <div class="modal-backdrop" id="addTodoModalBackdrop" hidden>
+    <div class="modal-backdrop" id="addTodoModalBackdrop" hidden data-section="modal-add-to-today">
       <div class="modal" role="dialog" aria-modal="true">
         <div class="modal-header">
           <div>
@@ -580,7 +588,7 @@
     </div>
 
     <!-- Schedule Task Modal -->
-    <div class="modal-backdrop" id="scheduleTaskModalBackdrop" hidden>
+    <div class="modal-backdrop" id="scheduleTaskModalBackdrop" hidden data-section="modal-schedule-task">
       <div class="modal" role="dialog" aria-modal="true">
         <div class="modal-header">
           <div>
@@ -600,7 +608,7 @@
     </div>
 
     <!-- Schedule Manual Todo Modal -->
-    <div class="modal-backdrop" id="scheduleManualTodoModalBackdrop" hidden>
+    <div class="modal-backdrop" id="scheduleManualTodoModalBackdrop" hidden data-section="modal-schedule-manual-todo">
       <div class="modal" role="dialog" aria-modal="true">
         <div class="modal-header">
           <div>
@@ -693,7 +701,7 @@
   </div>
 
   <!-- File Modal -->
-  <div class="modal-backdrop" id="fileModalBackdrop">
+  <div class="modal-backdrop" id="fileModalBackdrop" data-section="modal-file">
     <div class="modal" role="dialog" aria-modal="true">
       <div class="modal-header">
         <div>
@@ -740,7 +748,7 @@
   </div>
 
   <!-- Timer Settings Modal -->
-  <div class="modal-backdrop" id="timerModalBackdrop">
+  <div class="modal-backdrop" id="timerModalBackdrop" data-section="modal-timer-settings">
     <div class="modal" role="dialog" aria-modal="true">
       <div class="modal-header">
         <div>
@@ -774,7 +782,7 @@
   </div>
 
   <!-- Stats Modal -->
-  <div class="modal-backdrop" id="statsModalBackdrop">
+  <div class="modal-backdrop" id="statsModalBackdrop" data-section="modal-study-stats">
     <div class="modal stats-modal" role="dialog" aria-modal="true">
       <div class="modal-header">
         <div>
@@ -795,7 +803,7 @@
   </div>
 
   <!-- Subject Settings Modal -->
-  <div class="modal-backdrop" id="subjectSettingsBackdrop" hidden>
+  <div class="modal-backdrop" id="subjectSettingsBackdrop" hidden data-section="modal-subject-settings">
     <div class="modal subject-settings-modal" role="dialog" aria-modal="true" aria-labelledby="subjectSettingsTitle">
       <div class="modal-header">
         <div>
@@ -838,7 +846,7 @@
   </div>
 
   <!-- Notice Modal -->
-  <div class="modal-backdrop" id="noticeModalBackdrop" hidden>
+  <div class="modal-backdrop" id="noticeModalBackdrop" hidden data-section="modal-notice">
     <div class="modal notice-modal" role="dialog" aria-modal="true">
       <div class="modal-header">
         <div class="modal-title" id="noticeModalTitle">Notice</div>
@@ -851,7 +859,7 @@
     </div>
   </div>
 		  <!-- Suggestions Modal -->
-		  <div class="modal-backdrop" id="suggestionModalBackdrop" hidden>
+			  <div class="modal-backdrop" id="suggestionModalBackdrop" hidden data-section="modal-suggestions">
 		    <div class="modal suggestion-modal" role="dialog" aria-modal="true">
       <div class="modal-header">
         <div>
@@ -891,7 +899,7 @@
 		  </div>
 
 	  <!-- Today subtasks (compact view) Modal -->
-	  <div class="modal-backdrop" id="subtasksModalBackdrop" hidden>
+		  <div class="modal-backdrop" id="subtasksModalBackdrop" hidden data-section="modal-today-subtasks">
 	    <div class="modal subtasks-modal" role="dialog" aria-modal="true" aria-labelledby="subtasksModalTitle">
 	      <div class="modal-header">
 	        <div>
@@ -909,7 +917,7 @@
 	  </div>
 
 	  <!-- Today stats modal -->
-	  <div class="modal-backdrop" id="todayStatsModalBackdrop" hidden>
+		  <div class="modal-backdrop" id="todayStatsModalBackdrop" hidden data-section="modal-today-stats">
 	    <div class="modal insights-modal today-stats-modal" role="dialog" aria-modal="true" aria-labelledby="todayStatsModalTitle">
 	      <div class="modal-header">
 	        <div>
@@ -927,7 +935,7 @@
 	  </div>
 
 	  <!-- Notes Modal -->
-	  <div class="calendar-modal notes-modal" id="notesModal" aria-hidden="true">
+		  <div class="calendar-modal notes-modal" id="notesModal" aria-hidden="true" data-section="modal-notes">
 	    <div class="calendar-modal-backdrop" id="notesModalBackdrop"></div>
 	    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="notesModalTitle">
       <div class="calendar-modal-head">
@@ -969,7 +977,7 @@
   </div>
 
   <!-- Session Recap Modal -->
-  <div class="modal-backdrop" id="sessionRecapBackdrop" hidden>
+  <div class="modal-backdrop" id="sessionRecapBackdrop" hidden data-section="modal-session-recap">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sessionRecapTitle">
       <div class="modal-header">
         <div>
@@ -1025,7 +1033,7 @@
   </div>
 
   <!-- Insights Modal -->
-  <div class="modal-backdrop" id="insightsBackdrop" hidden>
+  <div class="modal-backdrop" id="insightsBackdrop" hidden data-section="modal-insights">
     <div class="modal insights-modal" role="dialog" aria-modal="true" aria-labelledby="insightsTitle">
       <div class="modal-header">
         <div>
@@ -1043,7 +1051,7 @@
   </div>
 
   <!-- Flashcards generator preview (Notes → Flashcards) -->
-  <div class="calendar-modal" id="flashcardGenModal" aria-hidden="true">
+	  <div class="calendar-modal" id="flashcardGenModal" aria-hidden="true" data-section="modal-flashcard-generator">
     <div class="calendar-modal-backdrop" id="flashcardGenModalBackdrop"></div>
     <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="flashcardGenTitle">
       <div class="calendar-modal-head">
@@ -1079,10 +1087,10 @@
     </div>
   </div>
 
-	  <div id="studyAriaLive" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-	  <button class="scroll-top-btn" id="scrollTopBtn" type="button" aria-label="Scroll to top">↑</button>
+	  <div id="studyAriaLive" class="sr-only" aria-live="polite" aria-atomic="true" data-section="aria-live"></div>
+	  <button class="scroll-top-btn" id="scrollTopBtn" type="button" aria-label="Scroll to top" data-section="scroll-top">↑</button>
 
-	  <nav class="phone-bottom-nav" aria-label="Hauptnavigation">
+	  <nav class="phone-bottom-nav" aria-label="Hauptnavigation" data-section="phone-bottom-nav">
 	    <button class="phone-bottom-nav__btn" type="button" data-mode="board" aria-label="Board">
 	      <span class="phone-bottom-nav__icon" aria-hidden="true">🏠</span>
 	      <span class="phone-bottom-nav__label">Board</span>
