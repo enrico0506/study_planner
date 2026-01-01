@@ -221,10 +221,12 @@ html.ads-disabled ins.adsbygoogle {
 .plannerHeader {
   display: flex;
   flex-direction: column;
-  flex: 0 0 auto;
+  flex: 0 0 var(--header-size);
   min-height: var(--header-size);
+  height: var(--header-size);
+  max-height: var(--header-size);
   flex-shrink: 0;
-  overflow: visible;
+  overflow: hidden;
   contain: layout paint;
   position: relative;
   z-index: 2;
@@ -232,6 +234,7 @@ html.ads-disabled ins.adsbygoogle {
 
 .plannerHeader > .top-row {
   flex: 1 1 auto;
+  min-height: 0;
 }
 
 .plannerLower {
@@ -1150,26 +1153,48 @@ body.session-header-mounted #focusCard {
 
     /* Top row: summary + focus */
 
-	    .top-row {
-	      display: grid;
-	      grid-template-columns: minmax(300px, 1fr) minmax(420px, 1.05fr);
-	      grid-template-areas: "summary focus";
-	      gap: 10px;
-	      align-items: stretch;
-	      margin-top: 6px;
-	      margin-bottom: 12px;
-	      overflow-x: auto;
-	      overflow-y: hidden;
-	      overscroll-behavior-x: contain;
+		    .top-row {
+		      display: grid;
+		      grid-template-columns: minmax(300px, 1fr) minmax(420px, 1.05fr);
+		      grid-template-areas: "summary focus";
+		      gap: 10px;
+		      align-items: stretch;
+		      margin-top: 6px;
+		      margin-bottom: 12px;
+		      min-height: 0;
+		      overflow-x: auto;
+		      overflow-y: hidden;
+		      overscroll-behavior-x: contain;
+		    }
+
+	    .summary-card {
+	      grid-area: summary;
 	    }
 
-    .summary-card {
-      grid-area: summary;
-    }
+	    .focus-card {
+	      grid-area: focus;
+	    }
 
-    .focus-card {
-      grid-area: focus;
-    }
+	    .plannerHeader .summary-card,
+	    .plannerHeader .focus-card {
+	      min-height: 0;
+	    }
+
+	    .plannerHeader .summary-card {
+	      overflow-x: hidden;
+	      overflow-y: auto;
+	    }
+
+	    .plannerHeader .focus-card {
+	      overflow: hidden;
+	    }
+
+	    .plannerHeader .focus-card .focus-main {
+	      flex: 1 1 auto;
+	      min-height: 0;
+	      overflow-x: hidden;
+	      overflow-y: auto;
+	    }
 
     .top-ad-slot {
       grid-area: ad;
