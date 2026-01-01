@@ -3468,10 +3468,6 @@ body.session-header-mounted #focusCard {
     scroll-snap-type: x mandatory;
     scroll-padding: 0 clamp(10px, 1.2vw, 16px);
   }
-
-  .subject-table .subject-column {
-    scroll-snap-align: start;
-  }
 }
 
 .subject-scroll-nav {
@@ -3646,7 +3642,11 @@ body.session-header-mounted #focusCard {
   display: grid;
   grid-auto-flow: column;
   --subject-gap: clamp(6px, 0.8vw, 12px);
-  grid-auto-columns: minmax(240px, calc((100% - (3 * var(--subject-gap))) / 4));
+  --subject-cols: 4;
+  grid-auto-columns: minmax(
+    260px,
+    calc((100% - (var(--subject-cols) * var(--subject-gap)) + var(--subject-gap)) / var(--subject-cols))
+  );
   gap: var(--subject-gap);
       width: 100%;
       background:
@@ -3677,13 +3677,13 @@ body.session-header-mounted #focusCard {
 
 @media (max-width: 1499px) {
   .subject-table {
-    grid-auto-columns: minmax(240px, calc((100% - (2 * var(--subject-gap))) / 3));
+    --subject-cols: 3;
   }
 }
 
 @media (max-width: 1199px) {
   .subject-table {
-    grid-auto-columns: minmax(240px, calc((100% - var(--subject-gap)) / 2));
+    --subject-cols: 2;
   }
 }
 
