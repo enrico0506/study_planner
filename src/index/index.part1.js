@@ -610,49 +610,60 @@ const COMPACT_WEEK_MQ =
       );
     }
 
-	    function applyDesktopSubjectSizing() {
-	      if (!subjectTable) return;
-	      if (isPhoneLayout()) return;
-	      if (!subjectsMaximized && window.matchMedia && window.matchMedia("(max-width: 960px)").matches) return;
+		    function applyDesktopSubjectSizing() {
+		      if (!subjectTable) return;
+		      if (isPhoneLayout()) return;
 
-      const wrapper = subjectTable.closest(".table-wrapper");
-      if (!wrapper) return;
+	      const wrapper = subjectTable.closest(".table-wrapper");
+	      if (!wrapper) return;
 
-      const count = subjects.length;
+	      const count = subjects.length;
       const addColWidth = 96; // "scroll a little" to reach Add subject
 
-      if (count <= 0) {
-        subjectTable.classList.remove("subject-table-dynamic");
-        subjectTable.style.removeProperty("grid-template-columns");
-        return;
-      }
+	      if (count <= 0) {
+	        subjectTable.classList.remove("subject-table-dynamic");
+	        subjectTable.style.removeProperty("grid-template-columns");
+	        wrapper.dataset.spVisibleSubjects = "";
+	        return;
+	      }
 
       const wrapperStyles = window.getComputedStyle(wrapper);
       const paddingLeft = parseFloat(wrapperStyles.paddingLeft) || 0;
       const paddingRight = parseFloat(wrapperStyles.paddingRight) || 0;
       const viewportWidth = Math.max(0, wrapper.clientWidth - paddingLeft - paddingRight);
 
-	      const tableStyles = window.getComputedStyle(subjectTable);
-	      const gapRaw = tableStyles.columnGap || tableStyles.gap || "0px";
-	      const gap = parseFloat(gapRaw) || 0;
+		      const tableStyles = window.getComputedStyle(subjectTable);
+		      const gapRaw = tableStyles.columnGap || tableStyles.gap || "0px";
+		      const gap = parseFloat(gapRaw) || 0;
 
-	      const desiredVisible = getDesiredVisibleSubjects();
-	      const visibleSubjects = count >= desiredVisible ? desiredVisible : Math.max(1, count);
-	      const base =
-	        (viewportWidth - gap * Math.max(0, visibleSubjects - 1)) / Math.max(1, visibleSubjects);
-	      const isNarrowDesktop =
-	        window.matchMedia &&
-	        window.matchMedia(
-	          "(min-width: 1404px) and (max-width: 1488px) and (min-height: 883px) and (max-height: 975px)"
-	        ).matches;
-	      const minWidth = subjectsMaximized ? 140 : isNarrowDesktop ? 160 : 190;
-	      // Use floor to guarantee all visible columns fit (avoid 1px overflow from rounding).
-	      const subjectWidth = Math.floor(Math.max(minWidth, base));
+		      const desiredMaxVisible = getDesiredVisibleSubjects();
+		      const maxVisible = Math.min(desiredMaxVisible, Math.max(1, count));
+		      const minVisible = count >= 2 ? 2 : 1;
 
-      const template = `repeat(${count}, ${subjectWidth}px) ${addColWidth}px`;
-      subjectTable.classList.add("subject-table-dynamic");
-      subjectTable.style.gridTemplateColumns = template;
-    }
+		      const baseFor = (visible) =>
+		        (viewportWidth - gap * Math.max(0, visible - 1)) / Math.max(1, visible);
+
+		      // Prefer readability: only show 4/3 subjects when each column stays wide enough.
+		      const MIN_COL_WIDTH_FOR_4 = 220;
+		      const MIN_COL_WIDTH_FOR_3 = 240;
+
+		      let visibleSubjects = Math.max(minVisible, maxVisible);
+		      if (visibleSubjects >= 4 && baseFor(visibleSubjects) < MIN_COL_WIDTH_FOR_4) {
+		        visibleSubjects = Math.min(3, maxVisible);
+		      }
+		      if (visibleSubjects >= 3 && baseFor(visibleSubjects) < MIN_COL_WIDTH_FOR_3) {
+		        visibleSubjects = Math.max(minVisible, Math.min(2, maxVisible));
+		      }
+
+		      wrapper.dataset.spVisibleSubjects = String(visibleSubjects);
+
+		      // Use floor to guarantee all visible columns fit (avoid 1px overflow from rounding).
+		      const subjectWidth = Math.floor(Math.max(1, baseFor(visibleSubjects)));
+
+	      const template = `repeat(${count}, ${subjectWidth}px) ${addColWidth}px`;
+	      subjectTable.classList.add("subject-table-dynamic");
+	      subjectTable.style.gridTemplateColumns = template;
+	    }
 
 	    function ensureSubjectScrollButtons() {
 	      if (!subjectTable) return;
@@ -716,13 +727,12 @@ const COMPACT_WEEK_MQ =
 	    let subjectSnapAnim = null;
 	    let subjectSnapAnimating = false;
 
-	    function ensureSubjectFourSnap() {
-	      if (!subjectTable) return;
-	      if (isPhoneLayout()) return;
-	      if (!subjectsMaximized && window.matchMedia && window.matchMedia("(max-width: 960px)").matches) return;
+		    function ensureSubjectFourSnap() {
+		      if (!subjectTable) return;
+		      if (isPhoneLayout()) return;
 
-	      const wrapper = subjectTable.closest(".table-wrapper");
-	      if (!wrapper) return;
+		      const wrapper = subjectTable.closest(".table-wrapper");
+		      if (!wrapper) return;
 
 	      const addBtn = subjectTable.querySelector(".subject-add-btn");
 	      if (addBtn && !addBtn.dataset.boundSnap) {
@@ -780,24 +790,27 @@ const COMPACT_WEEK_MQ =
 	        subjectSnapAnim.rafId = requestAnimationFrame(tick);
 	      };
 
-	      const getSnapMetrics = () => {
-	        const cols = Array.from(
-	          subjectTable.querySelectorAll(".subject-column:not(.subject-add-column)")
-	        );
-	        if (!cols.length) return null;
+		      const getSnapMetrics = () => {
+		        const cols = Array.from(
+		          subjectTable.querySelectorAll(".subject-column:not(.subject-add-column)")
+		        );
+		        if (!cols.length) return null;
 	        const wrapperStyle = window.getComputedStyle(wrapper);
 	        const padLeft = parseFloat(wrapperStyle.paddingLeft) || 0;
 	        const computed = window.getComputedStyle(subjectTable);
 	        const gapRaw = computed.columnGap || computed.gap || "0px";
 	        const gap = parseFloat(gapRaw) || 0;
-	        const colWidth = cols[0].getBoundingClientRect().width || cols[0].offsetWidth || 0;
-	        if (!colWidth) return null;
-	        const step = colWidth + gap;
-	        const desiredVisible = getDesiredVisibleSubjects();
-	        const visible = cols.length >= desiredVisible ? desiredVisible : Math.max(1, cols.length);
-	        const maxIdx = Math.max(0, cols.length - visible);
-	        return { cols, padLeft, step, visible, maxIdx };
-	      };
+		        const colWidth = cols[0].getBoundingClientRect().width || cols[0].offsetWidth || 0;
+		        if (!colWidth) return null;
+		        const step = colWidth + gap;
+		        const desiredVisibleRaw = Number(wrapper.dataset.spVisibleSubjects || "");
+		        const desiredVisible = Number.isFinite(desiredVisibleRaw) && desiredVisibleRaw > 0
+		          ? desiredVisibleRaw
+		          : getDesiredVisibleSubjects();
+		        const visible = cols.length >= desiredVisible ? desiredVisible : Math.max(1, cols.length);
+		        const maxIdx = Math.max(0, cols.length - visible);
+		        return { cols, padLeft, step, visible, maxIdx };
+		      };
 
 	      const computeTargetLeftForIdx = (idx) => {
 	        const m = getSnapMetrics();

@@ -3462,14 +3462,6 @@ body.session-header-mounted #focusCard {
 	  min-height: 0;
 	}
 
-@media (min-width: 721px) {
-  /* Keep subject cards aligned on resize: snap each column to the start edge. */
-  .table-wrapper {
-    scroll-snap-type: x mandatory;
-    scroll-padding: 0 clamp(10px, 1.2vw, 16px);
-  }
-}
-
 .subject-scroll-nav {
   position: absolute;
   inset: 0;
@@ -3641,24 +3633,20 @@ body.session-header-mounted #focusCard {
 .subject-table {
   display: grid;
   grid-auto-flow: column;
-  --subject-gap: clamp(6px, 0.8vw, 12px);
-  --subject-cols: 4;
-  grid-auto-columns: minmax(
-    260px,
-    calc((100% - (var(--subject-cols) * var(--subject-gap)) + var(--subject-gap)) / var(--subject-cols))
-  );
-  gap: var(--subject-gap);
-      width: 100%;
-      background:
-        repeating-linear-gradient(
-          to bottom,
-          color-mix(in srgb, var(--surface-soft) 85%, var(--surface-strong)) 0,
-          color-mix(in srgb, var(--surface-soft) 85%, var(--surface-strong)) 36px,
-          color-mix(in srgb, var(--surface-soft) 65%, var(--surface-strong)) 37px
-        );
-      min-height: 260px;
-      overflow: visible;
-    }
+  gap: clamp(6px, 0.8vw, 12px);
+  grid-auto-columns: minmax(260px, 280px);
+  width: max-content;
+  min-width: 100%;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--surface-soft) 85%, var(--surface-strong)) 0,
+      color-mix(in srgb, var(--surface-soft) 85%, var(--surface-strong)) 36px,
+      color-mix(in srgb, var(--surface-soft) 65%, var(--surface-strong)) 37px
+    );
+  min-height: 260px;
+  overflow: visible;
+}
 
 /* Desktop: dynamic subject sizing (set via JS on non-phone, non-maximized view). */
 .subject-table.subject-table-dynamic {
@@ -3673,18 +3661,6 @@ body.session-header-mounted #focusCard {
   min-width: 0;
   max-width: none;
   width: 100%;
-}
-
-@media (max-width: 1499px) {
-  .subject-table {
-    --subject-cols: 3;
-  }
-}
-
-@media (max-width: 1199px) {
-  .subject-table {
-    --subject-cols: 2;
-  }
 }
 
 .section-heading {
@@ -3794,30 +3770,6 @@ body.session-header-mounted #focusCard {
 
     .subject-add-column {
       padding: 0;
-    }
-
-@media (max-width: 960px) {
-  .table-wrapper {
-    padding: 10px;
-    overflow: visible;
-  }
-  .subject-scroll-head-btn {
-    display: none !important;
-  }
-  .subject-table {
-    grid-auto-flow: row;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 12px;
-        background: transparent;
-      }
-      .subject-column {
-        border: 1px solid var(--border-strong);
-        border-radius: 12px;
-        background: var(--surface-soft);
-        box-shadow: var(--shadow-soft);
-        min-width: 0;
-        max-width: none;
-      }
     }
 
     .subject-header {
