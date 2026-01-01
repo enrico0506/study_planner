@@ -221,12 +221,10 @@ html.ads-disabled ins.adsbygoogle {
 .plannerHeader {
   display: flex;
   flex-direction: column;
-  flex: 0 0 var(--header-size);
+  flex: 0 0 auto;
   min-height: var(--header-size);
-  height: var(--header-size);
-  max-height: var(--header-size);
   flex-shrink: 0;
-  overflow: hidden;
+  overflow: visible;
   contain: layout paint;
   position: relative;
   z-index: 2;
