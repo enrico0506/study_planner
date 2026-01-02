@@ -755,13 +755,74 @@
 		        (event) => {
 		          // Desktop: prevent trackpad/mouse horizontal scrolling so subjects only move via the arrow buttons.
 		          if (typeof isPhoneLayout === "function" && isPhoneLayout()) return;
-		          const horizontalIntent =
-		            event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY);
-		          if (!horizontalIntent) return;
+
+		          const hasHorizontalDelta = Math.abs(event.deltaX) > 0.5;
+		          if (!event.shiftKey && !hasHorizontalDelta) return;
+
+		          // Block horizontal scroll, but keep vertical scroll working (even if the device emits
+		          // some horizontal delta while scrolling vertically).
 		          event.preventDefault();
+		          const scroller = document.scrollingElement || document.documentElement;
+		          if (scroller && Number.isFinite(event.deltaY) && event.deltaY !== 0) {
+		            scroller.scrollTop += event.deltaY;
+		          }
 		        },
 		        { passive: false }
 		      );
+		    }
+
+		    // While dragging a file row from the Subjects table, auto-scroll the page when the cursor
+		    // approaches the viewport edge so you can reach drop targets (e.g. Today's focus) without
+		    // needing to release the drag.
+		    if (!document.documentElement.dataset.spDragAutoScrollBound) {
+		      document.documentElement.dataset.spDragAutoScrollBound = "1";
+
+		      const EDGE_PX = 72;
+		      const MAX_SPEED_PX = 28;
+		      let dragScrollRaf = 0;
+		      let lastDragY = 0;
+		      let dragScrollActive = false;
+
+		      const stopDragAutoScroll = () => {
+		        dragScrollActive = false;
+		        if (dragScrollRaf) cancelAnimationFrame(dragScrollRaf);
+		        dragScrollRaf = 0;
+		      };
+
+		      const tick = () => {
+		        dragScrollRaf = 0;
+		        if (!dragScrollActive || !dragState) return;
+
+		        const scroller = document.scrollingElement || document.documentElement;
+		        if (!scroller) return;
+
+		        const viewH = window.innerHeight || 0;
+		        if (viewH <= 0) return;
+
+		        let delta = 0;
+		        if (lastDragY < EDGE_PX) {
+		          const t = Math.max(0, Math.min(1, (EDGE_PX - lastDragY) / EDGE_PX));
+		          delta = -Math.ceil(MAX_SPEED_PX * t);
+		        } else if (viewH - lastDragY < EDGE_PX) {
+		          const t = Math.max(0, Math.min(1, (EDGE_PX - (viewH - lastDragY)) / EDGE_PX));
+		          delta = Math.ceil(MAX_SPEED_PX * t);
+		        }
+
+		        if (delta !== 0) {
+		          scroller.scrollTop += delta;
+		          dragScrollRaf = requestAnimationFrame(tick);
+		        }
+		      };
+
+		      document.addEventListener("dragover", (event) => {
+		        if (!dragState) return;
+		        if (typeof isPhoneLayout === "function" && isPhoneLayout()) return;
+		        lastDragY = Number(event.clientY) || 0;
+		        dragScrollActive = true;
+		        if (!dragScrollRaf) dragScrollRaf = requestAnimationFrame(tick);
+		      });
+		      document.addEventListener("dragend", stopDragAutoScroll);
+		      document.addEventListener("drop", stopDragAutoScroll);
 		    }
 
     document.addEventListener("click", (event) => {
