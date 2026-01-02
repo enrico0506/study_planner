@@ -1350,15 +1350,16 @@
             chip.addEventListener("click", () => openScheduleTaskModal(todo, key));
 
             // Drag & drop (within same subject)
-            chip.draggable = true;
-            chip.addEventListener("dragstart", (event) => {
-              scheduleDrag = { dayKey: key, todoId: todo.id, subjectId: todo.subjectId };
-              chip.classList.add("dragging");
-              if (event.dataTransfer) {
-                event.dataTransfer.effectAllowed = "move";
-                event.dataTransfer.setData("text/plain", todo.id);
-              }
-            });
+	            chip.draggable = true;
+	            chip.addEventListener("dragstart", (event) => {
+	              scheduleDrag = { dayKey: key, todoId: todo.id, subjectId: todo.subjectId };
+	              chip.classList.add("dragging");
+	              if (event.dataTransfer) {
+	                // Allow both reordering (move) and copying into Today (copy).
+	                event.dataTransfer.effectAllowed = "copyMove";
+	                event.dataTransfer.setData("text/plain", todo.id);
+	              }
+	            });
             chip.addEventListener("dragend", () => {
               scheduleDrag = null;
               chip.classList.remove("dragging");
