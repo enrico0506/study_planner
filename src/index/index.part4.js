@@ -987,8 +987,6 @@
     });
 	    window.addEventListener("resize", () => {
 	      enforceTodayHeight();
-	      applyDesktopSubjectSizing();
-	      ensureSubjectFourSnap();
 	      applyIpadFocusLayout();
 	    });
     const settingsPrefsSaveBtn = document.getElementById("settingsPrefsSaveBtn");

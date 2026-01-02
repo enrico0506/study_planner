@@ -1,6 +1,6 @@
 /* Study Planner service worker: app-shell caching + offline navigation fallback. */
 (() => {
-  const VERSION = "v10";
+  const VERSION = "v11";
   const SHELL_CACHE = `study-planner-shell-${VERSION}`;
   const RUNTIME_CACHE = `study-planner-runtime-${VERSION}`;
 
@@ -110,7 +110,7 @@
     event.waitUntil(
       (async () => {
         const cache = await caches.open(SHELL_CACHE);
-        await cache.addAll(PRECACHE_URLS);
+        await cache.addAll(PRECACHE_URLS.map((url) => new Request(url, { cache: "reload" })));
         await self.skipWaiting();
       })()
     );
@@ -143,7 +143,7 @@
       event.respondWith(
         (async () => {
           try {
-            const res = await fetch(req);
+            const res = await fetch(req, { cache: "no-store" });
             const runtime = await caches.open(RUNTIME_CACHE);
             if (res && res.ok) runtime.put(req, res.clone());
             return res;
@@ -166,7 +166,7 @@
         event.respondWith(
           (async () => {
             try {
-              const res = await fetch(req);
+              const res = await fetch(req, { cache: "no-store" });
               if (res && res.ok) {
                 const cache = await caches.open(RUNTIME_CACHE);
                 cache.put(req, res.clone());

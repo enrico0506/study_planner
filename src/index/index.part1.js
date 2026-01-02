@@ -699,7 +699,15 @@ const COMPACT_WEEK_MQ =
 
 		      const tableStyles = window.getComputedStyle(subjectTable);
 		      const gapRaw = tableStyles.columnGap || tableStyles.gap || "0px";
-		      const gap = parseFloat(gapRaw) || 0;
+
+		      let gap = parseFloat(gapRaw) || 0;
+		      const cols = subjectTable.querySelectorAll(".subject-column:not(.subject-add-column)");
+		      if (cols.length >= 2) {
+		        const a = cols[0].getBoundingClientRect();
+		        const b = cols[1].getBoundingClientRect();
+		        const measured = b.left - a.right;
+		        if (Number.isFinite(measured) && measured >= 0) gap = measured;
+		      }
 
 		      const desiredMaxVisible = getDesiredVisibleSubjects();
 		      const maxVisible = Math.min(desiredMaxVisible, Math.max(1, count));
@@ -770,20 +778,88 @@ const COMPACT_WEEK_MQ =
 	        });
 	      }
 
-      const update = () => {
-        const max = Math.max(0, wrapper.scrollWidth - wrapper.clientWidth);
-        const atStart = wrapper.scrollLeft <= 2;
-        const atEnd = wrapper.scrollLeft >= max - 2;
-        const hasOverflow = max > 4;
-        leftBtn.classList.toggle("is-hidden", !hasOverflow);
-        rightBtn.classList.toggle("is-hidden", !hasOverflow);
-        leftBtn.disabled = atStart;
-        rightBtn.disabled = atEnd;
-      };
+      if (!wrapper._spSubjectScrollButtonsUpdate) {
+        wrapper._spSubjectScrollButtonsUpdate = () => {
+          const leftBtn = document.getElementById("subjectScrollLeftBtn");
+          const rightBtn = document.getElementById("subjectScrollRightBtn");
+          if (!leftBtn || !rightBtn) return;
 
-      wrapper.addEventListener("scroll", () => requestAnimationFrame(update), { passive: true });
-      window.addEventListener("resize", () => requestAnimationFrame(update));
-	      requestAnimationFrame(update);
+          const max = Math.max(0, wrapper.scrollWidth - wrapper.clientWidth);
+          const atStart = wrapper.scrollLeft <= 2;
+          const atEnd = wrapper.scrollLeft >= max - 2;
+          const hasOverflow = max > 4;
+          leftBtn.classList.toggle("is-hidden", !hasOverflow);
+          rightBtn.classList.toggle("is-hidden", !hasOverflow);
+          leftBtn.disabled = atStart;
+          rightBtn.disabled = atEnd;
+        };
+
+        wrapper.addEventListener(
+          "scroll",
+          () => requestAnimationFrame(wrapper._spSubjectScrollButtonsUpdate),
+          { passive: true }
+        );
+        window.addEventListener("resize", () =>
+          requestAnimationFrame(wrapper._spSubjectScrollButtonsUpdate)
+        );
+      }
+
+	      requestAnimationFrame(wrapper._spSubjectScrollButtonsUpdate);
+	    }
+
+	    function ensureSubjectSizingObservers() {
+	      if (!subjectTable) return;
+
+	      const wrapper = subjectTable.closest(".table-wrapper");
+	      if (!wrapper) return;
+
+	      if (wrapper.dataset.subjectSizingObserved) return;
+	      wrapper.dataset.subjectSizingObserved = "1";
+
+	      let rafId = 0;
+	      let lastWidth = wrapper.clientWidth;
+
+	      const run = () => {
+	        if (rafId) return;
+	        rafId = requestAnimationFrame(() => {
+	          rafId = 0;
+	          if (!subjectTable.isConnected || !wrapper.isConnected) return;
+	          if (isPhoneLayout()) return;
+	          applyDesktopSubjectSizing();
+	          if (typeof wrapper._spSubjectScrollButtonsUpdate === "function") {
+	            wrapper._spSubjectScrollButtonsUpdate();
+	          }
+	          if (wrapper._spSubjectSnap && typeof wrapper._spSubjectSnap.snapToNearest === "function") {
+	            wrapper._spSubjectSnap.snapToNearest({ behavior: "instant" });
+	          }
+	        });
+	      };
+
+	      if (window.ResizeObserver) {
+	        const ro = new ResizeObserver((entries) => {
+	          const entry = entries && entries[0];
+	          const width = entry?.contentRect?.width ?? wrapper.clientWidth;
+	          if (Math.abs(width - lastWidth) < 0.5) return;
+	          lastWidth = width;
+	          run();
+	        });
+	        ro.observe(wrapper);
+	      }
+
+	      if (!wrapper._spSubjectSizingResizeBound) {
+	        wrapper._spSubjectSizingResizeBound = true;
+	        let resizeTimer = null;
+	        window.addEventListener("resize", () => {
+	          if (resizeTimer) clearTimeout(resizeTimer);
+	          resizeTimer = setTimeout(run, 140);
+	        });
+	      }
+
+	      if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === "function") {
+	        document.fonts.ready.then(run).catch(() => null);
+	      }
+
+	      run();
 	    }
 
 	    let subjectSnapTimer = null;
@@ -862,12 +938,17 @@ const COMPACT_WEEK_MQ =
 		        if (!cols.length) return null;
 	        const wrapperStyle = window.getComputedStyle(wrapper);
 	        const padLeft = parseFloat(wrapperStyle.paddingLeft) || 0;
-	        const computed = window.getComputedStyle(subjectTable);
-	        const gapRaw = computed.columnGap || computed.gap || "0px";
-	        const gap = parseFloat(gapRaw) || 0;
 		        const colWidth = cols[0].getBoundingClientRect().width || cols[0].offsetWidth || 0;
 		        if (!colWidth) return null;
-		        const step = colWidth + gap;
+
+		        let step = colWidth;
+		        if (cols.length >= 2) {
+		          const a = cols[0].getBoundingClientRect();
+		          const b = cols[1].getBoundingClientRect();
+		          const delta = b.left - a.left;
+		          if (Number.isFinite(delta) && delta > 0) step = delta;
+		        }
+
 		        const desiredVisibleRaw = Number(wrapper.dataset.spVisibleSubjects || "");
 		        const desiredVisible = Number.isFinite(desiredVisibleRaw) && desiredVisibleRaw > 0
 		          ? desiredVisibleRaw

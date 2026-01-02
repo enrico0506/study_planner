@@ -2721,6 +2721,7 @@
       subjectTable.appendChild(createAddSubjectColumn());
 
 	      applyDesktopSubjectSizing();
+	      ensureSubjectSizingObservers();
 	      ensureSubjectScrollButtons();
 	      ensureSubjectFourSnap();
 

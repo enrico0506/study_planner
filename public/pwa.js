@@ -23,6 +23,13 @@
       const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
       console.log("[PWA] Service worker registered:", registration.scope);
 
+      // Proactively check for updates so users don't need a hard refresh.
+      registration.update().catch(() => null);
+      window.addEventListener("focus", () => registration.update().catch(() => null));
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") registration.update().catch(() => null);
+      });
+
       if (registration.waiting) promptForUpdate(registration);
 
       registration.addEventListener("updatefound", () => {
@@ -48,4 +55,3 @@
     void register();
   });
 })();
-
