@@ -783,6 +783,7 @@
 		      let lastDragY = 0;
 		      let dragScrollActive = false;
 		      let dragScrollTimer = 0;
+		      let prevBodyOverflow = null;
 
 		      const updatePointer = (event) => {
 		        const x = Number(event?.clientX);
@@ -791,34 +792,28 @@
 		        if (Number.isFinite(y)) lastDragY = y;
 		      };
 
-		      const isScrollable = (el) => {
-		        if (!el || el === document.documentElement) return false;
-		        const style = window.getComputedStyle(el);
-		        const overflowY = style.overflowY || style.overflow || "";
-		        if (!/(auto|scroll|overlay)/.test(overflowY)) return false;
-		        return el.scrollHeight > el.clientHeight + 2;
+		      const ensurePageScrollable = () => {
+		        if (prevBodyOverflow !== null) return;
+		        prevBodyOverflow = document.body ? document.body.style.overflow : "";
+		        if (document.body) document.body.style.overflow = "auto";
 		      };
 
-		      const getScrollContainer = () => {
-		        const viewH = window.innerHeight || 0;
-		        const safeX = Math.max(0, Math.min((window.innerWidth || 0) - 1, lastDragX));
-		        const safeY = Math.max(0, Math.min(viewH - 1, lastDragY));
-		        let el = document.elementFromPoint(safeX, safeY);
-		        while (el && el !== document.body && el !== document.documentElement) {
-		          if (isScrollable(el)) return el;
-		          el = el.parentElement;
-		        }
-		        return document.scrollingElement || document.documentElement;
+		      const restorePageScrollable = () => {
+		        if (prevBodyOverflow === null) return;
+		        if (document.body) document.body.style.overflow = prevBodyOverflow;
+		        prevBodyOverflow = null;
 		      };
 
 		      const stopDragAutoScroll = () => {
 		        dragScrollActive = false;
 		        if (dragScrollTimer) clearInterval(dragScrollTimer);
 		        dragScrollTimer = 0;
+		        restorePageScrollable();
 		      };
 
 		      const startDragAutoScroll = () => {
 		        if (dragScrollTimer) return;
+		        ensurePageScrollable();
 		        dragScrollTimer = setInterval(() => {
 		          if (!dragScrollActive || !dragState) {
 		            stopDragAutoScroll();
@@ -838,16 +833,8 @@
 		          }
 
 		          if (delta !== 0) {
-		            const container = getScrollContainer();
-		            if (
-		              container === document.scrollingElement ||
-		              container === document.documentElement ||
-		              container === document.body
-		            ) {
-		              window.scrollBy(0, delta);
-		            } else {
-		              container.scrollTop += delta;
-		            }
+		            // Always scroll the page (not inner containers).
+		            window.scrollBy(0, delta);
 		          }
 		        }, 16);
 		      };
@@ -866,13 +853,20 @@
 		        updatePointer(event);
 		      });
 
-		      document.addEventListener("dragover", (event) => {
+		      document.addEventListener(
+		        "dragover",
+		        (event) => {
 		        if (!dragState) return;
 		        if (typeof isPhoneLayout === "function" && isPhoneLayout()) return;
 		        updatePointer(event);
 		        dragScrollActive = true;
 		        startDragAutoScroll();
-		      });
+		        // Keep the drag session "active" even over non-droppable areas so we keep
+		        // receiving coordinates near the viewport edges.
+		        event.preventDefault();
+		      },
+		        { capture: true, passive: false }
+		      );
 		      document.addEventListener("dragend", stopDragAutoScroll);
 		      document.addEventListener("drop", stopDragAutoScroll);
 		      window.addEventListener("blur", stopDragAutoScroll);
