@@ -817,7 +817,6 @@ const COMPACT_WEEK_MQ =
 	      wrapper.dataset.subjectSizingObserved = "1";
 
 	      let rafId = 0;
-	      let lastWidth = wrapper.clientWidth;
 
 	      const run = () => {
 	        if (rafId) return;
@@ -838,9 +837,11 @@ const COMPACT_WEEK_MQ =
 	      if (window.ResizeObserver) {
 	        const ro = new ResizeObserver((entries) => {
 	          const entry = entries && entries[0];
-	          const width = entry?.contentRect?.width ?? wrapper.clientWidth;
-	          if (Math.abs(width - lastWidth) < 0.5) return;
-	          lastWidth = width;
+	          const width = entry?.contentRect?.width ?? wrapper.getBoundingClientRect().width;
+	          if (!Number.isFinite(width)) {
+	            run();
+	            return;
+	          }
 	          run();
 	        });
 	        ro.observe(wrapper);
