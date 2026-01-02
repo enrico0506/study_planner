@@ -1,6 +1,6 @@
 /* Study Planner service worker: app-shell caching + offline navigation fallback. */
 (() => {
-  const VERSION = "v9";
+  const VERSION = "v10";
   const SHELL_CACHE = `study-planner-shell-${VERSION}`;
   const RUNTIME_CACHE = `study-planner-runtime-${VERSION}`;
 
@@ -96,6 +96,10 @@
     );
   }
 
+  function isCodeAsset(url) {
+    return url.pathname.endsWith(".css") || url.pathname.endsWith(".js");
+  }
+
   self.addEventListener("message", (event) => {
     if (event.data && event.data.type === "SKIP_WAITING") {
       void self.skipWaiting();
@@ -156,6 +160,26 @@
     }
 
     if (isStaticAsset(url)) {
+      // For code assets (CSS/JS), prefer the network so updates show up on a normal reload
+      // without requiring a hard refresh; fall back to cache when offline.
+      if (isCodeAsset(url)) {
+        event.respondWith(
+          (async () => {
+            try {
+              const res = await fetch(req);
+              if (res && res.ok) {
+                const cache = await caches.open(RUNTIME_CACHE);
+                cache.put(req, res.clone());
+              }
+              return res;
+            } catch {
+              return (await caches.match(req)) || Response.error();
+            }
+          })()
+        );
+        return;
+      }
+
       event.respondWith(
         (async () => {
           const cache = await caches.open(RUNTIME_CACHE);

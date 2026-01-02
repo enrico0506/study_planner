@@ -418,43 +418,34 @@ const COMPACT_WEEK_MQ =
 		    // Header auto-compaction: keep the fixed-height header usable by switching to compact styles
 		    // when the content overflows. This must be stable (no flicker) even when mutations/observers fire.
 		    const HEADER_COMPACT_ATTR = "data-header-compact"; // set on <html>
-		    const HEADER_COMPACT_TOLERANCE = 4; // px of overflow before we react
-		    const HEADER_COMPACT_EXIT_DELAY_MS = 520; // require stable fit time before trying to exit compact mode
-		    const HEADER_COMPACT_EXIT_COOLDOWN_MS = 2500; // after a failed exit attempt, wait before trying again
-		    const HEADER_COMPACT_EXIT_RETRY_GROW_PX = 24; // also require the viewport to grow before retrying a failed exit
-		    const HEADER_COMPACT_EXIT_SLACK_L1 = 28; // px of free space required before trying 1 -> 0
-		    const HEADER_COMPACT_EXIT_SLACK_L2 = 14; // px of free space required before trying 2 -> 1
-		    const HEADER_COMPACT_TEST_SETTLE_MS = 140; // wait for layout after switching levels
-		    const HEADER_COMPACT_RESIZE_GRACE_MS = 240; // don't change levels while the user is actively resizing
-		    let headerCompactRaf = 0;
-		    let headerCompactLevel = 0; // 0 = normal, 1/2 = compact
+			    const HEADER_COMPACT_TOLERANCE = 4; // px of overflow before we react
+			    const HEADER_COMPACT_EXIT_DELAY_MS = 520; // require stable fit time before trying to exit compact mode
+			    const HEADER_COMPACT_EXIT_COOLDOWN_MS = 2500; // after a failed exit attempt, wait before trying again
+			    const HEADER_COMPACT_EXIT_RETRY_GROW_PX = 24; // also require the viewport to grow before retrying a failed exit
+			    const HEADER_COMPACT_TEST_SETTLE_MS = 140; // wait for layout after switching levels
+			    const HEADER_COMPACT_RESIZE_GRACE_MS = 240; // don't change levels while the user is actively resizing
+			    let headerCompactRaf = 0;
+			    let headerCompactLevel = 0; // 0 = normal, 1/2 = compact
 		    let headerCompactExitArmedAt = 0;
 		    let headerCompactExitCooldownUntil = 0;
 		    let headerCompactExitBlockedAt = null; // { level, width, height }
 		    let headerCompactResizeUntil = 0;
 		    let headerCompactTest = null; // { fromLevel, startedAt }
 
-		    function hasVerticalOverflow(el, tolerance = HEADER_COMPACT_TOLERANCE) {
-		      if (!el) return false;
-		      if (el.clientHeight <= 0) return false;
-		      return el.scrollHeight - el.clientHeight > tolerance;
-		    }
-
-		    function getOverflowDelta(el) {
-		      if (!el) return 0;
-		      if (el.clientHeight <= 0) return 0;
-		      return el.scrollHeight - el.clientHeight;
-		    }
+			    function getOverflowDelta(el) {
+			      if (!el) return 0;
+			      if (el.clientHeight <= 0) return 0;
+			      return el.scrollHeight - el.clientHeight;
+			    }
 
 		    function getHeaderOverflowMetrics() {
 		      if (!summaryCard || !focusCard) return null;
-		      const focusMain = focusCard.querySelector(".focus-main");
-		      const deltas = [getOverflowDelta(summaryCard), getOverflowDelta(focusMain)];
-		      const maxDelta = Math.max(...deltas);
-		      const isOverflowing = maxDelta > HEADER_COMPACT_TOLERANCE;
-		      const slack = isOverflowing ? 0 : Math.min(...deltas.map((d) => (d < 0 ? -d : 0)));
-		      return { isOverflowing, slack };
-		    }
+			      const focusMain = focusCard.querySelector(".focus-main");
+			      const deltas = [getOverflowDelta(summaryCard), getOverflowDelta(focusMain)];
+			      const maxDelta = Math.max(...deltas);
+			      const isOverflowing = maxDelta > HEADER_COMPACT_TOLERANCE;
+			      return { isOverflowing, maxDelta };
+			    }
 
 		    function applyHeaderCompactLevel(nextLevel) {
 		      if (nextLevel === headerCompactLevel) return;
@@ -539,15 +530,8 @@ const COMPACT_WEEK_MQ =
 		        headerCompactExitBlockedAt = null;
 		      }
 
-		      const requiredSlack =
-		        headerCompactLevel >= 2 ? HEADER_COMPACT_EXIT_SLACK_L2 : HEADER_COMPACT_EXIT_SLACK_L1;
-		      if (metrics.slack < requiredSlack) {
-		        headerCompactExitArmedAt = 0;
-		        return;
-		      }
-
-		      if (!headerCompactExitArmedAt) headerCompactExitArmedAt = now;
-		      if (now - headerCompactExitArmedAt < HEADER_COMPACT_EXIT_DELAY_MS) return;
+			      if (!headerCompactExitArmedAt) headerCompactExitArmedAt = now;
+			      if (now - headerCompactExitArmedAt < HEADER_COMPACT_EXIT_DELAY_MS) return;
 
 		      const toLevel = headerCompactLevel >= 2 ? 1 : 0;
 		      headerCompactTest = { fromLevel: headerCompactLevel, startedAt: now };
