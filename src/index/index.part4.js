@@ -748,55 +748,21 @@
 	      });
 	    }
 
-		    if (tableWrapper) {
-		      const blockDragSelector =
-		        "button, input, select, textarea, option, .chip-btn, .file-row, .add-file-slot, .subject-add-box";
-      let isPanning = false;
-      let startX = 0;
-      let startScroll = 0;
-
-      tableWrapper.addEventListener(
-        "wheel",
-        (event) => {
-          const prefersX = Math.abs(event.deltaX) > Math.abs(event.deltaY);
-          if (event.shiftKey) {
-            tableWrapper.scrollLeft += event.deltaY;
-            event.preventDefault();
-          } else if (prefersX && event.deltaX !== 0) {
-            tableWrapper.scrollLeft += event.deltaX;
-            event.preventDefault();
-          }
-        },
-        { passive: false }
-      );
-
-      tableWrapper.addEventListener("mousedown", (event) => {
-        if (event.button !== 0) return;
-        if (event.target.closest(blockDragSelector)) return;
-        isPanning = true;
-        startX = event.pageX;
-        startScroll = tableWrapper.scrollLeft;
-        tableWrapper.classList.add("dragging-scroll");
-      });
-
-      document.addEventListener("mousemove", (event) => {
-        if (!isPanning) return;
-        const dx = event.pageX - startX;
-        tableWrapper.scrollLeft = startScroll - dx;
-      });
-
-      document.addEventListener("mouseup", () => {
-        if (!isPanning) return;
-        isPanning = false;
-        tableWrapper.classList.remove("dragging-scroll");
-      });
-
-      tableWrapper.addEventListener("mouseleave", () => {
-        if (!isPanning) return;
-        isPanning = false;
-        tableWrapper.classList.remove("dragging-scroll");
-      });
-    }
+		    if (tableWrapper && !tableWrapper.dataset.subjectWheelLocked) {
+		      tableWrapper.dataset.subjectWheelLocked = "1";
+		      tableWrapper.addEventListener(
+		        "wheel",
+		        (event) => {
+		          // Desktop: prevent trackpad/mouse horizontal scrolling so subjects only move via the arrow buttons.
+		          if (typeof isPhoneLayout === "function" && isPhoneLayout()) return;
+		          const horizontalIntent =
+		            event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY);
+		          if (!horizontalIntent) return;
+		          event.preventDefault();
+		        },
+		        { passive: false }
+		      );
+		    }
 
     document.addEventListener("click", (event) => {
       if (!themeMenuOpen) return;

@@ -3520,6 +3520,12 @@ body.session-header-mounted #focusCard {
   cursor: grabbing;
 }
 
+/* Subjects table: horizontal movement via header arrows only (no grab cursor). */
+.table-wrapper[data-section="subjects-table"],
+.table-wrapper[data-section="subjects-table"].dragging-scroll {
+  cursor: default;
+}
+
 .subject-settings-modal {
   max-width: 520px;
 }
