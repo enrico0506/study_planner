@@ -779,39 +779,40 @@
 
 		      const EDGE_PX = 72;
 		      const MAX_SPEED_PX = 28;
-		      let dragScrollRaf = 0;
 		      let lastDragY = 0;
 		      let dragScrollActive = false;
+		      let dragScrollTimer = 0;
 
 		      const stopDragAutoScroll = () => {
 		        dragScrollActive = false;
-		        if (dragScrollRaf) cancelAnimationFrame(dragScrollRaf);
-		        dragScrollRaf = 0;
+		        if (dragScrollTimer) clearInterval(dragScrollTimer);
+		        dragScrollTimer = 0;
 		      };
 
-		      const tick = () => {
-		        dragScrollRaf = 0;
-		        if (!dragScrollActive || !dragState) return;
+		      const startDragAutoScroll = () => {
+		        if (dragScrollTimer) return;
+		        dragScrollTimer = setInterval(() => {
+		          if (!dragScrollActive || !dragState) {
+		            stopDragAutoScroll();
+		            return;
+		          }
 
-		        const scroller = document.scrollingElement || document.documentElement;
-		        if (!scroller) return;
+		          const viewH = window.innerHeight || 0;
+		          if (viewH <= 0) return;
 
-		        const viewH = window.innerHeight || 0;
-		        if (viewH <= 0) return;
+		          let delta = 0;
+		          if (lastDragY <= EDGE_PX) {
+		            const t = Math.max(0, Math.min(1, (EDGE_PX - lastDragY) / EDGE_PX));
+		            delta = -Math.max(1, Math.ceil(MAX_SPEED_PX * t));
+		          } else if (viewH - lastDragY <= EDGE_PX) {
+		            const t = Math.max(0, Math.min(1, (EDGE_PX - (viewH - lastDragY)) / EDGE_PX));
+		            delta = Math.max(1, Math.ceil(MAX_SPEED_PX * t));
+		          }
 
-		        let delta = 0;
-		        if (lastDragY < EDGE_PX) {
-		          const t = Math.max(0, Math.min(1, (EDGE_PX - lastDragY) / EDGE_PX));
-		          delta = -Math.ceil(MAX_SPEED_PX * t);
-		        } else if (viewH - lastDragY < EDGE_PX) {
-		          const t = Math.max(0, Math.min(1, (EDGE_PX - (viewH - lastDragY)) / EDGE_PX));
-		          delta = Math.ceil(MAX_SPEED_PX * t);
-		        }
-
-		        if (delta !== 0) {
-		          scroller.scrollTop += delta;
-		          dragScrollRaf = requestAnimationFrame(tick);
-		        }
+		          if (delta !== 0) {
+		            window.scrollBy(0, delta);
+		          }
+		        }, 16);
 		      };
 
 		      document.addEventListener("dragover", (event) => {
@@ -819,10 +820,11 @@
 		        if (typeof isPhoneLayout === "function" && isPhoneLayout()) return;
 		        lastDragY = Number(event.clientY) || 0;
 		        dragScrollActive = true;
-		        if (!dragScrollRaf) dragScrollRaf = requestAnimationFrame(tick);
+		        startDragAutoScroll();
 		      });
 		      document.addEventListener("dragend", stopDragAutoScroll);
 		      document.addEventListener("drop", stopDragAutoScroll);
+		      window.addEventListener("blur", stopDragAutoScroll);
 		    }
 
     document.addEventListener("click", (event) => {
