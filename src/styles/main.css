@@ -89,7 +89,7 @@ body::-webkit-scrollbar,
       --shadow-card: 0 20px 50px rgba(15, 23, 42, 0.08);
       --app-desktop-max: 1480px;
       --app-desktop-min: 980px;
-      --app-aspect-ratio: 1.6;
+      --app-aspect-ratio: 1.78;
       --meter-low: linear-gradient(90deg, #fb7185, #f97373);
       --meter-mid: linear-gradient(90deg, #fbbf24, #facc15);
 	      --meter-high: linear-gradient(90deg, #22c55e, #16a34a);
