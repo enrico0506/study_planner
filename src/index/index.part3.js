@@ -1043,6 +1043,40 @@
 	      closeScheduleManualTodoModal();
 	    }
 
+	    function copyScheduleTodoToDay(sourceDayKey, targetDayKey, todoId) {
+	      const srcKey = String(sourceDayKey || "").trim();
+	      const dstKey = String(targetDayKey || "").trim();
+	      if (!srcKey || !dstKey) return false;
+	      if (srcKey === dstKey) return false;
+	      const todayKey = getTodayKey();
+	      // Only allow copying from past days into today.
+	      if (!todayKey || dstKey !== todayKey || srcKey >= todayKey) return false;
+
+	      const sourceList =
+	        srcKey === todayKey
+	          ? todayTodos
+	          : dailyFocusMap && Array.isArray(dailyFocusMap[srcKey])
+	            ? dailyFocusMap[srcKey]
+	            : [];
+	      const item = Array.isArray(sourceList) ? sourceList.find((t) => t && t.id === todoId) : null;
+	      if (!item) return false;
+
+	      const subtaskLabels = Array.isArray(item.subtasks)
+	        ? item.subtasks
+	            .map((s) => (s && typeof s.label === "string" ? s.label : ""))
+	            .filter(Boolean)
+	        : [];
+
+	      const isCustom =
+	        (item.kind === "custom" && (!item.subjectId || !item.fileId)) ||
+	        (!item.subjectId || !item.fileId);
+	      if (isCustom) {
+	        return addCustomTodoToDay(dstKey, item.label || "Untitled task", subtaskLabels);
+	      }
+
+	      return addTodoForFileToDay(dstKey, item.subjectId, item.fileId, subtaskLabels);
+	    }
+
 	    function renderScheduleView() {
 	      if (!scheduleGrid) return;
 	      const phone = isPhoneLayout();
@@ -1101,12 +1135,12 @@
 	        const key = dateToKey(day);
 	        const dayList = Array.isArray(dailyFocusMap[key]) ? dailyFocusMap[key] : [];
 
-        const col = document.createElement("div");
-        col.className = "schedule-day";
-        if (key === todayKey) col.classList.add("schedule-day-today");
+	        const col = document.createElement("div");
+	        col.className = "schedule-day";
+	        if (key === todayKey) col.classList.add("schedule-day-today");
 
-        const header = document.createElement("div");
-        header.className = "schedule-day-header";
+	        const header = document.createElement("div");
+	        header.className = "schedule-day-header";
 
         const dateLabel = document.createElement("div");
         dateLabel.className = "schedule-day-date";
@@ -1126,6 +1160,7 @@
 
 	        const list = document.createElement("div");
 	        list.className = "schedule-list";
+	        list.dataset.dayKey = key;
 
 	        const dayCalendarEvents = (calendarEvents || [])
 	          .filter((evt) => evt && evt.date === key)
@@ -1343,12 +1378,12 @@
             chip.addEventListener("dragleave", () => {
               chip.classList.remove("drag-over");
             });
-            chip.addEventListener("drop", (event) => {
-              if (
-                !scheduleDrag ||
-                scheduleDrag.dayKey !== key ||
-                scheduleDrag.subjectId !== todo.subjectId ||
-                scheduleDrag.todoId === todo.id
+	            chip.addEventListener("drop", (event) => {
+	              if (
+	                !scheduleDrag ||
+	                scheduleDrag.dayKey !== key ||
+	                scheduleDrag.subjectId !== todo.subjectId ||
+	                scheduleDrag.todoId === todo.id
               )
                 return;
               event.preventDefault();
@@ -1378,8 +1413,41 @@
 	        col.appendChild(header);
 	        col.appendChild(list);
 	        scheduleGrid.appendChild(col);
-	      }
-    }
+		      }
+
+		      // Allow copying tasks from a past day into Today via drag-and-drop onto today's column.
+		      if (key === todayKey) {
+		        const allowCopyFromPast = () =>
+		          scheduleDrag &&
+		          typeof scheduleDrag.dayKey === "string" &&
+		          scheduleDrag.dayKey < todayKey &&
+		          scheduleDrag.dayKey !== todayKey;
+
+		        list.addEventListener("dragover", (event) => {
+		          if (!allowCopyFromPast()) return;
+		          event.preventDefault();
+		          if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+		          list.classList.add("drag-over");
+		        });
+
+		        list.addEventListener("dragleave", () => {
+		          list.classList.remove("drag-over");
+		        });
+
+		        list.addEventListener("drop", (event) => {
+		          if (!allowCopyFromPast()) return;
+		          event.preventDefault();
+		          list.classList.remove("drag-over");
+		          const ok = copyScheduleTodoToDay(scheduleDrag.dayKey, todayKey, scheduleDrag.todoId);
+		          scheduleDrag = null;
+		          if (ok) {
+		            renderScheduleView();
+		            renderTodayTodos();
+		            showToast("Copied to today.", "success");
+		          }
+		        });
+		      }
+	    }
 
     function closeScheduleTaskModal() {
       scheduleModalState = null;

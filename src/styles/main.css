@@ -2371,6 +2371,12 @@ body.session-header-mounted #focusCard {
       border-radius: 8px;
     }
 
+    .schedule-day-today .schedule-list.drag-over {
+      outline: 2px dashed #60a5fa;
+      outline-offset: 2px;
+      background-color: rgba(96, 165, 250, 0.08);
+    }
+
     .schedule-focus-chip {
       display: flex;
       align-items: center;
