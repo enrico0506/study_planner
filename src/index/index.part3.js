@@ -1417,24 +1417,19 @@
 
 		      // Allow copying tasks from a past day into Today via drag-and-drop onto today's column.
 		      if (key === todayKey) {
+		        const isPastDay = (dayKey) => {
+		          const srcDate = parseCalendarDate(dayKey);
+		          const todayDate = parseCalendarDate(todayKey);
+		          if (!srcDate || !todayDate) return false;
+		          return srcDate.getTime() < todayDate.getTime();
+		        };
 		        const allowCopyFromPast = () =>
 		          scheduleDrag &&
 		          typeof scheduleDrag.dayKey === "string" &&
-		          scheduleDrag.dayKey < todayKey &&
-		          scheduleDrag.dayKey !== todayKey;
+		          scheduleDrag.dayKey !== todayKey &&
+		          isPastDay(scheduleDrag.dayKey);
 
-		        list.addEventListener("dragover", (event) => {
-		          if (!allowCopyFromPast()) return;
-		          event.preventDefault();
-		          if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
-		          list.classList.add("drag-over");
-		        });
-
-		        list.addEventListener("dragleave", () => {
-		          list.classList.remove("drag-over");
-		        });
-
-		        list.addEventListener("drop", (event) => {
+		        const handleCopyDrop = (event) => {
 		          if (!allowCopyFromPast()) return;
 		          event.preventDefault();
 		          list.classList.remove("drag-over");
@@ -1445,6 +1440,19 @@
 		            renderTodayTodos();
 		            showToast("Copied to today.", "success");
 		          }
+		        };
+
+		        [list, col].forEach((el) => {
+		          el.addEventListener("dragover", (event) => {
+		            if (!allowCopyFromPast()) return;
+		            event.preventDefault();
+		            if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+		            list.classList.add("drag-over");
+		          });
+		          el.addEventListener("dragleave", () => {
+		            list.classList.remove("drag-over");
+		          });
+		          el.addEventListener("drop", handleCopyDrop);
 		        });
 		      }
 	    }
