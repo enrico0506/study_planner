@@ -695,7 +695,12 @@ const COMPACT_WEEK_MQ =
       const wrapperStyles = window.getComputedStyle(wrapper);
       const paddingLeft = parseFloat(wrapperStyles.paddingLeft) || 0;
       const paddingRight = parseFloat(wrapperStyles.paddingRight) || 0;
-      const viewportWidth = Math.max(0, wrapper.clientWidth - paddingLeft - paddingRight);
+      const borderLeft = parseFloat(wrapperStyles.borderLeftWidth) || 0;
+      const borderRight = parseFloat(wrapperStyles.borderRightWidth) || 0;
+      const viewportWidth = Math.max(
+        0,
+        wrapper.getBoundingClientRect().width - paddingLeft - paddingRight - borderLeft - borderRight
+      );
 
 		      const tableStyles = window.getComputedStyle(subjectTable);
 		      const gapRaw = tableStyles.columnGap || tableStyles.gap || "0px";
@@ -716,16 +721,15 @@ const COMPACT_WEEK_MQ =
 		      const baseFor = (visible) =>
 		        (viewportWidth - gap * Math.max(0, visible - 1)) / Math.max(1, visible);
 
-		      // Prefer readability: only show 4/3 subjects when each column stays wide enough.
-		      const MIN_COL_WIDTH_FOR_4 = 220;
-		      const MIN_COL_WIDTH_FOR_3 = 240;
-
-		      let visibleSubjects = Math.max(minVisible, maxVisible);
-		      if (visibleSubjects >= 4 && baseFor(visibleSubjects) < MIN_COL_WIDTH_FOR_4) {
-		        visibleSubjects = Math.min(3, maxVisible);
-		      }
-		      if (visibleSubjects >= 3 && baseFor(visibleSubjects) < MIN_COL_WIDTH_FOR_3) {
-		        visibleSubjects = Math.max(minVisible, Math.min(2, maxVisible));
+		      // Decide column count purely from available width:
+		      // show the largest N (4/3/2) where each column stays readable.
+		      const MIN_COL_WIDTH = 260;
+		      let visibleSubjects = minVisible;
+		      for (let candidate = maxVisible; candidate >= minVisible; candidate -= 1) {
+		        if (baseFor(candidate) >= MIN_COL_WIDTH) {
+		          visibleSubjects = candidate;
+		          break;
+		        }
 		      }
 
 		      wrapper.dataset.spVisibleSubjects = String(visibleSubjects);
