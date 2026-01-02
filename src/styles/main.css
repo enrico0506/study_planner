@@ -4043,8 +4043,8 @@ body.session-header-mounted #focusCard {
     }
 
     .file-row {
-      padding: 6px 6px 5px;
-      margin-bottom: 4px;
+      padding: 5px 6px 4px;
+      margin-bottom: 3px;
       border-radius: 6px;
       background: transparent;
       border: 1px solid transparent;
@@ -4153,12 +4153,20 @@ body.session-header-mounted #focusCard {
       color: #111827;
       word-break: break-word;
       font-weight: 500;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
     }
 
     .file-notes {
       font-size: 0.74rem;
       color: #6b7280;
       word-break: break-word;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 1;
+      overflow: hidden;
     }
 
     .file-time {
@@ -4170,10 +4178,10 @@ body.session-header-mounted #focusCard {
 	    .file-meta {
 	      display: flex;
 	      flex-direction: column;
-	      gap: 8px;
+	      gap: 6px;
 	      font-size: 0.72rem;
 	      color: #6b7280;
-	      margin-top: 6px;
+	      margin-top: 4px;
 	    }
 
 	    /* Compact subjects (non-maximized): keep hover actions from changing row height. */
