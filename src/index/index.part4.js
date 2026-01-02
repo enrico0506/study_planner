@@ -546,16 +546,13 @@
         viewScheduleBtn.setAttribute("aria-selected", view === "schedule" ? "true" : "false");
       }
 
-      if (view === "schedule") {
-        renderScheduleView();
-        if (scheduleView) {
-          scheduleView.scrollIntoView({ behavior: "auto", block: "start" });
-        }
-        if (typeof window !== "undefined") {
-          window.scrollTo({ top: 0, behavior: "auto" });
-        }
-      } else {
-        applyTodayExpandedLayout();
+	      if (view === "schedule") {
+	        renderScheduleView();
+	        if (typeof window !== "undefined") {
+	          window.scrollTo({ top: 0, behavior: "auto" });
+	        }
+	      } else {
+	        applyTodayExpandedLayout();
       }
     }
 
