@@ -556,8 +556,8 @@
       showToast("success", "Email verified.");
       window.history.replaceState(null, "", window.location.pathname);
     } else if (verifyParam === "error") {
-      $("verifyMsg").textContent = "Verification link invalid or expired. Request a new one.";
-      showToast("error", "Verification failed. Request a new link.");
+      $("verifyMsg").textContent = "Verification code/link invalid or expired. Request a new one.";
+      showToast("error", "Verification failed. Request a new code.");
       window.history.replaceState(null, "", window.location.pathname);
     }
 
@@ -691,7 +691,7 @@
     initPasswordToggles();
 
     // Email verification handlers (attach regardless of auth state so the UI gives feedback).
-    // NOTE: Requesting a verification email requires login; verifying a token does not.
+    // NOTE: Requesting a verification code requires login; verifying a short code also requires login.
     $("requestVerifyBtn").addEventListener("click", async () => {
       const btn = $("requestVerifyBtn");
       $("verifyMsg").textContent = "";
@@ -707,11 +707,12 @@
           $("verifyMsg").textContent = "Email already verified.";
           showToast("info", "Email already verified.");
         } else if (result.emailSent) {
-          $("verifyMsg").textContent = "Verification email sent. Check your inbox (and spam).";
-          showToast("success", "Verification email sent.");
+          $("verifyMsg").textContent =
+            "Verification code sent. Check your inbox (and spam), then enter the code below.";
+          showToast("success", "Verification code sent.");
         } else if (result.token) {
-          $("verifyMsg").textContent = `Verification token (dev): ${result.token}`;
-          showToast("info", "Verification token generated.");
+          $("verifyMsg").textContent = `Verification code (dev): ${result.token}`;
+          showToast("info", "Verification code generated.");
         } else {
           $("verifyMsg").textContent =
             "Verification requested, but email sender is not configured (or sending failed).";
@@ -719,7 +720,8 @@
         }
       } catch (err) {
         const msg = String(err?.message || "Request verify failed");
-        $("verifyMsg").textContent = msg === "Unauthorized" ? "Please login first to send a verification email." : msg;
+        $("verifyMsg").textContent =
+          msg === "Unauthorized" ? "Please login first to send a verification code." : msg;
         showToast("error", $("verifyMsg").textContent);
       } finally {
         setButtonLoading(btn, false);
@@ -731,16 +733,20 @@
       $("verifyMsg").textContent = "";
       setButtonLoading(btn, true, "Verifying…");
       try {
+        const tokenRaw = $("verifyToken").value || "";
+        const token = tokenRaw.replace(/\s+/g, "").replace(/-/g, "");
         await apiFetch("/api/auth/verify-email", {
           method: "POST",
-          body: JSON.stringify({ token: $("verifyToken").value })
+          body: JSON.stringify({ token })
         });
         $("verifyToken").value = "";
         $("verifyMsg").textContent = "Email verified.";
         showToast("success", "Email verified.");
         setTimeout(() => window.location.reload(), 350);
       } catch (err) {
-        $("verifyMsg").textContent = String(err?.message || "Verify failed");
+        const msg = String(err?.message || "Verify failed");
+        $("verifyMsg").textContent =
+          msg === "Code requires login" ? "Please login first to verify using a code." : msg;
         showToast("error", $("verifyMsg").textContent);
       } finally {
         setButtonLoading(btn, false);

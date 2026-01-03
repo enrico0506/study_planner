@@ -283,8 +283,17 @@ function generateToken() {
   return crypto.randomBytes(24).toString("base64url");
 }
 
+function generateVerificationCode() {
+  const value = crypto.randomInt(0, 1_000_000);
+  return String(value).padStart(6, "0");
+}
+
 function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+function isLikelyShortVerificationCode(token) {
+  return /^\d{6}$/.test(String(token || "").trim());
 }
 
 app.post("/api/auth/register", authLimiter, async (req, res) => {
@@ -474,10 +483,14 @@ app.post("/api/auth/request-verify", requireAuth, strictAuthLimiter, async (req,
     if (!user) return res.status(401).json({ error: "Unauthorized" });
     if (user.email_verified) return res.json({ ok: true, alreadyVerified: true });
 
-    const token = generateToken();
+    const token = generateVerificationCode();
     const tokenHash = hashToken(token);
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
+    await pool.query(
+      "update auth_tokens set used_at = now() where user_id = $1 and kind = 'email_verify' and used_at is null",
+      [user.id]
+    );
     await pool.query(
       "insert into auth_tokens (user_id, kind, token_hash, expires_at) values ($1, 'email_verify', $2, $3)",
       [user.id, tokenHash, expiresAt]
@@ -487,19 +500,19 @@ app.post("/api/auth/request-verify", requireAuth, strictAuthLimiter, async (req,
     const email = emailRow.rows[0]?.email;
     if (!email) return res.json({ ok: true });
 
-    const baseUrl = getAppBaseUrl(req);
-    const verifyLink = `${baseUrl}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
     console.log("Sending verification email to:", email);
     const mailResult = await sendEmail({
       to: email,
       subject: "Verify your email",
       text:
-        `Verify your email for Study Planner:\n\n${verifyLink}\n\n` +
-        `This link expires in 1 hour.`,
+        `Your Study Planner verification code is:\n\n${token}\n\n` +
+        `Enter this code in the app to verify your email.\n\n` +
+        `This code expires in 1 hour.`,
       html:
-        `<p>Verify your email for <strong>Study Planner</strong>:</p>` +
-        `<p><a href="${verifyLink}">Verify email</a></p>` +
-        `<p style="color:#6b7280;font-size:12px">This link expires in 1 hour.</p>`
+        `<p>Your verification code for <strong>Study Planner</strong> is:</p>` +
+        `<p style="font-size:28px;font-weight:700;letter-spacing:0.18em;margin:12px 0">${token}</p>` +
+        `<p>Enter this code in the app to verify your email.</p>` +
+        `<p style="color:#6b7280;font-size:12px">This code expires in 1 hour.</p>`
     });
     console.log("Verification email result:", mailResult.ok ? "sent" : "not sent");
 
@@ -513,28 +526,40 @@ app.post("/api/auth/request-verify", requireAuth, strictAuthLimiter, async (req,
   }
 });
 
-async function verifyEmailToken(token) {
-  const value = String(token || "");
+async function verifyEmailToken(token, options = {}) {
+  const value = String(token || "").trim();
   if (!value) return { ok: false, error: "Token required" };
 
   try {
     const pool = getPool();
     const tokenHash = hashToken(value);
+    const isShortCode = isLikelyShortVerificationCode(value);
+    const userId = options?.userId;
+
+    if (isShortCode && !userId) return { ok: false, error: "Code requires login" };
+
+    const params = [tokenHash];
+    let userFilter = "";
+    if (userId) {
+      params.push(userId);
+      userFilter = "and user_id = $2";
+    }
     const tokenRow = await pool.query(
       `
         select id, user_id
         from auth_tokens
         where kind = 'email_verify'
           and token_hash = $1
+          ${userFilter}
           and used_at is null
           and expires_at > now()
         order by created_at desc
         limit 1
       `,
-      [tokenHash]
+      params
     );
     const row = tokenRow.rows[0];
-    if (!row) return { ok: false, error: "Invalid token" };
+    if (!row) return { ok: false, error: isShortCode ? "Invalid code" : "Invalid token" };
 
     await pool.query("begin");
     await pool.query("update users set email_verified = true where id = $1", [row.user_id]);
@@ -552,7 +577,7 @@ async function verifyEmailToken(token) {
 
 app.post("/api/auth/verify-email", strictAuthLimiter, async (req, res) => {
   const token = String(req.body?.token || "");
-  const result = await verifyEmailToken(token);
+  const result = await verifyEmailToken(token, { userId: req.user?.id });
   if (!result.ok) {
     const status = result.error === "Verify email failed" ? 500 : 400;
     return res.status(status).json({ error: result.error });

@@ -240,27 +240,27 @@
           </details>
         </section>
 
-        <section class="account-section" id="verification">
-          <div class="section-head">
-            <h2>Email verification</h2>
-            <p>Verify your email to secure your account.</p>
-          </div>
-          <div class="account-card">
-            <div class="account-row">
-              <button class="account-btn account-btn-primary" id="requestVerifyBtn" type="button">Send verification email</button>
-            </div>
-            <details class="account-details account-details-inline">
-              <summary>Have a token? Paste it here</summary>
-              <div class="account-form">
-                <div class="form-grid">
-                  <div class="form-field">
-                    <label for="verifyToken">Verification token</label>
-                    <input class="account-input" id="verifyToken" type="text" placeholder="Paste verification token" />
-                  </div>
-                  <div class="form-field">
-                    <label>&nbsp;</label>
-                    <button class="account-btn account-btn-primary" id="verifyEmailBtn" type="button">Verify email</button>
-                  </div>
+	        <section class="account-section" id="verification">
+	          <div class="section-head">
+	            <h2>Email verification</h2>
+	            <p>Verify your email to secure your account.</p>
+	          </div>
+	          <div class="account-card">
+	            <div class="account-row">
+	              <button class="account-btn account-btn-primary" id="requestVerifyBtn" type="button">Send verification code</button>
+	            </div>
+	            <details class="account-details account-details-inline">
+	              <summary>Have a code? Enter it here</summary>
+	              <div class="account-form">
+	                <div class="form-grid">
+	                  <div class="form-field">
+	                    <label for="verifyToken">Verification code</label>
+	                    <input class="account-input" id="verifyToken" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Enter 6-digit code" />
+	                  </div>
+	                  <div class="form-field">
+	                    <label>&nbsp;</label>
+	                    <button class="account-btn account-btn-primary" id="verifyEmailBtn" type="button">Verify email</button>
+	                  </div>
                 </div>
               </div>
             </details>
