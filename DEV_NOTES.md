@@ -4,6 +4,7 @@
 
 - `index.html` + `src/index/index.part*.js` – main app (board, today focus, timer, settings).
 - `calendar.html` + `src/calendar.js` – calendar.
+- `stundenplan.html` + `src/stundenplan.js` – timetable.
 - `account.html` + `src/account.js` – optional accounts/sync (requires backend; doesn’t work on `file://`).
 
 ## Central storage + schema

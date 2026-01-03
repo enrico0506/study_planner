@@ -7,6 +7,7 @@ Lightweight study board with subjects/files, Pomodoro timer, today's focus list,
 - Focus session timer with study/breaks; sessions under 3 minutes are ignored. Today’s focus and subject cards stay in sync with the active session.
 - Today's focus: drag files in, track subtasks, auto-complete logic (all subtasks done → main done). Completed tasks collapse; undone brings controls back.
 - Daily schedule timeline: weekly columns of daily focus items, subject-colored, reorderable within subject, clickable to view subtasks, start study on today’s items, and active/done highlighting.
+- Stundenplan page for weekly timetables: school-style table to add recurring lessons with custom names or linked subjects so colors stay consistent.
 - Custom modals/toasts for input and notices (no browser alerts); “+” subject uses an in-app prompt.
 
 ## Run

@@ -46,7 +46,7 @@ Optional but helpful:
 ## Project map (quick orientation)
 
 - Main UI: `index.html`
-- Other pages: `calendar.html`, `account.html`, `offline.html`
+- Other pages: `calendar.html`, `stundenplan.html`, `account.html`, `offline.html`
 - Frontend JS entrypoints on main page: `src/index/index.part1.js` … `src/index/index.part4.js`
 - Shared JS modules: `src/` (e.g. `src/storage.js`, `src/notes.js`, `src/insights.js`, …)
 - Styles: `src/styles/` (main + responsive + phone-specific files)

@@ -60,7 +60,7 @@
     overflow-x: auto;
   }
 
-  /* Calendar-style modals (calendar/stundenplan/karteikarten) */
+  /* Calendar-style modals (calendar/stundenplan) */
   .calendar-modal {
     place-items: start center;
     padding-left: var(--phone-inset-left);
@@ -79,4 +79,3 @@
     border-radius: 16px;
   }
 }
-

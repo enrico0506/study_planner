@@ -1,7 +1,7 @@
 {
   "name": "Study Planner",
   "short_name": "Study Planner",
-  "description": "A lightweight study planner with dashboard and calendar.",
+  "description": "A lightweight study planner with dashboard, calendar, and timetable.",
   "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
@@ -43,6 +43,11 @@
       "name": "Calendar",
       "short_name": "Calendar",
       "url": "/calendar.html"
+    },
+    {
+      "name": "Stundenplan",
+      "short_name": "Stundenplan",
+      "url": "/stundenplan.html"
     }
   ]
 }
