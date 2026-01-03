@@ -4,6 +4,41 @@ body.timetable-page .timetable-week-grid {
   overflow: auto; /* Enables sticky headers/rail and "Now" scrolling */
 }
 
+/* Stronger scanability: subtle alternating hour bands + clearer separators */
+body.timetable-page .timeline-rail {
+  background: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--surface-subtle-bg) 88%, transparent) 0,
+    color-mix(in srgb, var(--surface-subtle-bg) 88%, transparent) 1px,
+    transparent 1px,
+    transparent var(--timeline-hour-height)
+  );
+}
+
+body.timetable-page .timeline-day {
+  border-left: 1px solid color-mix(in srgb, var(--border-strong) 92%, transparent);
+  background-color: var(--surface-strong);
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--surface-soft) 22%, transparent) 0,
+      color-mix(in srgb, var(--surface-soft) 22%, transparent) var(--timeline-hour-height),
+      transparent var(--timeline-hour-height),
+      transparent calc(var(--timeline-hour-height) + var(--timeline-hour-height))
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--border-strong) 92%, transparent) 0,
+      color-mix(in srgb, var(--border-strong) 92%, transparent) 1px,
+      transparent 1px,
+      transparent calc(var(--timeline-hour-height) / 2 - 1px),
+      color-mix(in srgb, var(--border-subtle) 88%, transparent) calc(var(--timeline-hour-height) / 2),
+      color-mix(in srgb, var(--border-subtle) 88%, transparent) calc(var(--timeline-hour-height) / 2 + 1px),
+      transparent calc(var(--timeline-hour-height) / 2 + 1px),
+      transparent var(--timeline-hour-height)
+    );
+}
+
 /* Sticky weekday header row + sticky time column */
 body.timetable-page .timeline-cols-head {
   position: sticky;
@@ -29,6 +64,13 @@ body.timetable-page .timeline-rail {
 /* Today column header highlight */
 body.timetable-page .timeline-day-head.tt-today {
   background: var(--accent-soft);
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* Today column highlight (entire column) */
+body.timetable-page .timeline-day.tt-today-col {
+  background-color: color-mix(in srgb, var(--accent) 6%, var(--surface-strong));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 /* Hover highlight */
@@ -77,11 +119,28 @@ body.timetable-page .tt-now-line {
   position: absolute;
   left: 0;
   right: 0;
-  height: 2px;
-  background: rgba(239, 68, 68, 0.65);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.10);
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #ef4444 78%, var(--ink));
+  box-shadow:
+    0 0 0 4px rgba(239, 68, 68, 0.12),
+    0 10px 24px rgba(239, 68, 68, 0.10);
+  animation: tt-now-pulse 2.8s ease-in-out infinite;
   z-index: 4;
   pointer-events: none;
+}
+
+body.timetable-page .tt-now-line::after {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.92);
+  box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.14);
 }
 
 body.timetable-page .tt-now-label {
@@ -90,7 +149,7 @@ body.timetable-page .tt-now-label {
   transform: translateY(-50%);
   font-size: 0.75rem;
   font-weight: 800;
-  color: color-mix(in srgb, #b91c1c 80%, var(--ink));
+  color: color-mix(in srgb, #991b1b 85%, var(--ink));
   z-index: 5;
   pointer-events: none;
   background: color-mix(in srgb, var(--surface-strong) 80%, transparent);
@@ -99,10 +158,232 @@ body.timetable-page .tt-now-label {
   padding: 2px 8px;
 }
 
+@keyframes tt-now-pulse {
+  0% {
+    box-shadow:
+      0 0 0 4px rgba(239, 68, 68, 0.10),
+      0 10px 24px rgba(239, 68, 68, 0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgba(239, 68, 68, 0.16),
+      0 12px 28px rgba(239, 68, 68, 0.12);
+  }
+  100% {
+    box-shadow:
+      0 0 0 4px rgba(239, 68, 68, 0.10),
+      0 10px 24px rgba(239, 68, 68, 0.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.timetable-page .tt-now-line {
+    animation: none;
+  }
+}
+
+/* On phone/iPad day paging, keep absolute overlays aligned with the visible day. */
+@media (max-width: 1024px) {
+  body.timetable-page .tt-now-line {
+    transform: translate3d(calc(var(--tt-day, 0) * 100%), 0, 0);
+    transition: transform 0.22s ease;
+  }
+
+  body.timetable-page .tt-hover-row {
+    transform: translate3d(calc(var(--tt-day, 0) * 100%), -50%, 0);
+    transition: transform 0.22s ease;
+  }
+}
+
+/* Tabs + actions clarity */
+body.timetable-page .timetable-tab {
+  position: relative;
+}
+
+body.timetable-page .timetable-tab-active::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 4px;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 75%, transparent);
+}
+
+body.timetable-page .timetable-new-tab-btn {
+  min-width: 0;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+body.timetable-page .tab-icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 18px;
+}
+
+body.timetable-page .header-menu-toggle {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  font-size: 18px;
+}
+
+/* Global empty state overlay (shown only when a timetable has zero lessons) */
+body.timetable-page .tt-empty-overlay {
+  grid-column: 2;
+  grid-row: 2;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  pointer-events: none;
+  z-index: 3;
+}
+
+body.timetable-page .tt-empty-card {
+  max-width: 520px;
+  width: min(520px, 94%);
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-strong) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 75%, transparent);
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.10);
+  color: var(--ink);
+  font-weight: 800;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* Add/Edit modal duration chips */
+body.timetable-page .tt-duration-chips {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+}
+
+body.timetable-page .tt-duration-label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--ink-muted);
+}
+
+body.timetable-page .tt-duration-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+body.timetable-page .tt-duration-chip {
+  border: 1px solid var(--border-strong);
+  background: var(--surface-strong);
+  color: var(--accent-ink);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+}
+
+body.timetable-page .tt-duration-chip:hover {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border-strong));
+  transform: translateY(-0.5px);
+}
+
 /* Lesson drag affordances */
 body.timetable-page .timeline-lesson-block {
   cursor: grab;
   user-select: none;
+}
+
+/* Lesson card polish */
+body.timetable-page .timeline-lesson-block {
+  border-radius: 14px;
+  padding: 10px 12px 12px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 14px 30px rgba(15, 23, 42, 0.10);
+  border-width: 1px;
+}
+
+body.timetable-page .timeline-lesson-block::before {
+  display: none;
+}
+
+body.timetable-page .timeline-lesson-block:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 18px 42px rgba(15, 23, 42, 0.14);
+}
+
+body.timetable-page .timeline-lesson-block.is-dragging {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 20px 46px rgba(15, 23, 42, 0.18);
+}
+
+body.timetable-page .timeline-lesson-block .timetable-slot-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding-right: 42px;
+  font-weight: 900;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  white-space: normal;
+  overflow: hidden;
+}
+
+body.timetable-page .timeline-lesson-block .timetable-slot-title-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--lesson-color);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6);
+  margin-top: 2px;
+  flex: 0 0 auto;
+}
+
+body.timetable-page .timeline-lesson-block .timetable-slot-title-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+body.timetable-page .timeline-lesson-block .timetable-slot-meta {
+  font-size: 0.82rem;
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
+}
+
+body.timetable-page .timeline-lesson-block .timetable-slot-notes {
+  font-size: 0.82rem;
+  line-height: 1.35;
+  background: color-mix(in srgb, #ffffff 55%, transparent);
+  border-color: color-mix(in srgb, var(--border-strong) 70%, transparent);
+}
+
+body.timetable-page .timetable-slot-actions {
+  top: 6px;
+  right: 6px;
+}
+
+body.timetable-page .timetable-slot-menu-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+body.timetable-page .timetable-slot-menu {
+  min-width: 190px;
 }
 
 body.timetable-page .timeline-lesson-block.is-dragging {
@@ -117,7 +398,7 @@ body.timetable-page .tt-resize-handle {
   bottom: 6px;
   height: 10px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--ink) 18%, transparent);
+  background: color-mix(in srgb, var(--ink) 20%, transparent);
   cursor: ns-resize;
 }
 

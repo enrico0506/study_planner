@@ -41,6 +41,7 @@
   const lessonLocationInput = document.getElementById("lessonLocationInput");
   const lessonNotesInput = document.getElementById("lessonNotesInput");
   const lessonColorInput = document.getElementById("lessonColorInput");
+  const lessonDurationChips = document.getElementById("lessonDurationChips");
   const lessonStatus = document.getElementById("lessonStatus");
   const lessonResetBtn = document.getElementById("lessonResetBtn");
   const lessonSubmitBtn = document.getElementById("lessonSubmitBtn");
@@ -868,35 +869,31 @@
       col.dataset.day = String(day.value);
       col.style.height = timelineHeight + "px";
       col.style.setProperty("--timeline-hour-start", `${startHour}`);
+      if (todayIdx >= 0 && Number(day.value) === Number(days[todayIdx]?.value)) {
+        col.classList.add("tt-today-col");
+      }
 
       const dayLessons = lessons
         .filter((l) => Number(l.day) === Number(day.value))
         .sort((a, b) => (timeToMinutes(a.start) ?? 0) - (timeToMinutes(b.start) ?? 0));
 
-      if (!dayLessons.length) {
-        const placeholder = document.createElement("div");
-        placeholder.className = "timeline-day-empty";
-        placeholder.textContent = "";
-        col.appendChild(placeholder);
-      } else {
-        dayLessons.forEach((lesson) => {
-          const start = timeToMinutes(lesson.start) ?? startMin;
-          const end =
-            lesson.end && timeToMinutes(lesson.end) !== null
-              ? timeToMinutes(lesson.end)
-              : start + 60;
-          const top = (start - startHour * 60) * minuteHeight;
-          const height = Math.max((end - start) * minuteHeight, 30);
-          const block = buildLessonBlock(lesson, height, "timeline");
-          block.dataset.lessonId = lesson.id;
-          if (conflictIds.has(lesson.id)) {
-            block.classList.add("tt-conflict");
-            block.title = "Overlaps with another lesson";
-          }
-          block.style.top = `${top}px`;
-          col.appendChild(block);
-        });
-      }
+      dayLessons.forEach((lesson) => {
+        const start = timeToMinutes(lesson.start) ?? startMin;
+        const end =
+          lesson.end && timeToMinutes(lesson.end) !== null
+            ? timeToMinutes(lesson.end)
+            : start + 60;
+        const top = (start - startHour * 60) * minuteHeight;
+        const height = Math.max((end - start) * minuteHeight, 30);
+        const block = buildLessonBlock(lesson, height, "timeline");
+        block.dataset.lessonId = lesson.id;
+        if (conflictIds.has(lesson.id)) {
+          block.classList.add("tt-conflict");
+          block.title = "Overlaps with another lesson";
+        }
+        block.style.top = `${top}px`;
+        col.appendChild(block);
+      });
 
       cols.appendChild(col);
     });
@@ -905,6 +902,20 @@
     wrap.appendChild(colsHead);
     wrap.appendChild(rail);
     wrap.appendChild(cols);
+
+    if (!lessons.length) {
+      const emptyOverlay = document.createElement("div");
+      emptyOverlay.className = "tt-empty-overlay";
+      emptyOverlay.setAttribute("role", "note");
+      const emptyCard = document.createElement("div");
+      emptyCard.className = "tt-empty-card";
+      emptyCard.textContent =
+        "No lessons scheduled yet. Click ‘Add lesson’ or drag on the grid to create one.";
+      emptyOverlay.appendChild(emptyCard);
+      emptyOverlay.style.height = timelineHeight + "px";
+      wrap.appendChild(emptyOverlay);
+    }
+
     timetableGrid.appendChild(wrap);
     applyPhoneDayView();
 
@@ -943,7 +954,14 @@
 
     const title = document.createElement("div");
     title.className = "timetable-slot-title";
-    title.textContent = lesson.title || "Lesson";
+    const titleDot = document.createElement("span");
+    titleDot.className = "timetable-slot-title-dot";
+    titleDot.setAttribute("aria-hidden", "true");
+    const titleText = document.createElement("span");
+    titleText.className = "timetable-slot-title-text";
+    titleText.textContent = lesson.title || "Lesson";
+    title.appendChild(titleDot);
+    title.appendChild(titleText);
 
     const timeLine = document.createElement("div");
     timeLine.className = "timetable-slot-meta";
@@ -966,7 +984,7 @@
     const menuToggle = document.createElement("button");
     menuToggle.type = "button";
     menuToggle.className = "timetable-slot-menu-toggle";
-    menuToggle.textContent = "...";
+    menuToggle.textContent = "⋯";
     menuToggle.setAttribute("aria-label", "Open lesson menu");
     const menu = document.createElement("div");
     menu.className = "timetable-slot-menu";
@@ -1417,6 +1435,19 @@
     });
     lessonModalCloseBtn?.addEventListener("click", closeLessonModal);
     lessonModalBackdrop?.addEventListener("click", closeLessonModal);
+    lessonDurationChips?.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-duration-min]");
+      if (!button || !lessonDurationChips.contains(button)) return;
+      const durationMin = Number(button.dataset.durationMin);
+      if (!Number.isFinite(durationMin) || durationMin <= 0) return;
+      if (!lessonStartInput || !lessonEndInput) return;
+
+      const start = lessonStartInput.value || nearestHalfHour();
+      lessonStartInput.value = start;
+      const end = addMinutesToTime(start, durationMin);
+      if (end) lessonEndInput.value = end;
+      lessonEndInput.focus();
+    });
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         closeLessonModal();

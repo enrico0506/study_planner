@@ -71,8 +71,8 @@
       </div>
       <div class="header-actions">
         <a class="btn btn-secondary header-calendar-btn" href="index.html">← Back to board</a>
-        <div class="header-menu" aria-label="Menu">
-          <button class="header-menu-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Open menu">...</button>
+	        <div class="header-menu" aria-label="Menu">
+	          <button class="header-menu-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Open menu">⋯</button>
           <div class="header-menu-panel">
 	            <div class="header-menu-group">
 	              <div class="header-menu-subtitle">Pages</div>
@@ -115,11 +115,11 @@
         </div>
         <div class="timetable-tabs">
           <div class="timetable-tab-list" id="timetableTabs"></div>
+          <button class="chip-btn chip-btn-primary timetable-new-tab-btn" id="newTimetableTabBtn" type="button">+ New timetable</button>
           <div class="timetable-tab-actions" id="tabMenu">
-            <button class="tab-icon-btn" id="tabMenuToggle" type="button" aria-haspopup="true" aria-expanded="false" title="More actions" aria-label="More actions">...</button>
+            <button class="tab-icon-btn" id="tabMenuToggle" type="button" aria-haspopup="true" aria-expanded="false" title="More actions" aria-label="More actions">⋯</button>
             <div class="timetable-tab-menu" id="tabMenuPanel">
               <button class="tab-menu-btn" id="copyTimetableBtn" type="button">Copy tab</button>
-              <button class="tab-menu-btn" id="newTimetableTabBtn" type="button">New tab</button>
             </div>
           </div>
         </div>
@@ -167,6 +167,15 @@
             End
             <input type="time" id="lessonEndInput" required />
           </label>
+        </div>
+        <div class="tt-duration-chips" id="lessonDurationChips" aria-label="Quick duration">
+          <div class="tt-duration-label">Quick duration</div>
+          <div class="tt-duration-chip-row" role="group" aria-label="Set lesson duration">
+            <button class="tt-duration-chip" type="button" data-duration-min="30">30m</button>
+            <button class="tt-duration-chip" type="button" data-duration-min="45">45m</button>
+            <button class="tt-duration-chip" type="button" data-duration-min="60">60m</button>
+            <button class="tt-duration-chip" type="button" data-duration-min="90">90m</button>
+          </div>
         </div>
         <div class="form-row">
           <label>
