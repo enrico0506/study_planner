@@ -663,10 +663,10 @@
       return minutes + " min";
     }
 
-    function getDailyTotalsMap(includeActiveToday = false) {
-      const totals = {};
-      subjects.forEach((subj) => {
-        (subj.files || []).forEach((file) => {
+	    function getDailyTotalsMap(includeActiveToday = false) {
+	      const totals = {};
+	      subjects.forEach((subj) => {
+	        (subj.files || []).forEach((file) => {
           if (file.dailyMsPacked) {
             const map = parsePackedPairs(file.dailyMsPacked);
             map.forEach((val, dayId) => {
@@ -680,20 +680,13 @@
               if (v <= 0) continue;
               totals[key] = (totals[key] || 0) + v;
             }
-          } 
-        });
-      });
+	          } 
+	        });
+	      });
 
-      if (typeof getFlashcardsDailyTotalsMap === "function") {
-        const flashTotals = getFlashcardsDailyTotalsMap();
-        Object.entries(flashTotals || {}).forEach(([key, val]) => {
-          totals[key] = (totals[key] || 0) + (Number(val) || 0);
-        });
-      }
-
-      if (
-        includeActiveToday &&
-        activeStudy &&
+	      if (
+	        includeActiveToday &&
+	        activeStudy &&
         activeStudy.kind === "study" &&
         activeStudy.startTimeMs
       ) {
@@ -840,10 +833,10 @@
       return confidenceMode === "perceived" ? computePerceivedConfidence(file) : Number(file.confidence) || 0;
     }
 
-    function computeTodayStudyBySubject() {
-      const key = getTodayKey();
-      const dayId = dateKeyToDayId(key);
-      const results = [];
+	    function computeTodayStudyBySubject() {
+	      const key = getTodayKey();
+	      const dayId = dateKeyToDayId(key);
+	      const results = [];
 
       subjects.forEach((subj, subjIndex) => {
         let ms = 0;
@@ -857,25 +850,17 @@
         results.push({ subj, subjIndex, ms });
       });
 
-      if (activeStudy && activeStudy.kind === "study" && activeStudy.subjectId) {
-        const idx = subjects.findIndex((s) => s.id === activeStudy.subjectId);
-        if (idx !== -1) {
-          results[idx].ms += computeElapsedMs(activeStudy);
-        }
-      }
+	      if (activeStudy && activeStudy.kind === "study" && activeStudy.subjectId) {
+	        const idx = subjects.findIndex((s) => s.id === activeStudy.subjectId);
+	        if (idx !== -1) {
+	          results[idx].ms += computeElapsedMs(activeStudy);
+	        }
+	      }
 
-      if (typeof getFlashcardsDailyTotalsMap === "function") {
-        const flashTotals = getFlashcardsDailyTotalsMap();
-        const flashMs = flashTotals && flashTotals[key] ? Number(flashTotals[key]) || 0 : 0;
-        if (flashMs > 0) {
-          results.push({ subj: { id: "flashcards", name: "Karteikarten" }, subjIndex: subjects.length, ms: flashMs });
-        }
-      }
-
-      const perSubject = results.filter((r) => r.ms > 0);
-      const totalMs = perSubject.reduce((sum, r) => sum + r.ms, 0);
-      return { perSubject, totalMs };
-    }
+	      const perSubject = results.filter((r) => r.ms > 0);
+	      const totalMs = perSubject.reduce((sum, r) => sum + r.ms, 0);
+	      return { perSubject, totalMs };
+	    }
 
     const todayStatsModalBackdrop = document.getElementById("todayStatsModalBackdrop");
     const todayStatsModalTitle = document.getElementById("todayStatsModalTitle");
@@ -915,40 +900,29 @@
       return 0;
     }
 
-    function computeTodayStudyByTask() {
-      const key = getTodayKey();
-      const dayId = dateKeyToDayId(key);
-      const perTask = [];
+	    function computeTodayStudyByTask() {
+	      const key = getTodayKey();
+	      const dayId = dateKeyToDayId(key);
+	      const perTask = [];
       subjects.forEach((subj) => {
         (subj.files || []).forEach((file) => {
           const ms = getFileTodayMs(file, dayId, key);
           if (ms > 0) perTask.push({ subj, file, ms });
         });
       });
-      if (activeStudy && activeStudy.kind === "study" && activeStudy.subjectId && activeStudy.fileId) {
-        const { subj, file } = resolveFileRef(activeStudy.subjectId, activeStudy.fileId);
-        if (subj && file) {
-          const extra = computeElapsedMs(activeStudy);
-          const existing = perTask.find((x) => x.file && x.file.id === file.id && x.subj && x.subj.id === subj.id);
-          if (existing) existing.ms += extra;
-          else perTask.push({ subj, file, ms: extra });
-        }
-      }
-      if (typeof getFlashcardsDailyTotalsMap === "function") {
-        const flashTotals = getFlashcardsDailyTotalsMap();
-        const flashMs = flashTotals && flashTotals[key] ? Number(flashTotals[key]) || 0 : 0;
-        if (flashMs > 0) {
-          perTask.push({
-            subj: { id: "flashcards", name: "Karteikarten" },
-            file: { id: "flashcards", name: "Session" },
-            ms: flashMs
-          });
-        }
-      }
-      perTask.sort((a, b) => b.ms - a.ms);
-      const totalMs = perTask.reduce((sum, r) => sum + r.ms, 0);
-      return { perTask, totalMs, key };
-    }
+	      if (activeStudy && activeStudy.kind === "study" && activeStudy.subjectId && activeStudy.fileId) {
+	        const { subj, file } = resolveFileRef(activeStudy.subjectId, activeStudy.fileId);
+	        if (subj && file) {
+	          const extra = computeElapsedMs(activeStudy);
+	          const existing = perTask.find((x) => x.file && x.file.id === file.id && x.subj && x.subj.id === subj.id);
+	          if (existing) existing.ms += extra;
+	          else perTask.push({ subj, file, ms: extra });
+	        }
+	      }
+	      perTask.sort((a, b) => b.ms - a.ms);
+	      const totalMs = perTask.reduce((sum, r) => sum + r.ms, 0);
+	      return { perTask, totalMs, key };
+	    }
 
     function el(tag, className, text) {
       const n = document.createElement(tag);
@@ -1716,16 +1690,14 @@
         title.className = "suggestion-title";
         title.textContent = item.title || "Review";
 
-        const meta = document.createElement("div");
-        meta.className = "suggestion-meta";
-        if (item.kind === "file") {
-          meta.textContent = `${Math.round(item.confidence || 0)}% conf · ${Math.round(item.ageDays || 0)}d since review · ~${item.estMinutes || 25} min`;
-        } else if (item.kind === "flashcards") {
-          meta.textContent = `${item.dueCount || 0} due · ~${item.estMinutes || 15} min`;
-        } else if (item.kind === "exam_item") {
-          meta.textContent = `${item.daysLeft}d to exam · ~${item.estMinutes || 20} min`;
-        } else if (item.kind === "assignment") {
-          meta.textContent = `${item.daysLeft}d left · ~${item.estMinutes || 30} min`;
+	        const meta = document.createElement("div");
+	        meta.className = "suggestion-meta";
+	        if (item.kind === "file") {
+	          meta.textContent = `${Math.round(item.confidence || 0)}% conf · ${Math.round(item.ageDays || 0)}d since review · ~${item.estMinutes || 25} min`;
+	        } else if (item.kind === "exam_item") {
+	          meta.textContent = `${item.daysLeft}d to exam · ~${item.estMinutes || 20} min`;
+	        } else if (item.kind === "assignment") {
+	          meta.textContent = `${item.daysLeft}d left · ~${item.estMinutes || 30} min`;
         } else {
           meta.textContent = "";
         }
@@ -1738,25 +1710,23 @@
         const actions = document.createElement("div");
         actions.className = "suggestion-actions";
 
-        const badge = document.createElement("div");
-        badge.className = "suggestion-badge";
-        badge.textContent =
-          item.kind === "flashcards"
-            ? "Flashcards"
-            : item.kind === "exam_item"
-            ? "Exam"
-            : item.kind === "assignment"
-            ? "Assignment"
-            : "File";
+	        const badge = document.createElement("div");
+	        badge.className = "suggestion-badge";
+	        badge.textContent =
+	          item.kind === "exam_item"
+	            ? "Exam"
+	            : item.kind === "assignment"
+	            ? "Assignment"
+	            : "File";
 
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "chip-btn chip-btn-primary";
-        btn.textContent = item.kind === "file" ? "Study" : item.kind === "flashcards" ? "Review" : "Open";
-        btn.addEventListener("click", () => {
-          const action = engine.actionFor ? engine.actionFor(item) : null;
-          if (action && action.type === "navigate" && action.href) {
-            window.location.href = action.href;
+	        const btn = document.createElement("button");
+	        btn.type = "button";
+	        btn.className = "chip-btn chip-btn-primary";
+	        btn.textContent = item.kind === "file" ? "Study" : "Open";
+	        btn.addEventListener("click", () => {
+	          const action = engine.actionFor ? engine.actionFor(item) : null;
+	          if (action && action.type === "navigate" && action.href) {
+	            window.location.href = action.href;
             return;
           }
         });

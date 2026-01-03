@@ -9,7 +9,7 @@ On `index.html` I added stable markers like `data-section="..."`. When you tell 
 Common sections:
 - `header-bar` (top header row: title + controls)
 - `view-toggle` (Board / Daily schedule)
-- `study-hubs-dropdown` (Calendar / Stundenplan / Karteikarten links)
+- `study-hubs-dropdown` (Study hubs links)
 - `confidence-toggle` (Your confidence / Calculated)
 - `header-menu` (Login / Settings / Suggestions / Study stats)
 - `settings-modal` (settings dialog)
@@ -28,7 +28,7 @@ You can also ask: “List all `data-section` values on the main page”.
 When you want a change, send something like:
 
 1) **Where**
-- Page: `index.html` (or `calendar.html`, `stundenplan.html`, `karteikarten.html`, …)
+- Page: `index.html` (or `calendar.html`, `account.html`, `offline.html`, …)
 - Section: `data-section=...` (or an element id like `#subjectTable`)
 
 2) **What**
@@ -46,7 +46,7 @@ Optional but helpful:
 ## Project map (quick orientation)
 
 - Main UI: `index.html`
-- Other pages: `calendar.html`, `stundenplan.html`, `karteikarten.html`, `account.html`, `offline.html`
+- Other pages: `calendar.html`, `account.html`, `offline.html`
 - Frontend JS entrypoints on main page: `src/index/index.part1.js` … `src/index/index.part4.js`
 - Shared JS modules: `src/` (e.g. `src/storage.js`, `src/notes.js`, `src/insights.js`, …)
 - Styles: `src/styles/` (main + responsive + phone-specific files)

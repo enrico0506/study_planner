@@ -1167,7 +1167,6 @@ const COMPACT_WEEK_MQ =
     }
 
     function getSubjectColorById(subjectId) {
-      if (subjectId === "flashcards") return "#f6a23c";
       const idx = subjects.findIndex((s) => s.id === subjectId);
       if (idx === -1) return "#d1d5db";
       const subj = subjects[idx];
@@ -2050,51 +2049,6 @@ const COMPACT_WEEK_MQ =
       } catch {
         return [];
       }
-    }
-
-    function getFlashcardsDailyTotalsMap() {
-      const totals = {};
-      const sessions = loadSessionJournal();
-      sessions.forEach((session) => {
-        if (!session || session.source !== "flashcards") return;
-        const ms = Number(session.durationMs) || Number(session.durationMinutes) * 60000 || 0;
-        if (ms <= 0) return;
-        const key = getStudyDayKey(session.endedAt || session.startedAt);
-        if (!key) return;
-        totals[key] = (totals[key] || 0) + ms;
-      });
-      return totals;
-    }
-
-    function getFlashcardsTotalsForRange(range) {
-      const totals = getFlashcardsDailyTotalsMap();
-      if (range === "all") {
-        return Object.values(totals).reduce((sum, val) => sum + (Number(val) || 0), 0);
-      }
-      let sum = 0;
-      Object.entries(totals).forEach(([key, val]) => {
-        const t = dateKeyToMs(key);
-        if (t === null) return;
-        if (msInRange(t, range)) sum += Number(val) || 0;
-      });
-      return sum;
-    }
-
-    function getFlashcardsSessionsForRange(range) {
-      const sessions = loadSessionJournal();
-      if (range === "all") {
-        return sessions.filter((s) => s && s.source === "flashcards").length;
-      }
-      let count = 0;
-      sessions.forEach((session) => {
-        if (!session || session.source !== "flashcards") return;
-        const key = getStudyDayKey(session.endedAt || session.startedAt);
-        if (!key) return;
-        const t = dateKeyToMs(key);
-        if (t === null) return;
-        if (msInRange(t, range)) count += 1;
-      });
-      return count;
     }
 
     function totalMsForRange(file, range) {

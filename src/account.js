@@ -6,7 +6,6 @@
     "studyTodayTodos_v1",
     "studyDailyFocus_v1",
     "studyCalendarEvents_v1",
-    "studyFlashcards_v1",
     "studyAssignments",
     "studyAssignmentsSettings",
     "studyNotes_v1",
@@ -16,7 +15,6 @@
     "studyNotificationState_v1",
     "studyTimeBudgetSettings_v1",
     "studyExamMode_v1",
-    "studyFlashcardImports_v1",
     "studyAutoPlanSettings_v1"
   ]);
   const PREF_KEYS = new Set([
@@ -624,7 +622,7 @@
           await apiFetch("/api/auth/logout", { method: "POST" });
         } catch {}
         const shouldClear = confirm(
-          "Logout successful.\n\nDo you also want to clear this device's local study data (subjects, timetable, calendar, flashcards)?" +
+          "Logout successful.\n\nDo you also want to clear this device's local study data (subjects, timetable, calendar)?" +
             "\n\nChoose OK = clear local data, Cancel = keep local data."
         );
         if (shouldClear) {

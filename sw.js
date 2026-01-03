@@ -1,6 +1,6 @@
 /* Study Planner service worker: app-shell caching + offline navigation fallback. */
 (() => {
-  const VERSION = "v11";
+  const VERSION = "v12";
   const SHELL_CACHE = `study-planner-shell-${VERSION}`;
   const RUNTIME_CACHE = `study-planner-runtime-${VERSION}`;
 
@@ -8,10 +8,7 @@
     "/",
     "/index.html",
     "/calendar.html",
-    "/stundenplan.html",
-    "/karteikarten.html",
     "/account.html",
-    "/study-confidence-table.html",
     "/offline.html",
     "/manifest.webmanifest",
     "/pwa.js",
@@ -38,13 +35,10 @@
     "/src/time-budget.js",
     "/src/review-engine.js",
     "/src/exam-mode.js",
-    "/src/notes-to-flashcards.js",
     "/src/notifications.js",
     "/src/session-journal.js",
     "/src/insights.js",
     "/src/calendar.js",
-    "/src/stundenplan.js",
-    "/src/karteikarten.js",
     "/src/account.js",
     "/src/shared/sessionHeader.js",
     "/src/index/index.part1.js",
@@ -65,9 +59,7 @@
     "/src/styles/calendar-extras.css",
     "/src/styles/notes.css",
     "/src/styles/exam-mode.css",
-    "/src/styles/insights.css",
-    "/src/styles/karteikarten.css",
-    "/src/styles/stundenplan.css"
+    "/src/styles/insights.css"
   ];
 
   function isSameOrigin(url) {

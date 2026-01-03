@@ -76,8 +76,6 @@
       </div>
       <div class="header-actions">
         <a class="btn btn-secondary header-calendar-btn" href="index.html">← Back to board</a>
-        <a class="btn btn-secondary header-calendar-btn" href="stundenplan.html">Stundenplan</a>
-        <a class="btn btn-secondary header-calendar-btn" href="karteikarten.html">Karteikarten</a>
         <a class="btn btn-secondary header-calendar-btn" href="account.html">Account</a>
         <div class="header-menu" aria-label="Menu">
           <button class="header-menu-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Open menu">...</button>
@@ -93,8 +91,6 @@
 	            <div class="header-menu-group">
 	              <div class="header-menu-subtitle">Study hubs</div>
 	              <a class="header-menu-link" href="./calendar.html">Calendar</a>
-	              <a class="header-menu-link" href="./stundenplan.html">Stundenplan</a>
-	              <a class="header-menu-link" href="./karteikarten.html">Karteikarten</a>
 	              <a class="header-menu-link" href="./account.html">Account</a>
 	            </div>
           </div>
@@ -344,18 +340,17 @@
       </div>
       <div class="calendar-form">
         <div class="notes-toolbar">
-          <div class="notes-toolbar-left">
-            <label class="sr-only" for="notesSearchInput">Search</label>
-            <input class="notes-search" id="notesSearchInput" type="search" placeholder="Find in note…" />
-            <button class="btn btn-secondary" id="notesSearchBtn" type="button">Find</button>
-          </div>
-          <div class="notes-toolbar-right">
-            <button class="btn btn-secondary" id="notesToFlashcardsBtn" type="button">Create flashcards…</button>
-            <label class="sr-only" for="notesInsertSelect">Insert link</label>
-            <select id="notesInsertSelect"></select>
-            <button class="btn btn-secondary" id="notesInsertBtn" type="button">Insert link</button>
-          </div>
-        </div>
+	          <div class="notes-toolbar-left">
+	            <label class="sr-only" for="notesSearchInput">Search</label>
+	            <input class="notes-search" id="notesSearchInput" type="search" placeholder="Find in note…" />
+	            <button class="btn btn-secondary" id="notesSearchBtn" type="button">Find</button>
+	          </div>
+	          <div class="notes-toolbar-right">
+	            <label class="sr-only" for="notesInsertSelect">Insert link</label>
+	            <select id="notesInsertSelect"></select>
+	            <button class="btn btn-secondary" id="notesInsertBtn" type="button">Insert link</button>
+	          </div>
+	        </div>
         <div class="calendar-form-status" id="notesSaveHint" role="status" aria-live="polite"></div>
         <div class="notes-layout">
           <div class="notes-pane">
@@ -462,54 +457,16 @@
     </div>
   </div>
 
-  <!-- Flashcards generator preview (Notes → Flashcards) -->
-  <div class="calendar-modal" id="flashcardGenModal" aria-hidden="true">
-    <div class="calendar-modal-backdrop" id="flashcardGenModalBackdrop"></div>
-    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="flashcardGenTitle">
-      <div class="calendar-modal-head">
-        <div>
-          <div class="modal-label">Flashcards</div>
-          <div class="modal-title" id="flashcardGenTitle">Create flashcards</div>
-          <div class="modal-subtitle">Preview and import into Karteikarten.</div>
-        </div>
-        <div class="modal-actions">
-          <button class="btn btn-secondary" id="closeFlashcardGenBtn" type="button">Close</button>
-        </div>
-      </div>
-      <div class="calendar-form">
-        <div class="form-row">
-          <label>
-            Target deck
-            <select id="flashcardGenDeckSelect"></select>
-          </label>
-          <label>
-            Or create new
-            <input id="flashcardGenNewDeck" type="text" placeholder="New deck name (optional)" />
-          </label>
-        </div>
-        <div class="calendar-form-status" id="flashcardGenStatus"></div>
-        <div class="calendar-upcoming" id="flashcardGenList"></div>
-        <div class="calendar-form-actions">
-          <div class="calendar-form-buttons">
-            <button class="btn btn-secondary" id="flashcardGenCancelBtn" type="button">Cancel</button>
-            <button class="btn" id="flashcardGenImportBtn" type="button">Import cards</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script src="./src/storage.js" defer></script>
   <script src="./src/assignments.js" defer></script>
   <script src="./src/notes.js" defer></script>
   <script src="./src/autoplan.js" defer></script>
-  <script src="./src/time-budget.js" defer></script>
-  <script src="./src/review-engine.js" defer></script>
-  <script src="./src/exam-mode.js" defer></script>
-  <script src="./src/notes-to-flashcards.js" defer></script>
-  <script src="./src/notifications.js" defer></script>
-  <script src="./src/a11y-utils.js" defer></script>
-  <script src="./src/sync.js" defer></script>
+	  <script src="./src/time-budget.js" defer></script>
+	  <script src="./src/review-engine.js" defer></script>
+	  <script src="./src/exam-mode.js" defer></script>
+	  <script src="./src/notifications.js" defer></script>
+	  <script src="./src/a11y-utils.js" defer></script>
+	  <script src="./src/sync.js" defer></script>
   <script src="./src/page-menu.js" defer></script>
   <script src="./src/calendar.js" defer></script>
   <script src="./src/assignments-ui.js" defer></script>

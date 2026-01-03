@@ -4,8 +4,6 @@
 
 - `index.html` + `src/index/index.part*.js` – main app (board, today focus, timer, settings).
 - `calendar.html` + `src/calendar.js` – calendar.
-- `stundenplan.html` + `src/stundenplan.js` – timetable.
-- `karteikarten.html` + `src/karteikarten.js` – flashcards.
 - `account.html` + `src/account.js` – optional accounts/sync (requires backend; doesn’t work on `file://`).
 
 ## Central storage + schema
@@ -33,4 +31,3 @@ The Import/Export/Snapshots UI is implemented inside the existing Settings modal
 - `manifest.webmanifest` + `public/icons/app-icon.svg`
 - `sw.js` caches static assets.
 - `src/pwa.js` registers the service worker only on `https:` or `localhost`.
-

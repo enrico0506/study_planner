@@ -119,10 +119,10 @@
       }
       const maxDayMs = daySeries.reduce((max, d) => (d.ms > max ? d.ms : max), 0);
 
-      subjects.forEach((subj) => {
-        let subjMs = 0;
-        let subjSessions = 0;
-        (subj.files || []).forEach((file) => {
+	      subjects.forEach((subj) => {
+	        let subjMs = 0;
+	        let subjSessions = 0;
+	        (subj.files || []).forEach((file) => {
           let totalMs = totalMsForRange(file, statsRange);
           if (
             includesToday &&
@@ -159,34 +159,12 @@
             totalMs: subjMs,
             sessions: subjSessions
           });
-        }
-      });
+	        }
+	      });
 
-      if (typeof getFlashcardsTotalsForRange === "function") {
-        const flashMs = getFlashcardsTotalsForRange(statsRange);
-        const flashSessions =
-          typeof getFlashcardsSessionsForRange === "function" ? getFlashcardsSessionsForRange(statsRange) : 0;
-        if (flashMs > 0) {
-          totalMsRange += flashMs;
-          totalSessionsRange += flashSessions;
-          perSubject.push({
-            name: "Karteikarten",
-            totalMs: flashMs,
-            sessions: flashSessions
-          });
-          entries.push({
-            subjectName: "Karteikarten",
-            fileName: "Karteikarten",
-            totalMs: flashMs,
-            sessions: flashSessions,
-            confidence: 0
-          });
-        }
-      }
-
-      const confidenceTotal =
-        confidenceBuckets.low + confidenceBuckets.mid + confidenceBuckets.high;
-      const confPct = (count) =>
+	      const confidenceTotal =
+	        confidenceBuckets.low + confidenceBuckets.mid + confidenceBuckets.high;
+	      const confPct = (count) =>
         confidenceTotal ? Math.round((count * 100) / confidenceTotal) : 0;
 
       const activeDaysInRange = Object.entries(totalsMap || {}).reduce(

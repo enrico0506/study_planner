@@ -629,9 +629,7 @@
       const chip = document.createElement("span");
       chip.className = "calendar-chip calendar-chip-more";
       chip.textContent =
-        item.kind === "flashcards"
-          ? "Flashcards"
-          : item.kind === "exam_item"
+        item.kind === "exam_item"
           ? "Exam"
           : item.kind === "assignment"
           ? "Assignment"
@@ -644,7 +642,6 @@
       const meta = document.createElement("div");
       meta.className = "calendar-upcoming-meta";
       if (item.kind === "file") meta.textContent = `${Math.round(item.confidence || 0)}% conf · ~${item.estMinutes || 25} min`;
-      else if (item.kind === "flashcards") meta.textContent = `${item.dueCount || 0} due · ~${item.estMinutes || 15} min`;
       else if (item.kind === "exam_item") meta.textContent = `${item.daysLeft}d left · ~${item.estMinutes || 20} min`;
       else if (item.kind === "assignment") meta.textContent = `${item.daysLeft}d left · ~${item.estMinutes || 30} min`;
       else meta.textContent = "";
@@ -654,7 +651,7 @@
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "chip-btn chip-btn-primary";
-      btn.textContent = item.kind === "file" ? "Study" : item.kind === "flashcards" ? "Review" : "Open";
+      btn.textContent = item.kind === "file" ? "Study" : "Open";
       btn.addEventListener("click", () => {
         if (item.kind === "exam_item") {
           try {

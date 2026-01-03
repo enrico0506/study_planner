@@ -89,12 +89,10 @@
             <span class="header-quick-label">Study hubs</span>
             <span class="header-quick-caret" aria-hidden="true">⌄</span>
           </button>
-		          <div class="header-quick-panel" id="quickJumpPanel">
-		            <a class="header-quick-item" href="./calendar.html">Calendar</a>
-		            <a class="header-quick-item" href="./stundenplan.html">Stundenplan</a>
-		            <a class="header-quick-item" href="./karteikarten.html">Karteikarten</a>
-		          </div>
-		        </div>
+			          <div class="header-quick-panel" id="quickJumpPanel">
+			            <a class="header-quick-item" href="./calendar.html">Calendar</a>
+			          </div>
+			        </div>
         <div class="confidence-toggle" role="group" aria-label="Confidence mode" data-section="confidence-toggle">
           <button class="confidence-toggle-btn confidence-toggle-active" id="manualConfBtn" type="button" data-mode="manual">
             Your confidence
@@ -116,12 +114,10 @@
               <a class="header-menu-link" href="./index.html?mode=schedule">Daily schedule</a>
             </div>
             <div class="header-menu-divider mobile-menu-only"></div>
-	            <div class="header-menu-group mobile-menu-only">
-	              <div class="header-menu-subtitle">Study hubs</div>
-	              <a class="header-menu-link" href="./calendar.html">Calendar</a>
-	              <a class="header-menu-link" href="./stundenplan.html">Stundenplan</a>
-	              <a class="header-menu-link" href="./karteikarten.html">Karteikarten</a>
-	            </div>
+		            <div class="header-menu-group mobile-menu-only">
+		              <div class="header-menu-subtitle">Study hubs</div>
+		              <a class="header-menu-link" href="./calendar.html">Calendar</a>
+		            </div>
             <div class="header-menu-divider mobile-menu-only"></div>
             <div class="header-menu-group">
               <button class="header-menu-item" id="headerProfileBtn" type="button">Login</button>
@@ -950,18 +946,17 @@
       </div>
       <div class="calendar-form">
         <div class="notes-toolbar">
-          <div class="notes-toolbar-left">
-            <label class="sr-only" for="notesSearchInput">Search</label>
-            <input class="notes-search" id="notesSearchInput" type="search" placeholder="Find in note…" />
-            <button class="btn btn-secondary" id="notesSearchBtn" type="button">Find</button>
-          </div>
-          <div class="notes-toolbar-right">
-            <button class="btn btn-secondary" id="notesToFlashcardsBtn" type="button">Create flashcards…</button>
-            <label class="sr-only" for="notesInsertSelect">Insert link</label>
-            <select id="notesInsertSelect"></select>
-            <button class="btn btn-secondary" id="notesInsertBtn" type="button">Insert link</button>
-          </div>
-        </div>
+	          <div class="notes-toolbar-left">
+	            <label class="sr-only" for="notesSearchInput">Search</label>
+	            <input class="notes-search" id="notesSearchInput" type="search" placeholder="Find in note…" />
+	            <button class="btn btn-secondary" id="notesSearchBtn" type="button">Find</button>
+	          </div>
+	          <div class="notes-toolbar-right">
+	            <label class="sr-only" for="notesInsertSelect">Insert link</label>
+	            <select id="notesInsertSelect"></select>
+	            <button class="btn btn-secondary" id="notesInsertBtn" type="button">Insert link</button>
+	          </div>
+	        </div>
         <div class="calendar-form-status" id="notesSaveHint" role="status" aria-live="polite"></div>
         <div class="notes-layout">
           <div class="notes-pane">
@@ -1050,45 +1045,8 @@
     </div>
   </div>
 
-  <!-- Flashcards generator preview (Notes → Flashcards) -->
-	  <div class="calendar-modal" id="flashcardGenModal" aria-hidden="true" data-section="modal-flashcard-generator">
-    <div class="calendar-modal-backdrop" id="flashcardGenModalBackdrop"></div>
-    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="flashcardGenTitle">
-      <div class="calendar-modal-head">
-        <div>
-          <div class="modal-label">Flashcards</div>
-          <div class="modal-title" id="flashcardGenTitle">Create flashcards</div>
-          <div class="modal-subtitle">Preview and import into Karteikarten.</div>
-        </div>
-        <div class="modal-actions">
-          <button class="btn btn-secondary" id="closeFlashcardGenBtn" type="button">Close</button>
-        </div>
-      </div>
-      <div class="calendar-form">
-        <div class="form-row">
-          <label>
-            Target deck
-            <select id="flashcardGenDeckSelect"></select>
-          </label>
-          <label>
-            Or create new
-            <input id="flashcardGenNewDeck" type="text" placeholder="New deck name (optional)" />
-          </label>
-        </div>
-        <div class="calendar-form-status" id="flashcardGenStatus"></div>
-        <div class="calendar-upcoming" id="flashcardGenList"></div>
-        <div class="calendar-form-actions">
-          <div class="calendar-form-buttons">
-            <button class="btn btn-secondary" id="flashcardGenCancelBtn" type="button">Cancel</button>
-            <button class="btn" id="flashcardGenImportBtn" type="button">Import cards</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-	  <div id="studyAriaLive" class="sr-only" aria-live="polite" aria-atomic="true" data-section="aria-live"></div>
-	  <button class="scroll-top-btn" id="scrollTopBtn" type="button" aria-label="Scroll to top" data-section="scroll-top">↑</button>
+		  <div id="studyAriaLive" class="sr-only" aria-live="polite" aria-atomic="true" data-section="aria-live"></div>
+		  <button class="scroll-top-btn" id="scrollTopBtn" type="button" aria-label="Scroll to top" data-section="scroll-top">↑</button>
 
 	  <nav class="phone-bottom-nav" aria-label="Hauptnavigation" data-section="phone-bottom-nav">
 	    <button class="phone-bottom-nav__btn" type="button" data-mode="board" aria-label="Board">
@@ -1113,13 +1071,12 @@
 	  <script src="./src/assignments.js"></script>
 	  <script src="./src/notes.js"></script>
 	  <script src="./src/time-budget.js"></script>
-	  <script src="./src/session-journal.js"></script>
-	  <script src="./src/insights.js"></script>
-	  <script src="./src/review-engine.js"></script>
-	  <script src="./src/notes-to-flashcards.js"></script>
-	  <script src="./src/notifications.js"></script>
-	  <script src="./src/data-tools.js"></script>
-	  <script src="./src/a11y-utils.js"></script>
+		  <script src="./src/session-journal.js"></script>
+		  <script src="./src/insights.js"></script>
+		  <script src="./src/review-engine.js"></script>
+		  <script src="./src/notifications.js"></script>
+		  <script src="./src/data-tools.js"></script>
+		  <script src="./src/a11y-utils.js"></script>
 	  <script src="./src/sync.js"></script>
 	  <script src="./src/index/index.part1.js"></script>
 	  <script src="./src/index/index.part2.js"></script>

@@ -56,7 +56,6 @@
     const s = raw && typeof raw === "object" ? raw : {};
     return {
       dailyTargetMinutes: minutes(s.dailyTargetMinutes || 30) || 30,
-      includeFlashcards: s.includeFlashcards !== false,
       includeFiles: s.includeFiles !== false,
       includeExams: s.includeExams !== false,
       includeAssignments: !!s.includeAssignments
@@ -68,7 +67,6 @@
     const n = next && typeof next === "object" ? next : {};
     const out = {
       dailyTargetMinutes: n.dailyTargetMinutes != null ? minutes(n.dailyTargetMinutes) : cur.dailyTargetMinutes,
-      includeFlashcards: n.includeFlashcards != null ? !!n.includeFlashcards : cur.includeFlashcards,
       includeFiles: n.includeFiles != null ? !!n.includeFiles : cur.includeFiles,
       includeExams: n.includeExams != null ? !!n.includeExams : cur.includeExams,
       includeAssignments: n.includeAssignments != null ? !!n.includeAssignments : cur.includeAssignments
@@ -83,13 +81,6 @@
   function loadSubjects() {
     const subjects = getJSON("studySubjects_v1", []);
     return Array.isArray(subjects) ? subjects : [];
-  }
-
-  function loadFlashcards() {
-    const raw = Storage ? Storage.getRaw("studyFlashcards_v1", null) : localStorage.getItem("studyFlashcards_v1");
-    if (!raw) return null;
-    const parsed = safeJsonParse(raw);
-    return parsed && typeof parsed === "object" ? parsed : null;
   }
 
   function loadAssignments() {
@@ -132,27 +123,6 @@
     });
     out.sort((a, b) => b.score - a.score);
     return out;
-  }
-
-  function dueFlashcards(now) {
-    const state = loadFlashcards();
-    if (!state || !Array.isArray(state.decks)) return [];
-    const list = [];
-    state.decks.forEach((deck) => {
-      const cards = Array.isArray(deck.cards) ? deck.cards : [];
-      const dueCount = cards.filter((c) => !c.due || Number(c.due) <= now).length;
-      if (!dueCount) return;
-      list.push({
-        kind: "flashcards",
-        score: Math.min(100, dueCount * 6),
-        title: `Karteikarten: ${deck.name || "Deck"}`,
-        deckId: deck.id,
-        dueCount,
-        estMinutes: Math.min(40, Math.max(10, Math.round(dueCount * 0.8)))
-      });
-    });
-    list.sort((a, b) => b.score - a.score);
-    return list;
   }
 
   function loadExamModeMap() {
@@ -246,7 +216,6 @@
     const settings = loadSettings();
     let items = [];
     if (settings.includeFiles) items = items.concat(dueFiles(now));
-    if (settings.includeFlashcards) items = items.concat(dueFlashcards(now));
     if (settings.includeExams) items = items.concat(dueExamSyllabus(now));
     if (settings.includeAssignments) items = items.concat(dueAssignmentsSoon(now));
     items.sort((a, b) => b.score - a.score);
@@ -258,9 +227,6 @@
     if (!item) return null;
     if (item.kind === "file") {
       return { type: "navigate", href: `index.html?mode=board&startStudy=1&subjectId=${encodeURIComponent(item.subjectId)}&fileId=${encodeURIComponent(item.fileId)}` };
-    }
-    if (item.kind === "flashcards") {
-      return { type: "navigate", href: `karteikarten.html?deckId=${encodeURIComponent(item.deckId)}&startReview=1` };
     }
     if (item.kind === "exam_item") {
       return { type: "navigate", href: `calendar.html?openExamMode=1&examId=${encodeURIComponent(item.examId)}&examItemId=${encodeURIComponent(item.itemId)}` };
