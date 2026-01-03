@@ -198,6 +198,50 @@ html[data-theme="nocturne"] .account-page-body {
   gap: var(--space-3);
 }
 
+/* Profile page states (signed out / unverified / verified) */
+.account-page-body[data-account-state="signed-out"] #security,
+.account-page-body[data-account-state="signed-out"] #verification,
+.account-page-body[data-account-state="signed-out"] #backups {
+  display: none;
+}
+
+.account-page-body[data-account-state="signed-out"] .account-nav-link[href="#security"],
+.account-page-body[data-account-state="signed-out"] .account-nav-link[href="#verification"],
+.account-page-body[data-account-state="signed-out"] .account-nav-link[href="#backups"] {
+  display: none;
+}
+
+.account-page-body[data-account-state="signed-out"] .account-overview-actions,
+.account-page-body[data-account-state="signed-out"] .account-meta-grid {
+  display: none;
+}
+
+.account-page-body[data-account-state="verified"] #login,
+.account-page-body[data-account-state="unverified"] #login {
+  display: none;
+}
+
+.account-page-body[data-account-state="verified"] .account-nav-link[href="#login"],
+.account-page-body[data-account-state="unverified"] .account-nav-link[href="#login"] {
+  display: none;
+}
+
+.account-page-body[data-account-state="verified"] #verification {
+  display: none;
+}
+
+.account-page-body[data-account-state="verified"] .account-nav-link[href="#verification"] {
+  display: none;
+}
+
+.account-page-body[data-account-state="unverified"] #backups {
+  display: none;
+}
+
+.account-page-body[data-account-state="unverified"] .account-nav-link[href="#backups"] {
+  display: none;
+}
+
 .section-head h2 {
   margin: 0;
   font-size: 1.2rem;

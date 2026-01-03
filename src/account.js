@@ -598,6 +598,13 @@
 
     const me = await getMe();
     isAuthed = !!me;
+    try {
+      document.body.dataset.accountState = !me
+        ? "signed-out"
+        : me.emailVerified
+        ? "verified"
+        : "unverified";
+    } catch {}
     if (!me) {
       setPill("off", "Signed out");
       setAuthedUi(false);
