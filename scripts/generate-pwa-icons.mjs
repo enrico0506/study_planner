@@ -39,14 +39,20 @@ async function renderSvgToPng({ svg, size }) {
 }
 
 async function readLogoDataUri() {
-  const candidates = ["logo.png", "logo.jpg", "logo.jpeg"];
+  const candidates = ["logo.webp", "new_logo.webp", "logo.png", "logo.jpg", "logo.jpeg"];
   for (const filename of candidates) {
     const filePath = path.join(iconsDir, filename);
     if (!(await fileExists(filePath))) continue;
     const buffer = await fs.readFile(filePath);
     const ext = path.extname(filename).toLowerCase();
     const mime =
-      ext === ".png" ? "image/png" : ext === ".jpg" || ext === ".jpeg" ? "image/jpeg" : null;
+      ext === ".png"
+        ? "image/png"
+        : ext === ".jpg" || ext === ".jpeg"
+          ? "image/jpeg"
+          : ext === ".webp"
+            ? "image/webp"
+            : null;
     if (!mime) continue;
     return `data:${mime};base64,${buffer.toString("base64")}`;
   }
@@ -55,19 +61,9 @@ async function readLogoDataUri() {
 
 function inlineLogo(svg, dataUri) {
   if (!dataUri) return svg;
-  return svg
-    .replaceAll('href="logo.jpeg"', `href="${dataUri}"`)
-    .replaceAll("href='logo.jpeg'", `href='${dataUri}'`)
-    .replaceAll('xlink:href="logo.jpeg"', `xlink:href="${dataUri}"`)
-    .replaceAll("xlink:href='logo.jpeg'", `xlink:href='${dataUri}'`)
-    .replaceAll('href="logo.jpg"', `href="${dataUri}"`)
-    .replaceAll("href='logo.jpg'", `href='${dataUri}'`)
-    .replaceAll('xlink:href="logo.jpg"', `xlink:href="${dataUri}"`)
-    .replaceAll("xlink:href='logo.jpg'", `xlink:href='${dataUri}'`)
-    .replaceAll('href="logo.png"', `href="${dataUri}"`)
-    .replaceAll("href='logo.png'", `href='${dataUri}'`)
-    .replaceAll('xlink:href="logo.png"', `xlink:href="${dataUri}"`)
-    .replaceAll("xlink:href='logo.png'", `xlink:href='${dataUri}'`);
+  const pattern =
+    /(href|xlink:href)=("(?:logo(?:\.png|\.jpg|\.jpeg|\.webp)|new_logo\.webp)"|'(?:logo(?:\.png|\.jpg|\.jpeg|\.webp)|new_logo\.webp)')/gi;
+  return svg.replace(pattern, (match, attr) => `${attr}="${dataUri}"`);
 }
 
 async function fileExists(filePath) {

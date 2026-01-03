@@ -7,8 +7,8 @@
   <!-- Maskable icon: full-bleed background + safe padding for the logo. -->
   <rect width="512" height="512" fill="#0f172a" />
   <image
-    href="logo.jpeg"
-    xlink:href="logo.jpeg"
+    href="logo.webp"
+    xlink:href="logo.webp"
     x="64"
     y="64"
     width="384"
