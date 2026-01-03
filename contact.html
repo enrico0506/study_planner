@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="breeze">
+<head>
+  <meta charset="UTF-8" />
+  <title>Study Planner – Contact</title>
+  <meta name="description" content="Contact Study Planner support for bug reports, account help, or privacy requests." />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#2f62f4" />
+  <script>
+    (function () {
+      try {
+        const savedTheme = localStorage.getItem("studyTheme_v1");
+        if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
+      } catch {}
+    })();
+  </script>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192" />
+  <link rel="icon" href="/icons/app-icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <script defer src="/pwa.js"></script>
+  <link rel="stylesheet" href="./src/styles/main.css" />
+  <link rel="stylesheet" href="./src/styles/mobile.css" />
+  <link rel="stylesheet" href="./src/styles/a11y.css" />
+  <link rel="stylesheet" href="./src/styles/enhancements.css" />
+</head>
+<body class="legal-page">
+  <div class="app legal-app">
+    <div class="header-row">
+      <div class="header-main">
+        <p class="eyebrow">Support</p>
+        <h1>Contact</h1>
+        <p class="subtitle">Bug reports, account help, and privacy requests.</p>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="./index.html">← Back to app</a>
+      </div>
+    </div>
+
+    <main class="legal-content" id="mainContent">
+      <section class="legal-section">
+        <h2>How to reach us</h2>
+        <p>
+          Use the form below to contact the operator of this Study Planner instance. If you’re reporting a bug, please include the page you
+          were on, steps to reproduce, and your browser/device. For account and privacy requests, include the email address associated with
+          your account so we can verify ownership.
+        </p>
+        <p>
+          Please do not send passwords or sensitive payment information. For security issues, describe the problem and the impact, and include
+          enough technical detail to reproduce it safely. If you’re requesting deletion of account data, we may ask for additional confirmation
+          to prevent unauthorized requests.
+        </p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Contact form</h2>
+        <form class="legal-form" id="contactForm" novalidate>
+          <div class="legal-form-grid">
+            <label class="legal-form-field">
+              Your name
+              <input class="input" id="contactName" name="name" type="text" autocomplete="name" required minlength="2" maxlength="80" />
+            </label>
+            <label class="legal-form-field">
+              Email
+              <input class="input" id="contactEmail" name="email" type="email" autocomplete="email" required maxlength="254" />
+            </label>
+          </div>
+          <label class="legal-form-field">
+            Message
+            <textarea class="input" id="contactMessage" name="message" rows="6" required minlength="10" maxlength="5000"></textarea>
+          </label>
+          <div class="legal-form-actions">
+            <button class="btn" id="contactSubmitBtn" type="submit">Send message</button>
+            <div class="legal-form-status" id="contactStatus" aria-live="polite"></div>
+          </div>
+        </form>
+        <p class="legal-hint">
+          Note: The form requires the site operator to configure outbound email on the server. If it fails, please try again later.
+        </p>
+      </section>
+
+      <section class="legal-section">
+        <h2>What we can help with</h2>
+        <p>
+          Typical requests include: login problems, sync and backup questions, bug reports for specific pages (board, calendar, timetable), and
+          privacy questions about what data is stored locally versus synced to the server. If you include screenshots, please make sure they do
+          not reveal private information you don’t want to share.
+        </p>
+        <p>
+          Response times depend on availability and time zone. If your request is urgent, add “URGENT” to the first line of your message and
+          include a short summary so it can be triaged quickly. Messages are usually handled in English or German, depending on the operator.
+        </p>
+      </section>
+
+      <section class="legal-section legal-meta">
+        <h2>Last updated</h2>
+        <p>2026-01-03</p>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer" aria-label="Site footer" data-section="site-footer">
+    <div class="site-footer-inner">
+      <div class="site-footer-meta">
+        <div class="site-footer-title">Study Planner</div>
+        <div class="site-footer-subtitle">Local-first planning with optional sync.</div>
+      </div>
+      <nav class="site-footer-links" aria-label="Legal">
+        <a href="./about.html">About</a>
+        <a href="./contact.html">Contact</a>
+        <a href="./privacy.html">Privacy</a>
+        <a href="./terms.html">Terms</a>
+        <a href="./impressum.html">Imprint</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      const form = document.getElementById("contactForm");
+      const statusEl = document.getElementById("contactStatus");
+      const submitBtn = document.getElementById("contactSubmitBtn");
+      const nameEl = document.getElementById("contactName");
+      const emailEl = document.getElementById("contactEmail");
+      const msgEl = document.getElementById("contactMessage");
+      if (!form || !statusEl || !submitBtn || !nameEl || !emailEl || !msgEl) return;
+
+      function setStatus(text, kind) {
+        statusEl.textContent = text;
+        statusEl.dataset.kind = kind || "";
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!form.reportValidity()) return;
+
+        submitBtn.disabled = true;
+        setStatus("Sending…", "busy");
+        try {
+          const payload = {
+            name: nameEl.value,
+            email: emailEl.value,
+            message: msgEl.value
+          };
+          const res = await fetch("/api/contact", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            setStatus(data?.error || "Message could not be sent.", "error");
+            return;
+          }
+          form.reset();
+          setStatus("Thanks! Your message was sent.", "ok");
+        } catch {
+          setStatus("Network error. Please try again later.", "error");
+        } finally {
+          submitBtn.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

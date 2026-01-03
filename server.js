@@ -152,10 +152,54 @@ app.get("/index.html", (_req, res) => sendHtml(res, "index.html"));
 app.get("/calendar.html", (_req, res) => sendHtml(res, "calendar.html"));
 app.get("/stundenplan.html", (_req, res) => sendHtml(res, "stundenplan.html"));
 app.get("/account.html", (_req, res) => sendHtml(res, "account.html"));
+app.get("/about.html", (_req, res) => sendHtml(res, "about.html"));
+app.get("/contact.html", (_req, res) => sendHtml(res, "contact.html"));
+app.get("/privacy.html", (_req, res) => sendHtml(res, "privacy.html"));
+app.get("/terms.html", (_req, res) => sendHtml(res, "terms.html"));
+app.get("/impressum.html", (_req, res) => sendHtml(res, "impressum.html"));
 app.get("/offline.html", (_req, res) => sendHtml(res, "offline.html"));
 
 // Health check
 app.get("/healthz", (_req, res) => res.send("ok"));
+
+app.get("/robots.txt", (req, res) => {
+  res.type("text/plain; charset=utf-8");
+  const baseUrl = getAppBaseUrl(req);
+  res.send(`User-agent: *\nAllow: /\n\nSitemap: ${baseUrl}/sitemap.xml\n`);
+});
+
+app.get("/sitemap.xml", (req, res) => {
+  res.type("application/xml; charset=utf-8");
+  const baseUrl = getAppBaseUrl(req);
+  const urls = [
+    "/",
+    "/index.html",
+    "/calendar.html",
+    "/stundenplan.html",
+    "/account.html",
+    "/about.html",
+    "/contact.html",
+    "/privacy.html",
+    "/terms.html",
+    "/impressum.html"
+  ];
+  const now = new Date().toISOString();
+  const body = urls
+    .map(
+      (url) =>
+        `  <url>\n` +
+        `    <loc>${baseUrl}${url}</loc>\n` +
+        `    <lastmod>${now}</lastmod>\n` +
+        `  </url>`
+    )
+    .join("\n");
+  res.send(
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+      `${body}\n` +
+      `</urlset>\n`
+  );
+});
 
 function requireEnv(name) {
   const value = process.env[name];
@@ -284,6 +328,75 @@ app.get("/api/me", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Failed to load user" });
   }
+});
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function getContactRecipient() {
+  const value = process.env.CONTACT_EMAIL;
+  if (!value) return null;
+  return String(value).trim();
+}
+
+const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: rateLimitJsonHandler
+});
+
+function looksLikeEmail(value) {
+  const email = String(value || "").trim();
+  if (!email || email.length > 254) return false;
+  if (email.includes(" ")) return false;
+  const at = email.indexOf("@");
+  if (at <= 0 || at === email.length - 1) return false;
+  return true;
+}
+
+app.post("/api/contact", contactLimiter, async (req, res) => {
+  const to = getContactRecipient();
+  if (!to) return res.status(503).json({ error: "Contact form is not configured." });
+
+  const name = String(req.body?.name || "").trim();
+  const email = String(req.body?.email || "").trim();
+  const message = String(req.body?.message || "").trim();
+
+  if (name.length < 2 || name.length > 80) {
+    return res.status(400).json({ error: "Please enter a name (2–80 characters)." });
+  }
+  if (!looksLikeEmail(email)) {
+    return res.status(400).json({ error: "Please enter a valid email address." });
+  }
+  if (message.length < 10 || message.length > 5000) {
+    return res.status(400).json({ error: "Please enter a message (10–5000 characters)." });
+  }
+
+  const now = new Date().toISOString();
+  const subject = `Study Planner contact: ${name}`;
+  const text = `Name: ${name}\nEmail: ${email}\nTime: ${now}\n\n${message}\n`;
+  const html =
+    `<p><strong>Name:</strong> ${escapeHtml(name)}</p>` +
+    `<p><strong>Email:</strong> ${escapeHtml(email)}</p>` +
+    `<p><strong>Time:</strong> ${escapeHtml(now)}</p>` +
+    `<pre style="white-space:pre-wrap;line-height:1.5;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace">${escapeHtml(message)}</pre>`;
+
+  const result = await sendEmail({ to, subject, text, html });
+  if (!result.ok) {
+    const reason =
+      result.reason === "not_configured" ? "Contact email is not configured." : "Failed to send email.";
+    return res.status(503).json({ error: reason });
+  }
+
+  res.json({ ok: true });
 });
 
 function shouldRevealTokens() {

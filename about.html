@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="breeze">
+<head>
+  <meta charset="UTF-8" />
+  <title>Study Planner – About</title>
+  <meta name="description" content="Learn what Study Planner is, how it stores your data, and how to get started." />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#2f62f4" />
+  <script>
+    (function () {
+      try {
+        const savedTheme = localStorage.getItem("studyTheme_v1");
+        if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
+      } catch {}
+    })();
+  </script>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192" />
+  <link rel="icon" href="/icons/app-icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <script defer src="/pwa.js"></script>
+  <link rel="stylesheet" href="./src/styles/main.css" />
+  <link rel="stylesheet" href="./src/styles/mobile.css" />
+  <link rel="stylesheet" href="./src/styles/a11y.css" />
+  <link rel="stylesheet" href="./src/styles/enhancements.css" />
+</head>
+<body class="legal-page">
+  <div class="app legal-app">
+    <div class="header-row">
+      <div class="header-main">
+        <p class="eyebrow">About</p>
+        <h1>Study Planner</h1>
+        <p class="subtitle">A local-first study board for tasks, focus sessions, and weekly planning.</p>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="./index.html">← Back to app</a>
+        <a class="btn" href="./contact.html">Contact</a>
+      </div>
+    </div>
+
+    <main class="legal-content" id="mainContent">
+      <section class="legal-section">
+        <h2>What it is</h2>
+        <p>
+          Study Planner is a lightweight web app that helps you break subjects into smaller tasks, track confidence,
+          and plan focused sessions. It’s designed to stay fast and distraction-free: no feeds, no infinite scroll,
+          just a clean board, a daily focus list, and a schedule view that makes timeboxing simple.
+        </p>
+        <p>
+          You can use it like a personal “study cockpit”: keep an overview of what matters, decide what to do next, then
+          commit to a small session. Over time, the confidence meter and your completed focus items make it easier to see
+          what’s improving and where you should spend your next hour.
+        </p>
+      </section>
+
+      <section class="legal-section">
+        <h2>How your data is stored</h2>
+        <p>
+          By default, your study data is stored locally in your browser (using localStorage). This means your subjects,
+          tasks, notes, and planning information stay on your device and remain available even when the server is offline.
+          After your first successful visit, the app can also be used offline thanks to its service worker.
+        </p>
+        <p>
+          If you choose to create an account, you can enable cloud sync. In that mode, the app uploads your Study Planner
+          state so you can restore it on another device. The server keeps recent versions as backups to help you recover
+          if something goes wrong during syncing.
+        </p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Advertising</h2>
+        <p>
+          This site may show advertisements to help cover hosting costs. Ads are provided by third parties (for example,
+          Google AdSense) and may use cookies or similar technologies to measure performance and personalize ads.
+          For details, see the privacy policy.
+        </p>
+      </section>
+
+      <section class="legal-section legal-meta">
+        <h2>Last updated</h2>
+        <p>2026-01-03</p>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer" aria-label="Site footer" data-section="site-footer">
+    <div class="site-footer-inner">
+      <div class="site-footer-meta">
+        <div class="site-footer-title">Study Planner</div>
+        <div class="site-footer-subtitle">Local-first planning with optional sync.</div>
+      </div>
+      <nav class="site-footer-links" aria-label="Legal">
+        <a href="./about.html">About</a>
+        <a href="./contact.html">Contact</a>
+        <a href="./privacy.html">Privacy</a>
+        <a href="./terms.html">Terms</a>
+        <a href="./impressum.html">Imprint</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

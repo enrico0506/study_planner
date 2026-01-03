@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="breeze">
+<head>
+  <meta charset="UTF-8" />
+  <title>Study Planner – Privacy Policy</title>
+  <meta name="description" content="Privacy policy for Study Planner: what data is stored locally, what is sent to the server (optional accounts), and how advertising works." />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#2f62f4" />
+  <script>
+    (function () {
+      try {
+        const savedTheme = localStorage.getItem("studyTheme_v1");
+        if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
+      } catch {}
+    })();
+  </script>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192" />
+  <link rel="icon" href="/icons/app-icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <script defer src="/pwa.js"></script>
+  <link rel="stylesheet" href="./src/styles/main.css" />
+  <link rel="stylesheet" href="./src/styles/mobile.css" />
+  <link rel="stylesheet" href="./src/styles/a11y.css" />
+  <link rel="stylesheet" href="./src/styles/enhancements.css" />
+</head>
+<body class="legal-page">
+  <div class="app legal-app">
+    <div class="header-row">
+      <div class="header-main">
+        <p class="eyebrow">Legal</p>
+        <h1>Privacy Policy</h1>
+        <p class="subtitle">How Study Planner stores your data and what happens when you enable ads or sync.</p>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="./index.html">← Back to app</a>
+        <a class="btn" href="./contact.html">Contact</a>
+      </div>
+    </div>
+
+    <main class="legal-content" id="mainContent">
+      <section class="legal-section">
+        <h2>Summary</h2>
+        <p>
+          Study Planner is designed to work without an account. By default, your study data stays on your device and is stored
+          locally in your browser. If you choose to create an account, you can enable cloud sync so the server stores a copy of your
+          Study Planner state. This site may also display advertising (for example via Google AdSense), which can use cookies or similar
+          technologies.
+        </p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Data stored on your device (default mode)</h2>
+        <p>
+          When you use the app without an account, Study Planner stores your subjects, tasks, notes, schedule entries, and settings in
+          your browser (localStorage). This data is not automatically uploaded to the server. You can clear it at any time by removing
+          site data in your browser settings. Some preferences (like theme and whether ads are shown) are also stored locally.
+        </p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Accounts and cloud sync (optional)</h2>
+        <p>
+          If you create an account, we process your email address and a password hash (your password itself is not stored in plain text).
+          When cloud sync is enabled, the app uploads your Study Planner state to the server. The server stores the latest synced state and
+          keeps a limited number of recent versions as backups to help you restore your data if needed.
+        </p>
+        <p>
+          To operate accounts securely, the service also uses short-lived verification and password-reset tokens. Authentication is handled
+          via a secure, httpOnly cookie set by the server. If you do not want server-side storage, you can use the app without an account.
+        </p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Advertising (Google AdSense)</h2>
+        <p>
+          This site may use Google AdSense to display ads. Google and its partners may use cookies and/or device identifiers to show ads,
+          measure performance, and personalize content. You can learn more about Google’s advertising technologies and controls in Google’s
+          privacy resources and your Google account settings.
+        </p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Third-party resources</h2>
+        <p>
+          Some pages load third-party libraries from a content delivery network (CDN) to render math notation (KaTeX). When your browser
+          requests these files, the CDN may receive standard connection data such as IP address, user agent, and timestamp. If you prefer to
+          avoid third-party requests, you can self-host the libraries and serve them from your own domain.
+        </p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Data retention</h2>
+        <p>
+          Local-only data remains on your device until you clear it. If you use an account, the server stores your account record and your
+          synced Study Planner state until you delete the account or request deletion. Backup versions are retained in a limited rolling
+          window to reduce storage while keeping recovery possible.
+        </p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Your choices</h2>
+        <p>
+          You can use Study Planner without an account, clear local storage at any time, and choose whether to sign in and sync. You can also
+          disable ads in the app settings (stored locally on your device). Depending on your jurisdiction, you may have rights to access,
+          correct, or delete personal data associated with your account. To make a request, use the contact page.
+        </p>
+      </section>
+
+      <section class="legal-section legal-meta">
+        <h2>Last updated</h2>
+        <p>2026-01-03</p>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer" aria-label="Site footer" data-section="site-footer">
+    <div class="site-footer-inner">
+      <div class="site-footer-meta">
+        <div class="site-footer-title">Study Planner</div>
+        <div class="site-footer-subtitle">Local-first planning with optional sync.</div>
+      </div>
+      <nav class="site-footer-links" aria-label="Legal">
+        <a href="./about.html">About</a>
+        <a href="./contact.html">Contact</a>
+        <a href="./privacy.html">Privacy</a>
+        <a href="./terms.html">Terms</a>
+        <a href="./impressum.html">Imprint</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
+

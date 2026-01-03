@@ -6,7 +6,8 @@
     "start": "node server.js",
     "migrate": "node scripts/migrate.js",
     "gen:icons": "node scripts/generate-pwa-icons.mjs",
-    "postinstall": "node scripts/generate-pwa-icons.mjs --if-missing"
+    "postinstall": "node scripts/generate-pwa-icons.mjs --if-missing",
+    "adsense:audit": "node scripts/adsense-audit.mjs"
   },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",

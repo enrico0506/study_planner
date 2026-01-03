@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="breeze">
+<head>
+  <meta charset="UTF-8" />
+  <title>Study Planner – Imprint</title>
+  <meta name="description" content="Imprint / legal notice for the Study Planner website." />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#2f62f4" />
+  <script>
+    (function () {
+      try {
+        const savedTheme = localStorage.getItem("studyTheme_v1");
+        if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
+      } catch {}
+    })();
+  </script>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192" />
+  <link rel="icon" href="/icons/app-icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <script defer src="/pwa.js"></script>
+  <link rel="stylesheet" href="./src/styles/main.css" />
+  <link rel="stylesheet" href="./src/styles/mobile.css" />
+  <link rel="stylesheet" href="./src/styles/a11y.css" />
+  <link rel="stylesheet" href="./src/styles/enhancements.css" />
+</head>
+<body class="legal-page">
+  <div class="app legal-app">
+    <div class="header-row">
+      <div class="header-main">
+        <p class="eyebrow">Legal</p>
+        <h1>Imprint</h1>
+        <p class="subtitle">Legal notice and responsibility information.</p>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="./index.html">← Back to app</a>
+        <a class="btn" href="./contact.html">Contact</a>
+      </div>
+    </div>
+
+    <main class="legal-content" id="mainContent">
+      <section class="legal-section">
+        <h2>About this page</h2>
+        <p>
+          Study Planner can be self-hosted and published by different people or organizations. The legal operator of a specific instance is
+          the person or entity that owns and controls the domain where this site is published. If you have questions about this instance,
+          please use the contact page to reach the operator.
+        </p>
+        <p>
+          If your jurisdiction requires additional disclosures (for example, an “Impressum” with a postal address), the operator of this
+          instance must provide that information. This repository focuses on the software and therefore cannot automatically include the correct
+          legal details for every deployment.
+        </p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Responsibility for content</h2>
+        <p>
+          The operator is responsible for the content provided on this website in accordance with applicable laws. If you believe content is
+          unlawful or infringes rights, please contact the operator with details so it can be reviewed and addressed promptly.
+        </p>
+      </section>
+
+      <section class="legal-section">
+        <h2>External links</h2>
+        <p>
+          This site may contain links to external websites. We have no control over the content of external sites and cannot assume
+          responsibility for them. At the time of linking, no obvious legal violations were identifiable. If we become aware of violations, we
+          will remove such links where reasonable.
+        </p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Contact</h2>
+        <p>
+          For legal inquiries regarding this site, please contact the operator using the contact page. When reaching out, include the exact URL
+          you are referring to and a short description of the request so it can be processed efficiently.
+        </p>
+      </section>
+
+      <section class="legal-section legal-meta">
+        <h2>Last updated</h2>
+        <p>2026-01-03</p>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer" aria-label="Site footer" data-section="site-footer">
+    <div class="site-footer-inner">
+      <div class="site-footer-meta">
+        <div class="site-footer-title">Study Planner</div>
+        <div class="site-footer-subtitle">Local-first planning with optional sync.</div>
+      </div>
+      <nav class="site-footer-links" aria-label="Legal">
+        <a href="./about.html">About</a>
+        <a href="./contact.html">Contact</a>
+        <a href="./privacy.html">Privacy</a>
+        <a href="./terms.html">Terms</a>
+        <a href="./impressum.html">Imprint</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
