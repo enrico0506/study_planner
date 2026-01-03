@@ -735,7 +735,10 @@ const COMPACT_WEEK_MQ =
 		      wrapper.dataset.spVisibleSubjects = String(visibleSubjects);
 
 		      // Use floor to guarantee all visible columns fit (avoid 1px overflow from rounding).
-		      const subjectWidth = Math.floor(Math.max(1, baseFor(visibleSubjects)));
+		      // Guard against unstable layout measurements producing 0px columns on first paint.
+		      const computedWidth = Math.floor(baseFor(visibleSubjects));
+		      const subjectWidth =
+		        Number.isFinite(computedWidth) && computedWidth >= 120 ? computedWidth : MIN_COL_WIDTH;
 
 	      const template = `repeat(${count}, ${subjectWidth}px) ${addColWidth}px`;
 	      subjectTable.classList.add("subject-table-dynamic");
