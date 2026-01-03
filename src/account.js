@@ -256,6 +256,29 @@
     }
   }
 
+  function setVerifiedUi(isVerified) {
+    const ids = ["accountSyncNowBtn", "refreshVersionsBtn"];
+    for (const id of ids) {
+      const el = $(id);
+      if (el) el.disabled = !isVerified;
+    }
+  }
+
+  function openVerificationSection({ focusInput } = {}) {
+    const section = document.getElementById("verification");
+    if (!section) return;
+    const details = section.querySelector("details");
+    if (details) details.open = true;
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (focusInput) {
+      setTimeout(() => {
+        const input = $("verifyToken");
+        input?.focus?.();
+        input?.select?.();
+      }, 60);
+    }
+  }
+
   function formatTimestamp(ts) {
     if (!ts) return "—";
     const date = new Date(ts);
@@ -363,10 +386,14 @@
   }
 
   async function loginOrRegister(path, email, password) {
-    await apiFetch(path, { method: "POST", body: JSON.stringify({ email, password }) });
+    return apiFetch(path, { method: "POST", body: JSON.stringify({ email, password }) });
   }
 
   async function initialSyncAfterAuth(mode) {
+    const me = await getMe();
+    if (!me) return "Signed in.";
+    if (!me.emailVerified) return "Email verification required. Verify your email to enable sync.";
+
     const flow = mode === "register" ? "register" : "login";
     const local = snapshotLocalState();
     const cloud = await apiFetch("/api/state");
@@ -418,6 +445,10 @@
 
   async function syncNow() {
     if (!window.location.origin) return;
+    const me = await getMe();
+    if (!me) throw new Error("Unauthorized");
+    if (!me.emailVerified) throw new Error("Email verification required");
+
     const local = snapshotLocalState();
     const cloud = await apiFetch("/api/state");
     const cloudData = filterSnapshot((cloud && cloud.data) || {});
@@ -535,7 +566,11 @@
       const filterInput = $("versionsFilter");
       renderVersionsList(filterInput ? filterInput.value : "");
     } catch (err) {
-      $("versionsMsg").textContent = String(err?.message || "Failed to load backups");
+      const msg = String(err?.message || "Failed to load backups");
+      $("versionsMsg").textContent =
+        msg === "Email not verified"
+          ? "Email verification required to use backups."
+          : msg;
     }
   }
 
@@ -569,9 +604,13 @@
       $("accountStatusMsg").textContent = "Login or register to enable cross-browser sync.";
       updateOverview(null);
     } else {
-      setPill(me.emailVerified ? "ok" : "warn", me.emailVerified ? "Signed in" : "Signed in (unverified)");
+      const isVerified = !!me.emailVerified;
+      setPill(isVerified ? "ok" : "warn", isVerified ? "Signed in" : "Signed in (unverified)");
       setAuthedUi(true);
-      $("accountStatusMsg").textContent = `Logged in as ${me.email}${me.emailVerified ? " (verified)" : " (unverified)"}`;
+      setVerifiedUi(isVerified);
+      $("accountStatusMsg").textContent = isVerified
+        ? `Logged in as ${me.email} (verified)`
+        : `Logged in as ${me.email} (unverified). Verify your email to enable sync/backups.`;
       updateOverview(me);
       $("accountLogoutBtn").addEventListener("click", async () => {
         try {
@@ -622,7 +661,12 @@
         }
       });
       $("refreshVersionsBtn").addEventListener("click", refreshVersions);
-      await refreshVersions();
+      if (isVerified) {
+        await refreshVersions();
+      } else {
+        const msgEl = $("versionsMsg");
+        if (msgEl) msgEl.textContent = "Email verification required to use backups.";
+      }
     }
 
     const copyBtn = $("accountCopyEmailBtn");
@@ -689,6 +733,39 @@
     });
 
     initPasswordToggles();
+
+    try {
+      const devToken = sessionStorage.getItem("sp_verification_dev_token");
+      if (devToken) {
+        sessionStorage.removeItem("sp_verification_dev_token");
+        const input = $("verifyToken");
+        if (input) input.value = devToken;
+        $("verifyMsg").textContent = `Verification code (dev): ${devToken}`;
+        updateVerifyControls();
+      }
+    } catch {}
+
+    try {
+      const notice = sessionStorage.getItem("sp_verify_notice");
+      if (notice) {
+        sessionStorage.removeItem("sp_verify_notice");
+        const msgEl = $("verifyMsg");
+        if (msgEl && !msgEl.textContent) msgEl.textContent = notice;
+      }
+    } catch {}
+
+    let shouldFocusVerify = false;
+    try {
+      if (sessionStorage.getItem("sp_force_verify_on_load") === "1") {
+        sessionStorage.removeItem("sp_force_verify_on_load");
+        shouldFocusVerify = true;
+      }
+    } catch {}
+
+    if (me && me.emailVerified === false) {
+      if (window.location.hash === "#verification") shouldFocusVerify = true;
+      openVerificationSection({ focusInput: shouldFocusVerify });
+    }
 
     // Email verification handlers (attach regardless of auth state so the UI gives feedback).
     // NOTE: Requesting a verification code requires login; verifying a short code also requires login.
@@ -762,12 +839,26 @@
         return;
       }
       try {
-        await loginOrRegister(
+        const result = await loginOrRegister(
           "/api/auth/login",
           normalizeEmail($("authEmail").value),
           $("authPassword").value
         );
         $("authPassword").value = "";
+        if (result && result.emailVerified === false) {
+          $("authMsg").textContent = "Signed in. Email verification required to enable sync/backups.";
+          showToast("info", "Verification required.");
+          try {
+            sessionStorage.setItem("sp_force_verify_on_load", "1");
+            sessionStorage.setItem(
+              "sp_verify_notice",
+              "Verification required. Click “Send verification code”, then enter the 6-digit code."
+            );
+          } catch {}
+          window.location.hash = "#verification";
+          window.location.reload();
+          return;
+        }
         const msg = await initialSyncAfterAuth("login").catch(() => "Signed in.");
         $("authMsg").textContent = msg;
         showToast("success", "Signed in.");
@@ -786,12 +877,29 @@
         return;
       }
       try {
-        await loginOrRegister(
+        const result = await loginOrRegister(
           "/api/auth/register",
           normalizeEmail($("authEmail").value),
           $("authPassword").value
         );
         $("authPassword").value = "";
+        if (result && result.emailVerified === false) {
+          const sent = !!result.verification?.emailSent;
+          const devToken = result.verification?.token;
+          const msg = sent
+            ? "Account created. Verification code sent — enter the 6-digit code below."
+            : "Account created. Email verification required (code sending may have failed).";
+          $("authMsg").textContent = msg;
+          showToast("success", "Account created.");
+          try {
+            sessionStorage.setItem("sp_force_verify_on_load", "1");
+            sessionStorage.setItem("sp_verify_notice", msg);
+            if (devToken) sessionStorage.setItem("sp_verification_dev_token", devToken);
+          } catch {}
+          window.location.hash = "#verification";
+          window.location.reload();
+          return;
+        }
         const msg = await initialSyncAfterAuth("register").catch(() => "Registered.");
         $("authMsg").textContent = msg;
         showToast("success", "Account created.");

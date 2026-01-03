@@ -232,6 +232,21 @@ function requireAuth(req, res, next) {
   next();
 }
 
+async function requireVerifiedEmail(req, res, next) {
+  if (!req.user?.id) return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const pool = getPool();
+    const found = await pool.query("select email_verified from users where id = $1", [req.user.id]);
+    const row = found.rows[0];
+    if (!row) return res.status(401).json({ error: "Unauthorized" });
+    if (!row.email_verified) return res.status(403).json({ error: "Email not verified" });
+    next();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to check email verification" });
+  }
+}
+
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
@@ -296,6 +311,47 @@ function isLikelyShortVerificationCode(token) {
   return /^\d{6}$/.test(String(token || "").trim());
 }
 
+async function createEmailVerificationCode(pool, userId) {
+  const token = generateVerificationCode();
+  const tokenHash = hashToken(token);
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+  await pool.query(
+    "update auth_tokens set used_at = now() where user_id = $1 and kind = 'email_verify' and used_at is null",
+    [userId]
+  );
+  await pool.query(
+    "insert into auth_tokens (user_id, kind, token_hash, expires_at) values ($1, 'email_verify', $2, $3)",
+    [userId, tokenHash, expiresAt]
+  );
+
+  return { token, expiresAt };
+}
+
+async function sendEmailVerificationCode(req, email, code) {
+  return sendEmail({
+    to: email,
+    subject: "Verify your email",
+    text:
+      `Your Study Planner verification code is:\n\n${code}\n\n` +
+      `Enter this code in the app to verify your email.\n\n` +
+      `This code expires in 1 hour.`,
+    html:
+      `<p>Your verification code for <strong>Study Planner</strong> is:</p>` +
+      `<p style="font-size:28px;font-weight:700;letter-spacing:0.18em;margin:12px 0">${code}</p>` +
+      `<p>Enter this code in the app to verify your email.</p>` +
+      `<p style="color:#6b7280;font-size:12px">This code expires in 1 hour.</p>`
+  });
+}
+
+async function requestEmailVerificationCode(req, pool, userId, email) {
+  const { token } = await createEmailVerificationCode(pool, userId);
+  console.log("Sending verification email to:", email);
+  const mailResult = await sendEmailVerificationCode(req, email, token);
+  console.log("Verification email result:", mailResult.ok ? "sent" : "not sent");
+  return { token, emailSent: mailResult.ok };
+}
+
 app.post("/api/auth/register", authLimiter, async (req, res) => {
   const email = normalizeEmail(req.body?.email);
   const password = req.body?.password;
@@ -308,7 +364,7 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
     const passwordHash = await bcrypt.hash(String(password), 12);
     const pool = getPool();
     const created = await pool.query(
-      "insert into users (email, password_hash) values ($1, $2) returning id, email",
+      "insert into users (email, password_hash) values ($1, $2) returning id, email, email_verified",
       [email, passwordHash]
     );
     const user = created.rows[0];
@@ -321,7 +377,22 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
       expiresIn: `${AUTH_SESSION_DAYS}d`
     });
     setAuthCookie(req, res, token);
-    res.status(201).json({ email: user.email });
+
+    let verification = { emailSent: false };
+    if (user.email && !user.email_verified) {
+      try {
+        verification = await requestEmailVerificationCode(req, pool, user.id, user.email);
+      } catch (err) {
+        console.error("Failed to send verification code during registration:", err);
+      }
+    }
+
+    res.status(201).json({
+      email: user.email,
+      emailVerified: !!user.email_verified,
+      verificationRequired: !user.email_verified,
+      verification: shouldRevealTokens() ? verification : { emailSent: verification.emailSent }
+    });
   } catch (err) {
     const message = String(err?.message || "");
     if (message.startsWith("Missing required env var:")) {
@@ -344,9 +415,10 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
 
   try {
     const pool = getPool();
-    const found = await pool.query("select id, email, password_hash from users where email = $1", [
-      email
-    ]);
+    const found = await pool.query(
+      "select id, email, password_hash, email_verified from users where email = $1",
+      [email]
+    );
     const user = found.rows[0];
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
@@ -357,7 +429,7 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
       expiresIn: `${AUTH_SESSION_DAYS}d`
     });
     setAuthCookie(req, res, token);
-    res.json({ email: user.email });
+    res.json({ email: user.email, emailVerified: !!user.email_verified });
   } catch (err) {
     const message = String(err?.message || "");
     if (message.startsWith("Missing required env var:")) {
@@ -478,48 +550,17 @@ app.post("/api/auth/reset-password", strictAuthLimiter, async (req, res) => {
 app.post("/api/auth/request-verify", requireAuth, strictAuthLimiter, async (req, res) => {
   try {
     const pool = getPool();
-    const found = await pool.query("select id, email_verified from users where id = $1", [req.user.id]);
+    const found = await pool.query("select id, email, email_verified from users where id = $1", [
+      req.user.id
+    ]);
     const user = found.rows[0];
     if (!user) return res.status(401).json({ error: "Unauthorized" });
     if (user.email_verified) return res.json({ ok: true, alreadyVerified: true });
+    if (!user.email) return res.json({ ok: true });
 
-    const token = generateVerificationCode();
-    const tokenHash = hashToken(token);
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
-
-    await pool.query(
-      "update auth_tokens set used_at = now() where user_id = $1 and kind = 'email_verify' and used_at is null",
-      [user.id]
-    );
-    await pool.query(
-      "insert into auth_tokens (user_id, kind, token_hash, expires_at) values ($1, 'email_verify', $2, $3)",
-      [user.id, tokenHash, expiresAt]
-    );
-
-    const emailRow = await pool.query("select email from users where id = $1", [user.id]);
-    const email = emailRow.rows[0]?.email;
-    if (!email) return res.json({ ok: true });
-
-    console.log("Sending verification email to:", email);
-    const mailResult = await sendEmail({
-      to: email,
-      subject: "Verify your email",
-      text:
-        `Your Study Planner verification code is:\n\n${token}\n\n` +
-        `Enter this code in the app to verify your email.\n\n` +
-        `This code expires in 1 hour.`,
-      html:
-        `<p>Your verification code for <strong>Study Planner</strong> is:</p>` +
-        `<p style="font-size:28px;font-weight:700;letter-spacing:0.18em;margin:12px 0">${token}</p>` +
-        `<p>Enter this code in the app to verify your email.</p>` +
-        `<p style="color:#6b7280;font-size:12px">This code expires in 1 hour.</p>`
-    });
-    console.log("Verification email result:", mailResult.ok ? "sent" : "not sent");
-
-    if (shouldRevealTokens()) {
-      return res.json({ ok: true, token, emailSent: mailResult.ok });
-    }
-    res.json({ ok: true, emailSent: mailResult.ok });
+    const verification = await requestEmailVerificationCode(req, pool, user.id, user.email);
+    if (shouldRevealTokens()) return res.json({ ok: true, ...verification });
+    res.json({ ok: true, emailSent: verification.emailSent });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Request verify failed" });
@@ -595,7 +636,7 @@ app.get("/api/auth/verify-email", strictAuthLimiter, async (req, res) => {
   res.redirect(`${baseUrl}/account.html?verify=ok`);
 });
 
-app.get("/api/state", requireAuth, async (req, res) => {
+app.get("/api/state", requireAuth, requireVerifiedEmail, async (req, res) => {
   try {
     const pool = getPool();
     const result = await pool.query(
@@ -610,7 +651,7 @@ app.get("/api/state", requireAuth, async (req, res) => {
   }
 });
 
-app.put("/api/state", requireAuth, async (req, res) => {
+app.put("/api/state", requireAuth, requireVerifiedEmail, async (req, res) => {
   const data = req.body?.data;
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     return res.status(400).json({ error: "Invalid state payload" });
@@ -660,7 +701,7 @@ app.put("/api/state", requireAuth, async (req, res) => {
   }
 });
 
-app.get("/api/state/versions", requireAuth, async (req, res) => {
+app.get("/api/state/versions", requireAuth, requireVerifiedEmail, async (req, res) => {
   try {
     const pool = getPool();
     const result = await pool.query(
@@ -680,7 +721,7 @@ app.get("/api/state/versions", requireAuth, async (req, res) => {
   }
 });
 
-app.post("/api/state/restore", requireAuth, async (req, res) => {
+app.post("/api/state/restore", requireAuth, requireVerifiedEmail, async (req, res) => {
   const versionId = Number(req.body?.versionId);
   if (!Number.isFinite(versionId) || versionId <= 0) {
     return res.status(400).json({ error: "Invalid versionId" });

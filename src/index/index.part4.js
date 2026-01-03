@@ -905,10 +905,11 @@
       openSettingsModal();
       setActiveSettingsPanel("settingsThemePanel");
     });
-    headerProfileBtn?.addEventListener("click", () => {
-      closeHeaderMenu();
-      window.location.href = "./account.html";
-    });
+	    headerProfileBtn?.addEventListener("click", () => {
+	      closeHeaderMenu();
+	      const label = (headerProfileBtn.textContent || "").trim();
+	      window.location.href = label === "Verify" ? "./account.html#verification" : "./account.html";
+	    });
 
     // Phone navigation is handled via index.html?mode=... links.
     // Additional settings entry points removed in favor of a single Settings button

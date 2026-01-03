@@ -227,18 +227,34 @@ const COMPACT_WEEK_MQ =
 		    let headerMenuTimer = null;
 		    let addTodoModalState = null; // { subjectId, fileId, subjectName, fileName, subtasks: [] }
 
-		    async function updateHeaderProfileLabel() {
-	      if (!headerProfileBtn) return;
-      try {
-        const res = await fetch("/api/me", { credentials: "same-origin" });
-        if (res.ok) {
-          headerProfileBtn.textContent = "Profile";
-          headerProfileBtn.title = "Account & sync";
-        } else {
-          headerProfileBtn.textContent = "Login";
-          headerProfileBtn.title = "Login / register";
-        }
-      } catch {
+			    async function updateHeaderProfileLabel() {
+		      if (!headerProfileBtn) return;
+	      try {
+	        const res = await fetch("/api/me", { credentials: "same-origin" });
+	        if (res.ok) {
+	          let me = null;
+	          try {
+	            me = await res.json();
+	          } catch {}
+	          if (me && me.emailVerified === false) {
+	            headerProfileBtn.textContent = "Verify";
+	            headerProfileBtn.title = "Verify email to enable sync";
+	            try {
+	              const shownKey = "sp_email_verify_nag_shown";
+	              if (!sessionStorage.getItem(shownKey)) {
+	                sessionStorage.setItem(shownKey, "1");
+	                showToast("Verify your email to enable sync.", "info");
+	              }
+	            } catch {}
+	          } else {
+	            headerProfileBtn.textContent = "Profile";
+	            headerProfileBtn.title = "Account & sync";
+	          }
+	        } else {
+	          headerProfileBtn.textContent = "Login";
+	          headerProfileBtn.title = "Login / register";
+	        }
+	      } catch {
         // If offline or server unreachable, leave default label.
       }
     }

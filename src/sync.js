@@ -213,9 +213,9 @@
     } catch {}
   }
 
-  async function syncNowAuto() {
-    const me = await getMe();
-    if (!me) return;
+	  async function syncNowAuto() {
+	    const me = await getMe();
+	    if (!me || !me.emailVerified) return;
 
     const local = snapshotLocalState();
     const cloud = await pullCloudState();
@@ -278,9 +278,9 @@
   let lastLocalMutationMs = 0;
   let pollTimer = null;
 
-  async function pollCloudAndApplyIfNewer() {
-    const me = await getMe();
-    if (!me) return;
+	  async function pollCloudAndApplyIfNewer() {
+	    const me = await getMe();
+	    if (!me || !me.emailVerified) return;
     if (Date.now() - lastLocalMutationMs < 5000) return;
 
     const lastSeenCloudMs = Number(localStorage.getItem(SYNC_META_KEY) || 0) || 0;
@@ -306,9 +306,9 @@
     }, CLOUD_POLL_MS);
   }
 
-  async function pushIfChanged() {
-    const me = await getMe();
-    if (!me) return;
+	  async function pushIfChanged() {
+	    const me = await getMe();
+	    if (!me || !me.emailVerified) return;
     const lastSeenCloudMs = Number(localStorage.getItem(SYNC_META_KEY) || 0) || 0;
     if (!lastSeenCloudMs) return;
 
@@ -350,17 +350,15 @@
     };
   }
 
-  async function init() {
-    patchLocalStorage();
+	  async function init() {
+	    const me = await getMe();
+	    if (!me || !me.emailVerified) return;
 
-    const me = await getMe();
-    if (!me) {
-      return;
-    }
+	    patchLocalStorage();
 
-    try {
-      await syncNowAuto();
-    } catch {}
+	    try {
+	      await syncNowAuto();
+	    } catch {}
     lastPushedSignature = stableHashSnapshot(snapshotLocalState());
     startPolling();
   }
