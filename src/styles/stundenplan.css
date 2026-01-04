@@ -296,6 +296,12 @@ body.timetable-page .tt-duration-chip:hover {
   transform: translateY(-0.5px);
 }
 
+body.timetable-page .tt-duration-chip.is-active {
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-strong));
+  border-color: color-mix(in srgb, var(--accent) 70%, var(--border-strong));
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
 /* Lesson drag affordances */
 body.timetable-page .timeline-lesson-block {
   cursor: grab;
