@@ -89,6 +89,9 @@ body::-webkit-scrollbar,
       --shadow-card: 0 20px 50px rgba(15, 23, 42, 0.08);
       --app-desktop-max: 1480px;
       --app-desktop-min: 980px;
+      --ad-column-gap: 16px;
+      --app-ultrawide-max: 2200px;
+      --app-shell-width: min(95vw, var(--app-ultrawide-max));
       --app-aspect-ratio: 1.90;
       --meter-low: linear-gradient(90deg, #fb7185, #f97373);
       --meter-mid: linear-gradient(90deg, #fbbf24, #facc15);
@@ -165,11 +168,21 @@ html.ads-disabled ins.adsbygoogle {
 }
 
 .ad-column-left {
-  left: calc(50% - (var(--app-desktop-max) / 2) - var(--ad-column-width, 160px) - 16px);
+  left: calc(
+    50% -
+      (var(--app-shell-width) / 2) -
+      var(--ad-column-width, 160px) -
+      var(--ad-column-gap)
+  );
 }
 
 .ad-column-right {
-  right: calc(50% - (var(--app-desktop-max) / 2) - var(--ad-column-width, 160px) - 16px);
+  right: calc(
+    50% -
+      (var(--app-shell-width) / 2) -
+      var(--ad-column-width, 160px) -
+      var(--ad-column-gap)
+  );
 }
 
 @media (min-width: 1840px) {
@@ -190,9 +203,9 @@ html.ads-disabled ins.adsbygoogle {
 .app {
   margin: 28px auto 36px;
   padding: 20px 22px 36px;
-  width: 95vw;
+  width: var(--app-shell-width);
   min-width: min(var(--app-desktop-min), 95vw);
-  max-width: 95vw;
+  max-width: var(--app-shell-width);
   min-height: calc(100vh - 24px);
   min-height: calc(100dvh - 24px);
   box-sizing: border-box;
@@ -210,6 +223,15 @@ html.ads-disabled ins.adsbygoogle {
 @media (min-width: 721px) {
   .app {
     min-width: 774px;
+  }
+}
+
+@media (min-width: 1840px) {
+  html:not(.ads-disabled) {
+    --app-shell-width: min(
+      var(--app-ultrawide-max),
+      calc(100vw - (2 * (var(--ad-column-width, 160px) + var(--ad-column-gap))))
+    );
   }
 }
 
@@ -5147,7 +5169,7 @@ body.session-header-mounted #focusCard {
     .app {
       margin: 28px auto 36px;
       padding: 20px 22px 24px;
-      max-width: 95vw;
+      max-width: var(--app-shell-width);
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), #fffdf8);
       border-radius: var(--radius-lg);
       border: 1px solid rgba(228, 232, 239, 0.9);
