@@ -1506,52 +1506,56 @@
 	          list.appendChild(add);
 	        }
 
+	        // Allow copying tasks from a past day into Today via drag-and-drop onto today's column.
+	        if (key === todayKey) {
+	          const isPastDay = (dayKey) => {
+	            const srcDate = parseCalendarDate(dayKey);
+	            const todayDate = parseCalendarDate(todayKey);
+	            if (!srcDate || !todayDate) return false;
+	            return srcDate.getTime() < todayDate.getTime();
+	          };
+	          const allowCopyFromPast = () =>
+	            scheduleDrag &&
+	            typeof scheduleDrag.dayKey === "string" &&
+	            scheduleDrag.dayKey !== todayKey &&
+	            isPastDay(scheduleDrag.dayKey);
+
+	          const handleCopyDrop = (event) => {
+	            if (!allowCopyFromPast()) return;
+	            event.preventDefault();
+	            list.classList.remove("drag-over");
+	            const ok = copyScheduleTodoToDay(
+	              scheduleDrag.dayKey,
+	              todayKey,
+	              scheduleDrag.todoId
+	            );
+	            scheduleDrag = null;
+	            if (ok) {
+	              renderScheduleView();
+	              renderTodayTodos();
+	              showToast("Copied to today.", "success");
+	            }
+	          };
+
+	          [list, col].forEach((el) => {
+	            el.addEventListener("dragover", (event) => {
+	              if (!allowCopyFromPast()) return;
+	              event.preventDefault();
+	              if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+	              list.classList.add("drag-over");
+	            });
+	            el.addEventListener("dragleave", () => {
+	              list.classList.remove("drag-over");
+	            });
+	            el.addEventListener("drop", handleCopyDrop);
+	          });
+	        }
+
 	        col.appendChild(header);
 	        col.appendChild(list);
 	        scheduleGrid.appendChild(col);
 		      }
-
-		      // Allow copying tasks from a past day into Today via drag-and-drop onto today's column.
-		      if (key === todayKey) {
-		        const isPastDay = (dayKey) => {
-		          const srcDate = parseCalendarDate(dayKey);
-		          const todayDate = parseCalendarDate(todayKey);
-		          if (!srcDate || !todayDate) return false;
-		          return srcDate.getTime() < todayDate.getTime();
-		        };
-		        const allowCopyFromPast = () =>
-		          scheduleDrag &&
-		          typeof scheduleDrag.dayKey === "string" &&
-		          scheduleDrag.dayKey !== todayKey &&
-		          isPastDay(scheduleDrag.dayKey);
-
-		        const handleCopyDrop = (event) => {
-		          if (!allowCopyFromPast()) return;
-		          event.preventDefault();
-		          list.classList.remove("drag-over");
-		          const ok = copyScheduleTodoToDay(scheduleDrag.dayKey, todayKey, scheduleDrag.todoId);
-		          scheduleDrag = null;
-		          if (ok) {
-		            renderScheduleView();
-		            renderTodayTodos();
-		            showToast("Copied to today.", "success");
-		          }
-		        };
-
-		        [list, col].forEach((el) => {
-		          el.addEventListener("dragover", (event) => {
-		            if (!allowCopyFromPast()) return;
-		            event.preventDefault();
-		            if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
-		            list.classList.add("drag-over");
-		          });
-		          el.addEventListener("dragleave", () => {
-		            list.classList.remove("drag-over");
-		          });
-		          el.addEventListener("drop", handleCopyDrop);
-		        });
-		      }
-	    }
+		    }
 
     function closeScheduleTaskModal() {
       scheduleModalState = null;
