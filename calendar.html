@@ -2,7 +2,7 @@
 <html lang="en" data-theme="breeze">
 <head>
   <meta charset="UTF-8" />
-  <title>Study Planner – Calendar</title>
+  <title>Study Planner – Weekly Schedule</title>
   <meta name="description" content="Study Planner calendar for deadlines, assignments, and study blocks." />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#2f62f4" />
@@ -40,6 +40,7 @@
   <link rel="stylesheet" href="./src/styles/a11y.css" />
   <link rel="stylesheet" href="./src/styles/enhancements.css" />
   <link rel="stylesheet" href="./src/styles/calendar-extras.css" />
+  <link rel="stylesheet" href="./src/styles/weekly-schedule.css" />
   <link rel="stylesheet" href="./src/styles/notes.css" />
   <link rel="stylesheet" href="./src/styles/exam-mode.css" />
   <link rel="stylesheet" href="./src/styles/insights.css" />
@@ -63,113 +64,120 @@
   <link rel="stylesheet" href="./src/styles/res-3440x1440.css" />
   <link rel="stylesheet" href="./src/styles/res-5120x1440.css" />
 </head>
-<body class="calendar-page">
+<body class="calendar-page weekly-page">
   <aside class="ad-column ad-column-left" aria-label="Advertisement column"></aside>
   <aside class="ad-column ad-column-right" aria-label="Advertisement column"></aside>
-  <div class="calendar-shell">
-    <div class="header-row calendar-header">
-      <div class="header-main">
-        <p class="eyebrow">Planning</p>
-        <h1>Calendar & deadlines</h1>
-        <p class="subtitle">
-          Keep exam dates, study blocks, and reminders aligned in one focused calendar.
-        </p>
-      </div>
-      <div class="header-actions">
-        <a class="btn btn-secondary header-calendar-btn" href="index.html">← Back to board</a>
-        <a class="btn btn-secondary header-calendar-btn" href="account.html">Account</a>
-        <div class="header-menu" aria-label="Menu">
-          <button class="header-menu-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Open menu">...</button>
-          <div class="header-menu-panel">
-            <div class="header-menu-group">
-              <div class="header-menu-subtitle">Pages</div>
-              <a class="header-menu-link" href="./index.html?mode=board">Board</a>
-              <a class="header-menu-link" href="./index.html?mode=subjects">Subjects</a>
-              <a class="header-menu-link" href="./index.html?mode=today">Today's focus</a>
-              <a class="header-menu-link" href="./index.html?mode=schedule">Daily schedule</a>
+
+  <div class="weekly-shell" id="weeklyShell" data-section="weekly-shell">
+    <div class="ws-layout">
+      <nav class="ws-sidebar" id="wsSidebar" aria-label="Primary navigation">
+        <div class="ws-sidebar-top">
+          <div class="ws-user">
+            <div class="ws-avatar" aria-hidden="true">SP</div>
+            <div class="ws-user-meta">
+              <div class="ws-user-name">Study Planner</div>
+              <div class="ws-user-sub">Weekly schedule</div>
             </div>
-            <div class="header-menu-divider"></div>
-		            <div class="header-menu-group">
-		              <div class="header-menu-subtitle">Study hubs</div>
-		              <a class="header-menu-link" href="./calendar.html">Calendar</a>
-		              <a class="header-menu-link" href="./stundenplan.html">Stundenplan</a>
-		              <a class="header-menu-link" href="./account.html">Account</a>
-		            </div>
           </div>
+          <button class="btn ws-add-task" id="wsAddTaskBtn" type="button">Add task</button>
         </div>
-      </div>
-    </div>
 
-    <div class="calendar-scroll">
-      <div class="calendar-layout">
-        <section class="calendar-month-card">
-          <div class="calendar-month-header">
-            <div>
-              <div class="calendar-month-label" id="monthLabel">Month 2024</div>
-              <div class="calendar-month-subtitle">Click a date to add items in the pop-up form.</div>
-            </div>
-            <div class="calendar-month-actions">
-              <button class="icon-btn" id="prevMonthBtn" type="button" aria-label="Previous month">‹</button>
-              <button class="icon-btn" id="todayMonthBtn" type="button" aria-label="Jump to current month">•</button>
-              <button class="icon-btn" id="nextMonthBtn" type="button" aria-label="Next month">›</button>
-            </div>
-          </div>
-          <div class="calendar-weekdays">
-            <span>Mon</span>
-            <span>Tue</span>
-            <span>Wed</span>
-            <span>Thu</span>
-            <span>Fri</span>
-            <span>Sat</span>
-            <span>Sun</span>
-          </div>
-          <div class="calendar-day-grid" id="calendarGrid"></div>
-        </section>
+        <ul class="ws-nav" aria-label="Navigation links">
+          <li><a class="ws-nav-link" href="./index.html?mode=board">Search</a></li>
+          <li><a class="ws-nav-link" href="./index.html?mode=board">Inbox</a></li>
+          <li><a class="ws-nav-link" href="./index.html?mode=today">Today</a></li>
+          <li><a class="ws-nav-link ws-nav-link-active" href="./calendar.html" aria-current="page">Upcoming</a></li>
+          <li><a class="ws-nav-link" href="./index.html?mode=schedule">Daily schedule</a></li>
+          <li><a class="ws-nav-link" href="./index.html?mode=subjects">Subjects</a></li>
+          <li><a class="ws-nav-link" href="./stundenplan.html">Timetable</a></li>
+          <li><a class="ws-nav-link" href="./account.html">Account</a></li>
+        </ul>
 
-        <aside class="calendar-side">
-          <div class="calendar-card">
-            <div class="calendar-side-head">
-              <div class="side-date" id="selectedDateLabel">Today</div>
-              <div class="side-meta" id="selectedDateMeta">0 items scheduled</div>
-            </div>
-            <div class="side-actions">
-              <button class="chip-btn chip-btn-primary" id="openSelectedFormBtn" type="button">Add for this day</button>
-            </div>
-            <div class="calendar-day-events" id="selectedEventList"></div>
+        <details class="ws-section" open>
+          <summary>Favorites</summary>
+          <div class="ws-section-body">
+            <a class="ws-sub-link" href="./calendar.html" aria-current="page">Weekly schedule</a>
+            <a class="ws-sub-link" href="./index.html?mode=schedule">Daily schedule</a>
           </div>
+        </details>
 
-          <div class="calendar-card">
-            <div class="side-subtitle">Upcoming focus</div>
-            <div class="calendar-upcoming" id="upcomingList"></div>
-          </div>
-
-          <div class="calendar-card" id="assignmentsPanel">
-            <div class="side-subtitle">Assignments & exams</div>
-            <div class="assignments-actions">
-              <button class="chip-btn chip-btn-primary" id="assignmentsAddBtn" type="button">Add</button>
-              <button class="chip-btn" id="examModeBtn" type="button" hidden>Exam mode</button>
-              <button class="chip-btn" id="autoPlanWeekBtn" type="button">Auto-plan week</button>
-            </div>
-            <div class="assignments-filters">
-              <div class="assignments-filter-tabs assignments-tabs" aria-label="Assignments filter tabs">
-                <button class="chip-btn" id="assignmentsFilterDueSoon" type="button" aria-pressed="true">Due soon</button>
-                <button class="chip-btn" id="assignmentsFilterThisWeek" type="button" aria-pressed="false">This week</button>
-                <button class="chip-btn" id="assignmentsFilterAll" type="button" aria-pressed="false">All</button>
+        <details class="ws-section" open>
+          <summary>My Projects</summary>
+          <div class="ws-section-body">
+            <div class="calendar-card ws-assignments-card" id="assignmentsPanel">
+              <div class="side-subtitle">Assignments & exams</div>
+              <div class="assignments-actions">
+                <button class="chip-btn chip-btn-primary" id="assignmentsAddBtn" type="button">Add</button>
+                <button class="chip-btn" id="examModeBtn" type="button">Exam mode</button>
+                <button class="chip-btn" id="autoPlanWeekBtn" type="button">Auto-plan week</button>
               </div>
-              <label class="sr-only" for="assignmentsStatusFilter">Status</label>
-              <select id="assignmentsStatusFilter">
-                <option value="open">Open</option>
-                <option value="all">All</option>
-                <option value="done">Done</option>
-              </select>
+              <div class="assignments-filters">
+                <div class="assignments-filter-tabs assignments-tabs" aria-label="Assignments filter tabs">
+                  <button class="chip-btn" id="assignmentsFilterDueSoon" type="button" aria-pressed="true">Due soon</button>
+                  <button class="chip-btn" id="assignmentsFilterThisWeek" type="button" aria-pressed="false">This week</button>
+                  <button class="chip-btn" id="assignmentsFilterAll" type="button" aria-pressed="false">All</button>
+                </div>
+                <label class="sr-only" for="assignmentsStatusFilter">Status</label>
+                <select id="assignmentsStatusFilter">
+                  <option value="open">Open</option>
+                  <option value="all">All</option>
+                  <option value="done">Done</option>
+                </select>
+              </div>
+              <div class="calendar-form-status" id="assignmentsStatus"></div>
+              <div class="calendar-upcoming" id="assignmentsList"></div>
+              <div class="side-subtitle" style="margin-top:12px;">Review today</div>
+              <div class="calendar-upcoming" id="calendarReviewList"></div>
             </div>
-            <div class="calendar-form-status" id="assignmentsStatus"></div>
-            <div class="calendar-upcoming" id="assignmentsList"></div>
-            <div class="side-subtitle" style="margin-top:12px;">Review today</div>
-            <div class="calendar-upcoming" id="calendarReviewList"></div>
           </div>
-        </aside>
-      </div>
+        </details>
+
+        <div class="ws-sidebar-footer">
+          <a class="btn btn-secondary ws-footer-link" href="./index.html?mode=board">← Back to board</a>
+        </div>
+      </nav>
+
+      <button class="ws-sidebar-backdrop" id="wsSidebarBackdrop" type="button" aria-label="Close navigation" hidden></button>
+
+      <main class="ws-main" aria-label="Weekly schedule">
+        <header class="ws-header" aria-label="Schedule header">
+          <div class="ws-header-left">
+            <button class="ws-sidebar-toggle icon-btn icon-btn-ghost" id="wsSidebarToggle" type="button" aria-label="Open navigation">☰</button>
+            <div class="ws-title-block">
+              <h1 class="ws-title">Upcoming</h1>
+              <div class="ws-month" id="wsMonthLabel">—</div>
+            </div>
+          </div>
+
+          <div class="ws-header-actions">
+            <button class="btn btn-secondary" id="wsTodayBtn" type="button">Today</button>
+            <div class="ws-week-nav" role="group" aria-label="Week navigation">
+              <button class="icon-btn icon-btn-ghost" id="wsPrevWeekBtn" type="button" aria-label="Previous week">‹</button>
+              <button class="icon-btn icon-btn-ghost" id="wsNextWeekBtn" type="button" aria-label="Next week">›</button>
+            </div>
+            <div class="ws-plan">
+              <button class="btn btn-secondary" id="wsPlanBtn" type="button" aria-haspopup="true" aria-expanded="false">Plan ▾</button>
+              <div class="ws-plan-popover" id="wsPlanPopover" role="menu" aria-label="Plan menu" hidden>
+                <button class="ws-plan-item" id="wsPlanAddTaskBtn" type="button" role="menuitem">Add task…</button>
+                <button class="ws-plan-item" id="wsPlanAddAssignmentBtn" type="button" role="menuitem">Add assignment/exam…</button>
+                <button class="ws-plan-item" id="wsPlanAutoPlanBtn" type="button" role="menuitem">Auto-plan week…</button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="ws-week-meta" aria-label="Week controls">
+          <div class="ws-week-range" id="wsWeekRangeLabel">—</div>
+          <div class="ws-day-strip" id="wsDayStrip" role="tablist" aria-label="Select day"></div>
+        </div>
+
+        <section class="ws-schedule" aria-label="Weekly schedule">
+          <div class="ws-grid-scroll" id="wsGridScroll">
+            <div class="ws-grid-head" id="wsGridHead"></div>
+            <div class="ws-grid" id="wsGrid" role="grid" aria-label="Weekly time grid"></div>
+          </div>
+        </section>
+      </main>
     </div>
   </div>
 
@@ -179,8 +187,8 @@
       <div class="calendar-modal-head">
         <div>
           <div class="modal-label" id="modalDateLabel">Selected date</div>
-          <div class="modal-title" id="modalTitle">Add calendar item</div>
-          <div class="modal-subtitle">Fill the details and save to your planner.</div>
+          <div class="modal-title" id="modalTitle">Add task</div>
+          <div class="modal-subtitle">Leave times empty for an all-day item.</div>
         </div>
         <div class="modal-actions">
           <button class="chip-btn chip-btn-primary" id="newDeadlineTodayBtn" type="button">Today</button>
@@ -194,14 +202,18 @@
             <input type="text" id="eventTitleInput" name="title" placeholder="Deadline, study block, exam..." required />
           </label>
         </div>
-        <div class="form-grid">
+        <div class="form-grid ws-form-grid-3">
           <label>
             Date
             <input type="date" id="eventDateInput" name="date" required />
           </label>
           <label>
-            Time
-            <input type="time" id="eventTimeInput" name="time" step="60" />
+            Start
+            <input type="time" id="eventTimeInput" name="time" step="300" />
+          </label>
+          <label>
+            End
+            <input type="time" id="eventEndTimeInput" name="endTime" step="300" />
           </label>
         </div>
         <div class="form-grid">
@@ -229,11 +241,18 @@
             <textarea id="eventNotesInput" name="notes" rows="3" placeholder="Context, links, or next steps"></textarea>
           </label>
         </div>
+        <div class="form-row ws-event-meta-row">
+          <label class="ws-event-done-toggle">
+            <input type="checkbox" id="eventDoneInput" />
+            Mark as done
+          </label>
+        </div>
         <div class="calendar-form-actions">
           <div class="calendar-form-status" id="formStatus"></div>
           <div class="calendar-form-buttons">
+            <button class="btn btn-secondary" id="eventDeleteBtn" type="button" hidden>Delete</button>
             <button class="btn btn-secondary" id="cancelEditBtn" type="button">Cancel</button>
-            <button class="btn" id="formSubmitBtn" type="submit">Add to calendar</button>
+            <button class="btn" id="formSubmitBtn" type="submit">Save</button>
           </div>
         </div>
       </form>
@@ -342,17 +361,17 @@
       </div>
       <div class="calendar-form">
         <div class="notes-toolbar">
-	          <div class="notes-toolbar-left">
-	            <label class="sr-only" for="notesSearchInput">Search</label>
-	            <input class="notes-search" id="notesSearchInput" type="search" placeholder="Find in note…" />
-	            <button class="btn btn-secondary" id="notesSearchBtn" type="button">Find</button>
-	          </div>
-	          <div class="notes-toolbar-right">
-	            <label class="sr-only" for="notesInsertSelect">Insert link</label>
-	            <select id="notesInsertSelect"></select>
-	            <button class="btn btn-secondary" id="notesInsertBtn" type="button">Insert link</button>
-	          </div>
-	        </div>
+          <div class="notes-toolbar-left">
+            <label class="sr-only" for="notesSearchInput">Search</label>
+            <input class="notes-search" id="notesSearchInput" type="search" placeholder="Find in note…" />
+            <button class="btn btn-secondary" id="notesSearchBtn" type="button">Find</button>
+          </div>
+          <div class="notes-toolbar-right">
+            <label class="sr-only" for="notesInsertSelect">Insert link</label>
+            <select id="notesInsertSelect"></select>
+            <button class="btn btn-secondary" id="notesInsertBtn" type="button">Insert link</button>
+          </div>
+        </div>
         <div class="calendar-form-status" id="notesSaveHint" role="status" aria-live="polite"></div>
         <div class="notes-layout">
           <div class="notes-pane">
@@ -479,14 +498,14 @@
   <script src="./src/assignments.js" defer></script>
   <script src="./src/notes.js" defer></script>
   <script src="./src/autoplan.js" defer></script>
-	  <script src="./src/time-budget.js" defer></script>
-	  <script src="./src/review-engine.js" defer></script>
-	  <script src="./src/exam-mode.js" defer></script>
-	  <script src="./src/notifications.js" defer></script>
-	  <script src="./src/a11y-utils.js" defer></script>
-	  <script src="./src/sync.js" defer></script>
+  <script src="./src/time-budget.js" defer></script>
+  <script src="./src/review-engine.js" defer></script>
+  <script src="./src/exam-mode.js" defer></script>
+  <script src="./src/notifications.js" defer></script>
+  <script src="./src/a11y-utils.js" defer></script>
+  <script src="./src/sync.js" defer></script>
   <script src="./src/page-menu.js" defer></script>
-  <script src="./src/calendar.js" defer></script>
+  <script src="./src/weekly-schedule.js" defer></script>
   <script src="./src/assignments-ui.js" defer></script>
 </body>
 </html>
