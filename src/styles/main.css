@@ -190,16 +190,8 @@ html.ads-disabled ins.adsbygoogle {
 .app {
   margin: 28px auto 36px;
   padding: 20px 22px 36px;
-  width: min(
-    var(--app-desktop-max),
-    92vw,
-    calc((100dvh - var(--header-size) - 48px) * var(--app-aspect-ratio))
-  );
-  min-width: min(
-    var(--app-desktop-min),
-    92vw,
-    calc((100dvh - var(--header-size) - 48px) * var(--app-aspect-ratio))
-  );
+  width: min(var(--app-desktop-max), 90vw);
+  min-width: min(var(--app-desktop-min), 90vw);
   max-width: var(--app-desktop-max);
   min-height: calc(100vh - 24px);
   min-height: calc(100dvh - 24px);
@@ -1783,9 +1775,9 @@ body.session-header-mounted #focusCard {
 /* Laptop-friendly (14–16\") layout tuning */
 @media (max-width: 1440px) {
   .app {
-    width: min(var(--app-desktop-max), 98%);
+    width: min(var(--app-desktop-max), 90%);
     max-width: var(--app-desktop-max);
-    min-width: min(var(--app-desktop-min), 98%);
+    min-width: min(var(--app-desktop-min), 90%);
   }
 
   .layout-row {
