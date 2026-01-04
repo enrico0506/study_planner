@@ -9,6 +9,10 @@
   --ws-header-bg: color-mix(in srgb, var(--surface-strong) 75%, transparent);
 }
 
+.weekly-page [hidden] {
+  display: none !important;
+}
+
 .weekly-page .weekly-shell {
   width: var(--app-shell-width);
   max-width: var(--app-shell-width);
