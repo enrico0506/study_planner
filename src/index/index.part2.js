@@ -352,6 +352,84 @@
       return getDayId(new Date(), 2);
     }
 
+    function normalizeDayKey(dayKey) {
+      const key = String(dayKey || "").trim();
+      if (!key) return "";
+      // Expect YYYY-MM-DD; if not, still return the raw key so we don't hard-break older data.
+      return key;
+    }
+
+    const FOCUS_DAY_STORAGE_KEY = "studyFocusDayKey_v1";
+
+    function loadFocusDayKey() {
+      try {
+        const raw = SP_STORAGE
+          ? SP_STORAGE.getRaw(FOCUS_DAY_STORAGE_KEY, null)
+          : localStorage.getItem(FOCUS_DAY_STORAGE_KEY);
+        return normalizeDayKey(raw);
+      } catch {
+        return "";
+      }
+    }
+
+    function saveFocusDayKey(key) {
+      const clean = normalizeDayKey(key);
+      if (!clean) return;
+      try {
+        if (SP_STORAGE) SP_STORAGE.setRaw(FOCUS_DAY_STORAGE_KEY, clean, { debounceMs: 150 });
+        else localStorage.setItem(FOCUS_DAY_STORAGE_KEY, clean);
+      } catch {}
+    }
+
+    function getFocusDayKey() {
+      let key = normalizeDayKey(typeof focusDayKey === "string" ? focusDayKey : "");
+      if (!key) {
+        key = loadFocusDayKey();
+        if (key) focusDayKey = key;
+      }
+      return key || getTodayKey();
+    }
+
+    function setFocusDayKey(nextKey) {
+      focusDayKey = normalizeDayKey(nextKey) || getTodayKey();
+      saveFocusDayKey(focusDayKey);
+      return focusDayKey;
+    }
+
+    function compareDayKeys(a, b) {
+      const aId = dateKeyToDayId(normalizeDayKey(a));
+      const bId = dateKeyToDayId(normalizeDayKey(b));
+      if (aId === null || bId === null) return 0;
+      return aId - bId;
+    }
+
+    function shiftDayKey(dayKey, deltaDays) {
+      const baseKey = normalizeDayKey(dayKey) || getTodayKey();
+      const baseId = dateKeyToDayId(baseKey);
+      if (baseId === null) return baseKey;
+      const nextId = baseId + (Number(deltaDays) || 0);
+      const nextKey = dayIdToDateKey(nextId);
+      return nextKey || baseKey;
+    }
+
+    function describeDayKey(dayKey) {
+      const key = normalizeDayKey(dayKey) || getTodayKey();
+      const diff = compareDayKeys(key, getTodayKey());
+      if (diff === 0) return "Today";
+      if (diff === -1) return "Yesterday";
+      if (diff === 1) return "Tomorrow";
+      return key;
+    }
+
+    function isInFocusList(dayKey, subjectId, fileId) {
+      const key = normalizeDayKey(dayKey) || getTodayKey();
+      if (key === getTodayKey()) {
+        return todayTodos.some((t) => t.subjectId === subjectId && t.fileId === fileId);
+      }
+      const list = dailyFocusMap && Array.isArray(dailyFocusMap[key]) ? dailyFocusMap[key] : [];
+      return list.some((t) => t && t.subjectId === subjectId && t.fileId === fileId);
+    }
+
     function dateToKey(date) {
       if (!(date instanceof Date)) return null;
       return formatLocalDateKey(date);
@@ -558,6 +636,212 @@
       return todayTodos.some(
         (t) => t.subjectId === subjectId && t.fileId === fileId
       );
+    }
+
+    function isPastDayKey(dayKey) {
+      return compareDayKeys(normalizeDayKey(dayKey) || getTodayKey(), getTodayKey()) < 0;
+    }
+
+    function ensureDayList(dayKey) {
+      const key = normalizeDayKey(dayKey) || getTodayKey();
+      if (key === getTodayKey()) return todayTodos;
+
+      if (!dailyFocusMap || typeof dailyFocusMap !== "object") dailyFocusMap = {};
+      const raw = Array.isArray(dailyFocusMap[key]) ? dailyFocusMap[key] : [];
+      const clean = cloneTodos(raw);
+      dailyFocusMap[key] = clean;
+      return dailyFocusMap[key];
+    }
+
+    function saveDayList(dayKey, list) {
+      const key = normalizeDayKey(dayKey) || getTodayKey();
+      const clean = cloneTodos(list);
+      if (key === getTodayKey()) {
+        todayTodos = clean;
+        saveTodayTodos();
+        return;
+      }
+      if (!dailyFocusMap || typeof dailyFocusMap !== "object") dailyFocusMap = {};
+      dailyFocusMap[key] = clean;
+      saveDailyFocusMap();
+    }
+
+    function removeFileTodoFromDay(dayKey, subjectId, fileId) {
+      const key = normalizeDayKey(dayKey) || getTodayKey();
+      if (key === getTodayKey()) {
+        cleanupTodoForFile(subjectId, fileId);
+        return;
+      }
+      const list = ensureDayList(key);
+      const next = list.filter((t) => !(t && t.subjectId === subjectId && t.fileId === fileId));
+      saveDayList(key, next);
+      renderTodayTodos();
+      renderScheduleView();
+    }
+
+    function toggleTodoDoneForDay(dayKey, todoId, checked, { promptConfidence = false } = {}) {
+      const key = normalizeDayKey(dayKey) || getTodayKey();
+      if (isPastDayKey(key)) return;
+      const list = ensureDayList(key);
+      const todo = list.find((t) => t && t.id === todoId);
+      if (!todo) return;
+      const wasDone = !!todo.done;
+      todo.done = !!checked;
+      if (todo.done && Array.isArray(todo.subtasks)) {
+        todo.subtasks.forEach((s) => {
+          s.done = true;
+        });
+      } else if (!todo.done && Array.isArray(todo.subtasks)) {
+        todo.subtasks.forEach((s) => {
+          s.done = false;
+        });
+      }
+      saveDayList(key, list);
+      renderTodayTodos();
+      renderScheduleView();
+      if (key === getTodayKey()) renderTable();
+
+      const isFileTodo =
+        (todo.kind || "file") !== "custom" && !!todo.subjectId && !!todo.fileId;
+      if (key === getTodayKey() && todo.done && !wasDone && promptConfidence && isFileTodo) {
+        promptConfidenceUpdateForFile(todo.subjectId, todo.fileId);
+      }
+    }
+
+    function moveTodoForDay(dayKey, sourceId, targetId) {
+      const key = normalizeDayKey(dayKey) || getTodayKey();
+      if (isPastDayKey(key)) return;
+      if (!sourceId || !targetId || sourceId === targetId) return;
+      const list = ensureDayList(key);
+      const sourceIndex = list.findIndex((t) => t && t.id === sourceId);
+      const targetIndex = list.findIndex((t) => t && t.id === targetId);
+      if (sourceIndex === -1 || targetIndex === -1) return;
+      const next = [...list];
+      const [moved] = next.splice(sourceIndex, 1);
+      next.splice(targetIndex, 0, moved);
+      saveDayList(key, next);
+      renderTodayTodos();
+      renderScheduleView();
+      if (key === getTodayKey()) renderTable();
+    }
+
+    function moveTodoByDeltaForDay(dayKey, todoId, delta) {
+      const key = normalizeDayKey(dayKey) || getTodayKey();
+      if (isPastDayKey(key)) return false;
+      const list = ensureDayList(key);
+      const idx = list.findIndex((t) => t && t.id === todoId);
+      if (idx === -1) return false;
+      const nextIdx = idx + (delta < 0 ? -1 : 1);
+      if (nextIdx < 0 || nextIdx >= list.length) return false;
+      const next = [...list];
+      const [moved] = next.splice(idx, 1);
+      next.splice(nextIdx, 0, moved);
+      saveDayList(key, next);
+      renderTodayTodos();
+      renderScheduleView();
+      if (key === getTodayKey()) renderTable();
+      return true;
+    }
+
+    function moveTodoToTopForDay(dayKey, todoId) {
+      const key = normalizeDayKey(dayKey) || getTodayKey();
+      if (isPastDayKey(key)) return false;
+      const list = ensureDayList(key);
+      const idx = list.findIndex((t) => t && t.id === todoId);
+      if (idx <= 0) return false;
+      const next = [...list];
+      const [moved] = next.splice(idx, 1);
+      next.unshift(moved);
+      saveDayList(key, next);
+      renderTodayTodos();
+      renderScheduleView();
+      if (key === getTodayKey()) renderTable();
+      return true;
+    }
+
+    function removeTodoFromDay(dayKey, todoId) {
+      const key = normalizeDayKey(dayKey) || getTodayKey();
+      if (isPastDayKey(key)) return;
+      const list = ensureDayList(key);
+      const next = list.filter((t) => t && t.id !== todoId);
+      saveDayList(key, next);
+      renderTodayTodos();
+      renderScheduleView();
+      if (key === getTodayKey()) renderTable();
+    }
+
+    function addSubtaskToDay(dayKey, todoId, label) {
+      const key = normalizeDayKey(dayKey) || getTodayKey();
+      if (isPastDayKey(key)) return;
+      const cleanLabel = String(label || "").trim();
+      if (!cleanLabel) return;
+      const list = ensureDayList(key);
+      const todo = list.find((t) => t && t.id === todoId);
+      if (!todo) return;
+      if (!Array.isArray(todo.subtasks)) todo.subtasks = [];
+      todo.subtasks.push({ id: createId(), label: cleanLabel, done: false });
+      saveDayList(key, list);
+      renderTodayTodos();
+      renderScheduleView();
+    }
+
+    function removeSubtaskFromDay(dayKey, todoId, subId) {
+      const key = normalizeDayKey(dayKey) || getTodayKey();
+      if (isPastDayKey(key)) return;
+      const list = ensureDayList(key);
+      const todo = list.find((t) => t && t.id === todoId);
+      if (!todo || !Array.isArray(todo.subtasks)) return;
+      todo.subtasks = todo.subtasks.filter((s) => s && s.id !== subId);
+      saveDayList(key, list);
+      renderTodayTodos();
+      renderScheduleView();
+    }
+
+    function toggleSubtaskForDay(dayKey, todoId, subId, checked, { promptConfidence = false } = {}) {
+      const key = normalizeDayKey(dayKey) || getTodayKey();
+      if (isPastDayKey(key)) return;
+      const list = ensureDayList(key);
+      const todo = list.find((t) => t && t.id === todoId);
+      if (!todo || !Array.isArray(todo.subtasks)) return;
+      const sub = todo.subtasks.find((s) => s && s.id === subId);
+      if (!sub) return;
+      const wasDone = !!todo.done;
+      sub.done = !!checked;
+      const allDone = todo.subtasks.length > 0 && todo.subtasks.every((s) => !!s.done);
+      todo.done = allDone;
+      saveDayList(key, list);
+      renderTodayTodos();
+      renderScheduleView();
+      if (key === getTodayKey()) renderTable();
+
+      const isFileTodo =
+        (todo.kind || "file") !== "custom" && !!todo.subjectId && !!todo.fileId;
+      if (key === getTodayKey() && todo.done && !wasDone && promptConfidence && isFileTodo) {
+        promptConfidenceUpdateForFile(todo.subjectId, todo.fileId);
+      }
+    }
+
+    function setAllSubtasksForDay(dayKey, todoId, checked, { promptConfidence = false } = {}) {
+      const key = normalizeDayKey(dayKey) || getTodayKey();
+      if (isPastDayKey(key)) return;
+      const list = ensureDayList(key);
+      const todo = list.find((t) => t && t.id === todoId);
+      if (!todo || !Array.isArray(todo.subtasks)) return;
+      const next = !!checked;
+      todo.subtasks.forEach((s) => {
+        if (s) s.done = next;
+      });
+      todo.done = next;
+      saveDayList(key, list);
+      renderTodayTodos();
+      renderScheduleView();
+      if (key === getTodayKey()) renderTable();
+
+      const isFileTodo =
+        (todo.kind || "file") !== "custom" && !!todo.subjectId && !!todo.fileId;
+      if (key === getTodayKey() && todo.done && promptConfidence && isFileTodo) {
+        promptConfidenceUpdateForFile(todo.subjectId, todo.fileId);
+      }
     }
 
     function addDailyStudyForFile(file, ms) {
@@ -1995,18 +2279,24 @@
       renderAddTodoSubtasks();
     }
 
-    function openAddTodoModal(subjectId, file) {
+    function openAddTodoModal(subjectId, file, dayKey) {
       const subj = subjects.find((s) => s.id === subjectId);
+      const targetDayKey = normalizeDayKey(dayKey) || getFocusDayKey();
       addTodoModalState = {
+        dayKey: targetDayKey,
         subjectId,
         fileId: file.id,
         subjectName: subj ? subj.name || "Subject" : "Subject",
         fileName: file.name || "Untitled file",
         subtasks: []
       };
-      if (addTodoModalTitle) addTodoModalTitle.textContent = "Add to Today";
+      if (addTodoModalTitle) {
+        addTodoModalTitle.textContent =
+          targetDayKey === getTodayKey() ? "Add to Today" : `Add to ${describeDayKey(targetDayKey)}`;
+      }
       if (addTodoModalSubtitle) {
-        addTodoModalSubtitle.textContent = `${addTodoModalState.fileName} · ${addTodoModalState.subjectName}`;
+        const dayLabel = describeDayKey(targetDayKey);
+        addTodoModalSubtitle.textContent = `${addTodoModalState.fileName} · ${addTodoModalState.subjectName} · ${dayLabel}`;
       }
       if (addTodoSubtaskInput) addTodoSubtaskInput.value = "";
       renderAddTodoSubtasks();
@@ -2039,15 +2329,30 @@
         return;
       }
       const subtasks = addTodoModalState.subtasks || [];
-      const added = addTodoForFile(addTodoModalState.subjectId, addTodoModalState.fileId, subtasks);
+      const targetDayKey = normalizeDayKey(addTodoModalState.dayKey) || getFocusDayKey();
+      const added = addTodoForFileToDay(
+        targetDayKey,
+        addTodoModalState.subjectId,
+        addTodoModalState.fileId,
+        subtasks
+      );
       if (!added) {
-        showNotice("Already in Today’s Focus.", "info");
+        const dayLabel = describeDayKey(targetDayKey);
+        showNotice(
+          dayLabel === "Today" ? "Already in Today’s Focus." : `Already in ${dayLabel} focus.`,
+          "info"
+        );
       } else {
-        showNotice("Added to Today’s Focus.", "success");
+        const dayLabel = describeDayKey(targetDayKey);
+        showNotice(
+          dayLabel === "Today" ? "Added to Today’s Focus." : `Added to ${dayLabel} focus.`,
+          "success"
+        );
       }
       closeAddTodoModal();
       renderTable();
       renderTodayTodos();
+      renderScheduleView();
     }
 
     function cleanupTodosForSubject(subjectId) {

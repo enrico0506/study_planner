@@ -484,11 +484,13 @@
       if (todayDropZone) {
         todayDropZone.style.display = todayExpanded && !subjectsMaximized ? "none" : "";
       }
-      if (todayHeaderActions && todayHeaderActions.firstChild) {
-        const btn = todayHeaderActions.firstChild;
-        btn.setAttribute("aria-pressed", todayExpanded ? "true" : "false");
-        btn.dataset.state = todayExpanded ? "restore" : "maximize";
-        btn.dataset.icon = todayExpanded ? "⤡" : "⤢";
+      if (todayHeaderActions) {
+        const btn = todayHeaderActions.querySelector(".today-maximize-btn");
+        if (btn) {
+          btn.setAttribute("aria-pressed", todayExpanded ? "true" : "false");
+          btn.dataset.state = todayExpanded ? "restore" : "maximize";
+          btn.dataset.icon = todayExpanded ? "⤡" : "⤢";
+        }
       }
       const maxSubjectBtn = document.getElementById("maximizeSubjectsBtn");
       if (maxSubjectBtn) {
@@ -537,6 +539,43 @@
     // Events
 
     if (todayHeaderActions) {
+      const dayNav = document.createElement("div");
+      dayNav.className = "today-day-nav";
+
+      const dayPrevBtn = document.createElement("button");
+      dayPrevBtn.type = "button";
+      dayPrevBtn.className = "today-day-nav-btn";
+      dayPrevBtn.textContent = "‹";
+      dayPrevBtn.title = "Previous day";
+      dayPrevBtn.setAttribute("aria-label", "Previous day");
+      dayPrevBtn.addEventListener("click", () => {
+        setFocusDayKey(shiftDayKey(getFocusDayKey(), -1));
+        renderTodayTodos();
+        renderTable();
+      });
+
+      const dayLabel = document.createElement("div");
+      dayLabel.className = "today-day-nav-label";
+      dayLabel.id = "todayDayNavLabel";
+      dayLabel.textContent = describeDayKey(getFocusDayKey());
+
+      const dayNextBtn = document.createElement("button");
+      dayNextBtn.type = "button";
+      dayNextBtn.className = "today-day-nav-btn";
+      dayNextBtn.textContent = "›";
+      dayNextBtn.title = "Next day";
+      dayNextBtn.setAttribute("aria-label", "Next day");
+      dayNextBtn.addEventListener("click", () => {
+        setFocusDayKey(shiftDayKey(getFocusDayKey(), 1));
+        renderTodayTodos();
+        renderTable();
+      });
+
+      dayNav.appendChild(dayPrevBtn);
+      dayNav.appendChild(dayLabel);
+      dayNav.appendChild(dayNextBtn);
+      todayHeaderActions.appendChild(dayNav);
+
       const expandBtn = document.createElement("button");
       expandBtn.type = "button";
       expandBtn.className = "icon-btn today-maximize-btn";
@@ -1129,11 +1168,24 @@
     });
 
     if (viewBoardBtn) {
-      viewBoardBtn.addEventListener("click", () => setActiveView("board"));
+      viewBoardBtn.addEventListener("click", () => {
+        // Keep the URL `mode` param in sync so reloads don't unexpectedly snap back to schedule mode.
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("mode");
+          window.history.replaceState(null, "", url.toString());
+        } catch (e) {}
+        applyPageMode();
+        setActiveView("board");
+      });
     }
 
     if (viewScheduleBtn) {
-      viewScheduleBtn.addEventListener("click", () => setActiveView("schedule"));
+      viewScheduleBtn.addEventListener("click", () => {
+        // Keep phone-mode routing in sync so responsive CSS doesn't blank the UI.
+        if (document.body) document.body.dataset.mode = "schedule";
+        setActiveView("schedule");
+      });
     }
 
     // Filter removed
@@ -1409,6 +1461,12 @@
       todayDropZone.addEventListener("drop", (event) => {
         event.preventDefault();
         todayDropZone.classList.remove("today-dropzone-active");
+        const focusKey = getFocusDayKey();
+        if (isPastDayKey(focusKey)) {
+          showNotice("Past focus is read-only.", "info");
+          dragState = null;
+          return;
+        }
         let source = dragState;
         if (!source && event.dataTransfer) {
           const payload = event.dataTransfer.getData("application/json");
@@ -1422,8 +1480,12 @@
           }
         }
         if (!source) return;
-        if (isInTodayList(source.subjectId, source.fileId)) {
-          showNotice("Already in Today’s Focus.", "info");
+        if (isInFocusList(focusKey, source.subjectId, source.fileId)) {
+          const dayLabel = describeDayKey(focusKey);
+          showNotice(
+            dayLabel === "Today" ? "Already in Today’s Focus." : `Already in ${dayLabel} focus.`,
+            "info"
+          );
           dragState = null;
           return;
         }
@@ -1432,7 +1494,7 @@
           dragState = null;
           return;
         }
-        openAddTodoModal(source.subjectId, file);
+        openAddTodoModal(source.subjectId, file, focusKey);
         dragState = null;
       });
     }

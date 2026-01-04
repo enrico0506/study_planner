@@ -118,9 +118,11 @@ const COMPACT_WEEK_MQ =
 
     let subjects = [];
     let currentSearch = "";
-    let todayTodos = [];
-    let dailyFocusMap = {};
-    let calendarEvents = [];
+	    let todayTodos = [];
+	    let dailyFocusMap = {};
+	    // Which day the Today sidebar is currently showing (YYYY-MM-DD). Defaults to today.
+	    let focusDayKey = "";
+	    let calendarEvents = [];
     let dragState = null; // { subjectId, fileId }
     let fileModalState = null; // { mode: "add"|"edit", subjectId, fileId? }
     let todayExpanded = false;

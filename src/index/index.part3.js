@@ -5,18 +5,22 @@
 		    const subtasksModalBackdrop = document.getElementById("subtasksModalBackdrop");
 		    const subtasksModalTitle = document.getElementById("subtasksModalTitle");
 		    const subtasksModalSubtitle = document.getElementById("subtasksModalSubtitle");
-		    const subtasksModalBody = document.getElementById("subtasksModalBody");
-		    const subtasksModalCloseBtn = document.getElementById("subtasksModalCloseBtn");
-		    const subtasksModalCloseBtn2 = document.getElementById("subtasksModalCloseBtn2");
-		    let subtasksModalTodoId = null;
+			    const subtasksModalBody = document.getElementById("subtasksModalBody");
+			    const subtasksModalCloseBtn = document.getElementById("subtasksModalCloseBtn");
+			    const subtasksModalCloseBtn2 = document.getElementById("subtasksModalCloseBtn2");
+			    let subtasksModalTodoId = null;
+			    let subtasksModalDayKey = null;
 
-		    function renderSubtasksModal(todoId) {
-		      if (!subtasksModalBody) return;
-		      const todo = todayTodos.find((t) => t && t.id === todoId);
-		      if (!todo) {
-		        subtasksModalBody.innerHTML = "";
-		        const hint = document.createElement("div");
-		        hint.className = "today-subtasks-empty";
+			    function renderSubtasksModal(todoId) {
+			      if (!subtasksModalBody) return;
+			      const dayKey = normalizeDayKey(subtasksModalDayKey) || getFocusDayKey();
+			      const allowEdit = !isPastDayKey(dayKey);
+			      const dayList = ensureDayList(dayKey);
+			      const todo = dayList.find((t) => t && t.id === todoId);
+			      if (!todo) {
+			        subtasksModalBody.innerHTML = "";
+			        const hint = document.createElement("div");
+			        hint.className = "today-subtasks-empty";
 		        hint.textContent = "Task not found.";
 		        subtasksModalBody.appendChild(hint);
 		        return;
@@ -30,108 +34,114 @@
 		      if (subtasksModalTitle) {
 		        subtasksModalTitle.textContent = (file && file.name) || todo.label || "Subtasks";
 		      }
-		      if (subtasksModalSubtitle) {
-		        const subs = Array.isArray(todo.subtasks) ? todo.subtasks : [];
-		        subtasksModalSubtitle.textContent = `${
-		          isFileTodo ? (subj && subj.name) || "Subject" : "Custom"
-		        } • ${subs.length} subtask${subs.length === 1 ? "" : "s"}`;
-		      }
+			      if (subtasksModalSubtitle) {
+			        const subs = Array.isArray(todo.subtasks) ? todo.subtasks : [];
+			        subtasksModalSubtitle.textContent = `${
+			          isFileTodo ? (subj && subj.name) || "Subject" : "Custom"
+			        } • ${subs.length} subtask${subs.length === 1 ? "" : "s"}${allowEdit ? "" : " • read-only"}`;
+			      }
 
 		      subtasksModalBody.innerHTML = "";
 
 		      const wrap = document.createElement("div");
 		      wrap.className = "today-subtasks";
 
-		      const list = document.createElement("div");
-		      list.className = "today-subtasks-list";
+			      const subList = document.createElement("div");
+			      subList.className = "today-subtasks-list";
 
 		      const subs = Array.isArray(todo.subtasks) ? todo.subtasks : [];
 		      if (!subs.length) {
 		        const hint = document.createElement("div");
 		        hint.className = "today-subtasks-empty";
 		        hint.textContent = "No subtasks yet.";
-		        list.appendChild(hint);
+			        subList.appendChild(hint);
 		      } else {
 		        subs.forEach((sub) => {
 		          const row = document.createElement("div");
 		          row.className = "today-subtask-row";
 		          if (sub && sub.done) row.classList.add("today-subtask-done");
 
-		          const cb = document.createElement("input");
-		          cb.type = "checkbox";
-		          cb.checked = !!(sub && sub.done);
-		          cb.addEventListener("click", (e) => e.stopPropagation());
-		          cb.addEventListener("change", () => {
-		            toggleSubtask(todoId, sub.id, cb.checked, { promptConfidence: true });
-		            requestAnimationFrame(() => renderSubtasksModal(todoId));
-		          });
+			          const cb = document.createElement("input");
+			          cb.type = "checkbox";
+			          cb.checked = !!(sub && sub.done);
+			          cb.disabled = !allowEdit;
+			          cb.addEventListener("click", (e) => e.stopPropagation());
+			          cb.addEventListener("change", () => {
+			            toggleSubtaskForDay(dayKey, todoId, sub.id, cb.checked, { promptConfidence: true });
+			            requestAnimationFrame(() => renderSubtasksModal(todoId));
+			          });
 
 		          const label = document.createElement("div");
 		          label.className = "today-subtask-label";
 		          label.textContent = (sub && sub.label) || "Untitled subtask";
 
 		          const rm = document.createElement("button");
-		          rm.type = "button";
-		          rm.className = "today-subtask-remove";
-		          rm.textContent = "✕";
-		          rm.title = "Remove subtask";
-		          rm.addEventListener("click", () => {
-		            removeSubtask(todoId, sub.id);
-		            requestAnimationFrame(() => renderSubtasksModal(todoId));
-		          });
+			          rm.type = "button";
+			          rm.className = "today-subtask-remove";
+			          rm.textContent = "✕";
+			          rm.title = "Remove subtask";
+			          rm.disabled = !allowEdit;
+			          rm.addEventListener("click", () => {
+			            removeSubtaskFromDay(dayKey, todoId, sub.id);
+			            requestAnimationFrame(() => renderSubtasksModal(todoId));
+			          });
 
 		          row.appendChild(cb);
 		          row.appendChild(label);
 		          row.appendChild(rm);
-		          list.appendChild(row);
+			          subList.appendChild(row);
 		        });
 		      }
 
-		      const addRow = document.createElement("div");
-		      addRow.className = "today-subtask-add";
-		      const addInput = document.createElement("input");
-		      addInput.type = "text";
-		      addInput.placeholder = "Add subtask...";
-		      const addBtn = document.createElement("button");
-		      addBtn.type = "button";
-		      addBtn.textContent = "+";
-		      addBtn.className = "today-subtask-add-btn";
+				      wrap.appendChild(subList);
 
-		      function commitSubtask() {
-		        const text = addInput.value.trim();
-		        if (!text) return;
-		        addSubtask(todoId, text);
-		        addInput.value = "";
-		        requestAnimationFrame(() => renderSubtasksModal(todoId));
-		      }
+			      if (allowEdit) {
+			        const addRow = document.createElement("div");
+			        addRow.className = "today-subtask-add";
+			        const addInput = document.createElement("input");
+			        addInput.type = "text";
+			        addInput.placeholder = "Add subtask...";
+			        const addBtn = document.createElement("button");
+			        addBtn.type = "button";
+			        addBtn.textContent = "+";
+			        addBtn.className = "today-subtask-add-btn";
 
-		      addBtn.addEventListener("click", commitSubtask);
-		      addInput.addEventListener("keydown", (event) => {
-		        if (event.key === "Enter") {
-		          event.preventDefault();
-		          commitSubtask();
-		        }
-		      });
+			        function commitSubtask() {
+			          const text = addInput.value.trim();
+			          if (!text) return;
+			          addSubtaskToDay(dayKey, todoId, text);
+			          addInput.value = "";
+			          requestAnimationFrame(() => renderSubtasksModal(todoId));
+			        }
 
-		      addRow.appendChild(addInput);
-		      addRow.appendChild(addBtn);
+			        addBtn.addEventListener("click", commitSubtask);
+			        addInput.addEventListener("keydown", (event) => {
+			          if (event.key === "Enter") {
+			            event.preventDefault();
+			            commitSubtask();
+			          }
+			        });
 
-		      wrap.appendChild(list);
-		      wrap.appendChild(addRow);
-		      subtasksModalBody.appendChild(wrap);
-		    }
+			        addRow.appendChild(addInput);
+			        addRow.appendChild(addBtn);
+			        wrap.appendChild(addRow);
+			      }
+			      subtasksModalBody.appendChild(wrap);
+			    }
 
-		    function closeSubtasksModal() {
-		      if (!subtasksModalBackdrop) return;
-		      subtasksModalBackdrop.hidden = true;
-		      subtasksModalBackdrop.style.display = "none";
-		      subtasksModalTodoId = null;
-		    }
+			    function closeSubtasksModal() {
+			      if (!subtasksModalBackdrop) return;
+			      subtasksModalBackdrop.hidden = true;
+			      subtasksModalBackdrop.style.display = "none";
+			      subtasksModalTodoId = null;
+			      subtasksModalDayKey = null;
+			    }
 
-		    function openSubtasksModal(todo, file, subj) {
-		      if (!subtasksModalBackdrop || !subtasksModalBody) return;
-		      subtasksModalTodoId = todo && todo.id ? todo.id : null;
-		      renderSubtasksModal(subtasksModalTodoId);
+			    function openSubtasksModal(todo, file, subj, dayKey) {
+			      if (!subtasksModalBackdrop || !subtasksModalBody) return;
+			      subtasksModalTodoId = todo && todo.id ? todo.id : null;
+			      subtasksModalDayKey = normalizeDayKey(dayKey) || getFocusDayKey();
+			      renderSubtasksModal(subtasksModalTodoId);
 
 		      subtasksModalBackdrop.hidden = false;
 		      subtasksModalBackdrop.style.display = "flex";
@@ -173,55 +183,83 @@
 	      } catch {}
 	    }
 
-		    function renderTodayTodos() {
-		      if (!todayList) return;
-		      todayList.innerHTML = "";
+			    function renderTodayTodos(dayKey) {
+			      if (!todayList) return;
+			      todayList.innerHTML = "";
 
-		      // Per-item collapsed state (defaults to expanded to preserve existing look).
+			      // Per-item collapsed state (defaults to expanded to preserve existing look).
 			      if (!todayCollapsedMapLoaded) {
 			        todayCollapsedMapLoaded = true;
 			        todayCollapsedMap = loadTodayCollapsedMap();
 			      }
 
-      if (!todayTodos.length) {
-        const empty = document.createElement("div");
-        empty.className = "today-empty";
-        empty.textContent = "Drag files from subjects to build today's todo list.";
-        const ctaRow = document.createElement("div");
-        ctaRow.style.marginTop = "10px";
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "btn";
-        btn.textContent = "Add from subjects";
-        btn.addEventListener("click", () => {
-          window.location.href = "index.html?mode=subjects";
-        });
-        ctaRow.appendChild(btn);
-        empty.appendChild(ctaRow);
-        todayList.appendChild(empty);
-        return;
-      }
+	      const focusKey = normalizeDayKey(dayKey) || getFocusDayKey();
+	      const focusLabel = describeDayKey(focusKey);
+	      const allowEdit = !isPastDayKey(focusKey);
+	      const todos = ensureDayList(focusKey);
+	      const dayNavLabel = document.getElementById("todayDayNavLabel");
+	      if (dayNavLabel) dayNavLabel.textContent = focusLabel;
+	      const todayHeaderTitle = document.querySelector(".today-header-text h2");
+	      if (todayHeaderTitle) {
+	        todayHeaderTitle.textContent =
+	          focusLabel === "Today" ? "Today's focus" : `${focusLabel} focus`;
+	      }
+	      if (todayDropZone) {
+	        todayDropZone.classList.toggle("today-dropzone-readonly", !allowEdit);
+	        todayDropZone.textContent = !allowEdit
+	          ? "History is read-only."
+	          : focusLabel === "Today"
+	            ? "Drag to add."
+	            : `Drag to add to ${focusLabel}.`;
+	      }
+
+	      if (!todos.length) {
+	        const empty = document.createElement("div");
+	        empty.className = "today-empty";
+	        if (!allowEdit) {
+	          empty.textContent = `No focus items saved for ${focusLabel}.`;
+	        } else if (focusLabel === "Today") {
+	          empty.textContent = "Drag files from subjects to build today's todo list.";
+	        } else {
+	          empty.textContent = `Plan ${focusLabel} by adding files from subjects.`;
+	        }
+	        const ctaRow = document.createElement("div");
+	        ctaRow.style.marginTop = "10px";
+	        if (allowEdit) {
+	          const btn = document.createElement("button");
+	          btn.type = "button";
+	          btn.className = "btn";
+	          btn.textContent = "Add from subjects";
+	          btn.addEventListener("click", () => {
+	            window.location.href = "index.html?mode=subjects";
+	          });
+	          ctaRow.appendChild(btn);
+	          empty.appendChild(ctaRow);
+	        }
+	        todayList.appendChild(empty);
+	        return;
+	      }
 
 	      const isSlimMode = !todayExpanded && !subjectsMaximized;
 	      const useCompactTodayActions =
 	        typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
-	      const activeSlimTodo =
-	        isSlimMode && activeStudy && activeStudy.kind === "study"
-	          ? todayTodos.find(
-	              (t) =>
-	                t &&
-	                t.subjectId === activeStudy.subjectId &&
-	                t.fileId === activeStudy.fileId
-	            )
-	          : null;
+		      const activeSlimTodo =
+		        isSlimMode && activeStudy && activeStudy.kind === "study"
+		          ? todos.find(
+		              (t) =>
+		                t &&
+		                t.subjectId === activeStudy.subjectId &&
+		                t.fileId === activeStudy.fileId
+		            )
+		          : null;
 	      const slimExpandedTodoId = activeSlimTodo && activeSlimTodo.id ? activeSlimTodo.id : null;
-	      const isDragMode = todayExpanded && !subjectsMaximized;
-	      const sortedTodos = isDragMode
-	        ? [...todayTodos]
-	        : [...todayTodos].sort((a, b) => {
-	            if (a.done === b.done) return 0;
-	            return a.done ? 1 : -1;
-	          });
+		      const isDragMode = todayExpanded && !subjectsMaximized && allowEdit;
+		      const sortedTodos = isDragMode
+		        ? [...todos]
+		        : [...todos].sort((a, b) => {
+		            if (a.done === b.done) return 0;
+		            return a.done ? 1 : -1;
+		          });
 
       const activeItems = [];
       const completedItems = [];
@@ -274,13 +312,13 @@
           item.addEventListener("dragleave", () => {
             item.classList.remove("drop-target");
           });
-          item.addEventListener("drop", (event) => {
-            event.preventDefault();
-            item.classList.remove("drop-target");
-            if (!todayDragId || todayDragId === todo.id) return;
-            moveTodo(todayDragId, todo.id);
-          });
-        }
+	          item.addEventListener("drop", (event) => {
+	            event.preventDefault();
+	            item.classList.remove("drop-target");
+	            if (!todayDragId || todayDragId === todo.id) return;
+	            moveTodoForDay(focusKey, todayDragId, todo.id);
+	          });
+	        }
 
         const topRow = document.createElement("div");
         topRow.className = "today-item-top";
@@ -288,13 +326,14 @@
         const left = document.createElement("div");
         left.className = "today-item-left";
 
-	        const checkbox = document.createElement("input");
-	        checkbox.type = "checkbox";
-	        checkbox.checked = !!todo.done;
-	        checkbox.addEventListener("click", (e) => e.stopPropagation());
-	        checkbox.addEventListener("change", () => {
-	          toggleTodoDone(todo.id, checkbox.checked, { promptConfidence: true });
-	        });
+		        const checkbox = document.createElement("input");
+		        checkbox.type = "checkbox";
+		        checkbox.checked = !!todo.done;
+		        checkbox.disabled = !allowEdit;
+		        checkbox.addEventListener("click", (e) => e.stopPropagation());
+		        checkbox.addEventListener("change", () => {
+		          toggleTodoDoneForDay(focusKey, todo.id, checkbox.checked, { promptConfidence: true });
+		        });
 
         const colorDot = document.createElement("span");
         colorDot.className = "today-color-dot";
@@ -327,15 +366,18 @@
           } else {
             noteBody.textContent = todo.handoffNote;
           }
-          const noteDismiss = document.createElement("button");
-          noteDismiss.type = "button";
-          noteDismiss.className = "today-note-dismiss";
-          noteDismiss.textContent = "Dismiss";
-          noteDismiss.addEventListener("click", () => {
-            todo.handoffNote = "";
-            saveTodayTodos();
-            renderTodayTodos();
-          });
+	          const noteDismiss = document.createElement("button");
+	          noteDismiss.type = "button";
+	          noteDismiss.className = "today-note-dismiss";
+	          noteDismiss.textContent = "Dismiss";
+	          noteDismiss.disabled = !allowEdit;
+	          noteDismiss.addEventListener("click", () => {
+	            if (!allowEdit) return;
+	            todo.handoffNote = "";
+	            saveDayList(focusKey, todos);
+	            renderTodayTodos();
+	            renderScheduleView();
+	          });
           noteBox.appendChild(noteTitle);
           noteBox.appendChild(noteBody);
           noteBox.appendChild(noteDismiss);
@@ -358,20 +400,27 @@
 
 	        textWrap.appendChild(title);
 
-	        if (useCompactTodayActions && isFileTodo && file && !todo.done && !isThisActive) {
-	          const studyInline = document.createElement("button");
-	          studyInline.type = "button";
-	          studyInline.className = "chip-btn chip-btn-primary today-study-inline";
-	          studyInline.textContent = "Study";
+		        if (
+		          useCompactTodayActions &&
+		          focusKey === getTodayKey() &&
+		          isFileTodo &&
+		          file &&
+		          !todo.done &&
+		          !isThisActive
+		        ) {
+		          const studyInline = document.createElement("button");
+		          studyInline.type = "button";
+		          studyInline.className = "chip-btn chip-btn-primary today-study-inline";
+		          studyInline.textContent = "Study";
 	          studyInline.addEventListener("click", (e) => {
 	            e.stopPropagation();
 	            if (subj && file) {
-	              moveTodoToTop(todo.id, { render: false });
-	              startStudy(todo.subjectId, file);
-	            }
-	          });
-	          textWrap.appendChild(studyInline);
-	        }
+		              moveTodoToTop(todo.id, { render: false });
+		              startStudy(todo.subjectId, file);
+		            }
+		          });
+		          textWrap.appendChild(studyInline);
+		        }
 
 	        if (!isSlimMode) left.appendChild(checkbox);
 	        left.appendChild(colorDot);
@@ -405,42 +454,44 @@
 	            const reorderActions = document.createElement("div");
 	            reorderActions.className = "today-reorder-actions";
 
-	            const idx = todayTodos.findIndex((t) => t.id === todo.id);
-	            const upBtn = document.createElement("button");
-	            upBtn.type = "button";
-	            upBtn.className = "icon-btn icon-btn-ghost today-reorder-btn";
-	            upBtn.textContent = "↑";
-	            upBtn.title = "Move up";
-	            upBtn.setAttribute("aria-label", "Move up");
-	            upBtn.disabled = idx <= 0;
-	            upBtn.addEventListener("click", (e) => {
-	              e.stopPropagation();
-	              const moved = moveTodoByDelta(todo.id, -1);
-	              if (moved) {
-	                const nextIdx = todayTodos.findIndex((t) => t.id === todo.id);
-	                showToast("Moved in Today's focus.", "success");
-	                announceLive(`Moved “${(file && file.name) || todo.label || "Untitled"}” to position ${nextIdx + 1}.`);
-	                flashTodayTodoElement(todo.id);
-	              }
-	            });
+		            const idx = todos.findIndex((t) => t && t.id === todo.id);
+		            const upBtn = document.createElement("button");
+		            upBtn.type = "button";
+		            upBtn.className = "icon-btn icon-btn-ghost today-reorder-btn";
+		            upBtn.textContent = "↑";
+		            upBtn.title = "Move up";
+		            upBtn.setAttribute("aria-label", "Move up");
+		            upBtn.disabled = !allowEdit || idx <= 0;
+		            upBtn.addEventListener("click", (e) => {
+		              e.stopPropagation();
+		              const moved = moveTodoByDeltaForDay(focusKey, todo.id, -1);
+		              if (moved) {
+		                const nextIdx = ensureDayList(focusKey).findIndex((t) => t && t.id === todo.id);
+		                const label = focusLabel === "Today" ? "Today's focus" : `${focusLabel} focus`;
+		                showToast(`Moved in ${label}.`, "success");
+		                announceLive(`Moved “${(file && file.name) || todo.label || "Untitled"}” to position ${nextIdx + 1}.`);
+		                flashTodayTodoElement(todo.id);
+		              }
+		            });
 
 	            const downBtn = document.createElement("button");
 	            downBtn.type = "button";
 	            downBtn.className = "icon-btn icon-btn-ghost today-reorder-btn";
-	            downBtn.textContent = "↓";
-	            downBtn.title = "Move down";
-	            downBtn.setAttribute("aria-label", "Move down");
-	            downBtn.disabled = idx === -1 || idx >= todayTodos.length - 1;
-	            downBtn.addEventListener("click", (e) => {
-	              e.stopPropagation();
-	              const moved = moveTodoByDelta(todo.id, 1);
-	              if (moved) {
-	                const nextIdx = todayTodos.findIndex((t) => t.id === todo.id);
-	                showToast("Moved in Today's focus.", "success");
-	                announceLive(`Moved “${(file && file.name) || todo.label || "Untitled"}” to position ${nextIdx + 1}.`);
-	                flashTodayTodoElement(todo.id);
-	              }
-	            });
+		            downBtn.textContent = "↓";
+		            downBtn.title = "Move down";
+		            downBtn.setAttribute("aria-label", "Move down");
+		            downBtn.disabled = !allowEdit || idx === -1 || idx >= todos.length - 1;
+		            downBtn.addEventListener("click", (e) => {
+		              e.stopPropagation();
+		              const moved = moveTodoByDeltaForDay(focusKey, todo.id, 1);
+		              if (moved) {
+		                const nextIdx = ensureDayList(focusKey).findIndex((t) => t && t.id === todo.id);
+		                const label = focusLabel === "Today" ? "Today's focus" : `${focusLabel} focus`;
+		                showToast(`Moved in ${label}.`, "success");
+		                announceLive(`Moved “${(file && file.name) || todo.label || "Untitled"}” to position ${nextIdx + 1}.`);
+		                flashTodayTodoElement(todo.id);
+		              }
+		            });
 
 	            reorderActions.appendChild(upBtn);
 	            reorderActions.appendChild(downBtn);
@@ -454,33 +505,49 @@
 	            if (target && (target.tagName === "BUTTON" || target.tagName === "INPUT" || target.tagName === "A")) return;
 	            event.preventDefault();
 	            if (isSlimExpanded) return;
-	            openSubtasksModal(todo, file, subj);
+		            openSubtasksModal(todo, file, subj, focusKey);
 	            return;
 	          }
 	          if (event.altKey && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
 	            event.preventDefault();
 	            event.stopPropagation();
-	            const moved = moveTodoByDelta(todo.id, event.key === "ArrowUp" ? -1 : 1);
-            if (moved) {
-              const nextIdx = todayTodos.findIndex((t) => t.id === todo.id);
-              showToast("Moved in Today's focus.", "success");
-              announceLive(`Moved “${(file && file.name) || todo.label || "Untitled"}” to position ${nextIdx + 1}.`);
-              flashTodayTodoElement(todo.id);
-            }
-            return;
-          }
+	            if (!allowEdit) return;
+	            const moved = moveTodoByDeltaForDay(focusKey, todo.id, event.key === "ArrowUp" ? -1 : 1);
+	            if (moved) {
+	              const nextIdx = ensureDayList(focusKey).findIndex((t) => t && t.id === todo.id);
+	              const label = focusLabel === "Today" ? "Today's focus" : `${focusLabel} focus`;
+	              showToast(`Moved in ${label}.`, "success");
+	              announceLive(
+	                `Moved “${(file && file.name) || todo.label || "Untitled"}” to position ${nextIdx + 1}.`
+	              );
+	              flashTodayTodoElement(todo.id);
+	            }
+	            return;
+	          }
 	          if (event.key === "Delete" && !isThisActive) {
 	            event.preventDefault();
 	            event.stopPropagation();
-	            showNotice("Remove this item from Today's focus?", "warn", () => {
-              removeTodo(todo.id);
-              renderTable();
-              announceLive(`Removed “${(file && file.name) || todo.label || "Untitled"}” from Today’s focus.`);
-            });
-          }
-        });
+	            if (!allowEdit) return;
+	            const dayLabel = describeDayKey(focusKey);
+	            showNotice(
+	              dayLabel === "Today"
+	                ? "Remove this item from Today's focus?"
+	                : `Remove this item from ${dayLabel} focus?`,
+	              "warn",
+	              () => {
+	                removeTodoFromDay(focusKey, todo.id);
+	                renderTable();
+	                announceLive(
+	                  `Removed “${(file && file.name) || todo.label || "Untitled"}” from ${
+	                    dayLabel === "Today" ? "Today’s" : dayLabel
+	                  } focus.`
+	                );
+	              }
+	            );
+	          }
+	        });
 
-        if (!isThisActive) {
+        if (!isThisActive && allowEdit) {
           if (isSlimMode) {
             const removeX = document.createElement("button");
 	            removeX.type = "button";
@@ -490,11 +557,22 @@
 	            removeX.setAttribute("aria-label", "Remove");
 	            removeX.addEventListener("click", (e) => {
 	              e.stopPropagation();
-	              showNotice("Remove this item from Today's focus?", "warn", () => {
-	                removeTodo(todo.id);
-	                renderTable();
-	                announceLive(`Removed “${(file && file.name) || todo.label || "Untitled"}” from Today’s focus.`);
-	              });
+	              const dayLabel = describeDayKey(focusKey);
+	              showNotice(
+	                dayLabel === "Today"
+	                  ? "Remove this item from Today's focus?"
+	                  : `Remove this item from ${dayLabel} focus?`,
+	                "warn",
+	                () => {
+	                  removeTodoFromDay(focusKey, todo.id);
+	                  renderTable();
+	                  announceLive(
+	                    `Removed “${(file && file.name) || todo.label || "Untitled"}” from ${
+	                      dayLabel === "Today" ? "Today’s" : dayLabel
+	                    } focus.`
+	                  );
+	                }
+	              );
 	            });
 	            item.appendChild(removeX);
 	          } else {
@@ -503,11 +581,22 @@
 	            removeBtn.className = "today-remove-btn";
 	            removeBtn.textContent = "Remove";
 	            removeBtn.addEventListener("click", () => {
-	              showNotice("Remove this item from Today's focus?", "warn", () => {
-	                removeTodo(todo.id);
-	                renderTable();
-	                announceLive(`Removed “${(file && file.name) || todo.label || "Untitled"}” from Today’s focus.`);
-	              });
+	              const dayLabel = describeDayKey(focusKey);
+	              showNotice(
+	                dayLabel === "Today"
+	                  ? "Remove this item from Today's focus?"
+	                  : `Remove this item from ${dayLabel} focus?`,
+	                "warn",
+	                () => {
+	                  removeTodoFromDay(focusKey, todo.id);
+	                  renderTable();
+	                  announceLive(
+	                    `Removed “${(file && file.name) || todo.label || "Untitled"}” from ${
+	                      dayLabel === "Today" ? "Today’s" : dayLabel
+	                    } focus.`
+	                  );
+	                }
+	              );
 	            });
             actions.appendChild(removeBtn);
           }
@@ -577,8 +666,10 @@
             const cb = document.createElement("input");
             cb.type = "checkbox";
             cb.checked = !!sub.done;
+            cb.disabled = !allowEdit;
             cb.addEventListener("change", () => {
-              toggleSubtask(todo.id, sub.id, cb.checked, { promptConfidence: true });
+              if (!allowEdit) return;
+              toggleSubtaskForDay(focusKey, todo.id, sub.id, cb.checked, { promptConfidence: true });
             });
 
             const label = document.createElement("div");
@@ -590,8 +681,10 @@
             rm.className = "today-subtask-remove";
             rm.textContent = "✕";
             rm.title = "Remove subtask";
+            rm.disabled = !allowEdit;
             rm.addEventListener("click", () => {
-              removeSubtask(todo.id, sub.id);
+              if (!allowEdit) return;
+              removeSubtaskFromDay(focusKey, todo.id, sub.id);
             });
 
             row.appendChild(cb);
@@ -601,35 +694,37 @@
           });
         }
 
-        const addSubRow = document.createElement("div");
-        addSubRow.className = "today-subtask-add";
-        const addInput = document.createElement("input");
-        addInput.type = "text";
-        addInput.placeholder = "Add subtask...";
-        const addBtn = document.createElement("button");
-        addBtn.type = "button";
-        addBtn.textContent = "+";
-        addBtn.className = "today-subtask-add-btn";
-
-        function commitSubtask() {
-          const text = addInput.value.trim();
-          if (!text) return;
-          addSubtask(todo.id, text);
-        }
-
-        addBtn.addEventListener("click", commitSubtask);
-        addInput.addEventListener("keydown", (event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            commitSubtask();
-          }
-        });
-
-        addSubRow.appendChild(addInput);
-        addSubRow.appendChild(addBtn);
-
 	        subtasksWrap.appendChild(subtasksList);
-	        subtasksWrap.appendChild(addSubRow);
+	        if (allowEdit) {
+	          const addSubRow = document.createElement("div");
+	          addSubRow.className = "today-subtask-add";
+	          const addInput = document.createElement("input");
+	          addInput.type = "text";
+	          addInput.placeholder = "Add subtask...";
+	          const addBtn = document.createElement("button");
+	          addBtn.type = "button";
+	          addBtn.textContent = "+";
+	          addBtn.className = "today-subtask-add-btn";
+
+	          function commitSubtask() {
+	            const text = addInput.value.trim();
+	            if (!text) return;
+	            addSubtaskToDay(focusKey, todo.id, text);
+	            addInput.value = "";
+	          }
+
+	          addBtn.addEventListener("click", commitSubtask);
+	          addInput.addEventListener("keydown", (event) => {
+	            if (event.key === "Enter") {
+	              event.preventDefault();
+	              commitSubtask();
+	            }
+	          });
+
+	          addSubRow.appendChild(addInput);
+	          addSubRow.appendChild(addBtn);
+	          subtasksWrap.appendChild(addSubRow);
+	        }
 	        if (todayExpanded || subs.length > 4) {
 	          subtasksWrap.classList.add("today-subtasks-scroll");
 	        }
@@ -685,13 +780,13 @@
 	              subsBtn.textContent = "Subtasks";
 	              subsBtn.addEventListener("click", (e) => {
 	                e.stopPropagation();
-	                openSubtasksModal(todo, file, subj);
+		                openSubtasksModal(todo, file, subj, focusKey);
 	              });
 	              footer.appendChild(subsBtn);
 	              footerHasContent = true;
 	            }
 
-	            if (!useCompactTodayActions && isFileTodo) {
+	            if (!useCompactTodayActions && focusKey === getTodayKey() && isFileTodo) {
 	              const studyBtn = document.createElement("button");
 	              studyBtn.type = "button";
 	              studyBtn.className = "chip-btn chip-btn-primary";
@@ -751,7 +846,7 @@
 	              if (target.closest("button, input, a")) return;
 	            }
 	            if (isSlimExpanded) return;
-	            openSubtasksModal(todo, file, subj);
+	            openSubtasksModal(todo, file, subj, focusKey);
 	          });
 	        }
 
@@ -2173,6 +2268,10 @@
         emptyHint.style.display = "none";
       }
 
+      const focusKey = getFocusDayKey();
+      const focusLabel = describeDayKey(focusKey);
+      const allowFocusEdit = !isPastDayKey(focusKey);
+
       subjects.forEach((subj, subjIndex) => {
         if (!subj.sortMode) subj.sortMode = "manual";
         applySortToSubject(subj);
@@ -2391,10 +2490,8 @@
             row.dataset.subjectId = subj.id;
             row.dataset.fileId = file.id;
 
-            const inToday = todayTodos.some(
-              (t) => t.subjectId === subj.id && t.fileId === file.id
-            );
-            if ((subjectsMaximized || isPhoneTodayPicker()) && inToday) {
+            const inFocus = isInFocusList(focusKey, subj.id, file.id);
+            if ((subjectsMaximized || isPhoneTodayPicker()) && inFocus) {
               row.classList.add("in-today");
             }
 
@@ -2571,26 +2668,40 @@
               addTodayActionBtn.type = "button";
               addTodayActionBtn.className =
                 "icon-btn icon-btn-ghost file-action-btn " +
-                (inToday ? "file-action-remove" : "file-action-add");
-              addTodayActionBtn.textContent = inToday ? "−" : "+";
-              addTodayActionBtn.title = inToday
-                ? "Remove from Today's focus"
-                : "Add to Today's focus";
-              addTodayActionBtn.setAttribute(
-                "aria-label",
-                inToday ? "Remove from Today's focus" : "Add to Today's focus"
-              );
+                (inFocus ? "file-action-remove" : "file-action-add");
+              addTodayActionBtn.textContent = inFocus ? "−" : "+";
+              addTodayActionBtn.disabled = !allowFocusEdit;
+              const focusListTitle = focusLabel === "Today" ? "Today's focus" : `${focusLabel} focus`;
+              addTodayActionBtn.title = allowFocusEdit
+                ? inFocus
+                  ? `Remove from ${focusListTitle}`
+                  : `Add to ${focusListTitle}`
+                : "Past focus is read-only";
+              addTodayActionBtn.setAttribute("aria-label", addTodayActionBtn.title);
               addTodayActionBtn.addEventListener("click", (event) => {
                 event.stopPropagation();
-                if (inToday) {
-                  showNotice("Remove this file from Today's focus?", "warn", () => {
-                    cleanupTodoForFile(subj.id, file.id);
-                    renderTable();
-                    announceLive(`Removed “${file.name || "Untitled"}” from Today’s focus.`);
-                  });
+                if (!allowFocusEdit) {
+                  showNotice("Past focus is read-only.", "info");
                   return;
                 }
-                openAddTodoModal(subj.id, file);
+                if (inFocus) {
+                  const dayLabel = describeDayKey(focusKey);
+                  showNotice(
+                    dayLabel === "Today"
+                      ? "Remove this file from Today's focus?"
+                      : `Remove this file from ${dayLabel} focus?`,
+                    "warn",
+                    () => {
+                      removeFileTodoFromDay(focusKey, subj.id, file.id);
+                      renderTable();
+                      announceLive(
+                        `Removed “${file.name || "Untitled"}” from ${dayLabel === "Today" ? "Today’s" : dayLabel} focus.`
+                      );
+                    }
+                  );
+                  return;
+                }
+                openAddTodoModal(subj.id, file, focusKey);
               });
 
               const moveUpBtn = document.createElement("button");
@@ -2689,48 +2800,80 @@
 	              }
 	            }
 
-            // Add-to-today controls:
+            // Add-to-focus controls (targets the day shown in the Today sidebar):
             // - desktop: only show in Subjects maximized mode (existing behavior)
-            // - phone Today picker: show a simple "Add" action on every file (no Study button)
+            // - phone picker: show a simple "Add" action on every file (no Study button)
             const picker = isPhoneTodayPicker();
             if (subjectsMaximized || picker) {
               const addTodayBtn = document.createElement("button");
               addTodayBtn.className = picker ? "chip-btn chip-btn-primary" : "chip-btn chip-btn-ghost";
-              addTodayBtn.textContent = inToday ? (picker ? "Added" : "In Today") : picker ? "Add" : "To Today";
-              addTodayBtn.title = inToday
-                ? "Already in Today’s Focus"
-                : "Add this file to Today’s Focus";
+              const focusShort = focusLabel === "Today" ? "Today" : focusLabel;
+              addTodayBtn.textContent = inFocus
+                ? picker
+                  ? "Added"
+                  : `In ${focusShort}`
+                : picker
+                  ? "Add"
+                  : `To ${focusShort}`;
+              addTodayBtn.title = inFocus
+                ? focusLabel === "Today"
+                  ? "Already in Today’s Focus"
+                  : `Already in ${focusLabel} focus`
+                : focusLabel === "Today"
+                  ? "Add this file to Today’s Focus"
+                  : `Add this file to ${focusLabel} focus`;
 
-              if (inToday) {
+              if (!allowFocusEdit) {
+                addTodayBtn.disabled = true;
+                addTodayBtn.title = "Past focus is read-only";
+              }
+
+              if (inFocus) {
                 if (picker) {
                   addTodayBtn.disabled = true;
                   addTodayBtn.classList.add("chip-btn-success");
-                  const removeBtn = document.createElement("button");
-                  removeBtn.className = "chip-btn chip-btn-danger";
-                  removeBtn.textContent = "Remove";
-                  removeBtn.title = "Remove from Today’s Focus";
-                  removeBtn.addEventListener("click", (event) => {
-                    event.stopPropagation();
-                    cleanupTodoForFile(subj.id, file.id);
-                    renderTable();
-                  });
                   rightMeta.appendChild(addTodayBtn);
-                  rightMeta.appendChild(removeBtn);
+                  if (allowFocusEdit) {
+                    const removeBtn = document.createElement("button");
+                    removeBtn.className = "chip-btn chip-btn-danger";
+                    removeBtn.textContent = "Remove";
+                    removeBtn.title = focusLabel === "Today" ? "Remove from Today’s Focus" : `Remove from ${focusLabel} focus`;
+                    removeBtn.addEventListener("click", (event) => {
+                      event.stopPropagation();
+                      removeFileTodoFromDay(focusKey, subj.id, file.id);
+                      renderTable();
+                    });
+                    rightMeta.appendChild(removeBtn);
+                  }
                 } else {
                   addTodayBtn.disabled = true;
                   addTodayBtn.classList.add("chip-btn-success");
                   const removeBtn = document.createElement("button");
                   removeBtn.className = "chip-btn chip-btn-danger";
                   removeBtn.textContent = "Remove";
-                  removeBtn.title = "Remove from Today’s Focus";
+                  removeBtn.disabled = !allowFocusEdit;
+                  removeBtn.title = allowFocusEdit
+                    ? focusLabel === "Today"
+                      ? "Remove from Today’s Focus"
+                      : `Remove from ${focusLabel} focus`
+                    : "Past focus is read-only";
                   removeBtn.addEventListener("click", (event) => {
                     event.stopPropagation();
-                    showNotice("Remove this file from Today's focus?", "warn", () => {
-                      cleanupTodoForFile(subj.id, file.id);
-                      renderTodayTodos();
-                      renderScheduleView();
-                      renderTable();
-                    });
+                    if (!allowFocusEdit) {
+                      showNotice("Past focus is read-only.", "info");
+                      return;
+                    }
+                    const dayLabel = describeDayKey(focusKey);
+                    showNotice(
+                      dayLabel === "Today"
+                        ? "Remove this file from Today's focus?"
+                        : `Remove this file from ${dayLabel} focus?`,
+                      "warn",
+                      () => {
+                        removeFileTodoFromDay(focusKey, subj.id, file.id);
+                        renderTable();
+                      }
+                    );
                   });
                   rightMeta.appendChild(addTodayBtn);
                   rightMeta.appendChild(removeBtn);
@@ -2738,9 +2881,15 @@
               } else if (picker) {
                 addTodayBtn.addEventListener("click", (event) => {
                   event.stopPropagation();
-                  const added = addTodoForFile(subj.id, file.id);
+                  if (!allowFocusEdit) {
+                    showNotice("Past focus is read-only.", "info");
+                    return;
+                  }
+                  const added = addTodoForFileToDay(focusKey, subj.id, file.id);
                   if (added) {
-                    showToast("Added to Today.", "success");
+                    showToast(focusLabel === "Today" ? "Added to Today." : `Added to ${focusLabel}.`, "success");
+                    renderTodayTodos();
+                    renderScheduleView();
                     renderTable();
                   }
                 });
@@ -2748,7 +2897,11 @@
               } else {
                 addTodayBtn.addEventListener("click", (event) => {
                   event.stopPropagation();
-                  openAddTodoModal(subj.id, file);
+                  if (!allowFocusEdit) {
+                    showNotice("Past focus is read-only.", "info");
+                    return;
+                  }
+                  openAddTodoModal(subj.id, file, focusKey);
                 });
                 rightMeta.appendChild(addTodayBtn);
               }

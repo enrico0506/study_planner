@@ -15,6 +15,7 @@
 
 ## Core flows
 - Board: add/edit/delete subjects + files, reorder files, edit confidence.
+- View state: open `index.html?mode=schedule` → click **Board** → reload → board stays visible (subjects do not disappear).
 - Reorder file (no drag): use Move up/down buttons; also `Alt+ArrowUp/Alt+ArrowDown` while a file action button is focused.
 - Add to Today (no drag): click “+” on a file → item appears in Today; duplicate shows toast “Already in Today's focus” and highlights item.
 - Reorder Today (no drag): use ↑/↓ buttons; also `Alt+ArrowUp/Alt+ArrowDown` while focused inside the item.
