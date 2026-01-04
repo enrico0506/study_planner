@@ -722,7 +722,9 @@
     const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
     first.setHours(12, 0, 0, 0);
     const startOffset = weekdayMon0(first);
-    const gridStart = addDays(first, -startOffset);
+    const daysInCurrentMonth = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
+    const weeksNeeded = Math.max(4, Math.ceil((startOffset + daysInCurrentMonth) / 7));
+    const totalCells = weeksNeeded * 7;
 
     const events = loadEvents().filter(shouldShowInMonth);
     const byDate = new Map();
@@ -755,8 +757,20 @@
       });
     }
 
-    for (let i = 0; i < 42; i++) {
-      const day = addDays(gridStart, i);
+    for (let i = 0; i < totalCells; i++) {
+      const dayNum = i - startOffset + 1;
+
+      if (dayNum < 1 || dayNum > daysInCurrentMonth) {
+        const emptyCell = document.createElement("div");
+        emptyCell.className = "ws-month-cell ws-month-cell--empty";
+        emptyCell.setAttribute("role", "presentation");
+        emptyCell.setAttribute("aria-hidden", "true");
+        els.monthGrid.appendChild(emptyCell);
+        continue;
+      }
+
+      const day = new Date(cursor.getFullYear(), cursor.getMonth(), dayNum);
+      day.setHours(12, 0, 0, 0);
       const key = dateKey(day);
 
       const cell = document.createElement("div");
@@ -764,7 +778,6 @@
       cell.dataset.date = key;
       cell.setAttribute("role", "gridcell");
       cell.tabIndex = 0;
-      if (day.getMonth() !== cursor.getMonth()) cell.classList.add("is-outside");
       if (isSameDay(day, today)) cell.classList.add("is-today");
 
       const head = document.createElement("div");

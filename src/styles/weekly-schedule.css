@@ -392,6 +392,14 @@
   cursor: pointer;
 }
 
+.weekly-page .ws-month-cell--empty {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  cursor: default;
+  pointer-events: none;
+}
+
 .weekly-page .ws-month-cell.is-outside {
   opacity: 0.55;
 }
