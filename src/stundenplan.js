@@ -45,9 +45,14 @@
   const lessonLocationInput = document.getElementById("lessonLocationInput");
   const lessonNotesInput = document.getElementById("lessonNotesInput");
   const lessonColorInput = document.getElementById("lessonColorInput");
+  const lessonColorPalette = document.getElementById("lessonColorPalette");
+  const lessonSummary = document.getElementById("lessonSummary");
+  const lessonDayChips = document.getElementById("lessonDayChips");
+  const lessonAdvanced = document.getElementById("lessonAdvanced");
   const lessonDurationChips = document.getElementById("lessonDurationChips");
   const lessonStatus = document.getElementById("lessonStatus");
   const lessonResetBtn = document.getElementById("lessonResetBtn");
+  const lessonDeleteBtn = document.getElementById("lessonDeleteBtn");
   const lessonSubmitBtn = document.getElementById("lessonSubmitBtn");
   const openLessonModalBtn = document.getElementById("openLessonModalBtn");
   const lessonModal = document.getElementById("lessonModal");
@@ -79,6 +84,10 @@
     const v = String(value || "").trim();
     if (/^#[0-9a-fA-F]{6}$/.test(v)) return v;
     return fallback;
+  }
+
+  function shortDayLabel(label) {
+    return String(label || "").slice(0, 3);
   }
 
   function clampDurationMin(value) {
@@ -772,11 +781,133 @@
       lessonColorInput.title = "Linked subjects provide the lesson color.";
       const subjColor = getSubjectColorById(sid);
       if (subjColor) lessonColorInput.value = subjColor;
+      if (lessonColorPalette) lessonColorPalette.hidden = true;
       return;
     }
     lessonColorInput.disabled = false;
     lessonColorInput.title = "";
     lessonColorInput.value = sanitizeColor(lessonColorInput.value, lessonDefaults?.customColor || "#4f8bff");
+    if (lessonColorPalette) lessonColorPalette.hidden = false;
+  }
+
+  function formatDuration(mins) {
+    const m = Math.max(0, Math.round(Number(mins) || 0));
+    if (!m) return "";
+    if (m < 60) return `${m}m`;
+    const h = Math.floor(m / 60);
+    const rem = m % 60;
+    return rem ? `${h}h ${rem}m` : `${h}h`;
+  }
+
+  function lessonColorForSummary() {
+    if (lessonSubjectSelect?.value) return getSubjectColorById(lessonSubjectSelect.value) || lessonColorInput?.value || "#4f8bff";
+    return lessonColorInput?.value || lessonDefaults?.customColor || "#4f8bff";
+  }
+
+  function updateLessonSummary() {
+    if (!lessonSummary) return;
+    const dayVal = Number(lessonDaySelect?.value ?? 0);
+    const dayLabel = DAY_LABELS.find((d) => Number(d.value) === dayVal)?.label || "Day";
+
+    const start = lessonStartInput?.value || "";
+    const end = lessonEndInput?.value || "";
+    const startMin = timeToMinutes(start);
+    const endMin = timeToMinutes(end);
+
+    const hasTimes = startMin !== null && endMin !== null && endMin > startMin;
+    const durationLabel = hasTimes ? formatDuration(endMin - startMin) : "";
+
+    const subjectId = lessonSubjectSelect?.value || "";
+    const subjectName = subjectId ? subjects.find((s) => s.id === subjectId)?.name || "Subject" : "Custom lesson";
+    const color = sanitizeColor(lessonColorForSummary(), "#4f8bff");
+
+    lessonSummary.replaceChildren();
+
+    const dot = document.createElement("span");
+    dot.className = "tt-lesson-dot";
+    dot.style.backgroundColor = color;
+    lessonSummary.appendChild(dot);
+
+    const textWrap = document.createElement("div");
+    textWrap.className = "tt-lesson-summary-text";
+
+    const main = document.createElement("div");
+    main.className = "tt-lesson-summary-main";
+    main.textContent = hasTimes ? `${dayLabel} · ${start}–${end} · ${durationLabel}` : `${dayLabel} · Pick a time`;
+
+    const meta = document.createElement("div");
+    meta.className = "tt-lesson-summary-meta";
+    meta.textContent = subjectId ? `Linked: ${subjectName}` : "Custom lesson";
+
+    textWrap.appendChild(main);
+    textWrap.appendChild(meta);
+    lessonSummary.appendChild(textWrap);
+  }
+
+  function setDayChipActive() {
+    if (!lessonDayChips || !lessonDaySelect) return;
+    const selected = String(lessonDaySelect.value ?? "");
+    lessonDayChips.querySelectorAll("button[data-day-value]").forEach((btn) => {
+      const on = String(btn.dataset.dayValue || "") === selected;
+      btn.classList.toggle("is-active", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+
+  function renderDayChips() {
+    if (!lessonDayChips || !lessonDaySelect) return;
+    lessonDayChips.replaceChildren();
+    const days = getVisibleDays();
+    days.forEach((d) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tt-day-chip";
+      btn.dataset.dayValue = String(d.value);
+      btn.textContent = shortDayLabel(d.label);
+      btn.setAttribute("aria-pressed", "false");
+      btn.addEventListener("click", () => {
+        lessonDaySelect.value = String(d.value);
+        setDayChipActive();
+        updateLessonSummary();
+        validateLessonDraft({ silent: true });
+        lessonStartInput?.focus();
+      });
+      lessonDayChips.appendChild(btn);
+    });
+    setDayChipActive();
+  }
+
+  function renderColorPalette() {
+    if (!lessonColorPalette || !lessonColorInput) return;
+    lessonColorPalette.replaceChildren();
+
+    if (lessonColorInput.disabled) {
+      lessonColorPalette.hidden = true;
+      return;
+    }
+
+    lessonColorPalette.hidden = false;
+    const palette = Array.isArray(subjectColors) && subjectColors.length ? subjectColors : DEFAULT_SUBJECT_COLORS;
+    const current = sanitizeColor(lessonColorInput.value, palette[0] || "#4f8bff").toLowerCase();
+
+    palette.slice(0, 12).forEach((cRaw) => {
+      const c = sanitizeColor(cRaw, "#4f8bff");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tt-color-swatch";
+      btn.style.backgroundColor = c;
+      btn.dataset.color = c;
+      btn.setAttribute("aria-label", `Choose color ${c}`);
+      btn.classList.toggle("is-active", c.toLowerCase() === current);
+      btn.addEventListener("click", () => {
+        if (lessonColorInput.disabled) return;
+        lessonColorInput.value = c;
+        saveLessonDefaults({ customColor: c });
+        renderColorPalette();
+        updateLessonSummary();
+      });
+      lessonColorPalette.appendChild(btn);
+    });
   }
 
   function validateLessonDraft({ silent = false } = {}) {
@@ -828,6 +959,9 @@
     const mondayBased = today === 0 ? 6 : today - 1;
     const defaultDay = includeWeekend ? mondayBased : Math.min(4, mondayBased);
     lessonDaySelect.value = String(defaultDay);
+    renderDayChips();
+    setDayChipActive();
+    updateLessonSummary();
   }
 
   function populateSubjectOptions() {
@@ -871,6 +1005,9 @@
     editingId = null;
     if (lessonFormTitle) lessonFormTitle.textContent = "Add lesson";
     if (lessonSubmitBtn) lessonSubmitBtn.textContent = "Save lesson";
+    if (lessonDeleteBtn) lessonDeleteBtn.hidden = true;
+    if (lessonResetBtn) lessonResetBtn.textContent = "Reset";
+    if (lessonAdvanced) lessonAdvanced.open = false;
     if (lessonStartInput) lessonStartInput.step = "900";
     if (lessonEndInput) lessonEndInput.step = "900";
     lessonTitleInput && (lessonTitleInput.value = "");
@@ -890,6 +1027,9 @@
     clearStatus();
     setDraftDurationMin(getDurationFromInputs() || lessonDefaults?.durationMin, { persist: false });
     applySubjectColorLock();
+    renderColorPalette();
+    renderDayChips();
+    updateLessonSummary();
     validateLessonDraft({ silent: true });
     lessonTitleInput?.focus();
   }
@@ -898,6 +1038,8 @@
     editingId = lesson.id;
     if (lessonFormTitle) lessonFormTitle.textContent = "Edit lesson";
     if (lessonSubmitBtn) lessonSubmitBtn.textContent = "Update lesson";
+    if (lessonDeleteBtn) lessonDeleteBtn.hidden = false;
+    if (lessonResetBtn) lessonResetBtn.textContent = "Cancel";
     lessonTitleInput && (lessonTitleInput.value = lesson.title || "");
     lessonSubjectSelect &&
       (lessonSubjectSelect.value = lesson.subjectId ? lesson.subjectId : "");
@@ -910,6 +1052,11 @@
     clearStatus();
     setDraftDurationMin(getDurationFromInputs() || lessonDefaults?.durationMin, { persist: false });
     applySubjectColorLock();
+    renderColorPalette();
+    renderDayChips();
+    setDayChipActive();
+    updateLessonSummary();
+    if (lessonAdvanced) lessonAdvanced.open = !!(lesson.location || lesson.notes);
     validateLessonDraft({ silent: true });
     if (lessonModal) {
       lessonModal.classList.add("is-open");
@@ -932,6 +1079,20 @@
       lessonModal.classList.remove("is-open");
       lessonModal.setAttribute("aria-hidden", "true");
     }
+  }
+
+  function deleteEditingLesson() {
+    if (!editingId) return;
+    if (!confirm("Delete this lesson from the Stundenplan?")) return;
+    const working = getWorkingLessons();
+    const idx = working.findIndex((l) => l.id === editingId);
+    if (idx >= 0) {
+      working.splice(idx, 1);
+      saveTimetableState();
+      renderTimetable();
+      setStatus("Lesson removed.", "success");
+    }
+    closeLessonModal();
   }
 
   function renderTimetable() {
@@ -1573,10 +1734,19 @@
     if (lessonForm) {
       lessonForm.addEventListener("submit", handleSubmit);
     }
-    lessonResetBtn?.addEventListener("click", () => resetForm());
+    lessonResetBtn?.addEventListener("click", () => {
+      if (editingId) {
+        closeLessonModal();
+        return;
+      }
+      resetForm();
+    });
+    lessonDeleteBtn?.addEventListener("click", deleteEditingLesson);
     lessonSubjectSelect?.addEventListener("change", () => {
       const selected = lessonSubjectSelect.value;
       applySubjectColorLock();
+      renderColorPalette();
+      updateLessonSummary();
       if (!selected) {
         if (lessonColorInput && !lessonColorInput.disabled) {
           lessonColorInput.value = lessonDefaults?.customColor || lessonColorInput.value;
@@ -1594,20 +1764,26 @@
     lessonColorInput?.addEventListener("input", () => {
       if (lessonSubjectSelect?.value) return;
       saveLessonDefaults({ customColor: lessonColorInput.value });
+      renderColorPalette();
+      updateLessonSummary();
     });
 
     lessonDaySelect?.addEventListener("change", () => {
+      setDayChipActive();
+      updateLessonSummary();
       validateLessonDraft();
     });
 
     lessonStartInput?.addEventListener("input", () => {
       if (suppressTimeSync) return;
       syncEndToStart();
+      updateLessonSummary();
       validateLessonDraft({ silent: true });
     });
     lessonStartInput?.addEventListener("change", () => {
       if (suppressTimeSync) return;
       syncEndToStart();
+      updateLessonSummary();
       validateLessonDraft();
     });
 
@@ -1615,12 +1791,14 @@
       if (suppressTimeSync) return;
       const duration = getDurationFromInputs();
       if (duration) setDraftDurationMin(duration, { persist: false });
+      updateLessonSummary();
       validateLessonDraft({ silent: true });
     });
     lessonEndInput?.addEventListener("change", () => {
       if (suppressTimeSync) return;
       const duration = getDurationFromInputs();
       if (duration) setDraftDurationMin(duration, { persist: true });
+      updateLessonSummary();
       validateLessonDraft();
     });
 
@@ -1660,6 +1838,7 @@
       setDraftDurationMin(durationMin, { persist: true });
       const end = addMinutesToTime(start, lessonDraftDurationMin);
       if (end) lessonEndInput.value = end;
+      updateLessonSummary();
       validateLessonDraft({ silent: true });
       lessonLocationInput?.focus();
     });
