@@ -19,6 +19,9 @@
     sidebarBackdrop: document.getElementById("wsSidebarBackdrop"),
     addTaskBtn: document.getElementById("wsAddTaskBtn"),
 
+    viewWeekBtn: document.getElementById("wsViewWeekBtn"),
+    viewMonthBtn: document.getElementById("wsViewMonthBtn"),
+
     todayBtn: document.getElementById("wsTodayBtn"),
     prevWeekBtn: document.getElementById("wsPrevWeekBtn"),
     nextWeekBtn: document.getElementById("wsNextWeekBtn"),
@@ -32,6 +35,10 @@
     monthLabel: document.getElementById("wsMonthLabel"),
     weekRangeLabel: document.getElementById("wsWeekRangeLabel"),
     dayStrip: document.getElementById("wsDayStrip"),
+
+    weekView: document.getElementById("wsWeekView"),
+    monthView: document.getElementById("wsMonthView"),
+    monthGrid: document.getElementById("wsMonthGrid"),
 
     gridScroll: document.getElementById("wsGridScroll"),
     gridHead: document.getElementById("wsGridHead"),
@@ -60,9 +67,12 @@
   };
 
   const state = {
+    view: "week",
     weekStart: startOfWeek(new Date()),
     activeDayIndex: 0,
     isNarrow: false,
+    monthCursor: startOfMonth(new Date()),
+    monthSelectedKey: dateKey(new Date()),
     editingId: null,
     lastFocusEl: null,
     dayEls: new Map(), // dateKey -> { allDayCell, eventsLayer }
@@ -135,9 +145,21 @@
     return d;
   }
 
+  function startOfMonth(date) {
+    const d = new Date(date.getFullYear(), date.getMonth(), 1);
+    d.setHours(12, 0, 0, 0);
+    return d;
+  }
+
   function addDays(date, delta) {
     const d = new Date(date);
     d.setDate(d.getDate() + delta);
+    return d;
+  }
+
+  function addMonths(date, delta) {
+    const d = new Date(date.getFullYear(), date.getMonth() + delta, 1);
+    d.setHours(12, 0, 0, 0);
     return d;
   }
 
@@ -168,6 +190,10 @@
     const endMonth = new Intl.DateTimeFormat("en", { month: "short" }).format(end);
     const year = new Intl.DateTimeFormat("en", { year: "numeric" }).format(end);
     return `${startMonth} – ${endMonth} ${year}`;
+  }
+
+  function formatDisplayMonth(date) {
+    return new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(date);
   }
 
   function parseTimeToMinutes(timeStr) {
@@ -252,6 +278,70 @@
     if (els.planPopover.hidden) return;
     els.planPopover.hidden = true;
     els.planBtn.setAttribute("aria-expanded", "false");
+  }
+
+  function isImportantPriority(priority) {
+    const p = String(priority || "normal");
+    return p === "important" || p === "critical";
+  }
+
+  function shouldShowInMonth(evt) {
+    if (!evt || typeof evt !== "object") return false;
+    if (!evt.date) return false;
+    if (evt.done) return false;
+    const type = String(evt.type || "deadline");
+    const origin = String(evt.origin || "");
+    if (type === "study" || origin === "autoplan") return false;
+    if (type === "exam" || type === "reminder") return true;
+    if (isImportantPriority(evt.priority)) return true;
+    return Boolean(String(evt.time || "").trim());
+  }
+
+  function applyViewUI() {
+    const isMonth = state.view === "month";
+    if (els.weekView) els.weekView.hidden = isMonth;
+    if (els.monthView) els.monthView.hidden = !isMonth;
+    if (els.dayStrip) els.dayStrip.hidden = isMonth;
+
+    document.body.classList.toggle("ws-view-month", isMonth);
+    document.body.classList.toggle("ws-view-week", !isMonth);
+
+    const applyToggle = (btn, on) => {
+      if (!btn) return;
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+      btn.className = on ? "chip-btn chip-btn-primary" : "chip-btn";
+    };
+    applyToggle(els.viewWeekBtn, !isMonth);
+    applyToggle(els.viewMonthBtn, isMonth);
+  }
+
+  function setView(nextView) {
+    const view = nextView === "month" ? "month" : "week";
+    if (view === state.view) return;
+    state.view = view;
+
+    if (view === "month") {
+      const weekDays = currentWeekDays();
+      const base = weekDays[state.activeDayIndex] || new Date();
+      state.monthSelectedKey = dateKey(base);
+      state.monthCursor = startOfMonth(base);
+    } else {
+      const base = parseDateKey(state.monthSelectedKey) || new Date();
+      state.weekStart = startOfWeek(base);
+      const weekDays = currentWeekDays();
+      const idx = weekDays.findIndex((d) => isSameDay(d, base));
+      state.activeDayIndex = idx !== -1 ? idx : 0;
+      clampActiveDayIndex();
+    }
+
+    closePlanMenu();
+    applyViewUI();
+    render();
+  }
+
+  function setMonthCursor(nextMonth) {
+    state.monthCursor = startOfMonth(nextMonth);
+    render();
   }
 
   function openPlanMenu() {
@@ -612,8 +702,122 @@
   }
 
   function renderHeader() {
+    if (state.view === "month") {
+      if (els.weekRangeLabel) els.weekRangeLabel.textContent = "Important (no study blocks)";
+      if (els.monthLabel) els.monthLabel.textContent = formatDisplayMonth(state.monthCursor);
+      return;
+    }
     if (els.weekRangeLabel) els.weekRangeLabel.textContent = formatWeekRangeLabel(state.weekStart);
     if (els.monthLabel) els.monthLabel.textContent = formatMonthLabel(state.weekStart);
+  }
+
+  function renderMonthGrid() {
+    if (!els.monthGrid) return;
+    els.monthGrid.replaceChildren();
+
+    const cursor = startOfMonth(state.monthCursor || new Date());
+    const today = new Date();
+
+    const weekdayMon0 = (d) => (d.getDay() + 6) % 7;
+    const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    first.setHours(12, 0, 0, 0);
+    const startOffset = weekdayMon0(first);
+    const gridStart = addDays(first, -startOffset);
+
+    const events = loadEvents().filter(shouldShowInMonth);
+    const byDate = new Map();
+    events.forEach((evt) => {
+      const key = String(evt.date || "");
+      if (!key) return;
+      const list = byDate.get(key) || [];
+      list.push(evt);
+      byDate.set(key, list);
+    });
+
+    const priorityRank = (priority) => {
+      const p = String(priority || "normal");
+      if (p === "critical") return 0;
+      if (p === "important") return 1;
+      return 2;
+    };
+
+    for (const [key, list] of byDate.entries()) {
+      list.sort((a, b) => {
+        const pr = priorityRank(a.priority) - priorityRank(b.priority);
+        if (pr) return pr;
+        const typeA = String(a.type || "");
+        const typeB = String(b.type || "");
+        if (typeA !== typeB) return typeA.localeCompare(typeB);
+        const timeA = a.time || "24:00";
+        const timeB = b.time || "24:00";
+        if (timeA !== timeB) return timeA.localeCompare(timeB);
+        return String(a.title || "").localeCompare(String(b.title || ""));
+      });
+    }
+
+    for (let i = 0; i < 42; i++) {
+      const day = addDays(gridStart, i);
+      const key = dateKey(day);
+
+      const cell = document.createElement("div");
+      cell.className = "ws-month-cell";
+      cell.dataset.date = key;
+      cell.setAttribute("role", "gridcell");
+      cell.tabIndex = 0;
+      if (day.getMonth() !== cursor.getMonth()) cell.classList.add("is-outside");
+      if (isSameDay(day, today)) cell.classList.add("is-today");
+
+      const head = document.createElement("div");
+      head.className = "ws-month-day";
+      const num = document.createElement("div");
+      num.className = "ws-month-day-num";
+      num.textContent = String(day.getDate());
+      head.appendChild(num);
+      cell.appendChild(head);
+
+      const eventsWrap = document.createElement("div");
+      eventsWrap.className = "ws-month-events";
+      cell.appendChild(eventsWrap);
+
+      const dayEvents = byDate.get(key) || [];
+      const limit = 2;
+      dayEvents.slice(0, limit).forEach((evt) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        const tone = toneForEvent(evt);
+        btn.className = `ws-month-event ws-month-event--${tone}${isImportantPriority(evt.priority) ? " is-important" : ""}`;
+        const title = String(evt.title || "Untitled");
+        const time = String(evt.time || "").trim();
+        btn.textContent = time ? `${time} ${title}` : title;
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          state.monthSelectedKey = key;
+          openModal({ date: key, evt });
+        });
+        eventsWrap.appendChild(btn);
+      });
+
+      if (dayEvents.length > limit) {
+        const more = document.createElement("div");
+        more.className = "ws-month-more";
+        more.textContent = `+${dayEvents.length - limit} more`;
+        eventsWrap.appendChild(more);
+      }
+
+      const openForDay = () => {
+        state.monthSelectedKey = key;
+        openModal({ date: key });
+      };
+
+      cell.addEventListener("click", openForDay);
+      cell.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        openForDay();
+      });
+
+      els.monthGrid.appendChild(cell);
+    }
   }
 
   function renderEventsForVisibleDays(visibleDays) {
@@ -773,10 +977,16 @@
   }
 
   function render() {
-    if (!els.grid || !els.gridHead || !els.gridScroll) return;
-
     readSlotHeightPx();
+    applyViewUI();
     renderHeader();
+
+    if (state.view === "month") {
+      renderMonthGrid();
+      return;
+    }
+
+    if (!els.grid || !els.gridHead || !els.gridScroll) return;
 
     const scrollTop = els.gridScroll.scrollTop;
     const scrollLeft = els.gridScroll.scrollLeft;
@@ -801,21 +1011,46 @@
     clampActiveDayIndex();
 
     if (els.prevWeekBtn) {
-      els.prevWeekBtn.addEventListener("click", () => setWeekStart(addDays(state.weekStart, -7)));
+      els.prevWeekBtn.addEventListener("click", () => {
+        if (state.view === "month") return setMonthCursor(addMonths(state.monthCursor, -1));
+        setWeekStart(addDays(state.weekStart, -7));
+      });
     }
     if (els.nextWeekBtn) {
-      els.nextWeekBtn.addEventListener("click", () => setWeekStart(addDays(state.weekStart, 7)));
+      els.nextWeekBtn.addEventListener("click", () => {
+        if (state.view === "month") return setMonthCursor(addMonths(state.monthCursor, 1));
+        setWeekStart(addDays(state.weekStart, 7));
+      });
     }
     if (els.todayBtn) {
-      els.todayBtn.addEventListener("click", () => setWeekStart(new Date()));
+      els.todayBtn.addEventListener("click", () => {
+        if (state.view === "month") {
+          const now = new Date();
+          state.monthSelectedKey = dateKey(now);
+          return setMonthCursor(startOfMonth(now));
+        }
+        setWeekStart(new Date());
+      });
     }
 
     if (els.addTaskBtn) {
       els.addTaskBtn.addEventListener("click", () => {
+        if (state.view === "month") {
+          const key = state.monthSelectedKey || dateKey(new Date());
+          openModal({ date: key });
+          return;
+        }
         const days = currentWeekDays();
         const day = state.isNarrow ? days[state.activeDayIndex] : new Date();
         openModal({ date: dateKey(day) });
       });
+    }
+
+    if (els.viewWeekBtn) {
+      els.viewWeekBtn.addEventListener("click", () => setView("week"));
+    }
+    if (els.viewMonthBtn) {
+      els.viewMonthBtn.addEventListener("click", () => setView("month"));
     }
 
     if (els.sidebarToggle) {

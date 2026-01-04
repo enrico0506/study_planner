@@ -32,6 +32,14 @@
   min-height: 0;
 }
 
+.weekly-page .ws-layout--solo {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.weekly-page .ws-back-btn {
+  white-space: nowrap;
+}
+
 .weekly-page .ws-sidebar {
   background: color-mix(in srgb, var(--surface-subtle-bg) 82%, #ffffff);
   border-right: 1px solid var(--border-subtle);
@@ -192,6 +200,8 @@
   gap: 12px;
   background: var(--ws-header-bg);
   backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 60;
 }
 
 .weekly-page .ws-header-left {
@@ -228,6 +238,12 @@
   flex-wrap: wrap;
 }
 
+.weekly-page .ws-view-toggle {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
 .weekly-page .ws-week-nav {
   display: inline-flex;
   gap: 6px;
@@ -248,7 +264,7 @@
   border-radius: 14px;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
   padding: 8px;
-  z-index: 30;
+  z-index: 200;
 }
 
 .weekly-page .ws-plan-item {
@@ -313,11 +329,125 @@
   flex-direction: column;
 }
 
+.weekly-page .ws-week-view,
+.weekly-page .ws-month-view {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .weekly-page .ws-grid-scroll {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
   background: color-mix(in srgb, var(--surface-strong) 65%, transparent);
+}
+
+.weekly-page .ws-month-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+  background: color-mix(in srgb, var(--surface-strong) 65%, transparent);
+}
+
+.weekly-page .ws-month-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+}
+
+.weekly-page .ws-month-weekdays > div {
+  padding-inline: 10px;
+}
+
+.weekly-page .ws-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  align-items: stretch;
+}
+
+.weekly-page .ws-month-cell {
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 80%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, #ffffff 70%, transparent);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  min-height: 118px;
+  padding: 10px 10px 12px;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.weekly-page .ws-month-cell.is-outside {
+  opacity: 0.55;
+}
+
+.weekly-page .ws-month-cell.is-today {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent), var(--shadow-card);
+}
+
+.weekly-page .ws-month-day {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.weekly-page .ws-month-day-num {
+  font-weight: 850;
+  color: var(--accent-ink);
+}
+
+.weekly-page .ws-month-events {
+  display: grid;
+  gap: 6px;
+}
+
+.weekly-page .ws-month-event {
+  border: 1px solid color-mix(in srgb, var(--border-strong) 55%, transparent);
+  border-radius: 12px;
+  padding: 6px 8px;
+  font-size: 0.78rem;
+  line-height: 1.15;
+  text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: color-mix(in srgb, var(--surface-strong) 85%, #ffffff);
+}
+
+.weekly-page .ws-month-event.is-important {
+  box-shadow: 0 8px 16px color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border-strong));
+}
+
+.weekly-page .ws-month-event--deadline {
+  background: color-mix(in srgb, #a78bfa 18%, #ffffff);
+}
+
+.weekly-page .ws-month-event--exam {
+  background: color-mix(in srgb, #fb7185 18%, #ffffff);
+}
+
+.weekly-page .ws-month-event--reminder {
+  background: color-mix(in srgb, #fbbf24 20%, #ffffff);
+}
+
+.weekly-page .ws-month-more {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  padding-inline: 2px;
 }
 
 .weekly-page .ws-grid-head {

@@ -69,80 +69,11 @@
   <aside class="ad-column ad-column-right" aria-label="Advertisement column"></aside>
 
   <div class="weekly-shell" id="weeklyShell" data-section="weekly-shell">
-    <div class="ws-layout">
-      <nav class="ws-sidebar" id="wsSidebar" aria-label="Primary navigation">
-        <div class="ws-sidebar-top">
-          <div class="ws-user">
-            <div class="ws-avatar" aria-hidden="true">SP</div>
-            <div class="ws-user-meta">
-              <div class="ws-user-name">Study Planner</div>
-              <div class="ws-user-sub">Weekly schedule</div>
-            </div>
-          </div>
-          <button class="btn ws-add-task" id="wsAddTaskBtn" type="button">Add task</button>
-        </div>
-
-        <ul class="ws-nav" aria-label="Navigation links">
-          <li><a class="ws-nav-link" href="./index.html?mode=board">Search</a></li>
-          <li><a class="ws-nav-link" href="./index.html?mode=board">Inbox</a></li>
-          <li><a class="ws-nav-link" href="./index.html?mode=today">Today</a></li>
-          <li><a class="ws-nav-link ws-nav-link-active" href="./calendar.html" aria-current="page">Upcoming</a></li>
-          <li><a class="ws-nav-link" href="./index.html?mode=schedule">Daily schedule</a></li>
-          <li><a class="ws-nav-link" href="./index.html?mode=subjects">Subjects</a></li>
-          <li><a class="ws-nav-link" href="./stundenplan.html">Timetable</a></li>
-          <li><a class="ws-nav-link" href="./account.html">Account</a></li>
-        </ul>
-
-        <details class="ws-section" open>
-          <summary>Favorites</summary>
-          <div class="ws-section-body">
-            <a class="ws-sub-link" href="./calendar.html" aria-current="page">Weekly schedule</a>
-            <a class="ws-sub-link" href="./index.html?mode=schedule">Daily schedule</a>
-          </div>
-        </details>
-
-        <details class="ws-section" open>
-          <summary>My Projects</summary>
-          <div class="ws-section-body">
-            <div class="calendar-card ws-assignments-card" id="assignmentsPanel">
-              <div class="side-subtitle">Assignments & exams</div>
-              <div class="assignments-actions">
-                <button class="chip-btn chip-btn-primary" id="assignmentsAddBtn" type="button">Add</button>
-                <button class="chip-btn" id="examModeBtn" type="button">Exam mode</button>
-                <button class="chip-btn" id="autoPlanWeekBtn" type="button">Auto-plan week</button>
-              </div>
-              <div class="assignments-filters">
-                <div class="assignments-filter-tabs assignments-tabs" aria-label="Assignments filter tabs">
-                  <button class="chip-btn" id="assignmentsFilterDueSoon" type="button" aria-pressed="true">Due soon</button>
-                  <button class="chip-btn" id="assignmentsFilterThisWeek" type="button" aria-pressed="false">This week</button>
-                  <button class="chip-btn" id="assignmentsFilterAll" type="button" aria-pressed="false">All</button>
-                </div>
-                <label class="sr-only" for="assignmentsStatusFilter">Status</label>
-                <select id="assignmentsStatusFilter">
-                  <option value="open">Open</option>
-                  <option value="all">All</option>
-                  <option value="done">Done</option>
-                </select>
-              </div>
-              <div class="calendar-form-status" id="assignmentsStatus"></div>
-              <div class="calendar-upcoming" id="assignmentsList"></div>
-              <div class="side-subtitle" style="margin-top:12px;">Review today</div>
-              <div class="calendar-upcoming" id="calendarReviewList"></div>
-            </div>
-          </div>
-        </details>
-
-        <div class="ws-sidebar-footer">
-          <a class="btn btn-secondary ws-footer-link" href="./index.html?mode=board">← Back to board</a>
-        </div>
-      </nav>
-
-      <button class="ws-sidebar-backdrop" id="wsSidebarBackdrop" type="button" aria-label="Close navigation" hidden></button>
-
-      <main class="ws-main" aria-label="Weekly schedule">
+    <div class="ws-layout ws-layout--solo">
+      <main class="ws-main" aria-label="Calendar schedule">
         <header class="ws-header" aria-label="Schedule header">
           <div class="ws-header-left">
-            <button class="ws-sidebar-toggle icon-btn icon-btn-ghost" id="wsSidebarToggle" type="button" aria-label="Open navigation">☰</button>
+            <a class="btn btn-secondary ws-back-btn" href="./index.html?mode=board">← Board</a>
             <div class="ws-title-block">
               <h1 class="ws-title">Upcoming</h1>
               <div class="ws-month" id="wsMonthLabel">—</div>
@@ -150,10 +81,15 @@
           </div>
 
           <div class="ws-header-actions">
+            <button class="btn" id="wsAddTaskBtn" type="button">Add task</button>
+            <div class="ws-view-toggle" role="group" aria-label="Calendar view">
+              <button class="chip-btn chip-btn-primary" id="wsViewWeekBtn" type="button" aria-pressed="true">Week</button>
+              <button class="chip-btn" id="wsViewMonthBtn" type="button" aria-pressed="false">Month</button>
+            </div>
             <button class="btn btn-secondary" id="wsTodayBtn" type="button">Today</button>
-            <div class="ws-week-nav" role="group" aria-label="Week navigation">
-              <button class="icon-btn icon-btn-ghost" id="wsPrevWeekBtn" type="button" aria-label="Previous week">‹</button>
-              <button class="icon-btn icon-btn-ghost" id="wsNextWeekBtn" type="button" aria-label="Next week">›</button>
+            <div class="ws-week-nav" role="group" aria-label="Calendar navigation">
+              <button class="icon-btn icon-btn-ghost" id="wsPrevWeekBtn" type="button" aria-label="Previous">‹</button>
+              <button class="icon-btn icon-btn-ghost" id="wsNextWeekBtn" type="button" aria-label="Next">›</button>
             </div>
             <div class="ws-plan">
               <button class="btn btn-secondary" id="wsPlanBtn" type="button" aria-haspopup="true" aria-expanded="false">Plan ▾</button>
@@ -171,13 +107,50 @@
           <div class="ws-day-strip" id="wsDayStrip" role="tablist" aria-label="Select day"></div>
         </div>
 
-        <section class="ws-schedule" aria-label="Weekly schedule">
-          <div class="ws-grid-scroll" id="wsGridScroll">
-            <div class="ws-grid-head" id="wsGridHead"></div>
-            <div class="ws-grid" id="wsGrid" role="grid" aria-label="Weekly time grid"></div>
+        <section class="ws-schedule" aria-label="Calendar">
+          <div class="ws-week-view" id="wsWeekView">
+            <div class="ws-grid-scroll" id="wsGridScroll">
+              <div class="ws-grid-head" id="wsGridHead"></div>
+              <div class="ws-grid" id="wsGrid" role="grid" aria-label="Weekly time grid"></div>
+            </div>
+          </div>
+          <div class="ws-month-view" id="wsMonthView" hidden>
+            <div class="ws-month-scroll" id="wsMonthScroll">
+              <div class="ws-month-weekdays" aria-hidden="true">
+                <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+              </div>
+              <div class="ws-month-grid" id="wsMonthGrid" role="grid" aria-label="Monthly calendar"></div>
+            </div>
           </div>
         </section>
       </main>
+    </div>
+  </div>
+
+  <div class="ws-hidden-tools" hidden>
+    <div class="calendar-card ws-assignments-card" id="assignmentsPanel">
+      <div class="side-subtitle">Assignments & exams</div>
+      <div class="assignments-actions">
+        <button class="chip-btn chip-btn-primary" id="assignmentsAddBtn" type="button">Add</button>
+        <button class="chip-btn" id="examModeBtn" type="button">Exam mode</button>
+        <button class="chip-btn" id="autoPlanWeekBtn" type="button">Auto-plan week</button>
+      </div>
+      <div class="assignments-filters">
+        <div class="assignments-filter-tabs assignments-tabs" aria-label="Assignments filter tabs">
+          <button class="chip-btn" id="assignmentsFilterDueSoon" type="button" aria-pressed="true">Due soon</button>
+          <button class="chip-btn" id="assignmentsFilterThisWeek" type="button" aria-pressed="false">This week</button>
+          <button class="chip-btn" id="assignmentsFilterAll" type="button" aria-pressed="false">All</button>
+        </div>
+        <label class="sr-only" for="assignmentsStatusFilter">Status</label>
+        <select id="assignmentsStatusFilter">
+          <option value="open">Open</option>
+          <option value="all">All</option>
+          <option value="done">Done</option>
+        </select>
+      </div>
+      <div class="calendar-form-status" id="assignmentsStatus"></div>
+      <div class="calendar-upcoming" id="assignmentsList"></div>
+      <div class="calendar-upcoming" id="calendarReviewList"></div>
     </div>
   </div>
 
