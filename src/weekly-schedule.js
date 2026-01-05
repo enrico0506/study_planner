@@ -1038,6 +1038,14 @@
       applyCustomColor(card, customColor);
 
       const timeLabel = `${minutesToTime(startMin)} – ${minutesToTime(endMin)}`;
+      const compactTimeLabel = `${minutesToTime(startMin)}–${minutesToTime(endMin)}`;
+      const compactThresholdPx = state.slotHeightPx * 1.7;
+      const microThresholdPx = state.slotHeightPx * 1.05;
+      const locationThresholdPx = state.slotHeightPx * 2.3;
+      const isCompact = heightPx < compactThresholdPx;
+      const isMicro = heightPx < microThresholdPx;
+      if (isCompact) card.classList.add("ws-event--compact");
+      if (isMicro) card.classList.add("ws-event--micro");
       const ariaParts = [title, timeLabel];
       if (location) ariaParts.push(location);
       if (timeZoneLabel) ariaParts.push(timeZoneLabel);
@@ -1046,14 +1054,15 @@
 
       const t = document.createElement("div");
       t.className = "ws-event-title";
-      t.textContent = title;
-      const meta = document.createElement("div");
-      meta.className = "ws-event-time";
-      meta.textContent = timeLabel;
-
+      t.textContent = isCompact ? `${compactTimeLabel} ${title}` : title;
       card.appendChild(t);
-      card.appendChild(meta);
-      if (location) {
+      if (!isCompact) {
+        const meta = document.createElement("div");
+        meta.className = "ws-event-time";
+        meta.textContent = timeLabel;
+        card.appendChild(meta);
+      }
+      if (location && !isCompact && heightPx >= locationThresholdPx) {
         const loc = document.createElement("div");
         loc.className = "ws-event-time ws-event-location";
         loc.textContent = location;

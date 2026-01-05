@@ -664,6 +664,29 @@
   min-height: 30px;
 }
 
+.weekly-page .ws-event.ws-event--compact {
+  padding: 4px 8px;
+  border-radius: 10px;
+  gap: 2px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.weekly-page .ws-event.ws-event--compact .ws-event-title {
+  font-size: 0.82rem;
+  line-height: 1.15;
+}
+
+.weekly-page .ws-event.ws-event--micro {
+  padding: 3px 8px;
+}
+
+.weekly-page .ws-event.ws-event--micro .ws-event-title {
+  font-size: 0.8rem;
+  line-height: 1.15;
+}
+
 .weekly-page .ws-event-title {
   font-weight: 800;
   font-size: 0.86rem;
