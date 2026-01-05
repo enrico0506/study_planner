@@ -158,6 +158,9 @@ app.get("/privacy.html", (_req, res) => sendHtml(res, "privacy.html"));
 app.get("/terms.html", (_req, res) => sendHtml(res, "terms.html"));
 app.get("/impressum.html", (_req, res) => sendHtml(res, "impressum.html"));
 app.get("/offline.html", (_req, res) => sendHtml(res, "offline.html"));
+app.get("/ad-highperformance-160x600.html", (_req, res) =>
+  sendHtml(res, "ad-highperformance-160x600.html")
+);
 
 // Health check
 app.get("/healthz", (_req, res) => res.send("ok"));
