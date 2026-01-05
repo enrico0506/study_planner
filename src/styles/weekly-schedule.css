@@ -622,6 +622,28 @@
   padding: 4px 6px;
 }
 
+.weekly-page .ws-drag-selection {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  border-radius: 12px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 16%, #ffffff);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  color: var(--ink);
+  font-weight: 750;
+  font-size: 0.82rem;
+}
+
+.weekly-page .ws-drag-selection .ws-drag-selection-label {
+  pointer-events: none;
+  color: var(--ink);
+}
+
 .weekly-page .ws-event {
   position: absolute;
   left: 6px;
@@ -678,6 +700,17 @@
 .weekly-page .ws-event--deadline,
 .weekly-page .ws-all-day-event--deadline {
   background: color-mix(in srgb, #a78bfa 22%, #ffffff);
+}
+
+.weekly-page .ws-event--custom,
+.weekly-page .ws-all-day-event.ws-event--custom {
+  background: color-mix(in srgb, var(--ws-custom-color, var(--accent)) 18%, #ffffff);
+  border-color: color-mix(in srgb, var(--ws-custom-color, var(--accent)) 55%, transparent);
+  box-shadow: 0 10px 20px color-mix(in srgb, var(--ws-custom-color, var(--accent)) 24%, transparent);
+}
+
+.weekly-page .ws-event-location {
+  color: color-mix(in srgb, var(--ink) 60%, var(--ink-muted));
 }
 
 .weekly-page .ws-form-grid-3 {

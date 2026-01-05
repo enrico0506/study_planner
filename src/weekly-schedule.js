@@ -59,6 +59,12 @@
     endInput: document.getElementById("eventEndTimeInput"),
     typeSelect: document.getElementById("eventTypeSelect"),
     prioritySelect: document.getElementById("eventPrioritySelect"),
+    categoryInput: document.getElementById("eventCategoryInput"),
+    colorInput: document.getElementById("eventColorInput"),
+    timezoneInput: document.getElementById("eventTimezoneInput"),
+    locationInput: document.getElementById("eventLocationInput"),
+    reminderSelect: document.getElementById("eventReminderSelect"),
+    recurrenceSelect: document.getElementById("eventRecurrenceSelect"),
     notesInput: document.getElementById("eventNotesInput"),
     doneInput: document.getElementById("eventDoneInput"),
     deleteBtn: document.getElementById("eventDeleteBtn"),
@@ -77,6 +83,16 @@
     lastFocusEl: null,
     dayEls: new Map(), // dateKey -> { allDayCell, eventsLayer }
     slotHeightPx: 34,
+  };
+
+  const drag = {
+    active: false,
+    dayKey: null,
+    startMin: 0,
+    currentMin: 0,
+    layer: null,
+    node: null,
+    pointerId: null,
   };
 
   function safeJsonParse(raw) {
@@ -215,6 +231,45 @@
     return `${pad2(hh)}:${pad2(mm)}`;
   }
 
+  const DEFAULT_TYPE_COLORS = {
+    deadline: "#a78bfa",
+    exam: "#fb7185",
+    study: "#60a5fa",
+    reminder: "#fbbf24",
+  };
+
+  function defaultColorForType(type) {
+    return DEFAULT_TYPE_COLORS[type] || DEFAULT_TYPE_COLORS.deadline;
+  }
+
+  function normalizeHexColor(raw) {
+    const m = String(raw || "")
+      .trim()
+      .match(/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
+    if (!m) return "";
+    let hex = m[1];
+    if (hex.length === 3) hex = hex.split("").map((c) => c + c).join("");
+    return `#${hex.toLowerCase()}`;
+  }
+
+  function currentTimeZone() {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    } catch {
+      return "UTC";
+    }
+  }
+
+  function clampToDayMinutes(min) {
+    const minBound = START_HOUR * 60;
+    const maxBound = END_HOUR * 60;
+    return Math.min(maxBound, Math.max(minBound, min));
+  }
+
+  function snapToSlotMinutes(min) {
+    return Math.round(min / SLOT_MINUTES) * SLOT_MINUTES;
+  }
+
   function defaultDurationMinutes(evt) {
     const type = String(evt?.type || "");
     if (type === "study") return 50;
@@ -229,6 +284,13 @@
     if (type === "reminder") return "reminder";
     if (type === "exam") return "exam";
     return "deadline";
+  }
+
+  function applyCustomColor(el, color) {
+    const clean = normalizeHexColor(color);
+    if (!el || !clean) return;
+    el.classList.add("ws-event--custom");
+    el.style.setProperty("--ws-custom-color", clean);
   }
 
   function readSlotHeightPx() {
@@ -362,7 +424,7 @@
     if (els.sidebarBackdrop) els.sidebarBackdrop.hidden = !next;
   }
 
-  function openModal({ date, evt } = {}) {
+  function openModal({ date, evt, timeRange } = {}) {
     if (!els.modal || !els.form) return;
     state.lastFocusEl = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     state.editingId = evt && evt.id ? String(evt.id) : null;
@@ -379,12 +441,35 @@
 
     if (els.dateInput) els.dateInput.value = dayKey;
     if (els.titleInput) els.titleInput.value = String(evt?.title || "");
-    if (els.typeSelect) els.typeSelect.value = String(evt?.type || "deadline");
-    if (els.prioritySelect) els.prioritySelect.value = String(evt?.priority || "normal");
-    if (els.notesInput) els.notesInput.value = String(evt?.notes || "");
 
-    const startVal = evt && evt.time ? String(evt.time) : "";
-    const endVal = (() => {
+    const typeVal = String(evt?.type || "deadline");
+    const priorityVal = String(evt?.priority || "normal");
+    const notesVal = String(evt?.notes || "");
+    const categoryVal = String(evt?.category || "");
+    const locationVal = String(evt?.location || "");
+    const reminderVal = String(evt?.reminder || "none");
+    const recurrenceVal = String(evt?.recurrence || "none");
+    const timeZoneVal = String(evt?.timeZone || evt?.timezone || currentTimeZone() || "");
+
+    if (els.typeSelect) els.typeSelect.value = typeVal;
+    if (els.prioritySelect) els.prioritySelect.value = priorityVal;
+    if (els.notesInput) els.notesInput.value = notesVal;
+    if (els.categoryInput) els.categoryInput.value = categoryVal;
+    if (els.locationInput) els.locationInput.value = locationVal;
+    if (els.reminderSelect) els.reminderSelect.value = reminderVal;
+    if (els.recurrenceSelect) els.recurrenceSelect.value = recurrenceVal;
+    if (els.timezoneInput) els.timezoneInput.value = timeZoneVal;
+
+    const defaultToneColor = defaultColorForType(typeVal);
+    const incomingColor = normalizeHexColor(evt?.color);
+    const colorVal = incomingColor || defaultToneColor;
+    if (els.colorInput) {
+      els.colorInput.value = colorVal;
+      els.colorInput.dataset.autoColor = incomingColor && incomingColor !== defaultToneColor ? "" : colorVal;
+    }
+
+    let startVal = evt && evt.time ? String(evt.time) : "";
+    let endVal = (() => {
       if (!evt) return "";
       if (evt.endTime) return String(evt.endTime);
       const startMin = parseTimeToMinutes(evt.time);
@@ -393,9 +478,21 @@
       return minutesToTime(startMin + Math.max(5, dur));
     })();
 
+    if (!isEdit && timeRange) {
+      if (typeof timeRange.startMinutes === "number") startVal = minutesToTime(clampToDayMinutes(timeRange.startMinutes));
+      if (typeof timeRange.endMinutes === "number") endVal = minutesToTime(clampToDayMinutes(timeRange.endMinutes));
+    }
+
+    if (startVal && !endVal) {
+      const startMin = parseTimeToMinutes(startVal);
+      if (startMin != null) endVal = minutesToTime(startMin + defaultDurationMinutes({ type: typeVal }));
+    }
+
     if (els.startInput) els.startInput.value = startVal;
-    if (els.endInput) els.endInput.value = startVal ? endVal : "";
-    if (els.endInput) els.endInput.disabled = !startVal;
+    if (els.endInput) {
+      els.endInput.value = startVal ? endVal : "";
+      els.endInput.disabled = !startVal;
+    }
 
     if (els.modalDateLabel && dateObj) {
       els.modalDateLabel.textContent = new Intl.DateTimeFormat("en", {
@@ -471,6 +568,13 @@
     const priority = String(els.prioritySelect?.value || "normal");
     const notes = String(els.notesInput?.value || "").trim();
     const done = !!els.doneInput?.checked;
+    const category = String(els.categoryInput?.value || "").trim();
+    const location = String(els.locationInput?.value || "").trim();
+    const reminderRaw = String(els.reminderSelect?.value || "none");
+    const recurrenceRaw = String(els.recurrenceSelect?.value || "none");
+    const color = normalizeHexColor(els.colorInput?.value || "") || defaultColorForType(type);
+    const timeZoneInput = String(els.timezoneInput?.value || "").trim();
+    const timeZone = timeZoneInput || currentTimeZone();
 
     if (!title) {
       setFormStatus("Title is required.", "error");
@@ -510,6 +614,11 @@
       durationMinutes = Math.max(5, endMin - startMin);
     }
 
+    const validReminders = new Set(["none", "5m", "15m", "30m", "60m", "1d"]);
+    const reminder = validReminders.has(reminderRaw) ? reminderRaw : "none";
+    const validRecurrence = new Set(["none", "daily", "weekly", "weekdays", "monthly"]);
+    const recurrence = validRecurrence.has(recurrenceRaw) ? recurrenceRaw : "none";
+
     const isEditing = !!state.editingId;
     const id = state.editingId || "evt_" + createId("evt");
     const payload = {
@@ -521,6 +630,12 @@
       priority,
       notes,
       done,
+      category,
+      color,
+      location,
+      reminder,
+      recurrence,
+      timeZone,
     };
     if (!isEditing) payload.source = "weekly";
 
@@ -564,6 +679,23 @@
     const type = String(els.typeSelect?.value || "deadline");
     const dur = defaultDurationMinutes({ type });
     els.endInput.value = minutesToTime(startMin + dur);
+  }
+
+  function handleTypeChanged() {
+    handleStartInputChanged();
+    const typeVal = String(els.typeSelect?.value || "deadline");
+    if (!els.colorInput) return;
+    const currentColor = normalizeHexColor(els.colorInput.value || "");
+    const autoColor = normalizeHexColor(els.colorInput.dataset?.autoColor || "");
+    const defaultColor = defaultColorForType(typeVal);
+    if (!currentColor || (autoColor && currentColor === autoColor)) {
+      els.colorInput.value = defaultColor;
+      els.colorInput.dataset.autoColor = defaultColor;
+    }
+  }
+
+  function handleColorManuallyChanged() {
+    if (els.colorInput) els.colorInput.dataset.autoColor = "";
   }
 
   function currentWeekDays() {
@@ -856,6 +988,9 @@
 
       const tone = toneForEvent(evt);
       const title = String(evt.title || "Untitled");
+      const customColor = normalizeHexColor(evt.color);
+      const location = String(evt.location || "").trim();
+      const timeZoneLabel = String(evt.timeZone || evt.timezone || "").trim();
 
       const startMin = parseTimeToMinutes(evt.time);
       if (startMin == null) {
@@ -865,8 +1000,12 @@
         chip.className = `ws-all-day-event ws-all-day-event--${tone}`;
         chip.textContent = title;
         chip.dataset.eventId = String(evt.id || "");
-        chip.setAttribute("aria-label", `${title} (all-day)`);
+        const allDayLabelParts = [`${title} (all-day)`];
+        if (location) allDayLabelParts.push(location);
+        if (timeZoneLabel) allDayLabelParts.push(timeZoneLabel);
+        chip.setAttribute("aria-label", allDayLabelParts.join(" · "));
         chip.addEventListener("click", () => openModal({ date: key, evt }));
+        applyCustomColor(chip, customColor);
         refs.allDayCell.appendChild(chip);
         return;
       }
@@ -894,9 +1033,13 @@
       card.style.height = `${heightPx}px`;
       card.dataset.eventId = String(evt.id || "");
       if (evt.done) card.setAttribute("aria-disabled", "true");
+      applyCustomColor(card, customColor);
 
       const timeLabel = `${minutesToTime(startMin)} – ${minutesToTime(endMin)}`;
-      card.setAttribute("aria-label", `${title} · ${timeLabel}`);
+      const ariaParts = [title, timeLabel];
+      if (location) ariaParts.push(location);
+      if (timeZoneLabel) ariaParts.push(timeZoneLabel);
+      card.setAttribute("aria-label", ariaParts.join(" · "));
       card.addEventListener("click", () => openModal({ date: key, evt }));
 
       const t = document.createElement("div");
@@ -908,9 +1051,118 @@
 
       card.appendChild(t);
       card.appendChild(meta);
+      if (location) {
+        const loc = document.createElement("div");
+        loc.className = "ws-event-time ws-event-location";
+        loc.textContent = location;
+        card.appendChild(loc);
+      }
 
       refs.eventsLayer.appendChild(card);
     });
+  }
+
+  function clearDragSelection() {
+    if (drag.node && drag.node.parentElement) drag.node.parentElement.removeChild(drag.node);
+    drag.active = false;
+    drag.dayKey = null;
+    drag.startMin = 0;
+    drag.currentMin = 0;
+    drag.layer = null;
+    drag.node = null;
+    drag.pointerId = null;
+    window.removeEventListener("pointermove", handleGridPointerMove);
+    window.removeEventListener("pointerup", handleGridPointerUp);
+    window.removeEventListener("pointercancel", handleGridPointerUp);
+  }
+
+  function ensureDragNode(layer) {
+    if (!layer) return null;
+    if (drag.node && drag.node.parentElement !== layer) {
+      drag.node.remove();
+      drag.node = null;
+    }
+    if (!drag.node) {
+      const el = document.createElement("div");
+      el.className = "ws-drag-selection";
+      const label = document.createElement("span");
+      label.className = "ws-drag-selection-label";
+      el.appendChild(label);
+      layer.prepend(el);
+      drag.node = el;
+    }
+    return drag.node;
+  }
+
+  function positionMinutesFromPointer(event, layer, { clampStart = false } = {}) {
+    if (!layer) return START_HOUR * 60;
+    const rect = layer.getBoundingClientRect();
+    const y = Math.max(0, Math.min(rect.height, event.clientY - rect.top));
+    const pxPerMinute = state.slotHeightPx / SLOT_MINUTES;
+    const minutesFromStart = y / pxPerMinute;
+    const raw = START_HOUR * 60 + minutesFromStart;
+    const minBound = START_HOUR * 60;
+    const maxBound = clampStart ? Math.max(minBound, END_HOUR * 60 - SLOT_MINUTES) : END_HOUR * 60;
+    const clamped = Math.min(maxBound, Math.max(minBound, raw));
+    const snapped = snapToSlotMinutes(clamped);
+    return Math.min(maxBound, Math.max(minBound, snapped));
+  }
+
+  function updateDragSelection() {
+    if (!drag.active || !drag.layer || !drag.node) return;
+    const from = clampToDayMinutes(Math.min(drag.startMin, drag.currentMin));
+    let to = clampToDayMinutes(Math.max(drag.startMin, drag.currentMin));
+    if (to - from < SLOT_MINUTES) to = clampToDayMinutes(from + SLOT_MINUTES);
+    const pxPerMinute = state.slotHeightPx / SLOT_MINUTES;
+    const topPx = Math.max(0, (from - START_HOUR * 60) * pxPerMinute);
+    const heightPx = Math.max(state.slotHeightPx * 0.6, (to - from) * pxPerMinute);
+    drag.node.style.top = `${topPx}px`;
+    drag.node.style.height = `${heightPx}px`;
+    const label = drag.node.querySelector(".ws-drag-selection-label");
+    if (label) label.textContent = `${minutesToTime(from)} – ${minutesToTime(to)}`;
+  }
+
+  function handleGridPointerMove(event) {
+    if (!drag.active) return;
+    if (drag.pointerId != null && drag.pointerId !== event.pointerId) return;
+    drag.currentMin = positionMinutesFromPointer(event, drag.layer);
+    updateDragSelection();
+  }
+
+  function handleGridPointerUp(event) {
+    if (!drag.active) return;
+    if (drag.pointerId != null && drag.pointerId !== event.pointerId) return;
+    const dayKey = drag.dayKey;
+    const start = clampToDayMinutes(Math.min(drag.startMin, drag.currentMin));
+    let end = clampToDayMinutes(Math.max(drag.startMin, drag.currentMin));
+    if (end - start < SLOT_MINUTES) end = clampToDayMinutes(start + SLOT_MINUTES);
+    clearDragSelection();
+    if (!dayKey) return;
+    openModal({ date: dayKey, timeRange: { startMinutes: start, endMinutes: end } });
+  }
+
+  function handleGridPointerDown(event) {
+    if (state.view !== "week") return;
+    if (event.button !== 0 || !event.isPrimary) return;
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.closest(".ws-event") || target.closest(".ws-all-day-cell")) return;
+    const col = target.closest(".ws-day-col");
+    if (!col || !col.dataset.date) return;
+    const refs = state.dayEls.get(col.dataset.date);
+    if (!refs || !refs.eventsLayer) return;
+    event.preventDefault();
+    drag.active = true;
+    drag.dayKey = col.dataset.date;
+    drag.layer = refs.eventsLayer;
+    drag.pointerId = event.pointerId;
+    drag.startMin = positionMinutesFromPointer(event, refs.eventsLayer, { clampStart: true });
+    drag.currentMin = drag.startMin;
+    ensureDragNode(refs.eventsLayer);
+    updateDragSelection();
+    window.addEventListener("pointermove", handleGridPointerMove);
+    window.addEventListener("pointerup", handleGridPointerUp);
+    window.addEventListener("pointercancel", handleGridPointerUp);
   }
 
   function renderReviewToday() {
@@ -993,6 +1245,8 @@
     readSlotHeightPx();
     applyViewUI();
     renderHeader();
+
+    if (drag.active || drag.node) clearDragSelection();
 
     if (state.view === "month") {
       renderMonthGrid();
@@ -1131,7 +1385,9 @@
     els.form?.addEventListener("submit", handleFormSubmit);
     els.deleteBtn?.addEventListener("click", handleDelete);
     els.startInput?.addEventListener("change", handleStartInputChanged);
-    els.typeSelect?.addEventListener("change", handleStartInputChanged);
+    els.typeSelect?.addEventListener("change", handleTypeChanged);
+    els.colorInput?.addEventListener("input", handleColorManuallyChanged);
+    els.grid?.addEventListener("pointerdown", handleGridPointerDown);
 
     window.addEventListener("keydown", (event) => {
       if (event.key !== "Escape") return;

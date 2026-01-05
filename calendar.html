@@ -208,9 +208,59 @@
             </select>
           </label>
         </div>
+        <div class="form-grid ws-form-grid-3">
+          <label>
+            Category
+            <input type="text" id="eventCategoryInput" name="category" placeholder="Course, project, personal" />
+          </label>
+          <label>
+            Color
+            <input type="color" id="eventColorInput" name="color" value="#a78bfa" />
+          </label>
+          <label>
+            Timezone
+            <input type="text" id="eventTimezoneInput" name="timezone" list="timezoneOptions" placeholder="e.g. Europe/Berlin" />
+          </label>
+        </div>
+        <div class="form-grid ws-form-grid-3">
+          <label>
+            Location
+            <input type="text" id="eventLocationInput" name="location" placeholder="Library, Zoom, campus B" />
+          </label>
+          <label>
+            Reminder
+            <select id="eventReminderSelect" name="reminder">
+              <option value="none">None</option>
+              <option value="5m">5 minutes before</option>
+              <option value="15m">15 minutes before</option>
+              <option value="30m">30 minutes before</option>
+              <option value="60m">1 hour before</option>
+              <option value="1d">1 day before</option>
+            </select>
+          </label>
+          <label>
+            Recurrence (optional)
+            <select id="eventRecurrenceSelect" name="recurrence">
+              <option value="none">Does not repeat</option>
+              <option value="daily">Every day</option>
+              <option value="weekly">Every week</option>
+              <option value="weekdays">Weekdays (Mon-Fri)</option>
+              <option value="monthly">Every month</option>
+            </select>
+          </label>
+        </div>
+        <datalist id="timezoneOptions">
+          <option value="UTC"></option>
+          <option value="Europe/Berlin"></option>
+          <option value="America/New_York"></option>
+          <option value="America/Los_Angeles"></option>
+          <option value="America/Chicago"></option>
+          <option value="Asia/Kolkata"></option>
+          <option value="Asia/Tokyo"></option>
+        </datalist>
         <div class="form-row">
           <label>
-            Notes
+            Description
             <textarea id="eventNotesInput" name="notes" rows="3" placeholder="Context, links, or next steps"></textarea>
           </label>
         </div>
