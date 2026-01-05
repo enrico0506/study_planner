@@ -456,6 +456,10 @@
   background: color-mix(in srgb, #fbbf24 20%, #ffffff);
 }
 
+.weekly-page .ws-month-event--event {
+  background: color-mix(in srgb, #34d399 18%, #ffffff);
+}
+
 .weekly-page .ws-month-more {
   font-size: 0.78rem;
   color: var(--ink-muted);
@@ -690,6 +694,11 @@
 .weekly-page .ws-event--reminder,
 .weekly-page .ws-all-day-event--reminder {
   background: color-mix(in srgb, #fbbf24 25%, #ffffff);
+}
+
+.weekly-page .ws-event--event,
+.weekly-page .ws-all-day-event--event {
+  background: color-mix(in srgb, #34d399 24%, #ffffff);
 }
 
 .weekly-page .ws-event--exam,

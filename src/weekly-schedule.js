@@ -232,6 +232,7 @@
   }
 
   const DEFAULT_TYPE_COLORS = {
+    event: "#34d399",
     deadline: "#a78bfa",
     exam: "#fb7185",
     study: "#60a5fa",
@@ -279,7 +280,8 @@
   }
 
   function toneForEvent(evt) {
-    const type = String(evt?.type || "deadline");
+    const type = String(evt?.type || "event");
+    if (type === "event") return "event";
     if (type === "study") return "study";
     if (type === "reminder") return "reminder";
     if (type === "exam") return "exam";
@@ -351,10 +353,10 @@
     if (!evt || typeof evt !== "object") return false;
     if (!evt.date) return false;
     if (evt.done) return false;
-    const type = String(evt.type || "deadline");
+    const type = String(evt.type || "event");
     const origin = String(evt.origin || "");
     if (type === "study" || origin === "autoplan") return false;
-    if (type === "exam" || type === "reminder") return true;
+    if (type === "exam" || type === "reminder" || type === "event") return true;
     if (isImportantPriority(evt.priority)) return true;
     return Boolean(String(evt.time || "").trim());
   }
@@ -442,7 +444,7 @@
     if (els.dateInput) els.dateInput.value = dayKey;
     if (els.titleInput) els.titleInput.value = String(evt?.title || "");
 
-    const typeVal = String(evt?.type || "deadline");
+    const typeVal = String(evt?.type || "event");
     const priorityVal = String(evt?.priority || "normal");
     const notesVal = String(evt?.notes || "");
     const categoryVal = String(evt?.category || "");
@@ -564,7 +566,7 @@
     const date = String(els.dateInput?.value || "").trim();
     const start = String(els.startInput?.value || "").trim();
     const end = String(els.endInput?.value || "").trim();
-    const type = String(els.typeSelect?.value || "deadline");
+    const type = String(els.typeSelect?.value || "event");
     const priority = String(els.prioritySelect?.value || "normal");
     const notes = String(els.notesInput?.value || "").trim();
     const done = !!els.doneInput?.checked;
@@ -676,14 +678,14 @@
     if (els.endInput.value) return;
     const startMin = parseTimeToMinutes(start);
     if (startMin == null) return;
-    const type = String(els.typeSelect?.value || "deadline");
+    const type = String(els.typeSelect?.value || "event");
     const dur = defaultDurationMinutes({ type });
     els.endInput.value = minutesToTime(startMin + dur);
   }
 
   function handleTypeChanged() {
     handleStartInputChanged();
-    const typeVal = String(els.typeSelect?.value || "deadline");
+    const typeVal = String(els.typeSelect?.value || "event");
     if (!els.colorInput) return;
     const currentColor = normalizeHexColor(els.colorInput.value || "");
     const autoColor = normalizeHexColor(els.colorInput.dataset?.autoColor || "");
