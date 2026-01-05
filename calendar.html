@@ -67,46 +67,40 @@
 <body class="calendar-page weekly-page">
   <aside class="ad-column ad-column-left" aria-label="Advertisement column">
     <div class="ad-embed" aria-label="Advertisement">
+      <iframe
+        class="ad-frame ad-frame-160x600"
+        title="Advertisement"
+        loading="lazy"
+        sandbox="allow-scripts"
+        referrerpolicy="no-referrer"
+      ></iframe>
       <script>
         (function () {
           try {
             if (localStorage.getItem("studyAdsDisabled_v1") === "1") return;
           } catch {}
-          atOptions = {
-            key: "3adcddaa37c5d7198e27609e2a44012b",
-            format: "iframe",
-            height: 600,
-            width: 160,
-            params: {},
-          };
-          document.write(
-            '<scr' +
-              'ipt src="https://www.highperformanceformat.com/3adcddaa37c5d7198e27609e2a44012b/invoke.js"></scr' +
-              "ipt>"
-          );
+          const frame = document.currentScript?.previousElementSibling;
+          if (frame && frame.tagName === "IFRAME") frame.src = "./ad-highperformance-160x600.html";
         })();
       </script>
     </div>
   </aside>
   <aside class="ad-column ad-column-right" aria-label="Advertisement column">
     <div class="ad-embed" aria-label="Advertisement">
+      <iframe
+        class="ad-frame ad-frame-160x600"
+        title="Advertisement"
+        loading="lazy"
+        sandbox="allow-scripts"
+        referrerpolicy="no-referrer"
+      ></iframe>
       <script>
         (function () {
           try {
             if (localStorage.getItem("studyAdsDisabled_v1") === "1") return;
           } catch {}
-          atOptions = {
-            key: "3adcddaa37c5d7198e27609e2a44012b",
-            format: "iframe",
-            height: 600,
-            width: 160,
-            params: {},
-          };
-          document.write(
-            '<scr' +
-              'ipt src="https://www.highperformanceformat.com/3adcddaa37c5d7198e27609e2a44012b/invoke.js"></scr' +
-              "ipt>"
-          );
+          const frame = document.currentScript?.previousElementSibling;
+          if (frame && frame.tagName === "IFRAME") frame.src = "./ad-highperformance-160x600.html";
         })();
       </script>
     </div>

@@ -156,8 +156,7 @@ body {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   box-shadow: var(--panel-shadow);
-  padding: 12px;
-  box-sizing: border-box;
+  overflow: hidden;
   display: none;
 }
 
@@ -209,10 +208,15 @@ html.ads-disabled ins.adsbygoogle {
   justify-content: center;
 }
 
-.ad-embed iframe {
+.ad-frame {
   display: block;
   border: 0;
   max-width: 100%;
+}
+
+.ad-frame-160x600 {
+  width: 160px;
+  height: 600px;
 }
 
 .app {
