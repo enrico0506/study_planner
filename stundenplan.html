@@ -58,8 +58,52 @@
   <link rel="stylesheet" href="./src/styles/res-5120x1440.css" />
 </head>
 <body class="timetable-page">
-  <aside class="ad-column ad-column-left" aria-label="Advertisement column"></aside>
-  <aside class="ad-column ad-column-right" aria-label="Advertisement column"></aside>
+  <aside class="ad-column ad-column-left" aria-label="Advertisement column">
+    <div class="ad-embed" aria-label="Advertisement">
+      <script>
+        (function () {
+          try {
+            if (localStorage.getItem("studyAdsDisabled_v1") === "1") return;
+          } catch {}
+          atOptions = {
+            key: "3adcddaa37c5d7198e27609e2a44012b",
+            format: "iframe",
+            height: 600,
+            width: 160,
+            params: {},
+          };
+          document.write(
+            '<scr' +
+              'ipt src="https://www.highperformanceformat.com/3adcddaa37c5d7198e27609e2a44012b/invoke.js"></scr' +
+              "ipt>"
+          );
+        })();
+      </script>
+    </div>
+  </aside>
+  <aside class="ad-column ad-column-right" aria-label="Advertisement column">
+    <div class="ad-embed" aria-label="Advertisement">
+      <script>
+        (function () {
+          try {
+            if (localStorage.getItem("studyAdsDisabled_v1") === "1") return;
+          } catch {}
+          atOptions = {
+            key: "3adcddaa37c5d7198e27609e2a44012b",
+            format: "iframe",
+            height: 600,
+            width: 160,
+            params: {},
+          };
+          document.write(
+            '<scr' +
+              'ipt src="https://www.highperformanceformat.com/3adcddaa37c5d7198e27609e2a44012b/invoke.js"></scr' +
+              "ipt>"
+          );
+        })();
+      </script>
+    </div>
+  </aside>
   <div class="timetable-shell">
     <div class="header-row timetable-header">
       <div class="header-main">

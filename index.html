@@ -62,10 +62,54 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
   <script defer src="./src/shared/sessionHeader.js"></script>
 </head>
-<body>
-  <!-- SECTION: Ads Columns -->
-  <aside class="ad-column ad-column-left" aria-label="Advertisement column" data-section="ads-left"></aside>
-  <aside class="ad-column ad-column-right" aria-label="Advertisement column" data-section="ads-right"></aside>
+  <body>
+	  <!-- SECTION: Ads Columns -->
+	  <aside class="ad-column ad-column-left" aria-label="Advertisement column" data-section="ads-left">
+	    <div class="ad-embed" aria-label="Advertisement">
+	      <script>
+	        (function () {
+	          try {
+	            if (localStorage.getItem("studyAdsDisabled_v1") === "1") return;
+	          } catch {}
+	          atOptions = {
+	            key: "3adcddaa37c5d7198e27609e2a44012b",
+	            format: "iframe",
+	            height: 600,
+	            width: 160,
+	            params: {},
+	          };
+	          document.write(
+	            '<scr' +
+	              'ipt src="https://www.highperformanceformat.com/3adcddaa37c5d7198e27609e2a44012b/invoke.js"></scr' +
+	              "ipt>"
+	          );
+	        })();
+	      </script>
+	    </div>
+	  </aside>
+	  <aside class="ad-column ad-column-right" aria-label="Advertisement column" data-section="ads-right">
+	    <div class="ad-embed" aria-label="Advertisement">
+	      <script>
+	        (function () {
+	          try {
+	            if (localStorage.getItem("studyAdsDisabled_v1") === "1") return;
+	          } catch {}
+	          atOptions = {
+	            key: "3adcddaa37c5d7198e27609e2a44012b",
+	            format: "iframe",
+	            height: 600,
+	            width: 160,
+	            params: {},
+	          };
+	          document.write(
+	            '<scr' +
+	              'ipt src="https://www.highperformanceformat.com/3adcddaa37c5d7198e27609e2a44012b/invoke.js"></scr' +
+	              "ipt>"
+	          );
+	        })();
+	      </script>
+	    </div>
+	  </aside>
 
   <!-- SECTION: App Root -->
   <div class="app" id="appRoot" data-section="app-root">

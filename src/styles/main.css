@@ -156,6 +156,8 @@ body {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   box-shadow: var(--panel-shadow);
+  padding: 12px;
+  box-sizing: border-box;
   display: none;
 }
 
@@ -198,6 +200,19 @@ html.ads-disabled ins.adsbygoogle {
   border: 1px solid var(--panel-border);
   box-shadow: var(--panel-shadow);
   min-height: 0;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.ad-embed {
+  display: flex;
+  justify-content: center;
+}
+
+.ad-embed iframe {
+  display: block;
+  border: 0;
+  max-width: 100%;
 }
 
 .app {
