@@ -90,7 +90,7 @@
       const includesToday = msInRange(Date.now(), statsRange);
 
       const totalsMap = getDailyTotalsMap(true);
-      const weekMs = sumLastNDays(totalsMap, 7);
+      const weekMs = typeof sumThisWeek === "function" ? sumThisWeek(totalsMap) : sumLastNDays(totalsMap, 7);
       const goalMs = Math.max(0, weeklyTargetMinutes || 0) * 60 * 1000;
       const goalPct = goalMs ? Math.min(100, Math.round((weekMs * 100) / goalMs)) : 0;
       const { current: streakCurrent, best: streakBest } = computeStreakStats(totalsMap);

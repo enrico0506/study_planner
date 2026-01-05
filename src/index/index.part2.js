@@ -1023,6 +1023,21 @@
       return sum;
     }
 
+    function sumThisWeek(totals) {
+      if (!totals || typeof totals !== "object") return 0;
+      const todayId = dateKeyToDayId(getTodayKey());
+      if (todayId === null) return 0;
+      const weekdayMon0 = (new Date().getDay() + 6) % 7; // Monday=0
+      const startId = todayId - weekdayMon0;
+      let sum = 0;
+      for (let id = startId; id <= todayId; id++) {
+        const key = dayIdToDateKey(id);
+        if (!key) continue;
+        sum += Number(totals[key]) || 0;
+      }
+      return sum;
+    }
+
     function computeStreakStats(totals, thresholdMinutes = STREAK_THRESHOLD_MINUTES) {
       const thresholdMs = Math.max(1, thresholdMinutes) * 60 * 1000;
       const activeDays = new Set();
@@ -1654,7 +1669,7 @@
         typeof isIpadLandscapeLayout === "function" && isIpadLandscapeLayout();
 
       const totals = getDailyTotalsMap(true);
-      const weekMs = sumLastNDays(totals, 7);
+      const weekMs = sumThisWeek(totals);
       const goalMs = Math.max(0, weeklyTargetMinutes || 0) * 60 * 1000;
       const pct = goalMs > 0 ? Math.min(100, (weekMs * 100) / goalMs) : 0;
       const goalColor = "color-mix(in srgb, var(--accent) 80%, #ffffff)";
