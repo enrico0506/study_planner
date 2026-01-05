@@ -90,9 +90,26 @@
     const list = Array.isArray(sessions) ? sessions : [];
     return {
       today: sumToday(list),
-      week: sumInRange(list, 7),
+      week: sumThisWeek(list),
       month: sumInRange(list, 30),
     };
+  }
+
+  function sumThisWeek(sessions) {
+    const now = new Date();
+    const weekdayMon0 = (now.getDay() + 6) % 7; // Monday=0
+    now.setHours(0, 0, 0, 0);
+    now.setDate(now.getDate() - weekdayMon0);
+    const start = now.getTime();
+    const end = start + 7 * 86400000;
+    let total = 0;
+    sessions.forEach((s) => {
+      const endMs = s && s.endedAt ? new Date(s.endedAt).getTime() : null;
+      if (endMs == null || Number.isNaN(endMs)) return;
+      if (endMs < start || endMs >= end) return;
+      total += Math.max(0, Number(s.durationMs || (s.durationMinutes || 0) * 60000) || 0);
+    });
+    return total;
   }
 
   function sumInRange(sessions, days) {
@@ -137,7 +154,7 @@
     const today = createEl("div", "session-stat");
     today.append(createEl("div", "session-stat-label", "Today"), createEl("div", "session-stat-value", "0 min"));
     const week = createEl("div", "session-stat");
-    week.append(createEl("div", "session-stat-label", "7 days"), createEl("div", "session-stat-value", "0 min"));
+    week.append(createEl("div", "session-stat-label", "This week"), createEl("div", "session-stat-value", "0 min"));
     const month = createEl("div", "session-stat");
     month.append(createEl("div", "session-stat-label", "30 days"), createEl("div", "session-stat-value", "0 min"));
     stats.append(today, week, month);
