@@ -520,10 +520,6 @@ html.ads-disabled ins.adsbygoogle {
     margin-bottom: 2px;
   }
 
-  html.header-compact .plannerHeader .focus-timer-display {
-    font-size: 2.05rem;
-  }
-
   html.header-compact .plannerHeader .focus-bottom {
     margin-top: 2px;
     gap: 8px;
@@ -1924,12 +1920,13 @@ body.session-header-mounted #focusCard {
   width: var(--focus-timer-size, 170px);
   height: var(--focus-timer-size, 170px);
   border-radius: 16px;
-      border: 1px solid var(--border-strong);
-      background: radial-gradient(circle at 25% 20%, color-mix(in srgb, var(--accent-soft) 45%, var(--surface-strong)), var(--surface-strong));
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+	      border: 1px solid var(--border-strong);
+	      background: radial-gradient(circle at 25% 20%, color-mix(in srgb, var(--accent-soft) 45%, var(--surface-strong)), var(--surface-strong));
+	      display: flex;
+	      flex-direction: column;
+	      align-items: center;
+	      justify-content: center;
+	  container-type: inline-size;
   box-shadow: var(--shadow-soft);
   box-sizing: border-box;
   position: relative;
@@ -1946,10 +1943,16 @@ body.session-header-mounted #focusCard {
 
 .focus-timer-display {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 2.3rem;
+  font-size: clamp(1.2rem, 20cqw, 2.3rem);
   font-weight: 650;
   color: var(--accent-ink);
   line-height: 1.1;
+  width: 100%;
+  max-width: 100%;
+  white-space: nowrap;
+  text-align: center;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
 }
 
 .focus-timer-toggle {
@@ -2098,14 +2101,11 @@ body.session-header-mounted #focusCard {
         width: 100%;
         min-width: 0;
       }
-      .focus-timer-box {
-        width: min(220px, 100%);
-        height: 170px;
-      }
-  .focus-timer-display {
-    font-size: 2.3rem;
-  }
-}
+	      .focus-timer-box {
+	        width: min(220px, 100%);
+	        height: 170px;
+	      }
+	}
 
 /* Laptop-friendly (14–16\") layout tuning */
 @media (max-width: 1440px) {
