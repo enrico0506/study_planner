@@ -1734,15 +1734,12 @@ const COMPACT_WEEK_MQ =
         appRoot.classList.add("subjects-maximized");
         layoutRow?.classList.add("today-full");
         if (todaySidebar) todaySidebar.style.display = "none";
-        document.body.style.overflow = "auto";
       } else {
         appRoot.classList.remove("subjects-maximized");
         if (layoutRow) layoutRow.classList.remove("today-full");
         if (todaySidebar) todaySidebar.style.display = "";
-        if (!todayExpanded) {
-          document.body.style.overflow = "hidden";
-        }
       }
+      // Avoid forcing `body.style.overflow` here: inline overflow persists after toggling and can break scrolling.
       applyTodayExpandedLayout();
       renderTable();
       renderTodayTodos();
