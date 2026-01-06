@@ -738,6 +738,7 @@
 
 	    if (openSuggestionsBtn) {
 	      openSuggestionsBtn.addEventListener("click", () => {
+	        closeHeaderMenu();
 	        openSuggestionModal();
 	      });
 	    }
@@ -901,10 +902,10 @@
 	      }
 	    });
 
-    if (headerMenu) {
-      headerMenu.addEventListener("mouseenter", openHeaderMenu);
-      headerMenu.addEventListener("mouseleave", scheduleCloseHeaderMenu);
-    }
+	    if (headerMenu) {
+	      headerMenu.addEventListener("mouseenter", openHeaderMenu);
+	      headerMenu.addEventListener("mouseleave", scheduleCloseHeaderMenu);
+	    }
     headerMenuToggle?.addEventListener("click", (event) => {
       event.stopPropagation();
       if (headerMenu?.classList.contains("header-menu-open")) {
@@ -913,12 +914,17 @@
         openHeaderMenu();
       }
     });
-    headerMenuPanel?.addEventListener("mouseenter", openHeaderMenu);
-    headerMenuPanel?.addEventListener("mouseleave", scheduleCloseHeaderMenu);
-    document.addEventListener("click", (event) => {
-      if (headerMenu && headerMenu.contains(event.target)) return;
-      closeHeaderMenu();
-    });
+	    headerMenuPanel?.addEventListener("mouseenter", openHeaderMenu);
+	    headerMenuPanel?.addEventListener("mouseleave", scheduleCloseHeaderMenu);
+	    headerMenuPanel?.addEventListener("click", (event) => {
+	      const action = event.target?.closest?.("a, button");
+	      if (!action) return;
+	      closeHeaderMenu();
+	    });
+	    document.addEventListener("click", (event) => {
+	      if (headerMenu && headerMenu.contains(event.target)) return;
+	      closeHeaderMenu();
+	    });
     headerSettingsBtn?.addEventListener("click", () => {
       closeHeaderMenu();
       openSettingsModal();
@@ -1763,10 +1769,11 @@
       startBreak("long");
     });
 
-    // Stats modal
-    openStatsBtn.addEventListener("click", () => {
-      openStatsModal();
-    });
+	    // Stats modal
+	    openStatsBtn.addEventListener("click", () => {
+	      closeHeaderMenu();
+	      openStatsModal();
+	    });
 
     statsCloseBtn.addEventListener("click", () => {
       closeStatsModal();

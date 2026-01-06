@@ -1853,7 +1853,10 @@
         }
       }
     });
-    copyTimetableBtn?.addEventListener("click", duplicateActiveTimetable);
+    copyTimetableBtn?.addEventListener("click", () => {
+      closeTabMenu();
+      duplicateActiveTimetable();
+    });
     newTimetableTabBtn?.addEventListener("click", addNewTimetable);
     document.addEventListener("click", (event) => {
       // close slot menus when clicking outside

@@ -47,6 +47,12 @@
       }
     });
 
+    panel.addEventListener("click", (event) => {
+      const action = event.target?.closest?.("a, button");
+      if (!action) return;
+      closeAll();
+    });
+
     menu.addEventListener("keydown", (event) => {
       if (event.key !== "Escape") return;
       closeAll();
