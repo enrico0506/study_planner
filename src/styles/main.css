@@ -391,6 +391,10 @@ html.ads-disabled ins.adsbygoogle {
     --focus-timer-size: clamp(120px, 15dvh, 150px);
   }
 
+  html.header-compact.focus-ultra {
+    --focus-timer-size: clamp(104px, 13dvh, 132px);
+  }
+
   html.header-compact .plannerHeader .summary-card,
   html.header-compact .plannerHeader .focus-card {
     padding: 8px 10px 10px;
@@ -487,6 +491,15 @@ html.ads-disabled ins.adsbygoogle {
     overflow: hidden;
   }
 
+  html.header-compact.focus-ultra .plannerHeader .focus-label {
+    display: none;
+  }
+
+  html.header-compact.focus-ultra .plannerHeader .focus-title {
+    font-size: 0.96rem;
+    max-height: 1.4em;
+  }
+
   html.header-compact .plannerHeader .focus-subtitle {
     display: none;
   }
@@ -495,6 +508,16 @@ html.ads-disabled ins.adsbygoogle {
     margin-top: 2px;
     gap: 6px;
     min-height: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 2px;
+    scrollbar-gutter: stable;
+  }
+
+  html.header-compact .plannerHeader .focus-session-controls > * {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 
   html.header-compact .plannerHeader .focus-main-btn {
@@ -1517,21 +1540,23 @@ body.session-header-mounted #focusCard {
 	      min-width: 0;
 	    }
 
-	    .plannerHeader .summary-card {
-	      overflow-x: hidden;
-	      overflow-y: auto;
-	    }
+		    .plannerHeader .summary-card {
+		      overflow-x: hidden;
+		      overflow-y: auto;
+		      scrollbar-gutter: stable;
+		    }
 
 	    .plannerHeader .focus-card {
 	      overflow: hidden;
 	    }
 
-	    .plannerHeader .focus-card .focus-main {
-	      flex: 1 1 auto;
-	      min-height: 0;
-	      overflow-x: hidden;
-	      overflow-y: auto;
-	    }
+		    .plannerHeader .focus-card .focus-main {
+		      flex: 1 1 auto;
+		      min-height: 0;
+		      overflow-x: hidden;
+		      overflow-y: auto;
+		      scrollbar-gutter: stable;
+		    }
 
     .top-ad-slot {
       grid-area: ad;

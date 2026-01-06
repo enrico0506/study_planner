@@ -1581,10 +1581,15 @@
       }
     }
 
+    let lastTodayStudyLegendCount = null;
     function updateTodayStudyUI() {
       if (!summaryStudyTodayLabel || !summaryStudyBar || !summaryStudyLegend) return;
 
       const { perSubject, totalMs } = computeTodayStudyBySubject();
+      const legendCount = totalMs && perSubject.length ? perSubject.length : 0;
+      const legendCountChanged =
+        lastTodayStudyLegendCount !== null && legendCount !== lastTodayStudyLegendCount;
+      lastTodayStudyLegendCount = legendCount;
 
       const todayLabel = totalMs ? formatDuration(totalMs) : "0 min";
       summaryStudyTodayLabel.textContent = todayLabel;
@@ -1609,6 +1614,9 @@
         }
         if (useIpadCharts) {
           updateRingSingle(summaryStudyBar, 0, "#e5e7eb", "#e5e7eb");
+        }
+        if (legendCountChanged && typeof scheduleSummaryLayoutFit === "function") {
+          scheduleSummaryLayoutFit();
         }
         return;
       }
@@ -1652,6 +1660,10 @@
         });
         updateRingSegments(summaryStudyBar, segments);
       }
+
+      if (legendCountChanged && typeof scheduleSummaryLayoutFit === "function") {
+        scheduleSummaryLayoutFit();
+      }
     }
 
     function updateGoalsAndStreaks() {
@@ -1684,12 +1696,21 @@
         updateRingSingle(weeklyGoalFill.parentElement, pct, goalColor, goalTrack);
       }
       const remaining = goalMs - weekMs;
-      if (!goalMs) {
-        weeklyGoalHint.textContent = "Set a target to get a weekly rhythm.";
-      } else if (remaining > 0) {
-        weeklyGoalHint.textContent = formatDuration(remaining) + " left this week.";
-      } else {
-        weeklyGoalHint.textContent = "Goal met—keep compounding time!";
+      let hintText = "Set a target to get a weekly rhythm.";
+      if (goalMs) {
+        if (remaining > 0) {
+          hintText = formatDuration(remaining) + " left this week.";
+        } else {
+          hintText = "Goal met—keep compounding time!";
+        }
+      }
+
+      const prevHint = weeklyGoalHint.textContent;
+      if (prevHint !== hintText) {
+        weeklyGoalHint.textContent = hintText;
+        if (typeof scheduleSummaryLayoutFit === "function") {
+          scheduleSummaryLayoutFit();
+        }
       }
 
       const { current, best } = computeStreakStats(totals);
@@ -1697,65 +1718,153 @@
       streakBestLabel.textContent = "Best " + (best || 0);
     }
 
-	    let summaryLayoutRaf = 0;
-	    function applyHeaderCompactFit() {
+		    let summaryLayoutRaf = 0;
+        let summaryLayoutTimeout = 0;
+        let headerFitObserver = null;
+        let headerCompactHoldUntil = 0;
+        let summaryUltraHoldUntil = 0;
+        let focusUltraHoldUntil = 0;
+
+        function headerFitNowMs() {
+          if (typeof performance !== "undefined" && typeof performance.now === "function") {
+            return performance.now();
+          }
+          return Date.now();
+        }
+
+		    function applyHeaderCompactFit() {
+		      const root = document.documentElement;
+		      if (!root || !summaryCard || !focusCard) return false;
+
+          const wasHeaderCompact = root.classList.contains("header-compact");
+          const wasSummaryUltra = root.classList.contains("summary-ultra");
+          const wasFocusUltra = root.classList.contains("focus-ultra");
+	
+		      const isCapped =
+		        window.matchMedia && window.matchMedia("(min-width: 721px)").matches;
+		      if (!isCapped) {
+		        root.classList.remove("header-compact", "summary-ultra", "focus-ultra");
+            headerCompactHoldUntil = 0;
+            summaryUltraHoldUntil = 0;
+            focusUltraHoldUntil = 0;
+		        return wasHeaderCompact || wasSummaryUltra || wasFocusUltra;
+		      }
+	
+		      // Measure baseline without compact styles.
+		      root.classList.remove("header-compact", "summary-ultra", "focus-ultra");
+	
+		      const focusMain = focusCard.querySelector(".focus-main");
+		      const baselineOverflow =
+		        summaryCard.scrollHeight > summaryCard.clientHeight ||
+		        focusCard.scrollHeight > focusCard.clientHeight ||
+		        (focusMain && focusMain.scrollHeight > focusMain.clientHeight);
+
+          const ts = headerFitNowMs();
+          const holdMs = 260;
+
+		      if (baselineOverflow) {
+            headerCompactHoldUntil = ts + holdMs;
+          }
+
+          const shouldApplyCompact =
+            baselineOverflow || (wasHeaderCompact && ts < headerCompactHoldUntil);
+
+		      if (!shouldApplyCompact) {
+            summaryUltraHoldUntil = 0;
+            focusUltraHoldUntil = 0;
+            const changed = wasHeaderCompact || wasSummaryUltra || wasFocusUltra;
+            return changed;
+          }
+
+		      root.classList.add("header-compact");
+	
+		      // If Daily stats still overflows even after header-compact, apply a stricter fallback.
+		      const summaryStillOverflowing = summaryCard.scrollHeight > summaryCard.clientHeight;
+          if (summaryStillOverflowing) {
+            summaryUltraHoldUntil = ts + holdMs;
+          }
+          const shouldApplySummaryUltra =
+            summaryStillOverflowing || (wasSummaryUltra && ts < summaryUltraHoldUntil);
+		      root.classList.toggle("summary-ultra", shouldApplySummaryUltra);
+
+          const focusStillOverflowing =
+            focusCard.scrollHeight > focusCard.clientHeight ||
+            (focusMain && focusMain.scrollHeight > focusMain.clientHeight);
+          if (focusStillOverflowing) {
+            focusUltraHoldUntil = ts + holdMs;
+          }
+          const shouldApplyFocusUltra =
+            focusStillOverflowing || (wasFocusUltra && ts < focusUltraHoldUntil);
+          root.classList.toggle("focus-ultra", shouldApplyFocusUltra);
+
+          const isHeaderCompact = root.classList.contains("header-compact");
+          const isSummaryUltra = root.classList.contains("summary-ultra");
+          const isFocusUltra = root.classList.contains("focus-ultra");
+          return (
+            wasHeaderCompact !== isHeaderCompact ||
+            wasSummaryUltra !== isSummaryUltra ||
+            wasFocusUltra !== isFocusUltra
+          );
+		    }
+	
+	    function applySummaryLayoutFit() {
+	      if (!summaryCard) return false;
 	      const root = document.documentElement;
-	      if (!root || !summaryCard || !focusCard) return;
+	      if (!root) return false;
 
-	      const isCapped =
-	        window.matchMedia && window.matchMedia("(min-width: 721px)").matches;
-	      if (!isCapped) {
-	        root.classList.remove("header-compact", "summary-ultra");
-	        return;
+        const wasSummaryCompact = root.classList.contains("summary-compact");
+	
+	      const isDesktop = window.matchMedia && window.matchMedia("(min-width: 961px)").matches;
+	      if (!isDesktop) {
+	        root.classList.remove("summary-compact");
+	        return wasSummaryCompact;
 	      }
-
-	      // Measure baseline without compact styles.
-	      root.classList.remove("header-compact", "summary-ultra");
-
-	      const focusMain = focusCard.querySelector(".focus-main");
-	      const isOverflowing =
-	        summaryCard.scrollHeight > summaryCard.clientHeight + 1 ||
-	        focusCard.scrollHeight > focusCard.clientHeight + 1 ||
-	        (focusMain && focusMain.scrollHeight > focusMain.clientHeight + 1);
-	      if (!isOverflowing) return;
-
-	      root.classList.add("header-compact");
-
-	      // If Daily stats still overflows even after header-compact, apply a stricter fallback.
-	      const summaryStillOverflowing =
-	        summaryCard.scrollHeight > summaryCard.clientHeight + 1;
-	      root.classList.toggle("summary-ultra", summaryStillOverflowing);
+	
+	      // Decide based on whether the stacked layout fits (no compact class).
+	      root.classList.remove("summary-compact");
+	      const isOverflowing = summaryCard.scrollHeight > summaryCard.clientHeight;
+	      root.classList.toggle("summary-compact", isOverflowing);
+        return wasSummaryCompact !== root.classList.contains("summary-compact");
 	    }
 
-    function applySummaryLayoutFit() {
-      if (!summaryCard) return;
-      const root = document.documentElement;
-      if (!root) return;
-
-      const isDesktop = window.matchMedia && window.matchMedia("(min-width: 961px)").matches;
-      if (!isDesktop) {
-        root.classList.remove("summary-compact");
-        return;
+      function runSummaryLayoutFit(options = {}) {
+        const settle = !!options.settle;
+        const summaryChanged = applySummaryLayoutFit();
+        const headerChanged = applyHeaderCompactFit();
+        if (!settle && (summaryChanged || headerChanged)) {
+          requestAnimationFrame(() => runSummaryLayoutFit({ settle: true }));
+        }
       }
 
-      // Decide based on whether the stacked layout fits (no compact class).
-      root.classList.remove("summary-compact");
-      const isOverflowing = summaryCard.scrollHeight > summaryCard.clientHeight + 1;
-      root.classList.toggle("summary-compact", isOverflowing);
-    }
-
-    function scheduleSummaryLayoutFit() {
-      if (!summaryCard) return;
-      if (summaryLayoutRaf) return;
-      summaryLayoutRaf = requestAnimationFrame(() => {
-        summaryLayoutRaf = 0;
-        applySummaryLayoutFit();
-        applyHeaderCompactFit();
-      });
-    }
-
-    window.addEventListener("resize", scheduleSummaryLayoutFit, { passive: true });
-    scheduleSummaryLayoutFit();
+      function ensureHeaderFitObserver() {
+        if (headerFitObserver) return;
+        if (!window.ResizeObserver) return;
+        if (!summaryCard || !focusCard) return;
+        headerFitObserver = new ResizeObserver(() => {
+          scheduleSummaryLayoutFit();
+        });
+        headerFitObserver.observe(summaryCard);
+        headerFitObserver.observe(focusCard);
+      }
+	
+	    function scheduleSummaryLayoutFit() {
+	      if (!summaryCard) return;
+	      if (!summaryLayoutRaf) {
+	        summaryLayoutRaf = requestAnimationFrame(() => {
+	          summaryLayoutRaf = 0;
+            runSummaryLayoutFit();
+	        });
+	      }
+        if (summaryLayoutTimeout) clearTimeout(summaryLayoutTimeout);
+        summaryLayoutTimeout = window.setTimeout(() => {
+          if (summaryLayoutRaf) return;
+          runSummaryLayoutFit({ settle: true });
+        }, 180);
+	    }
+	
+	    window.addEventListener("resize", scheduleSummaryLayoutFit, { passive: true });
+      ensureHeaderFitObserver();
+	    scheduleSummaryLayoutFit();
 
     function updateSummary() {
       const totalSubjects = subjects.length;
