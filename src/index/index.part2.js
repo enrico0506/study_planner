@@ -1698,6 +1698,28 @@
     }
 
     let summaryLayoutRaf = 0;
+    function applyHeaderCompactFit() {
+      const root = document.documentElement;
+      if (!root || !summaryCard || !focusCard) return;
+
+      const isCapped =
+        window.matchMedia && window.matchMedia("(min-width: 721px)").matches;
+      if (!isCapped) {
+        root.classList.remove("header-compact");
+        return;
+      }
+
+      // Measure baseline without compact styles.
+      root.classList.remove("header-compact");
+
+      const focusMain = focusCard.querySelector(".focus-main");
+      const isOverflowing =
+        summaryCard.scrollHeight > summaryCard.clientHeight + 1 ||
+        focusCard.scrollHeight > focusCard.clientHeight + 1 ||
+        (focusMain && focusMain.scrollHeight > focusMain.clientHeight + 1);
+      root.classList.toggle("header-compact", isOverflowing);
+    }
+
     function applySummaryLayoutFit() {
       if (!summaryCard) return;
       const root = document.documentElement;
@@ -1721,10 +1743,12 @@
       summaryLayoutRaf = requestAnimationFrame(() => {
         summaryLayoutRaf = 0;
         applySummaryLayoutFit();
+        applyHeaderCompactFit();
       });
     }
 
     window.addEventListener("resize", scheduleSummaryLayoutFit, { passive: true });
+    scheduleSummaryLayoutFit();
 
     function updateSummary() {
       const totalSubjects = subjects.length;

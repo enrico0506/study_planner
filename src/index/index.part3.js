@@ -2075,6 +2075,9 @@
           '<span style="font-size:0.75rem;color:#9ca3af;">No controls – start a session.</span>';
         focusTimerDisplay.textContent = "00:00:00";
         updateTimerModeButtons(timerModePref);
+        if (typeof scheduleSummaryLayoutFit === "function") {
+          scheduleSummaryLayoutFit();
+        }
         return;
       }
 
@@ -2134,6 +2137,10 @@
 
       focusSessionControls.appendChild(pauseBtn);
       focusSessionControls.appendChild(stopBtn);
+
+      if (typeof scheduleSummaryLayoutFit === "function") {
+        scheduleSummaryLayoutFit();
+      }
     }
 
     function createAddSubjectColumn() {

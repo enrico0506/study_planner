@@ -239,10 +239,10 @@ html.ads-disabled ins.adsbygoogle {
 }
 
 /* Keep the planner header from collapsing once its cards hit their minimum widths.
-   When the viewport is narrower than this, the page will scroll horizontally instead of shrinking the cards. */
+   On narrower viewports, let the app shrink (avoid page-level horizontal scroll). */
 @media (min-width: 721px) {
   .app {
-    min-width: 774px;
+    min-width: min(774px, 95vw);
   }
 }
 
@@ -292,7 +292,7 @@ html.ads-disabled ins.adsbygoogle {
   max-height: none;
 }
 
-@media (min-width: 961px) {
+@media (min-width: 721px) {
   /* Keep the header row from growing taller than the intended viewport percentage. */
   .plannerHeader {
     height: var(--header-size);
@@ -307,7 +307,9 @@ html.ads-disabled ins.adsbygoogle {
   .plannerHeader .focus-card {
     height: 100%;
   }
+}
 
+@media (min-width: 961px) {
   /* Default: keep Daily stats stacked when it fits. */
   .plannerHeader .summary-card {
     display: grid;
@@ -380,6 +382,159 @@ html.ads-disabled ins.adsbygoogle {
   html.summary-compact .plannerHeader .summary-study-legend-item {
     flex: 0 0 auto;
     white-space: nowrap;
+  }
+}
+
+@media (min-width: 721px) {
+  /* When the header is height-capped, compact the two cards if they would overflow vertically. */
+  html.header-compact {
+    --focus-timer-size: clamp(120px, 15dvh, 150px);
+  }
+
+  html.header-compact .plannerHeader .summary-card,
+  html.header-compact .plannerHeader .focus-card {
+    padding: 8px 10px 10px;
+  }
+
+  html.header-compact .plannerHeader .summary-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  html.header-compact .plannerHeader .summary-block {
+    min-width: 0;
+  }
+
+  html.header-compact .plannerHeader .summary-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  html.header-compact .plannerHeader .summary-value {
+    font-size: 0.98rem;
+  }
+
+  html.header-compact .plannerHeader .summary-progress {
+    margin-top: 4px;
+  }
+
+  html.header-compact .plannerHeader .summary-progress-header {
+    margin-bottom: 4px;
+  }
+
+  html.header-compact .plannerHeader .summary-goal {
+    margin-top: 6px;
+    padding: 6px 8px;
+  }
+
+  html.header-compact .plannerHeader .summary-goal-track {
+    margin-top: 4px;
+    height: 8px;
+  }
+
+  html.header-compact .plannerHeader .summary-goal-footer {
+    margin-top: 4px;
+  }
+
+  html.header-compact .plannerHeader .summary-goal-hint {
+    display: none;
+  }
+
+  html.header-compact .plannerHeader .summary-streak {
+    padding: 4px 8px;
+  }
+
+  html.header-compact .plannerHeader .summary-streak-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  html.header-compact .plannerHeader .summary-streak-label {
+    display: none;
+  }
+
+  html.header-compact .plannerHeader .summary-study {
+    margin-top: 6px;
+  }
+
+  html.header-compact .plannerHeader .summary-study-legend {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    padding-bottom: 2px;
+  }
+
+  html.header-compact .plannerHeader .summary-study-legend-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  html.header-compact .plannerHeader .focus-card {
+    gap: 2px;
+  }
+
+  html.header-compact .plannerHeader .focus-label {
+    margin-bottom: 0;
+  }
+
+  html.header-compact .plannerHeader .focus-title {
+    font-size: 1.02rem;
+    line-height: 1.15;
+    max-height: 2.3em;
+    overflow: hidden;
+  }
+
+  html.header-compact .plannerHeader .focus-subtitle {
+    display: none;
+  }
+
+  html.header-compact .plannerHeader .focus-session-controls {
+    margin-top: 2px;
+    gap: 6px;
+    min-height: 0;
+  }
+
+  html.header-compact .plannerHeader .focus-main-btn {
+    padding: 6px 12px;
+    font-size: 0.78rem;
+  }
+
+  html.header-compact .plannerHeader .focus-right {
+    min-width: 160px;
+    gap: 4px;
+  }
+
+  html.header-compact .plannerHeader .focus-timer-toggle {
+    margin-bottom: 4px;
+  }
+
+  html.header-compact .plannerHeader .focus-timer-mode-btn {
+    padding: 4px 8px;
+    font-size: 0.72rem;
+  }
+
+  html.header-compact .plannerHeader .focus-timer-label-small {
+    margin-bottom: 2px;
+  }
+
+  html.header-compact .plannerHeader .focus-timer-display {
+    font-size: 2.05rem;
+  }
+
+  html.header-compact .plannerHeader .focus-bottom {
+    margin-top: 2px;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  html.header-compact .plannerHeader .focus-break-btn {
+    padding: 6px 8px;
+    font-size: 0.72rem;
   }
 }
 
@@ -1354,14 +1509,14 @@ body.session-header-mounted #focusCard {
       }
 	    }
 
-    @media (max-width: 960px) {
-      .top-row {
-        grid-template-columns: 1fr;
-        grid-template-areas:
-          "summary"
-          "focus";
-      }
-    }
+	    @media (max-width: 720px) {
+	      .top-row {
+	        grid-template-columns: 1fr;
+	        grid-template-areas:
+	          "summary"
+	          "focus";
+	      }
+	    }
 
     @media (max-height: 720px) {
       /* header layout unchanged; preserve default top-row */
@@ -2374,7 +2529,7 @@ body.session-header-mounted #focusCard {
       padding: 14px 16px 18px;
       box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
       max-height: none;
-      overflow: visible;
+      overflow-x: auto;
     }
 
     .schedule-bar {
