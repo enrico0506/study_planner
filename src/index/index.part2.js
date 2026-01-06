@@ -1697,6 +1697,35 @@
       streakBestLabel.textContent = "Best " + (best || 0);
     }
 
+    let summaryLayoutRaf = 0;
+    function applySummaryLayoutFit() {
+      if (!summaryCard) return;
+      const root = document.documentElement;
+      if (!root) return;
+
+      const isDesktop = window.matchMedia && window.matchMedia("(min-width: 961px)").matches;
+      if (!isDesktop) {
+        root.classList.remove("summary-compact");
+        return;
+      }
+
+      // Decide based on whether the stacked layout fits (no compact class).
+      root.classList.remove("summary-compact");
+      const isOverflowing = summaryCard.scrollHeight > summaryCard.clientHeight + 1;
+      root.classList.toggle("summary-compact", isOverflowing);
+    }
+
+    function scheduleSummaryLayoutFit() {
+      if (!summaryCard) return;
+      if (summaryLayoutRaf) return;
+      summaryLayoutRaf = requestAnimationFrame(() => {
+        summaryLayoutRaf = 0;
+        applySummaryLayoutFit();
+      });
+    }
+
+    window.addEventListener("resize", scheduleSummaryLayoutFit, { passive: true });
+
     function updateSummary() {
       const totalSubjects = subjects.length;
       let totalFiles = 0;
@@ -1739,6 +1768,7 @@
 
       updateTodayStudyUI();
       updateGoalsAndStreaks();
+      scheduleSummaryLayoutFit();
     }
 
     function matchFileForEvent(evt) {

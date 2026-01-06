@@ -308,15 +308,16 @@ html.ads-disabled ins.adsbygoogle {
     height: 100%;
   }
 
-  /* Use extra horizontal space to reduce vertical stacking (prevents scrollbars). */
+  /* Default: keep Daily stats stacked when it fits. */
   .plannerHeader .summary-card {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      "top top"
-      "progress progress"
-      "goal study";
-    grid-template-rows: auto auto 1fr;
+      "top"
+      "progress"
+      "goal"
+      "study";
+    grid-template-rows: auto auto auto auto;
     gap: 8px;
     align-content: start;
     justify-content: initial;
@@ -341,7 +342,6 @@ html.ads-disabled ins.adsbygoogle {
   .plannerHeader .summary-card > .summary-study {
     grid-area: study;
     margin-top: 0;
-    align-self: end;
   }
 
   .plannerHeader .focus-card {
@@ -351,6 +351,35 @@ html.ads-disabled ins.adsbygoogle {
   /* Slightly scale the timer box with viewport height to avoid forcing the row taller. */
   :root {
     --focus-timer-size: clamp(140px, 16dvh, 170px);
+  }
+}
+
+@media (min-width: 961px) {
+  /* Fallback: if the stacked layout doesn't fit, show Weekly target + Today's study side-by-side. */
+  html.summary-compact .plannerHeader .summary-card {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "top top"
+      "progress progress"
+      "goal study";
+    grid-template-rows: auto auto auto;
+  }
+
+  html.summary-compact .plannerHeader .summary-card > .summary-study {
+    align-self: end;
+  }
+
+  html.summary-compact .plannerHeader .summary-study-legend {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    padding-bottom: 2px;
+  }
+
+  html.summary-compact .plannerHeader .summary-study-legend-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 }
 
