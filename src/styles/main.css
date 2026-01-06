@@ -4530,6 +4530,11 @@ body.session-header-mounted #focusCard {
   z-index: 500;
 }
 
+    #authModalBackdrop {
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(6px);
+    }
+
     .modal {
       background: #ffffff;
       border-radius: 12px;
@@ -4541,9 +4546,73 @@ body.session-header-mounted #focusCard {
       box-sizing: border-box;
     }
 
+    .auth-modal {
+      max-width: 460px;
+      border-radius: 18px;
+      border-color: color-mix(in srgb, var(--accent) 14%, var(--border-strong) 86%);
+      background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--surface-strong) 92%, #ffffff 8%),
+        color-mix(in srgb, var(--surface-soft) 96%, #ffffff 4%)
+      );
+      box-shadow: 0 30px 80px rgba(15, 23, 42, 0.28);
+      padding: 16px 16px 14px;
+      animation: authModalIn 0.16s ease-out;
+      transform-origin: 50% 30%;
+    }
+
+    @keyframes authModalIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .auth-modal .modal-header {
+      margin-bottom: 10px;
+    }
+
+    .auth-modal .modal-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .auth-modal .modal-subtitle {
+      color: var(--ink-muted);
+    }
+
+    .auth-modal .modal-field-label {
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      color: var(--ink-muted);
+    }
+
+    .auth-modal .notice-input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid color-mix(in srgb, var(--border-strong) 78%, transparent);
+      background: color-mix(in srgb, var(--surface-strong) 86%, #ffffff 14%);
+      color: var(--ink);
+      font-size: 0.92rem;
+      box-sizing: border-box;
+      transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.08s ease;
+    }
+
+    .auth-modal .notice-input:focus {
+      outline: none;
+      border-color: color-mix(in srgb, var(--accent) 70%, var(--border-strong) 30%);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+
     .auth-modal-hint {
       font-size: 0.78rem;
-      color: #6b7280;
+      color: var(--ink-muted);
       margin-top: 6px;
     }
 
@@ -4552,7 +4621,7 @@ body.session-header-mounted #focusCard {
       align-items: center;
       gap: 12px;
       margin: 10px 0;
-      color: #6b7280;
+      color: var(--ink-muted);
       font-size: 0.78rem;
     }
 
@@ -4571,21 +4640,100 @@ body.session-header-mounted #focusCard {
     .auth-provider-grid {
       display: grid;
       gap: 8px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .auth-provider-grid .btn {
       width: 100%;
       display: inline-flex;
-      justify-content: center;
+      justify-content: flex-start;
+      gap: 10px;
+      padding-left: 46px;
       text-decoration: none;
+      position: relative;
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--surface-strong) 88%, #ffffff 12%);
+      border-color: color-mix(in srgb, var(--border-strong) 80%, transparent);
+    }
+
+    .auth-provider-grid .btn::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      width: 22px;
+      height: 22px;
+      border-radius: 10px;
+      transform: translateY(-50%);
+      border: 1px solid color-mix(in srgb, var(--border-strong) 85%, transparent);
+      background: var(--surface-strong);
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+    }
+
+    .auth-provider-grid .btn:hover {
+      background: color-mix(in srgb, var(--accent-soft) 78%, var(--surface-strong) 22%);
+      border-color: color-mix(in srgb, var(--accent) 55%, var(--border-strong) 45%);
+      transform: translateY(-0.5px);
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+    }
+
+    #authModalGoogleBtn::before {
+      background: conic-gradient(from 210deg, #ea4335, #fbbc05, #34a853, #4285f4, #ea4335);
+      border-color: rgba(0, 0, 0, 0.08);
+    }
+
+    #authModalAppleBtn::before {
+      background: linear-gradient(180deg, #111827, #000000);
+      border-color: rgba(0, 0, 0, 0.18);
+    }
+
+    #authModalOtherBtn::before {
+      background: linear-gradient(180deg, var(--accent-soft), color-mix(in srgb, var(--accent) 18%, #ffffff 82%));
+    }
+
+    .auth-provider-grid .btn:nth-child(3) {
+      grid-column: 1 / -1;
+    }
+
+    .auth-modal-footer {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      justify-content: stretch;
+    }
+
+    .auth-modal-footer .btn {
+      width: 100%;
+      justify-content: center;
+      border-radius: 14px;
     }
 
     .auth-modal-msg {
       margin-top: 10px;
       font-size: 0.85rem;
-      color: #6b7280;
+      color: var(--ink-muted);
       white-space: pre-wrap;
       min-height: 1.1em;
+    }
+
+    .auth-modal-msg:not(:empty) {
+      border-radius: 14px;
+      border: 1px solid color-mix(in srgb, #ef4444 28%, transparent);
+      background: color-mix(in srgb, #ef4444 10%, transparent);
+      color: color-mix(in srgb, #b91c1c 75%, var(--ink) 25%);
+      padding: 10px 12px;
+    }
+
+    @media (max-width: 520px) {
+      .auth-provider-grid {
+        grid-template-columns: 1fr;
+      }
+      .auth-provider-grid .btn:nth-child(3) {
+        grid-column: auto;
+      }
+      .auth-modal-footer {
+        grid-template-columns: 1fr;
+      }
     }
 
     .suggestion-modal {
