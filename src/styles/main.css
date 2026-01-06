@@ -6137,16 +6137,21 @@ body.session-header-mounted #focusCard {
 
 .focus-inline-settings {
   position: absolute;
-  inset: 10px;
-  padding: 14px;
-  border: 1px solid rgba(228, 232, 239, 0.9);
+  inset: clamp(6px, 1.2vw, 10px);
+  padding: clamp(10px, 1.4vw, 14px);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #f8fbff, #ffffff);
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12);
+  background: var(--card-surface-2);
+  box-shadow: var(--shadow-card);
   display: none;
   flex-direction: column;
   gap: 12px;
   z-index: 2;
+  overflow: auto;
+  min-height: 0;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .focus-inline-title {
@@ -6157,8 +6162,9 @@ body.session-header-mounted #focusCard {
 
 .focus-inline-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
+  min-width: 0;
 }
 
 .focus-inline-grid label {
@@ -6167,6 +6173,7 @@ body.session-header-mounted #focusCard {
   gap: 6px;
   font-size: 0.86rem;
   color: #4b5563;
+  min-width: 0;
 }
 
 .focus-inline-grid input {
@@ -6177,6 +6184,8 @@ body.session-header-mounted #focusCard {
   box-sizing: border-box;
   background: #fff;
   transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  width: 100%;
+  max-width: 100%;
 }
 
 .focus-inline-grid input:focus {
@@ -6188,8 +6197,20 @@ body.session-header-mounted #focusCard {
 .focus-inline-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: 4px;
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  padding-top: 10px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-strong) 0%, transparent),
+    color-mix(in srgb, var(--surface-strong) 92%, transparent) 35%,
+    var(--surface-strong) 80%
+  );
 }
 
 .focus-inline-actions .btn,
