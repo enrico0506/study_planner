@@ -896,6 +896,7 @@
       if (event.key === "Escape") {
         closeThemeMenu();
         closeHeaderMenu();
+        closeAuthModal();
       }
     });
 
@@ -926,6 +927,38 @@
 	      closeHeaderMenu();
 	      const label = (headerProfileBtn.textContent || "").trim();
 	      window.location.href = label === "Verify" ? "./account.html#verification" : "./account.html";
+	    });
+
+	    headerAuthBtn?.addEventListener("click", () => {
+	      closeHeaderMenu();
+	      openAuthModal();
+	    });
+
+	    authModalCloseBtn?.addEventListener("click", closeAuthModal);
+	    authModalBackdrop?.addEventListener("mousedown", (event) => {
+	      if (event.target === authModalBackdrop) closeAuthModal();
+	    });
+	    authModalEmail?.addEventListener("input", updateAuthModalControls);
+	    authModalPassword?.addEventListener("input", updateAuthModalControls);
+	    authModalPassword?.addEventListener("keydown", (event) => {
+	      if (event.key !== "Enter") return;
+	      event.preventDefault();
+	      submitAuthModal("login");
+	    });
+	    authModalLoginBtn?.addEventListener("click", () => submitAuthModal("login"));
+	    authModalRegisterBtn?.addEventListener("click", () => submitAuthModal("register"));
+	    authModalGoogleBtn?.addEventListener("click", () => {
+	      window.location.href = `/api/auth/auth0/login?connection=google-oauth2&returnTo=${encodeURIComponent(
+	        getAuth0ReturnTo()
+	      )}`;
+	    });
+	    authModalAppleBtn?.addEventListener("click", () => {
+	      window.location.href = `/api/auth/auth0/login?connection=apple&returnTo=${encodeURIComponent(
+	        getAuth0ReturnTo()
+	      )}`;
+	    });
+	    authModalOtherBtn?.addEventListener("click", () => {
+	      window.location.href = `/api/auth/auth0/login?returnTo=${encodeURIComponent(getAuth0ReturnTo())}`;
 	    });
 
     // Phone navigation is handled via index.html?mode=... links.

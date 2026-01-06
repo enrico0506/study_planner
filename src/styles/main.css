@@ -4541,6 +4541,53 @@ body.session-header-mounted #focusCard {
       box-sizing: border-box;
     }
 
+    .auth-modal-hint {
+      font-size: 0.78rem;
+      color: #6b7280;
+      margin-top: 6px;
+    }
+
+    .auth-modal-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 10px 0;
+      color: #6b7280;
+      font-size: 0.78rem;
+    }
+
+    .auth-modal-divider::before,
+    .auth-modal-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #e5e7eb;
+    }
+
+    .auth-modal-divider span {
+      white-space: nowrap;
+    }
+
+    .auth-provider-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .auth-provider-grid .btn {
+      width: 100%;
+      display: inline-flex;
+      justify-content: center;
+      text-decoration: none;
+    }
+
+    .auth-modal-msg {
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: #6b7280;
+      white-space: pre-wrap;
+      min-height: 1.1em;
+    }
+
     .suggestion-modal {
       max-width: 720px;
     }

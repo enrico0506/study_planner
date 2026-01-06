@@ -132,7 +132,7 @@
 				            <a class="header-quick-item" href="./calendar.html">Calendar</a>
 				            <a class="header-quick-item" href="./stundenplan.html">Stundenplan</a>
 				          </div>
-				        </div>
+        </div>
         <div class="confidence-toggle" role="group" aria-label="Confidence mode" data-section="confidence-toggle">
           <button class="confidence-toggle-btn confidence-toggle-active" id="manualConfBtn" type="button" data-mode="manual">
             Your confidence
@@ -142,6 +142,7 @@
           </button>
         </div>
         <button class="btn btn-secondary" id="adsToggleBtn" type="button" aria-pressed="false">Ads: On</button>
+        <button class="btn" id="headerAuthBtn" type="button">Login / Register</button>
         <div class="header-menu" id="headerMenu" aria-label="Menu" data-section="header-menu">
           <button class="header-menu-toggle" id="headerMenuToggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Open menu">
             ...
@@ -158,10 +159,10 @@
 			              <div class="header-menu-subtitle">Study hubs</div>
 			              <a class="header-menu-link" href="./calendar.html">Calendar</a>
 			              <a class="header-menu-link" href="./stundenplan.html">Stundenplan</a>
-			            </div>
+            </div>
             <div class="header-menu-divider mobile-menu-only"></div>
             <div class="header-menu-group">
-              <button class="header-menu-item" id="headerProfileBtn" type="button">Login</button>
+              <button class="header-menu-item" id="headerProfileBtn" type="button" hidden>Profile</button>
               <button class="header-menu-item" id="headerSettingsBtn" type="button">Settings</button>
             </div>
 	            <div class="header-menu-divider"></div>
@@ -592,13 +593,48 @@
           <div class="schedule-grid" id="scheduleGrid"></div>
         </div>
       </section>
-    </div>
+	    </div>
 
-    <!-- Add-to-Today Modal -->
-    <div class="modal-backdrop" id="addTodoModalBackdrop" hidden data-section="modal-add-to-today">
-      <div class="modal" role="dialog" aria-modal="true">
-        <div class="modal-header">
-          <div>
+	    <!-- Login / Register Modal -->
+	    <div class="modal-backdrop" id="authModalBackdrop" hidden data-section="modal-auth">
+	      <div class="modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+	        <div class="modal-header">
+	          <div>
+	            <div class="modal-title" id="authModalTitle">Login / Register</div>
+	            <div class="modal-subtitle" id="authModalSubtitle">Sign in to enable profile + cloud sync.</div>
+	          </div>
+	          <button class="modal-close-btn" id="authModalCloseBtn" aria-label="Close">✕</button>
+	        </div>
+	        <div class="modal-body">
+	          <div class="modal-field-row">
+	            <div class="modal-field-label">Email</div>
+	            <input class="notice-input" id="authModalEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+	          </div>
+	          <div class="modal-field-row">
+	            <div class="modal-field-label">Password</div>
+	            <input class="notice-input" id="authModalPassword" type="password" placeholder="Minimum 8 characters" autocomplete="current-password" />
+	            <div class="auth-modal-hint" id="authModalHint">Password must be at least 8 characters.</div>
+	          </div>
+	          <div class="auth-modal-divider" aria-hidden="true"><span>or</span></div>
+	          <div class="auth-provider-grid">
+	            <button class="btn btn-secondary auth-provider-btn" id="authModalGoogleBtn" type="button">Continue with Google</button>
+	            <button class="btn btn-secondary auth-provider-btn" id="authModalAppleBtn" type="button">Continue with Apple</button>
+	            <button class="btn btn-secondary auth-provider-btn" id="authModalOtherBtn" type="button">Other services…</button>
+	          </div>
+	          <div class="auth-modal-msg" id="authModalMsg" aria-live="polite"></div>
+	        </div>
+	        <div class="modal-footer auth-modal-footer">
+	          <button class="btn btn-secondary" id="authModalRegisterBtn" type="button">Register</button>
+	          <button class="btn" id="authModalLoginBtn" type="button">Login</button>
+	        </div>
+	      </div>
+	    </div>
+
+	    <!-- Add-to-Today Modal -->
+	    <div class="modal-backdrop" id="addTodoModalBackdrop" hidden data-section="modal-add-to-today">
+	      <div class="modal" role="dialog" aria-modal="true">
+	        <div class="modal-header">
+	          <div>
             <div class="modal-title" id="addTodoModalTitle">Add to Today</div>
             <div class="modal-subtitle" id="addTodoModalSubtitle">
               Add optional subtasks before sending this item to Today.

@@ -207,12 +207,24 @@ const COMPACT_WEEK_MQ =
     const headerMenu = document.getElementById("headerMenu");
     const headerMenuPanel = document.getElementById("headerMenuPanel");
     const headerMenuToggle = document.getElementById("headerMenuToggle");
+    const headerAuthBtn = document.getElementById("headerAuthBtn");
     const headerProfileBtn = document.getElementById("headerProfileBtn");
     const headerSettingsBtn = document.getElementById("headerSettingsBtn");
     const sessionHeaderMount = document.getElementById("sessionHeaderMount");
     const quickJumpDropdown = document.getElementById("quickJumpDropdown");
     const quickJumpTrigger = document.getElementById("quickJumpTrigger");
     const quickJumpPanel = document.getElementById("quickJumpPanel");
+    const authModalBackdrop = document.getElementById("authModalBackdrop");
+    const authModalCloseBtn = document.getElementById("authModalCloseBtn");
+    const authModalEmail = document.getElementById("authModalEmail");
+    const authModalPassword = document.getElementById("authModalPassword");
+    const authModalHint = document.getElementById("authModalHint");
+    const authModalMsg = document.getElementById("authModalMsg");
+    const authModalLoginBtn = document.getElementById("authModalLoginBtn");
+    const authModalRegisterBtn = document.getElementById("authModalRegisterBtn");
+    const authModalGoogleBtn = document.getElementById("authModalGoogleBtn");
+    const authModalAppleBtn = document.getElementById("authModalAppleBtn");
+    const authModalOtherBtn = document.getElementById("authModalOtherBtn");
     const settingsModal = document.getElementById("settingsModal");
     const settingsModalBackdrop = document.getElementById("settingsModalBackdrop");
     const settingsModalCloseBtn = document.getElementById("settingsModalCloseBtn");
@@ -228,9 +240,10 @@ const COMPACT_WEEK_MQ =
   const perceivedConfBtn = document.getElementById("perceivedConfBtn");
 		    let headerMenuTimer = null;
 		    let addTodoModalState = null; // { subjectId, fileId, subjectName, fileName, subtasks: [] }
+		    let authModalReturnFocusEl = null;
 
 			    async function updateHeaderProfileLabel() {
-		      if (!headerProfileBtn) return;
+		      if (!headerProfileBtn && !headerAuthBtn) return;
 	      try {
 	        const res = await fetch("/api/me", { credentials: "same-origin" });
 	        if (res.ok) {
@@ -238,6 +251,8 @@ const COMPACT_WEEK_MQ =
 	          try {
 	            me = await res.json();
 	          } catch {}
+	          if (headerProfileBtn) headerProfileBtn.hidden = false;
+	          if (headerAuthBtn) headerAuthBtn.hidden = true;
 	          if (me && me.emailVerified === false) {
 	            headerProfileBtn.textContent = "Verify";
 	            headerProfileBtn.title = "Verify email to enable sync";
@@ -252,12 +267,20 @@ const COMPACT_WEEK_MQ =
 	            headerProfileBtn.textContent = "Profile";
 	            headerProfileBtn.title = "Account & sync";
 	          }
+	          try {
+	            const toastMessage = sessionStorage.getItem("sp_post_auth_toast");
+	            if (toastMessage) {
+	              sessionStorage.removeItem("sp_post_auth_toast");
+	              showToast(String(toastMessage), "success");
+	            }
+	          } catch {}
 	        } else {
-	          headerProfileBtn.textContent = "Login";
-	          headerProfileBtn.title = "Login / register";
+	          if (headerProfileBtn) headerProfileBtn.hidden = true;
+	          if (headerAuthBtn) headerAuthBtn.hidden = false;
 	        }
 	      } catch {
-        // If offline or server unreachable, leave default label.
+        if (headerProfileBtn) headerProfileBtn.hidden = true;
+        if (headerAuthBtn) headerAuthBtn.hidden = false;
       }
     }
 
@@ -1404,6 +1427,144 @@ const COMPACT_WEEK_MQ =
       if (!settingsModal) return;
       settingsModal.classList.remove("is-open");
       settingsModal.setAttribute("aria-hidden", "true");
+    }
+
+    function isEmailValidInput(input) {
+      if (!input) return false;
+      if (input.validity) return input.validity.valid;
+      const raw = String(input.value || "").trim();
+      return /\S+@\S+\.\S+/.test(raw);
+    }
+
+    function updateAuthModalControls() {
+      const emailOk = isEmailValidInput(authModalEmail);
+      const passOk = (authModalPassword?.value || "").length >= 8;
+      const canSubmit = emailOk && passOk;
+      if (authModalLoginBtn) authModalLoginBtn.disabled = !canSubmit;
+      if (authModalRegisterBtn) authModalRegisterBtn.disabled = !canSubmit;
+      if (authModalHint) {
+        authModalHint.textContent = passOk
+          ? "Password looks good."
+          : "Password must be at least 8 characters.";
+      }
+    }
+
+    function openAuthModal() {
+      if (!authModalBackdrop) return;
+      authModalReturnFocusEl =
+        document.activeElement && document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      if (authModalMsg) authModalMsg.textContent = "";
+      authModalBackdrop.hidden = false;
+      authModalBackdrop.style.display = "flex";
+      updateAuthModalControls();
+      setTimeout(() => {
+        if (authModalEmail) {
+          authModalEmail.focus();
+          authModalEmail.select?.();
+        }
+      }, 0);
+    }
+
+    function closeAuthModal() {
+      if (!authModalBackdrop) return;
+      authModalBackdrop.style.display = "none";
+      authModalBackdrop.hidden = true;
+      if (authModalMsg) authModalMsg.textContent = "";
+      const returnTarget = authModalReturnFocusEl;
+      authModalReturnFocusEl = null;
+      if (returnTarget && document.contains(returnTarget)) {
+        returnTarget.focus();
+      }
+    }
+
+    function normalizeEmail(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    async function authModalApiFetch(path, payload) {
+      let res;
+      try {
+        res = await fetch(path, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) {
+        const isFile = window.location && window.location.protocol === "file:";
+        throw new Error(
+          isFile
+            ? "You opened this app via file://. Accounts require the Node server or your deployed URL."
+            : "Network error. Please try again."
+        );
+      }
+      const isJson = (res.headers.get("content-type") || "").includes("application/json");
+      const body = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null);
+      if (!res.ok) {
+        const message =
+          (body && typeof body === "object" && body.error) ||
+          (typeof body === "string" && body) ||
+          `HTTP ${res.status}`;
+        throw new Error(message);
+      }
+      return body;
+    }
+
+    async function submitAuthModal(flow) {
+      if (!authModalEmail || !authModalPassword) return;
+      if (authModalMsg) authModalMsg.textContent = "";
+
+      const email = normalizeEmail(authModalEmail.value);
+      const password = String(authModalPassword.value || "");
+      if (!email) {
+        if (authModalMsg) authModalMsg.textContent = "Email required.";
+        updateAuthModalControls();
+        return;
+      }
+      if (password.length < 8) {
+        if (authModalMsg) authModalMsg.textContent = "Password must be at least 8 characters.";
+        updateAuthModalControls();
+        return;
+      }
+
+      const loginLabel = authModalLoginBtn ? authModalLoginBtn.textContent : "";
+      const registerLabel = authModalRegisterBtn ? authModalRegisterBtn.textContent : "";
+      if (authModalLoginBtn) authModalLoginBtn.disabled = true;
+      if (authModalRegisterBtn) authModalRegisterBtn.disabled = true;
+      if (flow === "login" && authModalLoginBtn) authModalLoginBtn.textContent = "Logging in…";
+      if (flow === "register" && authModalRegisterBtn) authModalRegisterBtn.textContent = "Creating…";
+
+      try {
+        const result = await authModalApiFetch(flow === "register" ? "/api/auth/register" : "/api/auth/login", {
+          email,
+          password
+        });
+
+        try {
+          const verified = result && typeof result === "object" ? result.emailVerified : null;
+          const toast = flow === "register" ? "Account created." : "Signed in.";
+          sessionStorage.setItem(
+            "sp_post_auth_toast",
+            verified === false ? `${toast} Verify your email to enable sync.` : toast
+          );
+        } catch {}
+        window.location.reload();
+      } catch (err) {
+        const msg = String(err?.message || "Login failed");
+        if (authModalMsg) authModalMsg.textContent = msg;
+        showToast(msg, "warn");
+        if (flow === "login" && authModalLoginBtn) authModalLoginBtn.textContent = loginLabel;
+        if (flow === "register" && authModalRegisterBtn) authModalRegisterBtn.textContent = registerLabel;
+        updateAuthModalControls();
+      }
+    }
+
+    function getAuth0ReturnTo() {
+      const path = window.location && window.location.pathname ? window.location.pathname : "/index.html";
+      const search = window.location && window.location.search ? window.location.search : "";
+      const hash = window.location && window.location.hash ? window.location.hash : "";
+      const value = `${path}${search}${hash}`;
+      return value.startsWith("/") ? value : "/index.html";
     }
 
     function setActiveSettingsPanel(panelId) {
