@@ -26,8 +26,11 @@
     width: 100%;
     max-width: 560px;
     max-height: calc(100vh - var(--phone-inset-top) - var(--phone-inset-bottom));
-    overflow: auto;
     border-radius: 16px;
+  }
+
+  .modal-body {
+    overflow: auto;
   }
 
   /* Settings modal */

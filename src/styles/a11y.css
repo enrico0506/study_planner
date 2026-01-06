@@ -1,8 +1,8 @@
 /* Narrow a11y enhancements (no redesign). */
 
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 3px solid rgba(47, 98, 244, 0.55);
-  outline-offset: 3px;
+  outline: var(--focus-outline, 3px solid rgba(47, 98, 244, 0.55)) !important;
+  outline-offset: var(--focus-outline-offset, 3px) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -13,4 +13,3 @@
     animation-iteration-count: 1 !important;
   }
 }
-

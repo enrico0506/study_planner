@@ -78,17 +78,40 @@ body::-webkit-scrollbar,
 	      --surface-bg: #fcfbf7;
 	      --surface-subtle-bg: #f7f7ff;
       --border-subtle: #e4e7ef;
+      --border-strong: #e5e7eb;
       --accent: #2f62f4;
       --accent-ink: #0f1c3d;
       --accent-soft: #e4ecff;
       --accent-soft-hover: #d7dfff;
       --ink: #0f172a;
       --ink-muted: #5f6a86;
+      --text-subtle: color-mix(in srgb, var(--ink) 55%, transparent);
       --radius-lg: 22px;
       --radius-md: 14px;
+      --radius-control: 12px;
+      --radius-pill: 999px;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-7: 32px;
       --shadow-card: 0 20px 50px rgba(15, 23, 42, 0.08);
-      --app-desktop-max: 1480px;
-      --app-desktop-min: 980px;
+      --shadow-soft: 0 10px 22px rgba(15, 23, 42, 0.05);
+      --shadow-xs: 0 8px 18px rgba(15, 23, 42, 0.06);
+      --shadow-sm: 0 12px 30px rgba(15, 23, 42, 0.08);
+      --shadow-md: 0 18px 44px rgba(15, 23, 42, 0.12);
+      --shadow-lg: 0 30px 80px rgba(15, 23, 42, 0.22);
+      --motion-fast: 120ms;
+      --motion-med: 180ms;
+      --motion-slow: 260ms;
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+      --focus-outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
+      --focus-outline-offset: 3px;
+	      --app-desktop-max: 1480px;
+	      --app-desktop-min: 980px;
       --ad-column-gap: 16px;
       --app-ultrawide-max: 2200px;
       --app-shell-width: min(95vw, var(--app-ultrawide-max));
@@ -133,6 +156,7 @@ body {
   height: 100%;
   margin: 0;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 body {
@@ -144,8 +168,16 @@ body {
   background-size: cover;
   color: var(--ink);
   overflow-y: auto;
-  overflow-x: visible;
+  overflow-x: hidden;
+  line-height: 1.45;
   box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
 }
 
 .ad-column {
@@ -686,7 +718,9 @@ html.ads-disabled ins.adsbygoogle {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
-  max-height: 1000px;
+  max-height: min(80vh, 520px);
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .header-menu-panel .btn,
@@ -1439,6 +1473,9 @@ label.settings-check span {
       display: grid;
       gap: 4px;
       min-width: 180px;
+      max-height: min(70vh, 420px);
+      overflow: auto;
+      overscroll-behavior: contain;
       z-index: 10;
     }
 
@@ -1516,6 +1553,9 @@ label.settings-check span {
       display: grid;
       gap: 6px;
       min-width: 220px;
+      max-height: min(70vh, 420px);
+      overflow: auto;
+      overscroll-behavior: contain;
       z-index: 12;
     }
 
@@ -1617,6 +1657,7 @@ label.settings-check span {
 .session-header .session-stat-value {
   font-weight: 700;
   font-size: 16px;
+  font-variant-numeric: tabular-nums;
 }
 
 .session-card {
@@ -1661,6 +1702,7 @@ label.settings-check span {
 .session-card-timer {
   font-size: 28px;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .session-card-actions {
@@ -1685,15 +1727,20 @@ body.session-header-mounted #focusCard {
 
 .btn {
   padding: 9px 12px;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   border: 1px solid transparent;
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: 650;
   cursor: pointer;
   background: var(--accent);
   color: #ffffff;
   box-shadow: 0 10px 20px color-mix(in srgb, var(--accent) 30%, transparent);
-  transition: background 0.12s ease, transform 0.08s ease, box-shadow 0.08s ease;
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
   white-space: nowrap;
 }
 
@@ -1718,12 +1765,27 @@ body.session-header-mounted #focusCard {
   background: var(--surface-strong);
   border-color: var(--border-strong);
   color: var(--ink);
+  box-shadow: var(--shadow-xs);
 }
 
     .btn-secondary:hover {
       background: var(--accent-soft);
       box-shadow: none;
     }
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border-strong);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.btn-ghost:not([disabled]):hover {
+  background: var(--surface-soft);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border-strong));
+  transform: translateY(-0.5px);
+  box-shadow: var(--shadow-xs);
+}
 
     @media (max-width: 720px) {
       .header-row {
@@ -1841,6 +1903,23 @@ body.session-header-mounted #focusCard {
       box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
     }
 
+    /* Subtle card + menu micro-interactions (mouse/trackpad only). */
+    :where(.summary-card, .focus-card, .today-item, .subject-column, .session-card) {
+      transition:
+        background var(--motion-fast) var(--ease-standard),
+        border-color var(--motion-fast) var(--ease-standard),
+        box-shadow var(--motion-med) var(--ease-out),
+        transform var(--motion-fast) var(--ease-out);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      :where(.summary-card, .focus-card, .today-item, .subject-column, .session-card):hover {
+        border-color: color-mix(in srgb, var(--accent) 18%, var(--border-strong));
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+      }
+    }
+
     .summary-top {
       display: flex;
       justify-content: space-between;
@@ -1873,6 +1952,7 @@ body.session-header-mounted #focusCard {
       font-size: 1.05rem;
       font-weight: 600;
       color: var(--ink);
+      font-variant-numeric: tabular-nums;
     }
 
     .summary-progress {
@@ -4888,13 +4968,34 @@ body.session-header-mounted #focusCard {
     }
 
     .chip-btn {
-      border: none;
+      border: 1px solid var(--border-strong);
       border-radius: 10px;
       padding: 8px 12px;
       font-size: 0.78rem;
       cursor: pointer;
-      transition: background 0.08s ease, color 0.08s ease, transform 0.08s ease;
+      font-weight: 650;
+      background: var(--surface-strong);
+      color: var(--ink);
+      box-shadow: var(--shadow-xs);
+      transition:
+        background var(--motion-fast) var(--ease-standard),
+        border-color var(--motion-fast) var(--ease-standard),
+        color var(--motion-fast) var(--ease-standard),
+        transform var(--motion-fast) var(--ease-out),
+        box-shadow var(--motion-fast) var(--ease-out);
       white-space: nowrap;
+    }
+
+    .chip-btn[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .chip-btn:not([disabled]):hover {
+      background: var(--accent-soft);
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--border-strong));
+      transform: translateY(-0.5px);
     }
 
     .chip-btn-danger {
@@ -4902,6 +5003,8 @@ body.session-header-mounted #focusCard {
       color: #b91c1c;
       min-width: 60px;
       text-align: center;
+      border-color: #fecaca;
+      box-shadow: none;
     }
 
     .chip-btn-danger:hover {
@@ -4910,26 +5013,47 @@ body.session-header-mounted #focusCard {
     }
 
     .chip-btn-primary {
-      background: #e0f2fe;
-      color: #1d4ed8;
+      background: color-mix(in srgb, var(--accent) 15%, var(--surface-strong));
+      color: var(--accent-ink);
       min-width: 80px;
       text-align: center;
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--border-strong));
     }
 
     .chip-btn-primary:hover {
-      background: #bfdbfe;
+      background: color-mix(in srgb, var(--accent) 22%, var(--surface-strong));
       transform: translateY(-0.5px);
+    }
+
+    .chip-btn-ghost {
+      background: transparent;
+      border-color: color-mix(in srgb, var(--border-strong) 75%, transparent);
+      box-shadow: none;
+    }
+
+    .chip-btn-ghost:not([disabled]):hover {
+      background: var(--surface-soft);
+      border-color: color-mix(in srgb, var(--accent) 28%, var(--border-strong));
+      transform: translateY(-0.5px);
+      box-shadow: var(--shadow-xs);
     }
 
     .chip-btn-success {
       background: #dcfce7;
       color: #15803d;
       border: 1px solid #a7f3d0;
+      box-shadow: none;
     }
 
     .chip-btn-success:hover {
       background: #bbf7d0;
       transform: none;
+    }
+
+    .chip-btn:not(.chip-btn-primary):not(.chip-btn-danger):not(.chip-btn-success):not(.chip-btn-ghost)[aria-pressed="true"] {
+      background: color-mix(in srgb, var(--accent) 12%, var(--surface-strong));
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--border-strong));
+      color: var(--accent-ink);
     }
 
     .file-actions {
@@ -5086,6 +5210,9 @@ body.session-header-mounted #focusCard {
   display: none;
   align-items: center;
   justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow: auto;
   z-index: 500;
 }
 
@@ -5101,8 +5228,13 @@ body.session-header-mounted #focusCard {
       box-shadow: 0 25px 50px rgba(15, 23, 42, 0.25);
       width: 100%;
       max-width: 420px;
+      max-height: calc(100dvh - 32px);
       padding: 12px 14px 12px;
       box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
     }
 
     .auth-modal {
@@ -5430,6 +5562,10 @@ body.session-header-mounted #focusCard {
 
 .modal-body {
   padding: 4px 0 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
 }
 
 .modal-field-label {
@@ -5561,6 +5697,7 @@ body.session-header-mounted #focusCard {
       gap: 8px;
       justify-content: flex-end;
       margin-top: 4px;
+      flex: 0 0 auto;
     }
 
     .modal-footer .spacer {
@@ -5591,8 +5728,7 @@ body.session-header-mounted #focusCard {
 
     .stats-modal {
       max-width: 900px;
-      max-height: 80vh;
-      overflow-y: auto;
+      max-height: calc(100dvh - 32px);
     }
 
     .stats-summary {
@@ -5790,6 +5926,7 @@ body.session-header-mounted #focusCard {
     .stats-conf-num {
       font-size: 0.78rem;
       color: #6b7280;
+      font-variant-numeric: tabular-nums;
     }
 
     .stats-section {
@@ -5895,6 +6032,7 @@ body.session-header-mounted #focusCard {
       font-weight: 600;
       color: var(--accent-ink);
       white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     }
 
     .stats-bar-track {
@@ -6248,15 +6386,20 @@ body.session-header-mounted #focusCard {
 .icon-btn {
   width: 36px;
   height: 36px;
-  border-radius: 12px;
-  border: 1px solid #dfe4f0;
-  background: #ffffff;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-strong);
   display: grid;
   place-items: center;
   cursor: pointer;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--shadow-xs);
   color: #1f2937;
-  transition: background 0.12s ease, border-color 0.12s ease, transform 0.08s ease;
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
 }
 
 .icon-btn:focus-visible {
