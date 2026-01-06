@@ -1812,25 +1812,38 @@
           );
 		    }
 	
-	    function applySummaryLayoutFit() {
-	      if (!summaryCard) return false;
-	      const root = document.documentElement;
-	      if (!root) return false;
-
-        const wasSummaryCompact = root.classList.contains("summary-compact");
+		    function applySummaryLayoutFit() {
+		      if (!summaryCard) return false;
+		      const root = document.documentElement;
+		      if (!root) return false;
 	
-	      const isDesktop = window.matchMedia && window.matchMedia("(min-width: 961px)").matches;
-	      if (!isDesktop) {
-	        root.classList.remove("summary-compact");
-	        return wasSummaryCompact;
-	      }
+	        const wasSummaryCompact = root.classList.contains("summary-compact");
 	
-	      // Decide based on whether the stacked layout fits (no compact class).
-	      root.classList.remove("summary-compact");
-	      const isOverflowing = summaryCard.scrollHeight > summaryCard.clientHeight + overflowTolerance;
-	      root.classList.toggle("summary-compact", isOverflowing);
-        return wasSummaryCompact !== root.classList.contains("summary-compact");
-	    }
+		      const isDesktop = window.matchMedia && window.matchMedia("(min-width: 961px)").matches;
+		      if (!isDesktop) {
+		        root.classList.remove("summary-compact");
+		        return wasSummaryCompact;
+		      }
+	
+          // Measure based on non-compact header styling (header-compact can mask overflow).
+          const hadHeaderCompact = root.classList.contains("header-compact");
+          const hadSummaryUltra = root.classList.contains("summary-ultra");
+          const hadFocusUltra = root.classList.contains("focus-ultra");
+          root.classList.remove("header-compact", "summary-ultra", "focus-ultra");
+	
+		      // Decide based on whether the stacked layout fits (no compact class).
+		      root.classList.remove("summary-compact");
+		      const isOverflowing =
+		        summaryCard.scrollHeight > summaryCard.clientHeight + overflowTolerance;
+		      root.classList.toggle("summary-compact", isOverflowing);
+          const didChange = wasSummaryCompact !== root.classList.contains("summary-compact");
+	
+          if (hadHeaderCompact) root.classList.add("header-compact");
+          if (hadSummaryUltra) root.classList.add("summary-ultra");
+          if (hadFocusUltra) root.classList.add("focus-ultra");
+	
+	        return didChange;
+		    }
 
       function runSummaryLayoutFit(options = {}) {
         const settle = !!options.settle;
