@@ -1721,9 +1721,11 @@
 		    let summaryLayoutRaf = 0;
         let summaryLayoutTimeout = 0;
         let headerFitObserver = null;
+        const overflowTolerance = 1;
         let headerCompactHoldUntil = 0;
         let summaryUltraHoldUntil = 0;
         let focusUltraHoldUntil = 0;
+        let headerFitHoldTimeout = 0;
 
         function headerFitNowMs() {
           if (typeof performance !== "undefined" && typeof performance.now === "function") {
@@ -1755,9 +1757,10 @@
 	
 		      const focusMain = focusCard.querySelector(".focus-main");
 		      const baselineOverflow =
-		        summaryCard.scrollHeight > summaryCard.clientHeight ||
-		        focusCard.scrollHeight > focusCard.clientHeight ||
-		        (focusMain && focusMain.scrollHeight > focusMain.clientHeight);
+		        summaryCard.scrollHeight > summaryCard.clientHeight + overflowTolerance ||
+		        focusCard.scrollHeight > focusCard.clientHeight + overflowTolerance ||
+		        (focusMain &&
+		          focusMain.scrollHeight > focusMain.clientHeight + overflowTolerance);
 
           const ts = headerFitNowMs();
           const holdMs = 260;
@@ -1779,7 +1782,8 @@
 		      root.classList.add("header-compact");
 	
 		      // If Daily stats still overflows even after header-compact, apply a stricter fallback.
-		      const summaryStillOverflowing = summaryCard.scrollHeight > summaryCard.clientHeight;
+		      const summaryStillOverflowing =
+		        summaryCard.scrollHeight > summaryCard.clientHeight + overflowTolerance;
           if (summaryStillOverflowing) {
             summaryUltraHoldUntil = ts + holdMs;
           }
@@ -1788,8 +1792,9 @@
 		      root.classList.toggle("summary-ultra", shouldApplySummaryUltra);
 
           const focusStillOverflowing =
-            focusCard.scrollHeight > focusCard.clientHeight ||
-            (focusMain && focusMain.scrollHeight > focusMain.clientHeight);
+            focusCard.scrollHeight > focusCard.clientHeight + overflowTolerance ||
+            (focusMain &&
+              focusMain.scrollHeight > focusMain.clientHeight + overflowTolerance);
           if (focusStillOverflowing) {
             focusUltraHoldUntil = ts + holdMs;
           }
@@ -1822,7 +1827,7 @@
 	
 	      // Decide based on whether the stacked layout fits (no compact class).
 	      root.classList.remove("summary-compact");
-	      const isOverflowing = summaryCard.scrollHeight > summaryCard.clientHeight;
+	      const isOverflowing = summaryCard.scrollHeight > summaryCard.clientHeight + overflowTolerance;
 	      root.classList.toggle("summary-compact", isOverflowing);
         return wasSummaryCompact !== root.classList.contains("summary-compact");
 	    }
@@ -1831,9 +1836,31 @@
         const settle = !!options.settle;
         const summaryChanged = applySummaryLayoutFit();
         const headerChanged = applyHeaderCompactFit();
+        scheduleHeaderHoldRecheck();
         if (!settle && (summaryChanged || headerChanged)) {
           requestAnimationFrame(() => runSummaryLayoutFit({ settle: true }));
         }
+      }
+
+      function scheduleHeaderHoldRecheck() {
+        if (headerFitHoldTimeout) {
+          clearTimeout(headerFitHoldTimeout);
+          headerFitHoldTimeout = 0;
+        }
+
+        const now = headerFitNowMs();
+        const nextHoldUntil = Math.min(
+          headerCompactHoldUntil > now ? headerCompactHoldUntil : Infinity,
+          summaryUltraHoldUntil > now ? summaryUltraHoldUntil : Infinity,
+          focusUltraHoldUntil > now ? focusUltraHoldUntil : Infinity
+        );
+
+        if (!Number.isFinite(nextHoldUntil)) return;
+        const delay = Math.max(0, nextHoldUntil - now + 20);
+        headerFitHoldTimeout = window.setTimeout(() => {
+          headerFitHoldTimeout = 0;
+          scheduleSummaryLayoutFit();
+        }, delay);
       }
 
       function ensureHeaderFitObserver() {
