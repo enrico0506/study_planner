@@ -225,14 +225,15 @@ const COMPACT_WEEK_MQ =
     const authModalGoogleBtn = document.getElementById("authModalGoogleBtn");
     const authModalAppleBtn = document.getElementById("authModalAppleBtn");
     const authModalOtherBtn = document.getElementById("authModalOtherBtn");
-    const settingsModal = document.getElementById("settingsModal");
-    const settingsModalBackdrop = document.getElementById("settingsModalBackdrop");
-    const settingsModalCloseBtn = document.getElementById("settingsModalCloseBtn");
-    const settingsNav = document.getElementById("settingsNav");
-    const settingsThemePanel = document.getElementById("settingsThemePanel");
-  const settingsColorsPanel = document.getElementById("settingsColorsPanel");
-  const settingsPrefsPanel = document.getElementById("settingsPrefsPanel");
-  const settingsThemePickerBtn = document.getElementById("settingsThemePickerBtn");
+	    const settingsModal = document.getElementById("settingsModal");
+	    const settingsModalBackdrop = document.getElementById("settingsModalBackdrop");
+	    const settingsModalCloseBtn = document.getElementById("settingsModalCloseBtn");
+	    const settingsNav = document.getElementById("settingsNav");
+	    const settingsThemePanel = document.getElementById("settingsThemePanel");
+	  const settingsColorsPanel = document.getElementById("settingsColorsPanel");
+	  const settingsPrefsPanel = document.getElementById("settingsPrefsPanel");
+	  const settingsDataPanel = document.getElementById("settingsDataPanel");
+	  const settingsThemePickerBtn = document.getElementById("settingsThemePickerBtn");
   const timerModeCountdownBtn = document.getElementById("timerModeCountdownBtn");
   const timerModeStopwatchBtn = document.getElementById("timerModeStopwatchBtn");
   const focusTimerLabel = document.getElementById("focusTimerLabel");
@@ -1412,22 +1413,26 @@ const COMPACT_WEEK_MQ =
       }, 2000);
     }
 
-    function openSettingsModal() {
-      if (!settingsModal) return;
-      settingsModal.classList.add("is-open");
-      settingsModal.setAttribute("aria-hidden", "false");
-      renderSettingsThemeList();
-      renderSettingsColorsList();
-      populateSettingsColorsControls();
-      populateSettingsPreferences();
-      renderSettingsPreview();
-    }
+	    function openSettingsModal() {
+	      if (!settingsModal) return;
+	      document.documentElement.classList.add("settings-modal-open");
+	      document.body.classList.add("settings-modal-open");
+	      settingsModal.classList.add("is-open");
+	      settingsModal.setAttribute("aria-hidden", "false");
+	      renderSettingsThemeList();
+	      renderSettingsColorsList();
+	      populateSettingsColorsControls();
+	      populateSettingsPreferences();
+	      renderSettingsPreview();
+	    }
 
-    function closeSettingsModal() {
-      if (!settingsModal) return;
-      settingsModal.classList.remove("is-open");
-      settingsModal.setAttribute("aria-hidden", "true");
-    }
+	    function closeSettingsModal() {
+	      if (!settingsModal) return;
+	      document.documentElement.classList.remove("settings-modal-open");
+	      document.body.classList.remove("settings-modal-open");
+	      settingsModal.classList.remove("is-open");
+	      settingsModal.setAttribute("aria-hidden", "true");
+	    }
 
     function isEmailValidInput(input) {
       if (!input) return false;
@@ -1577,21 +1582,21 @@ const COMPACT_WEEK_MQ =
       return value.startsWith("/") ? value : "/index.html";
     }
 
-    function setActiveSettingsPanel(panelId) {
-      if (!settingsNav) return;
-      settingsNav.querySelectorAll(".settings-nav-item").forEach((btn) => {
-        const target = btn.dataset.panel;
+	    function setActiveSettingsPanel(panelId) {
+	      if (!settingsNav) return;
+	      settingsNav.querySelectorAll(".settings-nav-item").forEach((btn) => {
+	        const target = btn.dataset.panel;
         if (target === panelId) {
           btn.classList.add("settings-nav-active");
         } else {
           btn.classList.remove("settings-nav-active");
         }
       });
-      const panels = [settingsThemePanel, settingsColorsPanel, settingsPrefsPanel];
-      panels.forEach((panel) => {
-        if (!panel) return;
-        if (panel.id === panelId) {
-          panel.classList.add("settings-panel-active");
+	      const panels = [settingsThemePanel, settingsColorsPanel, settingsPrefsPanel, settingsDataPanel];
+	      panels.forEach((panel) => {
+	        if (!panel) return;
+	        if (panel.id === panelId) {
+	          panel.classList.add("settings-panel-active");
         } else {
           panel.classList.remove("settings-panel-active");
         }

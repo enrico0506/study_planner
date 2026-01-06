@@ -892,13 +892,14 @@
       closeThemeMenu();
     });
 
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
-        closeThemeMenu();
-        closeHeaderMenu();
-        closeAuthModal();
-      }
-    });
+	    document.addEventListener("keydown", (event) => {
+	      if (event.key === "Escape") {
+	        closeThemeMenu();
+	        closeHeaderMenu();
+	        closeAuthModal();
+	        closeSettingsModal();
+	      }
+	    });
 
     if (headerMenu) {
       headerMenu.addEventListener("mouseenter", openHeaderMenu);
