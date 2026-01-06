@@ -35,6 +35,7 @@
   let versionsCache = [];
   let pendingRestore = null;
   let isAuthed = false;
+  let isPremium = false;
 
   function setButtonLabel(btn, label) {
     if (!btn) return;
@@ -84,6 +85,17 @@
 
   function normalizeEmail(email) {
     return String(email || "").trim().toLowerCase();
+  }
+
+  function normalizePlan(plan) {
+    const value = String(plan || "").trim().toLowerCase();
+    return value === "premium" || value === "pro" ? "premium" : "free";
+  }
+
+  function isPremiumUser(me) {
+    if (!me || typeof me !== "object") return false;
+    if (me.isPremium === true) return true;
+    return normalizePlan(me.plan) === "premium";
   }
 
   async function apiFetch(path, options = {}) {
@@ -254,11 +266,11 @@
     }
   }
 
-  function setVerifiedUi(isVerified) {
+  function setSyncEnabledUi(canSync) {
     const ids = ["accountSyncNowBtn", "refreshVersionsBtn"];
     for (const id of ids) {
       const el = $(id);
-      if (el) el.disabled = !isVerified;
+      if (el) el.disabled = !canSync;
     }
   }
 
@@ -298,18 +310,55 @@
       if (verifyValue) verifyValue.textContent = "Signed out";
       if (avatar) avatar.textContent = "?";
       if (copyBtn) copyBtn.disabled = true;
+      updatePlanSection(null);
       return;
     }
 
     const email = me.email;
     if (emailValue) emailValue.textContent = email;
     if (verifyValue) {
-      verifyValue.textContent = me.emailVerified ? "Verified email" : "Email not verified";
+      const verifyText = me.emailVerified ? "Verified email" : "Email not verified";
+      verifyValue.textContent = `${verifyText} · ${isPremiumUser(me) ? "Premium" : "Free"}`;
     }
     if (avatar) {
       avatar.textContent = email.trim().charAt(0).toUpperCase() || "?";
     }
     if (copyBtn) copyBtn.disabled = false;
+    updatePlanSection(me);
+  }
+
+  function updatePlanSection(me) {
+    const planValue = $("accountPlanValue");
+    const syncEntitlementValue = $("accountSyncEntitlementValue");
+    const upgradeBtn = $("accountUpgradeBtn");
+    const manageBtn = $("accountManagePlanBtn");
+    const msgEl = $("accountPlanMsg");
+
+    if (!me) {
+      if (planValue) planValue.textContent = "—";
+      if (syncEntitlementValue) syncEntitlementValue.textContent = "—";
+      if (upgradeBtn) {
+        upgradeBtn.disabled = true;
+        upgradeBtn.textContent = "Upgrade to Premium";
+      }
+      if (manageBtn) manageBtn.hidden = true;
+      if (msgEl) msgEl.textContent = "Login to view plans.";
+      return;
+    }
+
+    const premium = isPremiumUser(me);
+    if (planValue) planValue.textContent = premium ? "Premium" : "Free";
+    if (syncEntitlementValue) syncEntitlementValue.textContent = premium ? "Enabled" : "Locked";
+    if (upgradeBtn) {
+      upgradeBtn.disabled = premium;
+      upgradeBtn.textContent = premium ? "Premium active" : "Upgrade to Premium";
+    }
+    if (manageBtn) manageBtn.hidden = true;
+    if (msgEl) {
+      msgEl.textContent = premium
+        ? "Cloud sync and backups are unlocked."
+        : "Upgrade to Premium to unlock cloud sync and backups (payment coming soon).";
+    }
   }
 
   function isEmailValid(input) {
@@ -391,6 +440,7 @@
     const me = await getMe();
     if (!me) return "Signed in.";
     if (!me.emailVerified) return "Email verification required. Verify your email to enable sync.";
+    if (!isPremiumUser(me)) return "Signed in. Premium required to enable cloud sync/backups.";
 
     const flow = mode === "register" ? "register" : "login";
     const local = snapshotLocalState();
@@ -446,6 +496,7 @@
     const me = await getMe();
     if (!me) throw new Error("Unauthorized");
     if (!me.emailVerified) throw new Error("Email verification required");
+    if (!isPremiumUser(me)) throw new Error("Premium required");
 
     const local = snapshotLocalState();
     const cloud = await apiFetch("/api/state");
@@ -552,6 +603,10 @@
   async function refreshVersions() {
     $("versionsMsg").textContent = "";
     $("versionsList").innerHTML = "";
+    if (!isPremium) {
+      $("versionsMsg").textContent = "Premium required to use backups.";
+      return;
+    }
     try {
       const result = await apiFetch("/api/state/versions");
       versionsCache = result.versions || [];
@@ -566,7 +621,9 @@
     } catch (err) {
       const msg = String(err?.message || "Failed to load backups");
       $("versionsMsg").textContent =
-        msg === "Email not verified"
+        msg === "Premium required"
+          ? "Premium required to use backups."
+          : msg === "Email not verified"
           ? "Email verification required to use backups."
           : msg;
     }
@@ -619,12 +676,14 @@
 
     const me = await getMe();
     isAuthed = !!me;
+    isPremium = isPremiumUser(me);
     try {
       document.body.dataset.accountState = !me
         ? "signed-out"
         : me.emailVerified
         ? "verified"
         : "unverified";
+      document.body.dataset.accountPlan = !me ? "none" : isPremium ? "premium" : "free";
     } catch {}
     if (!me) {
       setPill("off", "Signed out");
@@ -633,12 +692,16 @@
       updateOverview(null);
     } else {
       const isVerified = !!me.emailVerified;
-      setPill(isVerified ? "ok" : "warn", isVerified ? "Signed in" : "Signed in (unverified)");
+      const planLabel = isPremium ? "Premium" : "Free";
+      const pillText = isVerified ? `Signed in (${planLabel})` : `Signed in (${planLabel}, unverified)`;
+      setPill(isVerified && isPremium ? "ok" : "warn", pillText);
       setAuthedUi(true);
-      setVerifiedUi(isVerified);
-      $("accountStatusMsg").textContent = isVerified
-        ? `Logged in as ${me.email} (verified)`
-        : `Logged in as ${me.email} (unverified). Verify your email to enable sync/backups.`;
+      setSyncEnabledUi(isVerified && isPremium);
+      $("accountStatusMsg").textContent = !isPremium
+        ? `Logged in as ${me.email} (Free). Upgrade to Premium to enable sync/backups.`
+        : isVerified
+        ? `Logged in as ${me.email} (Premium)`
+        : `Logged in as ${me.email} (Premium, unverified). Verify your email to enable sync/backups.`;
       updateOverview(me);
       $("accountLogoutBtn").addEventListener("click", async () => {
         try {
@@ -663,8 +726,13 @@
           await refreshVersions();
           updateOverview(me);
         } catch (err) {
-          $("accountStatusMsg").textContent = String(err?.message || "Sync failed");
-          showToast("error", String(err?.message || "Sync failed"));
+          const raw = String(err?.message || "Sync failed");
+          const msg = raw === "Premium required" ? "Premium required to enable sync/backups." : raw;
+          $("accountStatusMsg").textContent = msg;
+          showToast("error", msg);
+          if (raw === "Premium required") {
+            document.getElementById("plan")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+          }
         }
         setButtonLoading($("accountSyncNowBtn"), false);
       });
@@ -689,11 +757,15 @@
         }
       });
       $("refreshVersionsBtn").addEventListener("click", refreshVersions);
-      if (isVerified) {
+      if (isVerified && isPremium) {
         await refreshVersions();
       } else {
         const msgEl = $("versionsMsg");
-        if (msgEl) msgEl.textContent = "Email verification required to use backups.";
+        if (msgEl) {
+          msgEl.textContent = !isPremium
+            ? "Premium required to use backups."
+            : "Email verification required to use backups.";
+        }
       }
     }
 
@@ -721,6 +793,27 @@
         }
       });
     }
+
+    const upgradeBtn = $("accountUpgradeBtn");
+    upgradeBtn?.addEventListener("click", () => {
+      const msgEl = $("accountPlanMsg");
+      if (!isAuthed) {
+        const msg = "Please login first.";
+        if (msgEl) msgEl.textContent = msg;
+        showToast("info", msg);
+        return;
+      }
+      if (isPremium) {
+        const msg = "Premium is already active on your account.";
+        if (msgEl) msgEl.textContent = msg;
+        showToast("success", msg);
+        return;
+      }
+      const msg =
+        "Upgrade is not available yet (payments coming soon). If you already purchased Premium, contact support.";
+      if (msgEl) msgEl.textContent = msg;
+      showToast("info", "Payments coming soon.");
+    });
 
     const filterInput = $("versionsFilter");
     if (filterInput) {

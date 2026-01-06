@@ -294,6 +294,33 @@ function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
 
+function normalizePlan(plan) {
+  const value = String(plan || "").trim().toLowerCase();
+  if (value === "premium" || value === "pro") return "premium";
+  return "free";
+}
+
+function isPremiumPlan(plan) {
+  return normalizePlan(plan) === "premium";
+}
+
+async function requirePremiumSync(req, res, next) {
+  if (!req.user?.id) return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const pool = getPool();
+    const found = await pool.query("select email_verified, plan from users where id = $1", [req.user.id]);
+    const row = found.rows[0];
+    if (!row) return res.status(401).json({ error: "Unauthorized" });
+    if (!row.email_verified) return res.status(403).json({ error: "Email not verified" });
+    if (!isPremiumPlan(row.plan)) return res.status(402).json({ error: "Premium required" });
+    req.user.plan = normalizePlan(row.plan);
+    next();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to check subscription" });
+  }
+}
+
 function validatePassword(password) {
   const value = String(password || "");
   if (value.length < 8) return "Password must be at least 8 characters";
@@ -318,7 +345,7 @@ app.get("/api/me", async (req, res) => {
 
   try {
     const pool = getPool();
-    const found = await pool.query("select email, email_verified from users where id = $1", [
+    const found = await pool.query("select email, email_verified, plan from users where id = $1", [
       req.user.id
     ]);
     const row = found.rows[0];
@@ -326,7 +353,8 @@ app.get("/api/me", async (req, res) => {
       clearAuthCookie(req, res);
       return res.status(401).json({ error: "Unauthorized" });
     }
-    res.json({ email: row.email, emailVerified: row.email_verified });
+    const plan = normalizePlan(row.plan);
+    res.json({ email: row.email, emailVerified: row.email_verified, plan, isPremium: plan === "premium" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to load user" });
@@ -539,7 +567,7 @@ async function verifyAuth0IdToken(idToken, { domain, clientId, nonce } = {}) {
 }
 
 async function findOrCreateUserForAuth0Login(pool, { email, emailVerified }) {
-  const found = await pool.query("select id, email, email_verified from users where email = $1", [email]);
+  const found = await pool.query("select id, email, email_verified, plan from users where email = $1", [email]);
   const existing = found.rows[0];
   if (existing) {
     await pool.query(
@@ -548,7 +576,7 @@ async function findOrCreateUserForAuth0Login(pool, { email, emailVerified }) {
     );
     if (emailVerified && !existing.email_verified) {
       const updated = await pool.query(
-        "update users set email_verified = true where id = $1 returning id, email, email_verified",
+        "update users set email_verified = true where id = $1 returning id, email, email_verified, plan",
         [existing.id]
       );
       return updated.rows[0] || existing;
@@ -558,7 +586,7 @@ async function findOrCreateUserForAuth0Login(pool, { email, emailVerified }) {
 
   const passwordHash = await bcrypt.hash(crypto.randomBytes(32).toString("hex"), 12);
   const created = await pool.query(
-    "insert into users (email, password_hash, email_verified) values ($1, $2, $3) returning id, email, email_verified",
+    "insert into users (email, password_hash, email_verified) values ($1, $2, $3) returning id, email, email_verified, plan",
     [email, passwordHash, !!emailVerified]
   );
   const user = created.rows[0];
@@ -732,7 +760,7 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
     const passwordHash = await bcrypt.hash(String(password), 12);
     const pool = getPool();
     const created = await pool.query(
-      "insert into users (email, password_hash) values ($1, $2) returning id, email, email_verified",
+      "insert into users (email, password_hash) values ($1, $2) returning id, email, email_verified, plan",
       [email, passwordHash]
     );
     const user = created.rows[0];
@@ -758,6 +786,8 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
     res.status(201).json({
       email: user.email,
       emailVerified: !!user.email_verified,
+      plan: normalizePlan(user.plan),
+      isPremium: isPremiumPlan(user.plan),
       verificationRequired: !user.email_verified,
       verification: shouldRevealTokens() ? verification : { emailSent: verification.emailSent }
     });
@@ -784,7 +814,7 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
   try {
     const pool = getPool();
     const found = await pool.query(
-      "select id, email, password_hash, email_verified from users where email = $1",
+      "select id, email, password_hash, email_verified, plan from users where email = $1",
       [email]
     );
     const user = found.rows[0];
@@ -797,7 +827,12 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
       expiresIn: `${AUTH_SESSION_DAYS}d`
     });
     setAuthCookie(req, res, token);
-    res.json({ email: user.email, emailVerified: !!user.email_verified });
+    res.json({
+      email: user.email,
+      emailVerified: !!user.email_verified,
+      plan: normalizePlan(user.plan),
+      isPremium: isPremiumPlan(user.plan)
+    });
   } catch (err) {
     const message = String(err?.message || "");
     if (message.startsWith("Missing required env var:")) {
@@ -813,6 +848,56 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
 app.post("/api/auth/logout", (req, res) => {
   clearAuthCookie(req, res);
   res.json({ ok: true });
+});
+
+function getAdminApiToken() {
+  const raw = process.env.ADMIN_API_TOKEN;
+  if (!raw) return null;
+  const token = String(raw).trim();
+  return token ? token : null;
+}
+
+function requireAdminToken(req, res, next) {
+  const token = getAdminApiToken();
+  if (!token) return res.status(404).send("Not found");
+
+  const header = String(req.headers.authorization || "");
+  const provided = header.toLowerCase().startsWith("bearer ") ? header.slice(7).trim() : "";
+  if (!provided || provided !== token) return res.status(401).json({ error: "Unauthorized" });
+  next();
+}
+
+app.post("/api/admin/set-plan", strictAuthLimiter, requireAdminToken, async (req, res) => {
+  const email = normalizeEmail(req.body?.email);
+  const rawPlan = String(req.body?.plan || "").trim().toLowerCase();
+  const plan = rawPlan === "premium" || rawPlan === "pro" ? "premium" : rawPlan === "free" ? "free" : null;
+  if (!email) return res.status(400).json({ error: "Email required" });
+  if (!plan) return res.status(400).json({ error: "Plan must be 'free' or 'premium'" });
+
+  try {
+    const pool = getPool();
+    const updated = await pool.query(
+      "update users set plan = $1 where email = $2 returning id, email, email_verified, plan",
+      [plan, email]
+    );
+    const row = updated.rows[0];
+    if (!row) return res.status(404).json({ error: "User not found" });
+    res.json({
+      ok: true,
+      user: {
+        id: String(row.id),
+        email: row.email,
+        emailVerified: !!row.email_verified,
+        plan: normalizePlan(row.plan),
+        isPremium: isPremiumPlan(row.plan)
+      }
+    });
+  } catch (err) {
+    const dbMessage = formatDbError(err);
+    if (dbMessage) return res.status(500).json({ error: dbMessage });
+    console.error(err);
+    res.status(500).json({ error: "Failed to update plan" });
+  }
 });
 
 app.post("/api/auth/change-password", requireAuth, strictAuthLimiter, async (req, res) => {
@@ -1004,7 +1089,7 @@ app.get("/api/auth/verify-email", strictAuthLimiter, async (req, res) => {
   res.redirect(`${baseUrl}/account.html?verify=ok`);
 });
 
-app.get("/api/state", requireAuth, requireVerifiedEmail, async (req, res) => {
+app.get("/api/state", requireAuth, requirePremiumSync, async (req, res) => {
   try {
     const pool = getPool();
     const result = await pool.query(
@@ -1019,7 +1104,7 @@ app.get("/api/state", requireAuth, requireVerifiedEmail, async (req, res) => {
   }
 });
 
-app.put("/api/state", requireAuth, requireVerifiedEmail, async (req, res) => {
+app.put("/api/state", requireAuth, requirePremiumSync, async (req, res) => {
   const data = req.body?.data;
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     return res.status(400).json({ error: "Invalid state payload" });
@@ -1069,7 +1154,7 @@ app.put("/api/state", requireAuth, requireVerifiedEmail, async (req, res) => {
   }
 });
 
-app.get("/api/state/versions", requireAuth, requireVerifiedEmail, async (req, res) => {
+app.get("/api/state/versions", requireAuth, requirePremiumSync, async (req, res) => {
   try {
     const pool = getPool();
     const result = await pool.query(
@@ -1089,7 +1174,7 @@ app.get("/api/state/versions", requireAuth, requireVerifiedEmail, async (req, re
   }
 });
 
-app.post("/api/state/restore", requireAuth, requireVerifiedEmail, async (req, res) => {
+app.post("/api/state/restore", requireAuth, requirePremiumSync, async (req, res) => {
   const versionId = Number(req.body?.versionId);
   if (!Number.isFinite(versionId) || versionId <= 0) {
     return res.status(400).json({ error: "Invalid versionId" });

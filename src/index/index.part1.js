@@ -1540,14 +1540,24 @@ const COMPACT_WEEK_MQ =
           password
         });
 
-        try {
-          const verified = result && typeof result === "object" ? result.emailVerified : null;
-          const toast = flow === "register" ? "Account created." : "Signed in.";
-          sessionStorage.setItem(
-            "sp_post_auth_toast",
-            verified === false ? `${toast} Verify your email to enable sync.` : toast
-          );
-        } catch {}
+	        try {
+	          const verified = result && typeof result === "object" ? result.emailVerified : null;
+	          const planRaw = result && typeof result === "object" ? String(result.plan || "").trim().toLowerCase() : "";
+	          const isPremiumResult =
+	            result && typeof result === "object"
+	              ? result.isPremium === true || planRaw === "premium" || planRaw === "pro"
+	              : false;
+	          const toast = flow === "register" ? "Account created." : "Signed in.";
+	          const message = !isPremiumResult
+	            ? `${toast} Premium required for cloud sync/backups.`
+	            : verified === false
+	            ? `${toast} Verify your email to enable sync.`
+	            : toast;
+	          sessionStorage.setItem(
+	            "sp_post_auth_toast",
+	            message
+	          );
+	        } catch {}
         window.location.reload();
       } catch (err) {
         const msg = String(err?.message || "Login failed");

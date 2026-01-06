@@ -180,6 +180,13 @@
     }
   }
 
+  function isPremiumUser(me) {
+    if (!me || typeof me !== "object") return false;
+    if (me.isPremium === true) return true;
+    const plan = String(me.plan || "").trim().toLowerCase();
+    return plan === "premium" || plan === "pro";
+  }
+
   async function pullCloudState() {
     return apiFetch("/api/state");
   }
@@ -213,7 +220,7 @@
 
 	  async function syncNowAuto() {
 	    const me = await getMe();
-	    if (!me || !me.emailVerified) return;
+	    if (!me || !me.emailVerified || !isPremiumUser(me)) return;
 
     const local = snapshotLocalState();
     const cloud = await pullCloudState();
@@ -278,7 +285,7 @@
 
 	  async function pollCloudAndApplyIfNewer() {
 	    const me = await getMe();
-	    if (!me || !me.emailVerified) return;
+	    if (!me || !me.emailVerified || !isPremiumUser(me)) return;
     if (Date.now() - lastLocalMutationMs < 5000) return;
 
     const lastSeenCloudMs = Number(localStorage.getItem(SYNC_META_KEY) || 0) || 0;
@@ -306,7 +313,7 @@
 
 	  async function pushIfChanged() {
 	    const me = await getMe();
-	    if (!me || !me.emailVerified) return;
+	    if (!me || !me.emailVerified || !isPremiumUser(me)) return;
     const lastSeenCloudMs = Number(localStorage.getItem(SYNC_META_KEY) || 0) || 0;
     if (!lastSeenCloudMs) return;
 
@@ -350,7 +357,7 @@
 
 	  async function init() {
 	    const me = await getMe();
-	    if (!me || !me.emailVerified) return;
+	    if (!me || !me.emailVerified || !isPremiumUser(me)) return;
 
 	    patchLocalStorage();
 

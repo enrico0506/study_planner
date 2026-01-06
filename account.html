@@ -98,6 +98,7 @@
         <div class="account-nav-label">Quick links</div>
         <nav class="account-nav" aria-label="Account sections">
           <a class="account-nav-link" href="#overview">Overview</a>
+          <a class="account-nav-link" href="#plan">Plan</a>
           <a class="account-nav-link" href="#login">Login / Register</a>
           <a class="account-nav-link" href="#security">Security</a>
           <a class="account-nav-link" href="#verification">Email verification</a>
@@ -141,10 +142,34 @@
           <div class="account-msg" id="accountStatusMsg" aria-live="polite"></div>
         </section>
 
+        <section class="account-section" id="plan">
+          <div class="section-head">
+            <h2>Plan</h2>
+            <p>Free is local-only. Premium unlocks cloud sync and backups.</p>
+          </div>
+          <div class="account-card">
+            <div class="account-meta-grid">
+              <div class="account-meta-card">
+                <div class="account-meta-label">Current plan</div>
+                <div class="account-meta-value" id="accountPlanValue">—</div>
+              </div>
+              <div class="account-meta-card">
+                <div class="account-meta-label">Cloud sync</div>
+                <div class="account-meta-value" id="accountSyncEntitlementValue">—</div>
+              </div>
+            </div>
+            <div class="account-row">
+              <button class="account-btn account-btn-primary" id="accountUpgradeBtn" type="button">Upgrade to Premium</button>
+              <button class="account-btn account-btn-secondary" id="accountManagePlanBtn" type="button" hidden>Manage billing</button>
+            </div>
+            <div class="account-msg" id="accountPlanMsg" aria-live="polite"></div>
+          </div>
+        </section>
+
         <section class="account-section" id="login">
           <div class="section-head">
             <h2>Login / Register</h2>
-            <p>Sign in to sync your study data between devices.</p>
+            <p>Sign in to manage your account. Premium unlocks cloud sync/backups.</p>
           </div>
           <div class="account-card" id="authCard">
             <div class="account-form">

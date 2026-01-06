@@ -26,11 +26,13 @@ async function main() {
       email text not null unique,
       password_hash text not null,
       email_verified boolean not null default false,
+      plan text not null default 'free',
       created_at timestamptz not null default now()
     );
   `);
 
   await client.query(`alter table users add column if not exists email_verified boolean not null default false;`);
+  await client.query(`alter table users add column if not exists plan text not null default 'free';`);
 
   await client.query(`
     create table if not exists user_states (
