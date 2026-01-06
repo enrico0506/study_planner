@@ -167,6 +167,13 @@
                 <button class="account-btn account-btn-primary" id="loginBtn" type="button">Login</button>
                 <button class="account-btn account-btn-secondary" id="registerBtn" type="button">Register</button>
               </div>
+              <div class="account-divider" aria-hidden="true"><span>or</span></div>
+              <div class="account-row">
+                <a class="account-btn account-btn-secondary" id="auth0GoogleLink" href="/api/auth/auth0/login?connection=google-oauth2&returnTo=/account.html">Continue with Google</a>
+                <a class="account-btn account-btn-secondary" id="auth0AppleLink" href="/api/auth/auth0/login?connection=apple&returnTo=/account.html">Continue with Apple</a>
+                <a class="account-btn account-btn-secondary" id="auth0MoreLink" href="/api/auth/auth0/login?returnTo=/account.html">Other services…</a>
+              </div>
+              <div class="field-hint" id="auth0Hint">Uses Auth0 Universal Login (if configured on the server).</div>
             </div>
             <div class="account-msg" id="authMsg" aria-live="polite"></div>
             <div class="account-tip">

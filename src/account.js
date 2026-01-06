@@ -583,14 +583,37 @@
       return;
     }
 
-    const verifyParam = new URLSearchParams(window.location.search || "").get("verify");
+    const params = new URLSearchParams(window.location.search || "");
+    const verifyParam = params.get("verify");
+    const auth0Param = params.get("auth0");
+    let shouldClearParams = false;
     if (verifyParam === "ok") {
       $("verifyMsg").textContent = "Email verified.";
       showToast("success", "Email verified.");
-      window.history.replaceState(null, "", window.location.pathname);
+      shouldClearParams = true;
     } else if (verifyParam === "error") {
       $("verifyMsg").textContent = "Verification code/link invalid or expired. Request a new one.";
       showToast("error", "Verification failed. Request a new code.");
+      shouldClearParams = true;
+    }
+
+    if (auth0Param) {
+      const messages = {
+        not_configured:
+          "Auth0 login is not configured on this server. Set AUTH0_DOMAIN, AUTH0_CLIENT_ID, and AUTH0_CLIENT_SECRET in your env.",
+        state_mismatch: "Auth0 login session expired. Please try again.",
+        token_exchange_failed: "Auth0 login failed while exchanging the code for tokens.",
+        missing_id_token: "Auth0 login failed: missing ID token.",
+        missing_email: "Auth0 login failed: your provider did not return an email address.",
+        callback_failed: "Auth0 login failed. Please try again."
+      };
+      const msg = messages[auth0Param] || `Auth0 login failed (${auth0Param}).`;
+      $("authMsg").textContent = msg;
+      showToast("error", msg);
+      shouldClearParams = true;
+    }
+
+    if (shouldClearParams) {
       window.history.replaceState(null, "", window.location.pathname);
     }
 

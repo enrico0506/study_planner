@@ -37,6 +37,11 @@ It also stores the last 20 synced snapshots as backups and includes an `account.
 - `DATABASE_URL` (Postgres connection string)
 - `JWT_SECRET` (long random string)
 - Optional: `AUTH_SESSION_DAYS` (how long the login cookie lasts; default `90`)
+- Optional (Auth0 social login): `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET` (see `.env.example`)
+
+Auth0 setup (optional):
+- Enable Google/Apple (and any other) connections in your Auth0 tenant.
+- Add `${APP_BASE_URL}/api/auth/auth0/callback` to **Allowed Callback URLs** for your Auth0 application.
 
 2) Run the DB migration:
 - `npm run migrate`

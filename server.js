@@ -423,6 +423,262 @@ function isLikelyShortVerificationCode(token) {
   return /^\d{6}$/.test(String(token || "").trim());
 }
 
+function getAuth0Config() {
+  const domainRaw = process.env.AUTH0_DOMAIN;
+  const clientId = process.env.AUTH0_CLIENT_ID;
+  const clientSecret = process.env.AUTH0_CLIENT_SECRET;
+  if (!domainRaw || !clientId || !clientSecret) return null;
+
+  const domain = String(domainRaw).trim().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+  const normalizedClientId = String(clientId).trim();
+  const normalizedClientSecret = String(clientSecret).trim();
+  if (!domain || !normalizedClientId || !normalizedClientSecret) return null;
+
+  const audienceRaw = process.env.AUTH0_AUDIENCE;
+  const audience = audienceRaw ? String(audienceRaw).trim() : null;
+
+  return { domain, clientId: normalizedClientId, clientSecret: normalizedClientSecret, audience };
+}
+
+function isSafeReturnTo(value) {
+  const input = String(value || "").trim();
+  if (!input) return false;
+  if (input.length > 2000) return false;
+  if (!input.startsWith("/")) return false;
+  if (input.startsWith("//")) return false;
+  if (input.includes("\n") || input.includes("\r")) return false;
+  if (input.includes("://")) return false;
+  return true;
+}
+
+const AUTH0_FLOW_COOKIE_MAX_AGE_MS = 10 * 60 * 1000;
+const AUTH0_FLOW_COOKIE_PATH = "/api/auth/auth0";
+
+function setAuth0FlowCookie(req, res, name, value) {
+  res.cookie(name, value, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: isRequestSecure(req),
+    path: AUTH0_FLOW_COOKIE_PATH,
+    maxAge: AUTH0_FLOW_COOKIE_MAX_AGE_MS
+  });
+}
+
+function clearAuth0FlowCookies(req, res) {
+  const options = { path: AUTH0_FLOW_COOKIE_PATH, secure: isRequestSecure(req), sameSite: "lax" };
+  res.clearCookie("auth0_state", options);
+  res.clearCookie("auth0_nonce", options);
+  res.clearCookie("auth0_return_to", options);
+}
+
+function redirectToAccountAuth0Error(req, res, code) {
+  const baseUrl = getAppBaseUrl(req);
+  const param = encodeURIComponent(String(code || "error"));
+  res.redirect(`${baseUrl}/account.html?auth0=${param}`);
+}
+
+let auth0JwksCache = { fetchedAt: 0, keys: new Map() };
+const AUTH0_JWKS_TTL_MS = 6 * 60 * 60 * 1000;
+
+async function refreshAuth0Jwks(domain) {
+  const res = await fetch(`https://${domain}/.well-known/jwks.json`, {
+    headers: { accept: "application/json" }
+  });
+  if (!res.ok) throw new Error(`JWKS fetch failed (HTTP ${res.status})`);
+  const jwks = await res.json();
+  const keys = new Map();
+  for (const jwk of jwks?.keys || []) {
+    const kid = jwk?.kid;
+    if (!kid) continue;
+    try {
+      const keyObject = crypto.createPublicKey({ key: jwk, format: "jwk" });
+      const pem = keyObject.export({ type: "spki", format: "pem" });
+      keys.set(kid, pem);
+    } catch {}
+  }
+  auth0JwksCache = { fetchedAt: Date.now(), keys };
+}
+
+async function getAuth0PublicKey(domain, kid) {
+  const now = Date.now();
+  const cachedKey = auth0JwksCache.keys.get(kid);
+  const isFresh = now - auth0JwksCache.fetchedAt < AUTH0_JWKS_TTL_MS;
+  if (cachedKey && isFresh) return cachedKey;
+
+  try {
+    await refreshAuth0Jwks(domain);
+  } catch (err) {
+    if (cachedKey) return cachedKey;
+    throw err;
+  }
+
+  const key = auth0JwksCache.keys.get(kid);
+  if (!key) throw new Error("Unknown signing key (kid)");
+  return key;
+}
+
+async function verifyAuth0IdToken(idToken, { domain, clientId, nonce } = {}) {
+  const decoded = jwt.decode(idToken, { complete: true });
+  const kid = decoded?.header?.kid;
+  const alg = decoded?.header?.alg;
+  if (!kid) throw new Error("Invalid id_token (missing kid)");
+  if (alg !== "RS256") throw new Error("Unsupported id_token algorithm");
+
+  const key = await getAuth0PublicKey(domain, kid);
+  const issuer = `https://${domain}/`;
+  const payload = jwt.verify(idToken, key, {
+    algorithms: ["RS256"],
+    audience: clientId,
+    issuer
+  });
+
+  if (!payload || typeof payload !== "object") throw new Error("Invalid id_token payload");
+  if (nonce && payload.nonce !== nonce) throw new Error("Invalid nonce");
+
+  return payload;
+}
+
+async function findOrCreateUserForAuth0Login(pool, { email, emailVerified }) {
+  const found = await pool.query("select id, email, email_verified from users where email = $1", [email]);
+  const existing = found.rows[0];
+  if (existing) {
+    await pool.query(
+      "insert into user_states (user_id, data) values ($1, '{}'::jsonb) on conflict (user_id) do nothing",
+      [existing.id]
+    );
+    if (emailVerified && !existing.email_verified) {
+      const updated = await pool.query(
+        "update users set email_verified = true where id = $1 returning id, email, email_verified",
+        [existing.id]
+      );
+      return updated.rows[0] || existing;
+    }
+    return existing;
+  }
+
+  const passwordHash = await bcrypt.hash(crypto.randomBytes(32).toString("hex"), 12);
+  const created = await pool.query(
+    "insert into users (email, password_hash, email_verified) values ($1, $2, $3) returning id, email, email_verified",
+    [email, passwordHash, !!emailVerified]
+  );
+  const user = created.rows[0];
+  await pool.query(
+    "insert into user_states (user_id, data) values ($1, '{}'::jsonb) on conflict (user_id) do nothing",
+    [user.id]
+  );
+  return user;
+}
+
+app.get("/api/auth/auth0/login", authLimiter, (req, res) => {
+  const config = getAuth0Config();
+  if (!config) return redirectToAccountAuth0Error(req, res, "not_configured");
+
+  const baseUrl = getAppBaseUrl(req);
+  const callbackUrl = `${baseUrl}/api/auth/auth0/callback`;
+  const returnTo = isSafeReturnTo(req.query?.returnTo) ? String(req.query.returnTo) : "/account.html";
+
+  const state = crypto.randomBytes(16).toString("base64url");
+  const nonce = crypto.randomBytes(16).toString("base64url");
+  setAuth0FlowCookie(req, res, "auth0_state", state);
+  setAuth0FlowCookie(req, res, "auth0_nonce", nonce);
+  setAuth0FlowCookie(req, res, "auth0_return_to", returnTo);
+
+  const url = new URL(`https://${config.domain}/authorize`);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("client_id", config.clientId);
+  url.searchParams.set("redirect_uri", callbackUrl);
+  url.searchParams.set("scope", "openid profile email");
+  url.searchParams.set("state", state);
+  url.searchParams.set("nonce", nonce);
+  if (config.audience) url.searchParams.set("audience", config.audience);
+
+  const connection = String(req.query?.connection || "").trim();
+  if (connection && /^[a-zA-Z0-9_-]{1,64}$/.test(connection)) {
+    url.searchParams.set("connection", connection);
+  }
+
+  res.redirect(url.toString());
+});
+
+app.get("/api/auth/auth0/callback", authLimiter, async (req, res) => {
+  const config = getAuth0Config();
+  if (!config) return redirectToAccountAuth0Error(req, res, "not_configured");
+
+  const baseUrl = getAppBaseUrl(req);
+  const callbackUrl = `${baseUrl}/api/auth/auth0/callback`;
+
+  const error = String(req.query?.error || "");
+  if (error) {
+    clearAuth0FlowCookies(req, res);
+    return redirectToAccountAuth0Error(req, res, error);
+  }
+
+  const code = String(req.query?.code || "");
+  const state = String(req.query?.state || "");
+  const expectedState = String(req.cookies?.auth0_state || "");
+  if (!code || !state || !expectedState || state !== expectedState) {
+    clearAuth0FlowCookies(req, res);
+    return redirectToAccountAuth0Error(req, res, "state_mismatch");
+  }
+
+  const expectedNonce = String(req.cookies?.auth0_nonce || "");
+  const returnTo = isSafeReturnTo(req.cookies?.auth0_return_to)
+    ? String(req.cookies.auth0_return_to)
+    : "/account.html";
+
+  try {
+    const tokenRes = await fetch(`https://${config.domain}/oauth/token`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        grant_type: "authorization_code",
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+        code,
+        redirect_uri: callbackUrl
+      })
+    });
+    const tokenBody = await tokenRes.json().catch(() => ({}));
+    if (!tokenRes.ok) {
+      clearAuth0FlowCookies(req, res);
+      return redirectToAccountAuth0Error(req, res, tokenBody?.error || "token_exchange_failed");
+    }
+
+    const idToken = tokenBody?.id_token;
+    if (!idToken) {
+      clearAuth0FlowCookies(req, res);
+      return redirectToAccountAuth0Error(req, res, "missing_id_token");
+    }
+
+    const profile = await verifyAuth0IdToken(idToken, {
+      domain: config.domain,
+      clientId: config.clientId,
+      nonce: expectedNonce
+    });
+
+    const email = normalizeEmail(profile.email);
+    if (!email) {
+      clearAuth0FlowCookies(req, res);
+      return redirectToAccountAuth0Error(req, res, "missing_email");
+    }
+
+    const emailVerified = profile.email_verified === true;
+    const pool = getPool();
+    const user = await findOrCreateUserForAuth0Login(pool, { email, emailVerified });
+
+    const token = jwt.sign({ sub: String(user.id), email: user.email }, getJwtSecret(), {
+      expiresIn: `${AUTH_SESSION_DAYS}d`
+    });
+    setAuthCookie(req, res, token);
+    clearAuth0FlowCookies(req, res);
+    res.redirect(`${baseUrl}${returnTo}`);
+  } catch (err) {
+    console.error("Auth0 callback failed:", err);
+    clearAuth0FlowCookies(req, res);
+    redirectToAccountAuth0Error(req, res, "callback_failed");
+  }
+});
+
 async function createEmailVerificationCode(pool, userId) {
   const token = generateVerificationCode();
   const tokenHash = hashToken(token);

@@ -419,6 +419,27 @@ label {
   flex-wrap: wrap;
 }
 
+.account-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: var(--space-3) 0;
+  color: var(--account-muted);
+  font-size: 0.85rem;
+}
+
+.account-divider::before,
+.account-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(148, 163, 184, 0.35);
+}
+
+.account-divider span {
+  white-space: nowrap;
+}
+
 .account-row-between {
   justify-content: space-between;
 }
@@ -434,6 +455,7 @@ label {
   cursor: pointer;
   background: var(--account-surface-muted);
   color: var(--account-text);
+  text-decoration: none;
   transition: transform 0.08s ease, border-color 0.12s ease, background 0.12s ease;
 }
 
