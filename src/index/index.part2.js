@@ -1697,28 +1697,35 @@
       streakBestLabel.textContent = "Best " + (best || 0);
     }
 
-    let summaryLayoutRaf = 0;
-    function applyHeaderCompactFit() {
-      const root = document.documentElement;
-      if (!root || !summaryCard || !focusCard) return;
+	    let summaryLayoutRaf = 0;
+	    function applyHeaderCompactFit() {
+	      const root = document.documentElement;
+	      if (!root || !summaryCard || !focusCard) return;
 
-      const isCapped =
-        window.matchMedia && window.matchMedia("(min-width: 721px)").matches;
-      if (!isCapped) {
-        root.classList.remove("header-compact");
-        return;
-      }
+	      const isCapped =
+	        window.matchMedia && window.matchMedia("(min-width: 721px)").matches;
+	      if (!isCapped) {
+	        root.classList.remove("header-compact", "summary-ultra");
+	        return;
+	      }
 
-      // Measure baseline without compact styles.
-      root.classList.remove("header-compact");
+	      // Measure baseline without compact styles.
+	      root.classList.remove("header-compact", "summary-ultra");
 
-      const focusMain = focusCard.querySelector(".focus-main");
-      const isOverflowing =
-        summaryCard.scrollHeight > summaryCard.clientHeight + 1 ||
-        focusCard.scrollHeight > focusCard.clientHeight + 1 ||
-        (focusMain && focusMain.scrollHeight > focusMain.clientHeight + 1);
-      root.classList.toggle("header-compact", isOverflowing);
-    }
+	      const focusMain = focusCard.querySelector(".focus-main");
+	      const isOverflowing =
+	        summaryCard.scrollHeight > summaryCard.clientHeight + 1 ||
+	        focusCard.scrollHeight > focusCard.clientHeight + 1 ||
+	        (focusMain && focusMain.scrollHeight > focusMain.clientHeight + 1);
+	      if (!isOverflowing) return;
+
+	      root.classList.add("header-compact");
+
+	      // If Daily stats still overflows even after header-compact, apply a stricter fallback.
+	      const summaryStillOverflowing =
+	        summaryCard.scrollHeight > summaryCard.clientHeight + 1;
+	      root.classList.toggle("summary-ultra", summaryStillOverflowing);
+	    }
 
     function applySummaryLayoutFit() {
       if (!summaryCard) return;

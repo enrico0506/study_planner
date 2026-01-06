@@ -536,6 +536,49 @@ html.ads-disabled ins.adsbygoogle {
     padding: 6px 8px;
     font-size: 0.72rem;
   }
+
+  /* Extra fallback: if Daily stats still overflows, hide non-essential text. */
+  html.header-compact.summary-ultra .plannerHeader .summary-progress-header span:first-child,
+  html.header-compact.summary-ultra .plannerHeader .summary-study-header span:first-child,
+  html.header-compact.summary-ultra .plannerHeader .summary-goal-header .summary-label {
+    display: none;
+  }
+
+  html.header-compact.summary-ultra .plannerHeader .summary-progress-header,
+  html.header-compact.summary-ultra .plannerHeader .summary-study-header {
+    justify-content: flex-end;
+  }
+
+  html.header-compact.summary-ultra .plannerHeader .summary-goal-header {
+    flex-wrap: nowrap;
+  }
+
+  html.header-compact.summary-ultra .plannerHeader .summary-goal-header > div {
+    min-width: 0;
+  }
+
+  html.header-compact.summary-ultra .plannerHeader #editGoalBtn {
+    padding: 6px 8px;
+    font-size: 0.72rem;
+  }
+
+  html.header-compact.summary-ultra .plannerHeader .summary-goal-line {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  html.header-compact.summary-ultra .plannerHeader .summary-goal-track,
+  html.header-compact.summary-ultra .plannerHeader .summary-progress-bar,
+  html.header-compact.summary-ultra .plannerHeader .summary-study-bar {
+    height: 7px;
+  }
+
+  html.header-compact.summary-ultra .plannerHeader .summary-streak,
+  html.header-compact.summary-ultra .plannerHeader .summary-study-legend {
+    display: none;
+  }
 }
 
 .plannerLower {
