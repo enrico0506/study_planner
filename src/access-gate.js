@@ -3,6 +3,15 @@
   const BLOCKED_CLASS = "sp-access-gate-blocked";
   const STYLE_ID = "spAccessGateStyle";
   const OVERLAY_ID = "spAccessGate";
+  const ENABLE_KEY = "studyAdblockGateEnabled_v1";
+
+  function isGateEnabled() {
+    try {
+      return localStorage.getItem(ENABLE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  }
 
   function shouldBypass() {
     try {
@@ -167,7 +176,6 @@
     const baitBlocked = detectByBaitElement();
     if (baitBlocked) return true;
 
-    // Fallback: some blockers don’t hide bait elements, but block ad network scripts.
     if (hasAdsenseScriptTag()) {
       return detectByAdsenseGlobal();
     }
@@ -198,11 +206,11 @@
 
   function start() {
     if (shouldBypass()) return;
+    if (!isGateEnabled()) return;
     injectStyles();
     setChecking(true);
 
     whenBodyReady(() => {
-      // Make the decision quickly to avoid a long blank screen.
       window.requestAnimationFrame(() => {
         let blocked = false;
         try {
@@ -218,7 +226,6 @@
 
         allow();
 
-        // Secondary check (delayed) for script-blocking-only ad blockers.
         if (!navigator.onLine || !hasAdsenseScriptTag()) return;
         window.setTimeout(() => {
           try {
@@ -228,7 +235,6 @@
       });
     });
 
-    // Safety net: never keep the page hidden forever.
     window.setTimeout(() => {
       if (document.documentElement.classList.contains(CHECKING_CLASS)) allow();
     }, 3500);
@@ -236,4 +242,3 @@
 
   start();
 })();
-
