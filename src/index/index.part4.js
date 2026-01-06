@@ -799,28 +799,83 @@
 			      let dragScrollActive = false;
 			      let dragScrollTimer = 0;
 			      let prevBodyOverflow = null;
+			      let prevHtmlOverflow = null;
 
 			      const isCoarsePointer = () =>
 			        !!(window.matchMedia && window.matchMedia("(hover: none) and (pointer: coarse)").matches);
 
 			      const updatePointer = (event) => {
-			        const x = Number(event?.clientX);
-			        const y = Number(event?.clientY);
-			        if (Number.isFinite(x)) lastDragX = x;
-			        if (Number.isFinite(y)) lastDragY = y;
+			        const clientX = Number(event?.clientX);
+			        const clientY = Number(event?.clientY);
+			        const pageX = Number(event?.pageX);
+			        const pageY = Number(event?.pageY);
+
+			        // Some browsers report (0,0) for drag events once the pointer leaves the drag source.
+			        // Prefer pageX/pageY when client coords look unhelpful.
+			        const clientLooksReal =
+			          Number.isFinite(clientX) &&
+			          Number.isFinite(clientY) &&
+			          !(clientX === 0 && clientY === 0);
+			        if (clientLooksReal) {
+			          lastDragX = clientX;
+			          lastDragY = clientY;
+			          return;
+			        }
+
+			        if (Number.isFinite(pageX) && Number.isFinite(pageY)) {
+			          lastDragX = pageX - (window.scrollX || 0);
+			          lastDragY = pageY - (window.scrollY || 0);
+			          return;
+			        }
+
+			        if (Number.isFinite(clientX)) lastDragX = clientX;
+			        if (Number.isFinite(clientY)) lastDragY = clientY;
 			      };
 
 		      const ensurePageScrollable = () => {
 		        if (prevBodyOverflow !== null) return;
 		        prevBodyOverflow = document.body ? document.body.style.overflow : "";
+		        prevHtmlOverflow = document.documentElement ? document.documentElement.style.overflow : "";
 		        if (document.body) document.body.style.overflow = "auto";
+		        if (document.documentElement) document.documentElement.style.overflow = "auto";
 		      };
 
 		      const restorePageScrollable = () => {
 		        if (prevBodyOverflow === null) return;
 		        if (document.body) document.body.style.overflow = prevBodyOverflow;
+		        if (document.documentElement && prevHtmlOverflow !== null) {
+		          document.documentElement.style.overflow = prevHtmlOverflow;
+		        }
 		        prevBodyOverflow = null;
+		        prevHtmlOverflow = null;
 		      };
+
+			      const isScrollableY = (el) => {
+			        if (!el || typeof el !== "object") return false;
+			        const hasRoom = el.scrollHeight > el.clientHeight + 1;
+			        if (!hasRoom) return false;
+			        if (el === document.documentElement || el === document.body) return true;
+			        if (!window.getComputedStyle) return true;
+			        const style = window.getComputedStyle(el);
+			        const overflowY = (style?.overflowY || "").toLowerCase();
+			        return overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay";
+			      };
+
+			      const pickScrollTarget = () => {
+			        const docScroller = document.scrollingElement || document.documentElement;
+			        const start =
+			          typeof document.elementFromPoint === "function"
+			            ? document.elementFromPoint(lastDragX, lastDragY)
+			            : null;
+			        let node = start;
+			        while (node && node !== document.body && node !== document.documentElement) {
+			          if (isScrollableY(node)) return node;
+			          node = node.parentElement;
+			        }
+			        if (docScroller && isScrollableY(docScroller)) return docScroller;
+			        if (document.body && isScrollableY(document.body)) return document.body;
+			        return docScroller || document.body;
+			      };
 
 		      const stopDragAutoScroll = () => {
 		        dragScrollActive = false;
@@ -881,9 +936,22 @@
 			          }
 
 			          if (delta !== 0) {
-			            const scroller = document.scrollingElement || document.documentElement;
-			            if (scroller) scroller.scrollTop += delta;
-			            else window.scrollBy(0, delta);
+			            const scroller = pickScrollTarget();
+			            if (scroller) {
+			              const before = scroller.scrollTop;
+			              scroller.scrollTop += delta;
+			              // Fallback: some environments ignore scrollTop writes during drag on the main scroller.
+			              if (
+			                scroller.scrollTop === before &&
+			                (scroller === document.scrollingElement ||
+			                  scroller === document.documentElement ||
+			                  scroller === document.body)
+			              ) {
+			                window.scrollBy(0, delta);
+			              }
+			            } else {
+			              window.scrollBy(0, delta);
+			            }
 			          }
 			        }, 16);
 			      };
@@ -901,6 +969,26 @@
 			        if (isCoarsePointer()) return;
 			        updatePointer(event);
 			      });
+
+			      // Some browsers suppress drag/dragover coordinates; pointer/mouse move is a useful fallback.
+			      document.addEventListener(
+			        "pointermove",
+			        (event) => {
+			          if (!dragState) return;
+			          if (isCoarsePointer()) return;
+			          updatePointer(event);
+			        },
+			        { passive: true }
+			      );
+			      document.addEventListener(
+			        "mousemove",
+			        (event) => {
+			          if (!dragState) return;
+			          if (isCoarsePointer()) return;
+			          updatePointer(event);
+			        },
+			        { passive: true }
+			      );
 
 		      document.addEventListener(
 			        "dragover",
