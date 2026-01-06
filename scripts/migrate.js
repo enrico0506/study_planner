@@ -27,12 +27,32 @@ async function main() {
       password_hash text not null,
       email_verified boolean not null default false,
       plan text not null default 'free',
+      stripe_customer_id text null,
+      stripe_subscription_id text null,
+      stripe_subscription_status text null,
+      stripe_current_period_end timestamptz null,
       created_at timestamptz not null default now()
     );
   `);
 
   await client.query(`alter table users add column if not exists email_verified boolean not null default false;`);
   await client.query(`alter table users add column if not exists plan text not null default 'free';`);
+  await client.query(`alter table users add column if not exists stripe_customer_id text;`);
+  await client.query(`alter table users add column if not exists stripe_subscription_id text;`);
+  await client.query(`alter table users add column if not exists stripe_subscription_status text;`);
+  await client.query(`alter table users add column if not exists stripe_current_period_end timestamptz;`);
+
+  await client.query(`
+    create unique index if not exists users_stripe_customer_id_key
+      on users(stripe_customer_id)
+      where stripe_customer_id is not null;
+  `);
+
+  await client.query(`
+    create index if not exists users_stripe_subscription_id_idx
+      on users(stripe_subscription_id)
+      where stripe_subscription_id is not null;
+  `);
 
   await client.query(`
     create table if not exists user_states (

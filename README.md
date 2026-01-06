@@ -47,7 +47,13 @@ Auth0 setup (optional):
 - Enable Google/Apple (and any other) connections in your Auth0 tenant.
 - Add `${APP_BASE_URL}/api/auth/auth0/callback` to **Allowed Callback URLs** for your Auth0 application.
 
-Premium testing (temporary, until payments are integrated):
+Stripe billing (Premium subscriptions):
+- Set `STRIPE_SECRET_KEY` and `STRIPE_PRICE_ID` (a recurring Price).
+- Add a Stripe webhook endpoint: `${APP_BASE_URL}/api/billing/webhook`
+  - Enable events: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
+  - Set `STRIPE_WEBHOOK_SECRET` to the webhook signing secret.
+
+Premium testing / manual override (optional):
 - Set `ADMIN_API_TOKEN` and call `POST /api/admin/set-plan` (example in `.env.example`)
 
 2) Run the DB migration:

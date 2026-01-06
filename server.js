@@ -10,6 +10,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
 import nodemailer from "nodemailer";
+import Stripe from "stripe";
 
 const app = express();
 const port = process.env.PORT || 10000;
@@ -19,7 +20,17 @@ const __dirname = path.dirname(__filename);
 
 app.set("trust proxy", 1);
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(express.json({ limit: "2mb" }));
+app.use(
+  express.json({
+    limit: "2mb",
+    verify: (req, _res, buf) => {
+      const url = typeof req.originalUrl === "string" ? req.originalUrl : "";
+      if (url.startsWith("/api/billing/webhook")) {
+        req.rawBody = buf;
+      }
+    }
+  })
+);
 app.use(cookieParser());
 
 const AUTH_SESSION_DAYS = (() => {
@@ -897,6 +908,355 @@ app.post("/api/admin/set-plan", strictAuthLimiter, requireAdminToken, async (req
     if (dbMessage) return res.status(500).json({ error: dbMessage });
     console.error(err);
     res.status(500).json({ error: "Failed to update plan" });
+  }
+});
+
+function getStripeSecretKey() {
+  const raw = process.env.STRIPE_SECRET_KEY;
+  if (!raw) return null;
+  const value = String(raw).trim();
+  return value ? value : null;
+}
+
+function getStripePriceId() {
+  const raw = process.env.STRIPE_PRICE_ID;
+  if (!raw) return null;
+  const value = String(raw).trim();
+  return value ? value : null;
+}
+
+function getStripeWebhookSecret() {
+  const raw = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!raw) return null;
+  const value = String(raw).trim();
+  return value ? value : null;
+}
+
+let stripeClient = null;
+function getStripeClient() {
+  const secretKey = getStripeSecretKey();
+  if (!secretKey) return null;
+  if (!stripeClient) stripeClient = new Stripe(secretKey);
+  return stripeClient;
+}
+
+function parseNumericId(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+  if (!/^\d+$/.test(raw)) return null;
+  return raw;
+}
+
+function isStripePremiumStatus(status) {
+  const value = String(status || "").trim().toLowerCase();
+  return value === "active" || value === "trialing" || value === "past_due";
+}
+
+function toStripePeriodEndDate(periodEndSeconds) {
+  const seconds = Number(periodEndSeconds);
+  if (!Number.isFinite(seconds) || seconds <= 0) return null;
+  return new Date(Math.trunc(seconds) * 1000);
+}
+
+async function ensureStripeCustomerId(pool, stripe, { userId, email, existingCustomerId }) {
+  if (existingCustomerId) return existingCustomerId;
+
+  const customer = await stripe.customers.create({
+    email,
+    metadata: { user_id: String(userId) }
+  });
+
+  const updated = await pool.query(
+    "update users set stripe_customer_id = $1 where id = $2 and stripe_customer_id is null returning stripe_customer_id",
+    [customer.id, userId]
+  );
+  const stored = updated.rows[0]?.stripe_customer_id;
+  if (stored) return stored;
+
+  try {
+    await stripe.customers.del(customer.id);
+  } catch {}
+
+  const refetched = await pool.query("select stripe_customer_id from users where id = $1", [userId]);
+  return refetched.rows[0]?.stripe_customer_id || customer.id;
+}
+
+async function applyStripeSubscriptionToUser(pool, { userId, customerId, subscriptionId, status, currentPeriodEnd }) {
+  const plan = isStripePremiumStatus(status) ? "premium" : "free";
+  const periodEnd = toStripePeriodEndDate(currentPeriodEnd);
+
+  if (customerId) {
+    const updatedByCustomer = await pool.query(
+      `
+        update users
+           set plan = $1,
+               stripe_subscription_id = $2,
+               stripe_subscription_status = $3,
+               stripe_current_period_end = $4
+         where stripe_customer_id = $5
+         returning id
+      `,
+      [plan, subscriptionId || null, status || null, periodEnd, customerId]
+    );
+    if (updatedByCustomer.rows[0]?.id) return String(updatedByCustomer.rows[0].id);
+  }
+
+  if (!userId) return null;
+  const updatedById = await pool.query(
+    `
+      update users
+         set plan = $1,
+             stripe_customer_id = coalesce(stripe_customer_id, $2),
+             stripe_subscription_id = $3,
+             stripe_subscription_status = $4,
+             stripe_current_period_end = $5
+       where id = $6
+       returning id
+    `,
+    [plan, customerId || null, subscriptionId || null, status || null, periodEnd, userId]
+  );
+  if (updatedById.rows[0]?.id) return String(updatedById.rows[0].id);
+  return null;
+}
+
+app.post("/api/billing/create-checkout-session", requireAuth, strictAuthLimiter, async (req, res) => {
+  const stripe = getStripeClient();
+  const priceId = getStripePriceId();
+  if (!stripe || !priceId) {
+    return res.status(503).json({ error: "Billing is not configured" });
+  }
+
+  try {
+    const pool = getPool();
+    const found = await pool.query("select email, stripe_customer_id from users where id = $1", [req.user.id]);
+    const row = found.rows[0];
+    if (!row) return res.status(401).json({ error: "Unauthorized" });
+
+    const customerId = await ensureStripeCustomerId(pool, stripe, {
+      userId: req.user.id,
+      email: row.email,
+      existingCustomerId: row.stripe_customer_id
+    });
+
+    const baseUrl = getAppBaseUrl(req);
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: customerId,
+      client_reference_id: String(req.user.id),
+      line_items: [{ price: priceId, quantity: 1 }],
+      allow_promotion_codes: true,
+      subscription_data: {
+        metadata: { user_id: String(req.user.id) }
+      },
+      success_url: `${baseUrl}/account.html?billing=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/account.html?billing=cancel`
+    });
+
+    if (!session.url) return res.status(500).json({ error: "Failed to create checkout session" });
+    res.json({ url: session.url });
+  } catch (err) {
+    const message = String(err?.message || "");
+    if (message.startsWith("Missing required env var:")) {
+      return res.status(500).json({ error: message });
+    }
+    const dbMessage = formatDbError(err);
+    if (dbMessage) return res.status(500).json({ error: dbMessage });
+    console.error(err);
+    res.status(500).json({ error: "Failed to start checkout" });
+  }
+});
+
+app.post("/api/billing/create-portal-session", requireAuth, strictAuthLimiter, async (req, res) => {
+  const stripe = getStripeClient();
+  if (!stripe) return res.status(503).json({ error: "Billing is not configured" });
+
+  try {
+    const pool = getPool();
+    const found = await pool.query("select stripe_customer_id from users where id = $1", [req.user.id]);
+    const row = found.rows[0];
+    if (!row) return res.status(401).json({ error: "Unauthorized" });
+    const customerId = row.stripe_customer_id;
+    if (!customerId) return res.status(400).json({ error: "No billing customer for this account" });
+
+    const baseUrl = getAppBaseUrl(req);
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: `${baseUrl}/account.html`
+    });
+
+    res.json({ url: session.url });
+  } catch (err) {
+    const dbMessage = formatDbError(err);
+    if (dbMessage) return res.status(500).json({ error: dbMessage });
+    console.error(err);
+    res.status(500).json({ error: "Failed to open billing portal" });
+  }
+});
+
+app.post("/api/billing/confirm-checkout", requireAuth, strictAuthLimiter, async (req, res) => {
+  const stripe = getStripeClient();
+  if (!stripe) return res.status(503).json({ error: "Billing is not configured" });
+
+  const sessionId = String(req.body?.sessionId || "").trim();
+  if (!sessionId) return res.status(400).json({ error: "sessionId required" });
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ["subscription", "customer"]
+    });
+
+    const expectedUserId = String(req.user.id);
+    if (String(session.client_reference_id || "") !== expectedUserId) {
+      return res.status(403).json({ error: "Session does not belong to this user" });
+    }
+
+    const customerId =
+      typeof session.customer === "string" ? session.customer : session.customer && typeof session.customer === "object"
+        ? session.customer.id
+        : null;
+    const subscriptionId =
+      typeof session.subscription === "string"
+        ? session.subscription
+        : session.subscription && typeof session.subscription === "object"
+        ? session.subscription.id
+        : null;
+
+    if (!customerId || !subscriptionId) {
+      return res.status(400).json({ error: "Checkout session is missing subscription details" });
+    }
+
+    const subscription =
+      typeof session.subscription === "string"
+        ? await stripe.subscriptions.retrieve(session.subscription)
+        : session.subscription;
+
+    const pool = getPool();
+    await applyStripeSubscriptionToUser(pool, {
+      userId: expectedUserId,
+      customerId,
+      subscriptionId,
+      status: subscription?.status,
+      currentPeriodEnd: subscription?.current_period_end
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to confirm checkout" });
+  }
+});
+
+app.post("/api/billing/webhook", async (req, res) => {
+  const stripe = getStripeClient();
+  const webhookSecret = getStripeWebhookSecret();
+  if (!stripe || !webhookSecret) return res.status(404).send("Not found");
+
+  const signature = req.headers["stripe-signature"];
+  if (!signature || typeof signature !== "string") return res.status(400).send("Missing stripe-signature");
+
+  const rawBody = req.rawBody;
+  if (!rawBody) return res.status(400).send("Missing raw body");
+
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+  } catch (err) {
+    console.error("Stripe webhook signature verification failed:", String(err?.message || err));
+    return res.status(400).send("Invalid signature");
+  }
+
+  try {
+    const pool = getPool();
+
+    if (event.type === "checkout.session.completed") {
+      const session = event.data?.object;
+      const customerId =
+        typeof session?.customer === "string"
+          ? session.customer
+          : session?.customer && typeof session.customer === "object"
+          ? session.customer.id
+          : null;
+      const subscriptionId =
+        typeof session?.subscription === "string"
+          ? session.subscription
+          : session?.subscription && typeof session.subscription === "object"
+          ? session.subscription.id
+          : null;
+      const userId = parseNumericId(session?.client_reference_id);
+
+      if (customerId && subscriptionId) {
+        const subscription =
+          typeof session.subscription === "string"
+            ? await stripe.subscriptions.retrieve(session.subscription)
+            : session.subscription;
+        await applyStripeSubscriptionToUser(pool, {
+          userId,
+          customerId,
+          subscriptionId,
+          status: subscription?.status,
+          currentPeriodEnd: subscription?.current_period_end
+        });
+      } else {
+        console.warn("Stripe webhook checkout.session.completed missing customer/subscription");
+      }
+
+      return res.json({ received: true });
+    }
+
+    if (
+      event.type === "customer.subscription.created" ||
+      event.type === "customer.subscription.updated" ||
+      event.type === "customer.subscription.deleted"
+    ) {
+      const subscription = event.data?.object;
+      const customerId =
+        typeof subscription?.customer === "string"
+          ? subscription.customer
+          : subscription?.customer && typeof subscription.customer === "object"
+          ? subscription.customer.id
+          : null;
+      const userId = parseNumericId(subscription?.metadata?.user_id);
+
+      if (!customerId) {
+        console.warn("Stripe subscription webhook missing customer");
+        return res.json({ received: true });
+      }
+
+      const applied = await applyStripeSubscriptionToUser(pool, {
+        userId,
+        customerId,
+        subscriptionId: subscription?.id,
+        status: subscription?.status,
+        currentPeriodEnd: subscription?.current_period_end
+      });
+
+      if (!applied) {
+        try {
+          const customer = await stripe.customers.retrieve(customerId);
+          const fallbackUserId = parseNumericId(customer?.metadata?.user_id);
+          if (fallbackUserId) {
+            await applyStripeSubscriptionToUser(pool, {
+              userId: fallbackUserId,
+              customerId,
+              subscriptionId: subscription?.id,
+              status: subscription?.status,
+              currentPeriodEnd: subscription?.current_period_end
+            });
+          } else {
+            console.warn("Stripe webhook could not map customer to a user", customerId);
+          }
+        } catch (err) {
+          console.warn("Stripe webhook customer lookup failed:", String(err?.message || err));
+        }
+      }
+
+      return res.json({ received: true });
+    }
+
+    return res.json({ received: true });
+  } catch (err) {
+    console.error("Stripe webhook handler failed:", err);
+    res.status(500).send("Webhook handler failed");
   }
 });
 

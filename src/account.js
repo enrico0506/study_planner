@@ -353,11 +353,13 @@
       upgradeBtn.disabled = premium;
       upgradeBtn.textContent = premium ? "Premium active" : "Upgrade to Premium";
     }
-    if (manageBtn) manageBtn.hidden = true;
+    if (manageBtn) manageBtn.hidden = !premium;
     if (msgEl) {
       msgEl.textContent = premium
-        ? "Cloud sync and backups are unlocked."
-        : "Upgrade to Premium to unlock cloud sync and backups (payment coming soon).";
+        ? me.emailVerified
+          ? "Cloud sync and backups are unlocked."
+          : "Premium is active. Verify your email to enable sync/backups."
+        : "Upgrade to Premium to unlock cloud sync and backups.";
     }
   }
 
@@ -643,6 +645,8 @@
     const params = new URLSearchParams(window.location.search || "");
     const verifyParam = params.get("verify");
     const auth0Param = params.get("auth0");
+    const billingParam = params.get("billing");
+    const checkoutSessionId = params.get("session_id");
     let shouldClearParams = false;
     if (verifyParam === "ok") {
       $("verifyMsg").textContent = "Email verified.";
@@ -675,6 +679,37 @@
     }
 
     const me = await getMe();
+    if (billingParam === "cancel") {
+      showToast("info", "Checkout canceled.");
+      shouldClearParams = true;
+    }
+    if (billingParam === "success") {
+      if (!me) {
+        showToast("warn", "Payment complete, but you are signed out. Please login again.");
+        shouldClearParams = true;
+      } else if (checkoutSessionId) {
+        showToast("info", "Payment complete. Activating Premium…");
+        try {
+          await apiFetch("/api/billing/confirm-checkout", {
+            method: "POST",
+            body: JSON.stringify({ sessionId: checkoutSessionId })
+          });
+          showToast("success", "Premium activated.");
+          window.location.href = "./account.html";
+          return;
+        } catch (err) {
+          const msg = String(err?.message || "Activation pending");
+          $("accountPlanMsg").textContent =
+            "Payment received. Premium may take a moment to activate. If it doesn't update soon, contact support.";
+          showToast("warn", msg);
+          shouldClearParams = true;
+        }
+      }
+    }
+
+    if (shouldClearParams) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
     isAuthed = !!me;
     isPremium = isPremiumUser(me);
     try {
@@ -795,7 +830,7 @@
     }
 
     const upgradeBtn = $("accountUpgradeBtn");
-    upgradeBtn?.addEventListener("click", () => {
+    upgradeBtn?.addEventListener("click", async () => {
       const msgEl = $("accountPlanMsg");
       if (!isAuthed) {
         const msg = "Please login first.";
@@ -809,10 +844,50 @@
         showToast("success", msg);
         return;
       }
-      const msg =
-        "Upgrade is not available yet (payments coming soon). If you already purchased Premium, contact support.";
-      if (msgEl) msgEl.textContent = msg;
-      showToast("info", "Payments coming soon.");
+
+      setButtonLoading(upgradeBtn, true, "Redirecting…");
+      try {
+        const result = await apiFetch("/api/billing/create-checkout-session", {
+          method: "POST",
+          body: JSON.stringify({})
+        });
+        const url = result?.url;
+        if (!url) throw new Error("Failed to start checkout");
+        window.location.href = url;
+      } catch (err) {
+        const msg = String(err?.message || "Failed to start checkout");
+        if (msgEl) msgEl.textContent = msg;
+        showToast("error", msg);
+      } finally {
+        setButtonLoading(upgradeBtn, false);
+      }
+    });
+
+    const manageBtn = $("accountManagePlanBtn");
+    manageBtn?.addEventListener("click", async () => {
+      const msgEl = $("accountPlanMsg");
+      if (!isAuthed) {
+        const msg = "Please login first.";
+        if (msgEl) msgEl.textContent = msg;
+        showToast("info", msg);
+        return;
+      }
+      setButtonLoading(manageBtn, true, "Opening…");
+      try {
+        const result = await apiFetch("/api/billing/create-portal-session", {
+          method: "POST",
+          body: JSON.stringify({})
+        });
+        const url = result?.url;
+        if (!url) throw new Error("Failed to open billing portal");
+        window.location.href = url;
+      } catch (err) {
+        const msg = String(err?.message || "Failed to open billing portal");
+        if (msgEl) msgEl.textContent = msg;
+        showToast("error", msg);
+      } finally {
+        setButtonLoading(manageBtn, false);
+      }
     });
 
     const filterInput = $("versionsFilter");
