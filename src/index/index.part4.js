@@ -789,23 +789,26 @@
 		    // While dragging a file row from the Subjects table, auto-scroll the page when the cursor
 		    // approaches the viewport edge so you can reach drop targets (e.g. Today's focus) without
 		    // needing to release the drag.
-		    if (!document.documentElement.dataset.spDragAutoScrollBound) {
-		      document.documentElement.dataset.spDragAutoScrollBound = "1";
+			    if (!document.documentElement.dataset.spDragAutoScrollBound) {
+			      document.documentElement.dataset.spDragAutoScrollBound = "1";
 
-		      const EDGE_PX = 96;
-		      const MAX_SPEED_PX = 30;
-		      let lastDragX = 0;
-		      let lastDragY = 0;
-		      let dragScrollActive = false;
-		      let dragScrollTimer = 0;
-		      let prevBodyOverflow = null;
+			      const EDGE_PX = 140;
+			      const MAX_SPEED_PX = 38;
+			      let lastDragX = 0;
+			      let lastDragY = 0;
+			      let dragScrollActive = false;
+			      let dragScrollTimer = 0;
+			      let prevBodyOverflow = null;
 
-		      const updatePointer = (event) => {
-		        const x = Number(event?.clientX);
-		        const y = Number(event?.clientY);
-		        if (Number.isFinite(x)) lastDragX = x;
-		        if (Number.isFinite(y)) lastDragY = y;
-		      };
+			      const isCoarsePointer = () =>
+			        !!(window.matchMedia && window.matchMedia("(hover: none) and (pointer: coarse)").matches);
+
+			      const updatePointer = (event) => {
+			        const x = Number(event?.clientX);
+			        const y = Number(event?.clientY);
+			        if (Number.isFinite(x)) lastDragX = x;
+			        if (Number.isFinite(y)) lastDragY = y;
+			      };
 
 		      const ensurePageScrollable = () => {
 		        if (prevBodyOverflow !== null) return;
@@ -839,15 +842,21 @@
 			          const viewW = window.innerWidth || 0;
 			          if (viewH <= 0 || viewW <= 0) return;
 
-			          let topEdge = 0;
-			          let bottomEdge = viewH;
-			          if (tableWrapper && tableWrapper.getBoundingClientRect) {
-			            const rect = tableWrapper.getBoundingClientRect();
-			            if (
-			              rect &&
-			              rect.width > 0 &&
-			              rect.height > 0 &&
-			              lastDragX >= rect.left &&
+				          let topEdge = 0;
+				          let bottomEdge = viewH;
+				          const subjectsWrapper =
+				            (typeof subjectTable !== "undefined" &&
+				            subjectTable &&
+				            typeof subjectTable.closest === "function"
+				              ? subjectTable.closest(".table-wrapper")
+				              : null) || tableWrapper;
+				          if (subjectsWrapper && subjectsWrapper.getBoundingClientRect) {
+				            const rect = subjectsWrapper.getBoundingClientRect();
+				            if (
+				              rect &&
+				              rect.width > 0 &&
+				              rect.height > 0 &&
+				              lastDragX >= rect.left &&
 			              lastDragX <= rect.right &&
 			              lastDragY >= rect.top &&
 			              lastDragY <= rect.bottom
@@ -879,29 +888,29 @@
 			        }, 16);
 			      };
 
-		      document.addEventListener("dragstart", (event) => {
-		        if (!dragState) return;
-		        if (typeof isPhoneLayout === "function" && isPhoneLayout()) return;
-		        updatePointer(event);
-		        dragScrollActive = true;
-		        startDragAutoScroll();
-		      });
+			      document.addEventListener("dragstart", (event) => {
+			        if (!dragState) return;
+			        if (isCoarsePointer()) return;
+			        updatePointer(event);
+			        dragScrollActive = true;
+			        startDragAutoScroll();
+			      });
 
-		      document.addEventListener("drag", (event) => {
-		        if (!dragState) return;
-		        if (typeof isPhoneLayout === "function" && isPhoneLayout()) return;
-		        updatePointer(event);
-		      });
+			      document.addEventListener("drag", (event) => {
+			        if (!dragState) return;
+			        if (isCoarsePointer()) return;
+			        updatePointer(event);
+			      });
 
 		      document.addEventListener(
-		        "dragover",
-		        (event) => {
-		        if (!dragState) return;
-		        if (typeof isPhoneLayout === "function" && isPhoneLayout()) return;
-		        updatePointer(event);
-		        dragScrollActive = true;
-		        startDragAutoScroll();
-		        // Keep the drag session "active" even over non-droppable areas so we keep
+			        "dragover",
+			        (event) => {
+			        if (!dragState) return;
+			        if (isCoarsePointer()) return;
+			        updatePointer(event);
+			        dragScrollActive = true;
+			        startDragAutoScroll();
+			        // Keep the drag session "active" even over non-droppable areas so we keep
 		        // receiving coordinates near the viewport edges.
 		        event.preventDefault();
 		      },
