@@ -99,6 +99,7 @@ body::-webkit-scrollbar,
 	      --study-bar-bg: #e8ecf7;
 	      --study-bar-radius: 999px;
 	      --header-size: clamp(200px, 27dvh, 360px);
+	      --focus-timer-size: 170px;
 	      font-family: "Manrope", "Space Grotesk", sans-serif;
 	      background: var(--page-bg);
 	      color: var(--ink);
@@ -285,6 +286,72 @@ html.ads-disabled ins.adsbygoogle {
 .plannerHeader > .top-row {
   flex: 1 1 auto;
   min-height: 0;
+}
+
+.plannerHeader {
+  max-height: none;
+}
+
+@media (min-width: 961px) {
+  /* Keep the header row from growing taller than the intended viewport percentage. */
+  .plannerHeader {
+    height: var(--header-size);
+    max-height: var(--header-size);
+  }
+
+  .plannerHeader > .top-row {
+    height: 100%;
+  }
+
+  .plannerHeader .summary-card,
+  .plannerHeader .focus-card {
+    height: 100%;
+  }
+
+  /* Use extra horizontal space to reduce vertical stacking (prevents scrollbars). */
+  .plannerHeader .summary-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "top top"
+      "progress progress"
+      "goal study";
+    grid-template-rows: auto auto 1fr;
+    gap: 8px;
+    align-content: start;
+    justify-content: initial;
+    padding: 8px 12px 10px;
+  }
+
+  .plannerHeader .summary-card > .summary-top {
+    grid-area: top;
+    margin-bottom: 0;
+  }
+
+  .plannerHeader .summary-card > .summary-progress {
+    grid-area: progress;
+    margin-top: 0;
+  }
+
+  .plannerHeader .summary-card > .summary-goal {
+    grid-area: goal;
+    margin-top: 0;
+  }
+
+  .plannerHeader .summary-card > .summary-study {
+    grid-area: study;
+    margin-top: 0;
+    align-self: end;
+  }
+
+  .plannerHeader .focus-card {
+    padding: 8px 12px 10px;
+  }
+
+  /* Slightly scale the timer box with viewport height to avoid forcing the row taller. */
+  :root {
+    --focus-timer-size: clamp(140px, 16dvh, 170px);
+  }
 }
 
 .plannerLower {
@@ -1627,8 +1694,8 @@ body.session-header-mounted #focusCard {
     }
 
 .focus-timer-box {
-  width: 170px;
-  height: 170px;
+  width: var(--focus-timer-size, 170px);
+  height: var(--focus-timer-size, 170px);
   border-radius: 16px;
       border: 1px solid var(--border-strong);
       background: radial-gradient(circle at 25% 20%, color-mix(in srgb, var(--accent-soft) 45%, var(--surface-strong)), var(--surface-strong));
