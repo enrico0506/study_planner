@@ -826,33 +826,58 @@
 		        restorePageScrollable();
 		      };
 
-		      const startDragAutoScroll = () => {
-		        if (dragScrollTimer) return;
-		        ensurePageScrollable();
-		        dragScrollTimer = setInterval(() => {
-		          if (!dragScrollActive || !dragState) {
-		            stopDragAutoScroll();
-		            return;
-		          }
+			      const startDragAutoScroll = () => {
+			        if (dragScrollTimer) return;
+			        ensurePageScrollable();
+			        dragScrollTimer = setInterval(() => {
+			          if (!dragScrollActive || !dragState) {
+			            stopDragAutoScroll();
+			            return;
+			          }
 
-		          const viewH = window.innerHeight || 0;
-		          if (viewH <= 0) return;
+			          const viewH = window.innerHeight || 0;
+			          const viewW = window.innerWidth || 0;
+			          if (viewH <= 0 || viewW <= 0) return;
 
-		          let delta = 0;
-		          if (lastDragY <= EDGE_PX) {
-		            const t = Math.max(0, Math.min(1, (EDGE_PX - lastDragY) / EDGE_PX));
-		            delta = -Math.max(1, Math.ceil(MAX_SPEED_PX * t));
-		          } else if (viewH - lastDragY <= EDGE_PX) {
-		            const t = Math.max(0, Math.min(1, (EDGE_PX - (viewH - lastDragY)) / EDGE_PX));
-		            delta = Math.max(1, Math.ceil(MAX_SPEED_PX * t));
-		          }
+			          let topEdge = 0;
+			          let bottomEdge = viewH;
+			          if (tableWrapper && tableWrapper.getBoundingClientRect) {
+			            const rect = tableWrapper.getBoundingClientRect();
+			            if (
+			              rect &&
+			              rect.width > 0 &&
+			              rect.height > 0 &&
+			              lastDragX >= rect.left &&
+			              lastDragX <= rect.right &&
+			              lastDragY >= rect.top &&
+			              lastDragY <= rect.bottom
+			            ) {
+			              // When dragging within the Subjects table, use its visible bounds as the "scroll edge"
+			              // so you can keep the cursor inside the table while scrolling the page.
+			              topEdge = Math.max(0, rect.top);
+			              bottomEdge = Math.min(viewH, rect.bottom);
+			            }
+			          }
 
-		          if (delta !== 0) {
-		            // Always scroll the page (not inner containers).
-		            window.scrollBy(0, delta);
-		          }
-		        }, 16);
-		      };
+			          let delta = 0;
+			          if (lastDragY <= topEdge + EDGE_PX) {
+			            const t = Math.max(0, Math.min(1, (topEdge + EDGE_PX - lastDragY) / EDGE_PX));
+			            delta = -Math.max(1, Math.ceil(MAX_SPEED_PX * t));
+			          } else if (lastDragY >= bottomEdge - EDGE_PX) {
+			            const t = Math.max(
+			              0,
+			              Math.min(1, (lastDragY - (bottomEdge - EDGE_PX)) / EDGE_PX)
+			            );
+			            delta = Math.max(1, Math.ceil(MAX_SPEED_PX * t));
+			          }
+
+			          if (delta !== 0) {
+			            const scroller = document.scrollingElement || document.documentElement;
+			            if (scroller) scroller.scrollTop += delta;
+			            else window.scrollBy(0, delta);
+			          }
+			        }, 16);
+			      };
 
 		      document.addEventListener("dragstart", (event) => {
 		        if (!dragState) return;
