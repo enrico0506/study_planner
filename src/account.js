@@ -37,6 +37,14 @@
   let isAuthed = false;
   let isPremium = false;
 
+  function prefersReducedMotion() {
+    return !!(
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)") &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    );
+  }
+
   function setButtonLabel(btn, label) {
     if (!btn) return;
     const node = btn.querySelector(".btn-label");
@@ -279,7 +287,7 @@
     if (!section) return;
     const details = section.querySelector("details");
     if (details) details.open = true;
-    section.scrollIntoView({ behavior: "smooth", block: "start" });
+    section.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
     if (focusInput) {
       setTimeout(() => {
         const input = $("verifyToken");
@@ -1221,6 +1229,89 @@
       event.preventDefault();
       $("resetPasswordBtn")?.click();
     });
+
+    setupSectionNav();
+  }
+
+  function setupSectionNav() {
+    const links = Array.from(document.querySelectorAll('.account-nav-link[href^="#"]'));
+    if (!links.length) return;
+
+    const getLinkTarget = (link) => {
+      const href = link.getAttribute("href") || "";
+      if (!href.startsWith("#")) return null;
+      try {
+        return decodeURIComponent(href.slice(1));
+      } catch {
+        return href.slice(1);
+      }
+    };
+
+    let activeId = null;
+    const setActive = (id) => {
+      if (!id || id === activeId) return;
+      activeId = id;
+      links.forEach((link) => {
+        const targetId = getLinkTarget(link);
+        const isActive = targetId === id;
+        link.classList.toggle("is-active", isActive);
+        if (isActive) link.setAttribute("aria-current", "location");
+        else link.removeAttribute("aria-current");
+      });
+    };
+
+    const getVisibleSections = () => {
+      const sections = [];
+      links.forEach((link) => {
+        const id = getLinkTarget(link);
+        if (!id) return;
+        const section = document.getElementById(id);
+        if (!section) return;
+        if (section.offsetParent === null) return;
+        sections.push(section);
+      });
+      sections.sort((a, b) => a.offsetTop - b.offsetTop);
+      return sections;
+    };
+
+    let rafId = 0;
+    const update = () => {
+      rafId = 0;
+      const sections = getVisibleSections();
+      if (!sections.length) return;
+      const y = (window.scrollY || 0) + 160;
+      let current = sections[0].id;
+      for (const section of sections) {
+        if (section.offsetTop <= y) current = section.id;
+        else break;
+      }
+      setActive(current);
+    };
+
+    const schedule = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(update);
+    };
+
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    document.addEventListener("visibilitychange", schedule);
+    links.forEach((link) =>
+      link.addEventListener("click", () => {
+        const id = getLinkTarget(link);
+        if (id) setActive(id);
+      })
+    );
+
+    try {
+      const observer = new MutationObserver(schedule);
+      observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ["data-account-state", "data-account-plan"]
+      });
+    } catch {}
+
+    schedule();
   }
 
   if (document.readyState === "loading") {
