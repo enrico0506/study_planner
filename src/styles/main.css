@@ -3407,11 +3407,17 @@ body.session-header-mounted #focusCard {
   cursor: not-allowed;
 }
 
-    .today-dropzone-active {
+.today-dropzone-active {
       border-color: #60a5fa;
       background: #e5ecff;
       color: #1d4ed8;
     }
+
+.today-sidebar.today-sidebar-drop-active .today-section {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, #60a5fa 55%, transparent),
+    0 14px 34px rgba(15, 23, 42, 0.08);
+}
 
 .today-list {
   margin-top: 10px;
@@ -3493,7 +3499,6 @@ body.session-header-mounted #focusCard {
       display: flex;
       flex-direction: column;
       min-height: 260px;
-      height: 100%;
       max-height: none;
       overflow: hidden;
       writing-mode: horizontal-tb;
@@ -3502,6 +3507,12 @@ body.session-header-mounted #focusCard {
       /* Keep shadows minimal in the tight grid to avoid “overlap” between rows. */
       box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
     }
+
+@media (hover: hover) and (pointer: fine) {
+  .today-list.today-list-grid .today-item:hover {
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
+  }
+}
 
     .today-list.today-list-grid .today-item-top {
       flex-shrink: 0;
@@ -3609,6 +3620,7 @@ body.session-header-mounted #focusCard {
   gap: 10px;
   padding: 12px;
   position: relative;
+  box-sizing: border-box;
   border-radius: 14px;
   border: 2px solid var(--border-strong);
   background: var(--surface-strong);

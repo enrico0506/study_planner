@@ -1605,30 +1605,32 @@
       renderScheduleView();
     });
 
-    if (todayDropZone) {
-      todayDropZone.addEventListener("dragenter", (event) => {
-        if (!dragState) return;
-        event.preventDefault();
-        todayDropZone.classList.add("today-dropzone-active");
-      });
-      todayDropZone.addEventListener("dragover", (event) => {
-        if (!dragState) return;
-        event.preventDefault();
-        todayDropZone.classList.add("today-dropzone-active");
-        if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
-      });
-      todayDropZone.addEventListener("dragleave", () => {
-        todayDropZone.classList.remove("today-dropzone-active");
-      });
-      todayDropZone.addEventListener("drop", (event) => {
-        event.preventDefault();
-        todayDropZone.classList.remove("today-dropzone-active");
+    // Allow dropping subject files anywhere inside the Today sidebar (not only the top dropzone).
+    if (todaySidebar && !todaySidebar.dataset.spTodayDropBound) {
+      todaySidebar.dataset.spTodayDropBound = "1";
+
+      let todayDragDepth = 0;
+
+      const isTodayDropCandidate = (event) => {
+        if (dragState) return true;
+        const types = event?.dataTransfer?.types;
+        if (!types) return false;
+        return Array.from(types).includes("application/json");
+      };
+
+      const setTodayDropActive = (active) => {
+        todayDropZone?.classList.toggle("today-dropzone-active", active);
+        todaySidebar?.classList.toggle("today-sidebar-drop-active", active);
+      };
+
+      const handleTodayDrop = (event) => {
         const focusKey = getFocusDayKey();
         if (isPastDayKey(focusKey)) {
           showNotice("Past focus is read-only.", "info");
           dragState = null;
           return;
         }
+
         let source = dragState;
         if (!source && event.dataTransfer) {
           const payload = event.dataTransfer.getData("application/json");
@@ -1641,6 +1643,7 @@
             }
           }
         }
+
         if (!source) return;
         if (isInFocusList(focusKey, source.subjectId, source.fileId)) {
           const dayLabel = describeDayKey(focusKey);
@@ -1651,14 +1654,66 @@
           dragState = null;
           return;
         }
+
         const { file } = resolveFileRef(source.subjectId, source.fileId);
         if (!file) {
           dragState = null;
           return;
         }
+
         openAddTodoModal(source.subjectId, file, focusKey);
         dragState = null;
-      });
+      };
+
+      todaySidebar.addEventListener(
+        "dragenter",
+        (event) => {
+          if (!isTodayDropCandidate(event)) return;
+          event.preventDefault();
+          todayDragDepth += 1;
+          setTodayDropActive(true);
+        },
+        { capture: true }
+      );
+      todaySidebar.addEventListener(
+        "dragover",
+        (event) => {
+          if (!isTodayDropCandidate(event)) return;
+          event.preventDefault();
+          setTodayDropActive(true);
+          if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+        },
+        { capture: true, passive: false }
+      );
+      todaySidebar.addEventListener(
+        "dragleave",
+        (event) => {
+          if (!isTodayDropCandidate(event)) return;
+          todayDragDepth = Math.max(0, todayDragDepth - 1);
+          if (todayDragDepth === 0) setTodayDropActive(false);
+        },
+        { capture: true }
+      );
+      todaySidebar.addEventListener(
+        "drop",
+        (event) => {
+          if (!isTodayDropCandidate(event)) return;
+          event.preventDefault();
+          todayDragDepth = 0;
+          setTodayDropActive(false);
+          handleTodayDrop(event);
+        },
+        { capture: true }
+      );
+
+      document.addEventListener(
+        "dragend",
+        () => {
+          todayDragDepth = 0;
+          setTodayDropActive(false);
+        },
+        { capture: true }
+      );
     }
 
     modalConfidenceRange.addEventListener("input", () => {
