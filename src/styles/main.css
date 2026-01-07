@@ -3856,46 +3856,6 @@ body.session-header-mounted #focusCard {
       flex: 0 0 auto;
     }
 
-.today-note-box {
-  background: #fef3c7;
-  border: 1px solid #fcd34d;
-  border-radius: 10px;
-  padding: 8px 10px;
-  margin-bottom: 8px;
-  color: #92400e;
-  display: grid;
-  gap: 6px;
-}
-
-.today-note-title {
-  font-weight: 700;
-  font-size: 0.85rem;
-}
-
-.today-note-body {
-  font-size: 0.85rem;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.today-note-list {
-  margin: 0;
-  padding-left: 18px;
-  display: grid;
-  gap: 4px;
-}
-
-.today-note-dismiss {
-  align-self: start;
-  border: none;
-  background: #fef08a;
-  color: #92400e;
-  border-radius: 8px;
-  padding: 6px 10px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
 .today-reorder-actions {
   display: inline-flex;
   gap: 6px;
@@ -4949,16 +4909,6 @@ body.session-header-mounted #focusCard {
       display: -webkit-box;
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 2;
-      overflow: hidden;
-    }
-
-    .file-notes {
-      font-size: 0.74rem;
-      color: #6b7280;
-      word-break: break-word;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 1;
       overflow: hidden;
     }
 
@@ -6849,7 +6799,6 @@ body.session-header-mounted #focusCard {
   color: var(--ink);
 }
 
-[data-theme] .file-notes,
 [data-theme] .file-time,
 [data-theme] .today-meta,
 [data-theme] .subtitle,

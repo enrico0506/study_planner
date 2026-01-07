@@ -498,21 +498,20 @@
       }
     }
 
-    function addCalendarEvent({ title, date, time = "", type = "deadline", priority = "normal", notes = "" } = {}) {
-      const cleanTitle = String(title || "").trim();
-      const cleanDate = String(date || "").trim();
-      if (!cleanTitle || !cleanDate) return false;
-      const evt = {
-        id: "evt_" + createId(),
-        title: cleanTitle,
-        date: cleanDate,
-        time: String(time || "").trim(),
-        type: String(type || "deadline"),
-        priority: String(priority || "normal"),
-        notes: String(notes || "").trim(),
-        done: false,
-        source: "schedule"
-      };
+	    function addCalendarEvent({ title, date, time = "", type = "deadline", priority = "normal" } = {}) {
+	      const cleanTitle = String(title || "").trim();
+	      const cleanDate = String(date || "").trim();
+	      if (!cleanTitle || !cleanDate) return false;
+	      const evt = {
+	        id: "evt_" + createId(),
+	        title: cleanTitle,
+	        date: cleanDate,
+	        time: String(time || "").trim(),
+	        type: String(type || "deadline"),
+	        priority: String(priority || "normal"),
+	        done: false,
+	        source: "schedule"
+	      };
       if (!Array.isArray(calendarEvents)) calendarEvents = [];
       calendarEvents.push(evt);
       saveCalendarEvents({ debounceMs: 0 });
@@ -2380,15 +2379,9 @@
         subtasks
       };
 
-      if (file.nextTimeNotePending) {
-        todo.handoffNote = file.nextTimeNotePending;
-        file.nextTimeNotePending = "";
-        saveToStorage();
-      }
-
-      todayTodos.unshift(todo);
-      saveTodayTodos();
-      renderTodayTodos();
+	      todayTodos.unshift(todo);
+	      saveTodayTodos();
+	      renderTodayTodos();
       return true;
     }
 
@@ -2445,17 +2438,16 @@
             .map((txt) => ({ id: createId(), label: txt, done: false }))
         : [];
 
-      const todo = {
-        id: createId(),
-        kind: "custom",
-        subjectId: null,
-        fileId: null,
-        label: cleanLabel,
-        subjectName: "",
-        done: false,
-        handoffNote: "",
-        subtasks
-      };
+	      const todo = {
+	        id: createId(),
+	        kind: "custom",
+	        subjectId: null,
+	        fileId: null,
+	        label: cleanLabel,
+	        subjectName: "",
+	        done: false,
+	        subtasks
+	      };
 
       if (cleanKey === getTodayKey()) {
         todayTodos.unshift(todo);

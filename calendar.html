@@ -40,15 +40,11 @@
   <link rel="stylesheet" href="./src/styles/phone-modals.css" />
   <link rel="stylesheet" href="./src/styles/a11y.css" />
   <link rel="stylesheet" href="./src/styles/enhancements.css" />
-  <link rel="stylesheet" href="./src/styles/calendar-extras.css" />
-  <link rel="stylesheet" href="./src/styles/weekly-schedule.css" />
-  <link rel="stylesheet" href="./src/styles/notes.css" />
-  <link rel="stylesheet" href="./src/styles/exam-mode.css" />
-  <link rel="stylesheet" href="./src/styles/insights.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-  <link rel="stylesheet" href="./src/styles/res-1024x768.css" />
+	  <link rel="stylesheet" href="./src/styles/calendar-extras.css" />
+	  <link rel="stylesheet" href="./src/styles/weekly-schedule.css" />
+	  <link rel="stylesheet" href="./src/styles/exam-mode.css" />
+	  <link rel="stylesheet" href="./src/styles/insights.css" />
+	  <link rel="stylesheet" href="./src/styles/res-1024x768.css" />
   <link rel="stylesheet" href="./src/styles/res-1200x800.css" />
   <link rel="stylesheet" href="./src/styles/res-1280x720.css" />
   <link rel="stylesheet" href="./src/styles/res-1365x800.css" />
@@ -298,12 +294,6 @@
           <option value="Asia/Kolkata"></option>
           <option value="Asia/Tokyo"></option>
         </datalist>
-        <div class="form-row">
-          <label>
-            Description
-            <textarea id="eventNotesInput" name="notes" rows="3" placeholder="Context, links, or next steps"></textarea>
-          </label>
-        </div>
         <div class="form-row ws-event-meta-row">
           <label class="ws-event-done-toggle">
             <input type="checkbox" id="eventDoneInput" />
@@ -397,7 +387,6 @@
         <div class="calendar-form-actions">
           <div class="calendar-form-status" id="assignmentFormStatus"></div>
           <div class="calendar-form-buttons">
-            <button class="btn btn-secondary" id="assignmentNotesBtn" type="button">Notes</button>
             <button class="btn btn-secondary" id="assignmentDuplicateBtn" type="button">Duplicate</button>
             <button class="btn btn-secondary" id="assignmentStudyBtn" type="button">Study</button>
             <button class="btn btn-secondary" id="assignmentDeleteBtn" type="button">Delete</button>
@@ -405,47 +394,6 @@
           </div>
         </div>
       </form>
-    </div>
-  </div>
-
-  <!-- Notes Modal -->
-  <div class="calendar-modal notes-modal" id="notesModal" aria-hidden="true">
-    <div class="calendar-modal-backdrop" id="notesModalBackdrop"></div>
-    <div class="calendar-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="notesModalTitle">
-      <div class="calendar-modal-head">
-        <div>
-          <div class="modal-label">Notes</div>
-          <div class="modal-title" id="notesModalTitle">Notes</div>
-          <div class="modal-subtitle" id="notesModalSubtitle">Markdown + KaTeX.</div>
-        </div>
-        <div class="modal-actions">
-          <button class="btn btn-secondary" id="closeNotesModalBtn" type="button">Close</button>
-        </div>
-      </div>
-      <div class="calendar-form">
-        <div class="notes-toolbar">
-          <div class="notes-toolbar-left">
-            <label class="sr-only" for="notesSearchInput">Search</label>
-            <input class="notes-search" id="notesSearchInput" type="search" placeholder="Find in note…" />
-            <button class="btn btn-secondary" id="notesSearchBtn" type="button">Find</button>
-          </div>
-          <div class="notes-toolbar-right">
-            <label class="sr-only" for="notesInsertSelect">Insert link</label>
-            <select id="notesInsertSelect"></select>
-            <button class="btn btn-secondary" id="notesInsertBtn" type="button">Insert link</button>
-          </div>
-        </div>
-        <div class="calendar-form-status" id="notesSaveHint" role="status" aria-live="polite"></div>
-        <div class="notes-layout">
-          <div class="notes-pane">
-            <label class="sr-only" for="notesEditor">Markdown editor</label>
-            <textarea class="notes-editor" id="notesEditor" rows="12" placeholder="# Notes&#10;&#10;- Use **bold** / *italic* / `code`&#10;- Math: $a^2 + b^2 = c^2$&#10;- Links: [Title](https://...)"></textarea>
-          </div>
-          <div class="notes-pane">
-            <div class="notes-preview" id="notesPreview" aria-label="Preview"></div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -559,7 +507,6 @@
 
   <script src="./src/storage.js" defer></script>
   <script src="./src/assignments.js" defer></script>
-  <script src="./src/notes.js" defer></script>
   <script src="./src/autoplan.js" defer></script>
   <script src="./src/time-budget.js" defer></script>
   <script src="./src/review-engine.js" defer></script>

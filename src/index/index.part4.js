@@ -28,17 +28,16 @@
         }, () => modalFileNameInput)
       : null;
 
-    function openFileModalAdd(subjectId) {
-      fileModalState = { mode: "add", subjectId };
-      fileModalTitle.textContent = "Add file";
-      fileModalSubtitle.textContent = "Add a new file to your study planner.";
-      modalDeleteBtn.hidden = true;
+	    function openFileModalAdd(subjectId) {
+	      fileModalState = { mode: "add", subjectId };
+	      fileModalTitle.textContent = "Add file";
+	      fileModalSubtitle.textContent = "Add a new file to your study planner.";
+	      modalDeleteBtn.hidden = true;
 
-      renderSubjectOptions(subjectId);
-      modalFileNameInput.value = "";
-      modalFileNotesInput.value = "";
-      modalConfidenceRange.value = "50";
-      modalConfidenceValue.textContent = "50%";
+	      renderSubjectOptions(subjectId);
+	      modalFileNameInput.value = "";
+	      modalConfidenceRange.value = "50";
+	      modalConfidenceValue.textContent = "50%";
 
       if (fileModalA11y) fileModalA11y.open();
       else {
@@ -47,17 +46,16 @@
       }
     }
 
-    function openFileModalEdit(subjectId, file) {
-      fileModalState = { mode: "edit", subjectId, fileId: file.id };
-      fileModalTitle.textContent = "Edit file";
-      fileModalSubtitle.textContent = "Update file information or move it to another subject.";
-      modalDeleteBtn.hidden = false;
+	    function openFileModalEdit(subjectId, file) {
+	      fileModalState = { mode: "edit", subjectId, fileId: file.id };
+	      fileModalTitle.textContent = "Edit file";
+	      fileModalSubtitle.textContent = "Update file information or move it to another subject.";
+	      modalDeleteBtn.hidden = false;
 
-      renderSubjectOptions(subjectId);
-      modalFileNameInput.value = file.name;
-      modalFileNotesInput.value = file.notes || "";
-      modalConfidenceRange.value = file.confidence;
-      modalConfidenceValue.textContent = file.confidence + "%";
+	      renderSubjectOptions(subjectId);
+	      modalFileNameInput.value = file.name;
+	      modalConfidenceRange.value = file.confidence;
+	      modalConfidenceValue.textContent = file.confidence + "%";
 
       if (fileModalA11y) fileModalA11y.open();
       else {
@@ -1535,20 +1533,12 @@
         () => subjectSettingsNameInput || subjectSettingsNameInput
       );
     }
-    subjectSettingsCloseBtn?.addEventListener("click", closeSubjectSettingsModal);
-    subjectSettingsCancelBtn?.addEventListener("click", closeSubjectSettingsModal);
-    subjectNotesBtn?.addEventListener("click", () => {
-      const Notes = window.StudyPlanner && window.StudyPlanner.Notes ? window.StudyPlanner.Notes : null;
-      if (!Notes) return;
-      if (!subjectSettingsState) return;
-      const subj = subjects.find((s) => s.id === subjectSettingsState.subjectId);
-      if (!subj) return;
-      Notes.open({ scope: "subject", scopeId: subj.id, label: `Notes · ${subj.name}` });
-    });
+	    subjectSettingsCloseBtn?.addEventListener("click", closeSubjectSettingsModal);
+	    subjectSettingsCancelBtn?.addEventListener("click", closeSubjectSettingsModal);
 
-    subjectSettingsCustomColor?.addEventListener("input", () => {
-      const v = String(subjectSettingsCustomColor.value || "").trim();
-      if (isHexColor(v)) {
+	    subjectSettingsCustomColor?.addEventListener("input", () => {
+	      const v = String(subjectSettingsCustomColor.value || "").trim();
+	      if (isHexColor(v)) {
         subjectSettingsTempColor = v;
         renderSubjectSettingsSwatches(v);
         updateSubjectSettingsPreview();
@@ -1740,33 +1730,15 @@
         event.preventDefault();
         modalSaveBtn?.click();
       });
-    };
-    clickFileSaveOnEnter(modalFileNameInput);
-    clickFileSaveOnEnter(modalFileNotesInput);
+	    };
+	    clickFileSaveOnEnter(modalFileNameInput);
 
-    openFileNotesBtn?.addEventListener("click", () => {
-      const Notes = window.StudyPlanner && window.StudyPlanner.Notes ? window.StudyPlanner.Notes : null;
-      if (!Notes) {
-        showNotice("Notes are unavailable (notes.js not loaded).", "warn");
-        return;
-      }
-      if (!fileModalState || fileModalState.mode !== "edit") {
-        showNotice("Save the file once before adding Markdown notes.", "warn");
-        return;
-      }
-      const subj = subjects.find((s) => s.id === fileModalState.subjectId);
-      const file = subj && Array.isArray(subj.files) ? subj.files.find((f) => f.id === fileModalState.fileId) : null;
-      if (!subj || !file) return;
-      Notes.open({ scope: "file", scopeId: `${subj.id}:${file.id}`, label: `Notes · ${file.name}` });
-    });
+	    modalSaveBtn.addEventListener("click", () => {
+	      if (!fileModalState) return;
 
-    modalSaveBtn.addEventListener("click", () => {
-      if (!fileModalState) return;
-
-      const fileName = modalFileNameInput.value.trim();
-      const notes = modalFileNotesInput.value.trim();
-      const conf = Number(modalConfidenceRange.value);
-      const selectedSubjectId = modalSubjectSelect.value;
+	      const fileName = modalFileNameInput.value.trim();
+	      const conf = Number(modalConfidenceRange.value);
+	      const selectedSubjectId = modalSubjectSelect.value;
 
       if (!subjects.length) {
         showNotice("Please create a subject first.", "warn");
@@ -1781,15 +1753,14 @@
       const targetSubject =
         subjects.find((s) => s.id === selectedSubjectId) || subjects[0];
 
-      if (fileModalState.mode === "add") {
-        const newFile = {
-          id: createId(),
-          name: fileName,
-          notes,
-          confidence: conf,
-          lastReviewed: null,
-          totalMs: 0,
-          sessions: 0,
+	      if (fileModalState.mode === "add") {
+	        const newFile = {
+	          id: createId(),
+	          name: fileName,
+	          confidence: conf,
+	          lastReviewed: null,
+	          totalMs: 0,
+	          sessions: 0,
           lastSessionMs: 0
         };
         targetSubject.files.push(newFile);
@@ -1810,14 +1781,13 @@
           closeFileModal();
           renderTable();
           return;
-        }
+	        }
 
-        if (originalSubject.id === targetSubject.id) {
-          file.name = fileName;
-          file.notes = notes;
-          file.confidence = conf;
-          updateManualOrder(originalSubject);
-          syncTodoForFile(
+	        if (originalSubject.id === targetSubject.id) {
+	          file.name = fileName;
+	          file.confidence = conf;
+	          updateManualOrder(originalSubject);
+	          syncTodoForFile(
             originalSubject.id,
             originalSubject.id,
             file.id,
@@ -1828,14 +1798,13 @@
             originalSubject.files = originalSubject.files.filter(
               (f) => f.id !== fileModalState.fileId
             );
-            updateManualOrder(originalSubject);
-            const movedFile = {
-              id: fileModalState.fileId,
-              name: fileName,
-              notes,
-              confidence: conf,
-              lastReviewed: file.lastReviewed || null,
-              totalMs: file.totalMs || 0,
+	            updateManualOrder(originalSubject);
+	            const movedFile = {
+	              id: fileModalState.fileId,
+	              name: fileName,
+	              confidence: conf,
+	              lastReviewed: file.lastReviewed || null,
+	              totalMs: file.totalMs || 0,
               sessions: file.sessions || 0,
               lastSessionMs: file.lastSessionMs || 0,
               dailyMsPacked: file.dailyMsPacked || packLegacyDayObject(file.dailyMs),

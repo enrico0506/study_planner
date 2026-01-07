@@ -342,51 +342,9 @@
         const textWrap = document.createElement("div");
         textWrap.className = "today-text";
 
-        if (todo.handoffNote) {
-          const noteBox = document.createElement("div");
-          noteBox.className = "today-note-box";
-          const noteTitle = document.createElement("div");
-          noteTitle.className = "today-note-title";
-          noteTitle.textContent = "Note from last time";
-          const noteBody = document.createElement("div");
-          noteBody.className = "today-note-body";
-          const parts = String(todo.handoffNote || "")
-            .split(/\r?\n+/)
-            .map((s) => s.trim())
-            .filter(Boolean);
-          if (parts.length > 1) {
-            const list = document.createElement("ul");
-            list.className = "today-note-list";
-            parts.forEach((line) => {
-              const li = document.createElement("li");
-              li.textContent = line;
-              list.appendChild(li);
-            });
-            noteBody.appendChild(list);
-          } else {
-            noteBody.textContent = todo.handoffNote;
-          }
-	          const noteDismiss = document.createElement("button");
-	          noteDismiss.type = "button";
-	          noteDismiss.className = "today-note-dismiss";
-	          noteDismiss.textContent = "Dismiss";
-	          noteDismiss.disabled = !allowEdit;
-	          noteDismiss.addEventListener("click", () => {
-	            if (!allowEdit) return;
-	            todo.handoffNote = "";
-	            saveDayList(focusKey, todos);
-	            renderTodayTodos();
-	            renderScheduleView();
-	          });
-          noteBox.appendChild(noteTitle);
-          noteBox.appendChild(noteBody);
-          noteBox.appendChild(noteDismiss);
-          item.appendChild(noteBox);
-        }
-
-	        const isThisActive = isActiveStudy(todo.subjectId, todo.fileId);
-	        const isPaused = isThisActive && activeStudy && activeStudy.paused;
-	        const isSlimExpanded = isSlimMode && !!slimExpandedTodoId && todo.id === slimExpandedTodoId;
+		        const isThisActive = isActiveStudy(todo.subjectId, todo.fileId);
+		        const isPaused = isThisActive && activeStudy && activeStudy.paused;
+		        const isSlimExpanded = isSlimMode && !!slimExpandedTodoId && todo.id === slimExpandedTodoId;
 
 	        const title = document.createElement("div");
 	        title.className = "today-title";
@@ -429,30 +387,9 @@
 	        const actions = document.createElement("div");
 	        actions.className = "today-actions";
 
-		          if (!isSlimMode) {
-		            const noteNextBtn = document.createElement("button");
-		            noteNextBtn.type = "button";
-		            noteNextBtn.className = "chip-btn chip-btn-ghost";
-		            noteNextBtn.textContent = "Note for next time";
-		            noteNextBtn.addEventListener("click", (e) => {
-		              e.stopPropagation();
-		              if (!file) return;
-	              openNoticePrompt("Note for next time", file.nextTimeNotePending || "", (val) => {
-	                const trimmed = String(val || "").trim();
-	                if (trimmed) {
-	                  file.nextTimeNotePending = trimmed;
-	                  saveToStorage();
-	                  showToast("Saved for next time.", "success");
-	                } else {
-	                  file.nextTimeNotePending = "";
-	                  saveToStorage();
-	                }
-	                renderTodayTodos();
-	              });
-	            });
-
-	            const reorderActions = document.createElement("div");
-	            reorderActions.className = "today-reorder-actions";
+			          if (!isSlimMode) {
+			            const reorderActions = document.createElement("div");
+			            reorderActions.className = "today-reorder-actions";
 
 		            const idx = todos.findIndex((t) => t && t.id === todo.id);
 		            const upBtn = document.createElement("button");
@@ -493,11 +430,10 @@
 		              }
 		            });
 
-	            reorderActions.appendChild(upBtn);
-	            reorderActions.appendChild(downBtn);
-		            actions.appendChild(reorderActions);
-		            if (isFileTodo && file) actions.appendChild(noteNextBtn);
-		          }
+		            reorderActions.appendChild(upBtn);
+		            reorderActions.appendChild(downBtn);
+			            actions.appendChild(reorderActions);
+			          }
 
 	        item.addEventListener("keydown", (event) => {
 	          if (isSlimMode && (event.key === "Enter" || event.key === " ")) {
@@ -1064,13 +1000,12 @@
 	      if (scheduleManualTodoTypeSelect) scheduleManualTodoTypeSelect.value = "custom_todo";
 	      if (scheduleManualTodoNameInput) scheduleManualTodoNameInput.value = "";
 	      if (scheduleManualTodoSubtaskInput) scheduleManualTodoSubtaskInput.value = "";
-	      if (scheduleManualTodoDeadlineTime) scheduleManualTodoDeadlineTime.value = "";
-	      if (scheduleManualTodoDeadlineType) scheduleManualTodoDeadlineType.value = "deadline";
-	      if (scheduleManualTodoDeadlinePriority) scheduleManualTodoDeadlinePriority.value = "normal";
-	      if (scheduleManualTodoDeadlineNotes) scheduleManualTodoDeadlineNotes.value = "";
+		      if (scheduleManualTodoDeadlineTime) scheduleManualTodoDeadlineTime.value = "";
+		      if (scheduleManualTodoDeadlineType) scheduleManualTodoDeadlineType.value = "deadline";
+		      if (scheduleManualTodoDeadlinePriority) scheduleManualTodoDeadlinePriority.value = "normal";
 
-	      renderScheduleManualTodoSubtasks();
-	      setScheduleManualTodoModalType("custom_todo");
+		      renderScheduleManualTodoSubtasks();
+		      setScheduleManualTodoModalType("custom_todo");
 	      scheduleManualTodoModalBackdrop.hidden = false;
 	      scheduleManualTodoModalBackdrop.style.display = "flex";
 	      scheduleManualTodoNameInput?.focus();
@@ -1096,14 +1031,13 @@
 	          scheduleManualTodoNameInput?.focus();
 	          return;
 	        }
-	        const ok = addCalendarEvent({
-	          title: label,
-	          date: dayKey,
-	          time: scheduleManualTodoDeadlineTime?.value || "",
-	          type: scheduleManualTodoDeadlineType?.value || "deadline",
-	          priority: scheduleManualTodoDeadlinePriority?.value || "normal",
-	          notes: scheduleManualTodoDeadlineNotes?.value || ""
-	        });
+		        const ok = addCalendarEvent({
+		          title: label,
+		          date: dayKey,
+		          time: scheduleManualTodoDeadlineTime?.value || "",
+		          type: scheduleManualTodoDeadlineType?.value || "deadline",
+		          priority: scheduleManualTodoDeadlinePriority?.value || "normal"
+		        });
 	        if (ok) {
 	          loadCalendarEvents();
 	          renderScheduleView();
@@ -1286,10 +1220,10 @@
 	          if (evt.done) chip.classList.add("schedule-chip-done");
 
 	          const label = document.createElement("div");
-	          label.className = "schedule-chip-label";
-	          const time = evt.time ? `${evt.time} · ` : "";
-	          label.textContent = time + (evt.title || "Deadline");
-	          label.title = evt.notes ? `${evt.title}\n\n${evt.notes}` : evt.title || "Deadline";
+		          label.className = "schedule-chip-label";
+		          const time = evt.time ? `${evt.time} · ` : "";
+		          label.textContent = time + (evt.title || "Deadline");
+		          label.title = evt.title || "Deadline";
 
 	          const del = document.createElement("button");
 	          del.type = "button";
@@ -1325,15 +1259,14 @@
 	          chip.appendChild(del);
 	          chip.appendChild(cb);
 
-	          chip.addEventListener("click", () => {
-	            const parts = [];
-	            parts.push(evt.type ? String(evt.type) : "deadline");
-	            if (evt.time) parts.push(String(evt.time));
-	            if (evt.priority) parts.push(String(evt.priority));
-	            const meta = parts.filter(Boolean).join(" · ");
-	            const msg = (meta ? meta + "\n\n" : "") + (evt.notes ? String(evt.notes) : "");
-	            showNotice(msg || "Calendar item.", "info");
-	          });
+		          chip.addEventListener("click", () => {
+		            const parts = [];
+		            parts.push(evt.type ? String(evt.type) : "deadline");
+		            if (evt.time) parts.push(String(evt.time));
+		            if (evt.priority) parts.push(String(evt.priority));
+		            const meta = parts.filter(Boolean).join(" · ");
+		            showNotice(meta || "Calendar item.", "info");
+		          });
 
 	          list.appendChild(chip);
 	        });
@@ -2602,16 +2535,9 @@
             nameDiv.textContent = file.name;
             row.appendChild(nameDiv);
 
-            if (file.notes) {
-              const notesDiv = document.createElement("div");
-              notesDiv.className = "file-notes";
-              notesDiv.textContent = file.notes;
-              row.appendChild(notesDiv);
-            }
-
-            const timeDiv = document.createElement("div");
-            timeDiv.className = "file-time";
-            timeDiv.textContent = file.lastReviewed
+	            const timeDiv = document.createElement("div");
+	            timeDiv.className = "file-time";
+	            timeDiv.textContent = file.lastReviewed
               ? "Revised " + formatTimeAgo(file.lastReviewed)
               : "Never revised";
             row.appendChild(timeDiv);

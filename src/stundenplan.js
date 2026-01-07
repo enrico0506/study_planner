@@ -1019,12 +1019,11 @@
     const nextStart = presetStart || lessonStartInput?.value || nearestHalfHour();
     const duration = clampDurationMin(lessonDefaults?.durationMin);
     const nextEnd = presetEnd || addMinutesToTime(nextStart, duration);
-    lessonStartInput && (lessonStartInput.value = nextStart);
-    lessonEndInput && (lessonEndInput.value = nextEnd);
-    lessonLocationInput && (lessonLocationInput.value = "");
-    lessonNotesInput && (lessonNotesInput.value = "");
-    lessonColorInput && (lessonColorInput.value = lessonDefaults?.customColor || "#4f8bff");
-    clearStatus();
+	    lessonStartInput && (lessonStartInput.value = nextStart);
+	    lessonEndInput && (lessonEndInput.value = nextEnd);
+	    lessonLocationInput && (lessonLocationInput.value = "");
+	    lessonColorInput && (lessonColorInput.value = lessonDefaults?.customColor || "#4f8bff");
+	    clearStatus();
     setDraftDurationMin(getDurationFromInputs() || lessonDefaults?.durationMin, { persist: false });
     applySubjectColorLock();
     renderColorPalette();
@@ -1044,11 +1043,10 @@
     lessonSubjectSelect &&
       (lessonSubjectSelect.value = lesson.subjectId ? lesson.subjectId : "");
     lessonDaySelect && (lessonDaySelect.value = String(lesson.day ?? 0));
-    lessonStartInput && (lessonStartInput.value = lesson.start || "");
-    lessonEndInput && (lessonEndInput.value = lesson.end || "");
-    lessonLocationInput && (lessonLocationInput.value = lesson.location || "");
-    lessonNotesInput && (lessonNotesInput.value = lesson.notes || "");
-    lessonColorInput && (lessonColorInput.value = lesson.color || lessonDefaults?.customColor || "#4f8bff");
+	    lessonStartInput && (lessonStartInput.value = lesson.start || "");
+	    lessonEndInput && (lessonEndInput.value = lesson.end || "");
+	    lessonLocationInput && (lessonLocationInput.value = lesson.location || "");
+	    lessonColorInput && (lessonColorInput.value = lesson.color || lessonDefaults?.customColor || "#4f8bff");
     clearStatus();
     setDraftDurationMin(getDurationFromInputs() || lessonDefaults?.durationMin, { persist: false });
     applySubjectColorLock();
@@ -1056,7 +1054,7 @@
     renderDayChips();
     setDayChipActive();
     updateLessonSummary();
-    if (lessonAdvanced) lessonAdvanced.open = !!(lesson.location || lesson.notes);
+	    if (lessonAdvanced) lessonAdvanced.open = !!lesson.location;
     validateLessonDraft({ silent: true });
     if (lessonModal) {
       lessonModal.classList.add("is-open");
@@ -1287,14 +1285,8 @@
     if (lesson.location) bits.push(lesson.location);
     meta.textContent = bits.join(" • ");
 
-    const notes = document.createElement("div");
-    notes.className = "timetable-slot-notes";
-    if (lesson.notes) {
-      notes.textContent = lesson.notes;
-    }
-
-    const actions = document.createElement("div");
-    actions.className = "timetable-slot-actions";
+	    const actions = document.createElement("div");
+	    actions.className = "timetable-slot-actions";
     const menuToggle = document.createElement("button");
     menuToggle.type = "button";
     menuToggle.className = "timetable-slot-menu-toggle";
@@ -1358,11 +1350,10 @@
     actions.appendChild(menuToggle);
     actions.appendChild(menu);
 
-    wrap.appendChild(title);
-    wrap.appendChild(timeLine);
-    if (meta.textContent) wrap.appendChild(meta);
-    if (notes.textContent) wrap.appendChild(notes);
-    wrap.appendChild(actions);
+	    wrap.appendChild(title);
+	    wrap.appendChild(timeLine);
+	    if (meta.textContent) wrap.appendChild(meta);
+	    wrap.appendChild(actions);
     if (mode === "timeline") {
       const handle = document.createElement("div");
       handle.className = "tt-resize-handle";
@@ -1672,11 +1663,10 @@
     const title = (lessonTitleInput?.value || "").trim();
     const subjectId = lessonSubjectSelect?.value || "";
     const day = Number(lessonDaySelect?.value ?? 0);
-    const start = lessonStartInput?.value || "";
-    const end = lessonEndInput?.value || "";
-    const location = (lessonLocationInput?.value || "").trim();
-    const notes = (lessonNotesInput?.value || "").trim();
-    const color = lessonColorInput?.value || "#4f8bff";
+	    const start = lessonStartInput?.value || "";
+	    const end = lessonEndInput?.value || "";
+	    const location = (lessonLocationInput?.value || "").trim();
+	    const color = lessonColorInput?.value || "#4f8bff";
 
     if (!title) {
       setStatus("Please enter a lesson title.", "error");
@@ -1694,18 +1684,17 @@
     const subjectName =
       (subjects.find((s) => s.id === subjectId)?.name || "") || undefined;
 
-    const newLesson = {
-      id: editingId || createId(),
-      title,
-      subjectId: subjectId || null,
-      subjectName,
-      day,
-      start,
-      end,
-      location,
-      notes,
-      color
-    };
+	    const newLesson = {
+	      id: editingId || createId(),
+	      title,
+	      subjectId: subjectId || null,
+	      subjectName,
+	      day,
+	      start,
+	      end,
+	      location,
+	      color
+	    };
 
     const working = getWorkingLessons();
     if (wouldOverlap(newLesson, newLesson.id)) {

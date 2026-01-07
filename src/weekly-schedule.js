@@ -59,18 +59,17 @@
     endInput: document.getElementById("eventEndTimeInput"),
     typeSelect: document.getElementById("eventTypeSelect"),
     prioritySelect: document.getElementById("eventPrioritySelect"),
-    categoryInput: document.getElementById("eventCategoryInput"),
-    colorInput: document.getElementById("eventColorInput"),
-    timezoneInput: document.getElementById("eventTimezoneInput"),
-    locationInput: document.getElementById("eventLocationInput"),
-    reminderSelect: document.getElementById("eventReminderSelect"),
-    recurrenceSelect: document.getElementById("eventRecurrenceSelect"),
-    notesInput: document.getElementById("eventNotesInput"),
-    doneInput: document.getElementById("eventDoneInput"),
-    deleteBtn: document.getElementById("eventDeleteBtn"),
-    status: document.getElementById("formStatus"),
-    cancelBtn: document.getElementById("cancelEditBtn"),
-  };
+	    categoryInput: document.getElementById("eventCategoryInput"),
+	    colorInput: document.getElementById("eventColorInput"),
+	    timezoneInput: document.getElementById("eventTimezoneInput"),
+	    locationInput: document.getElementById("eventLocationInput"),
+	    reminderSelect: document.getElementById("eventReminderSelect"),
+	    recurrenceSelect: document.getElementById("eventRecurrenceSelect"),
+	    doneInput: document.getElementById("eventDoneInput"),
+	    deleteBtn: document.getElementById("eventDeleteBtn"),
+	    status: document.getElementById("formStatus"),
+	    cancelBtn: document.getElementById("cancelEditBtn"),
+	  };
 
   const state = {
     view: "week",
@@ -446,7 +445,6 @@
 
     const typeVal = String(evt?.type || "event");
     const priorityVal = String(evt?.priority || "normal");
-    const notesVal = String(evt?.notes || "");
     const categoryVal = String(evt?.category || "");
     const locationVal = String(evt?.location || "");
     const reminderVal = String(evt?.reminder || "none");
@@ -455,7 +453,6 @@
 
     if (els.typeSelect) els.typeSelect.value = typeVal;
     if (els.prioritySelect) els.prioritySelect.value = priorityVal;
-    if (els.notesInput) els.notesInput.value = notesVal;
     if (els.categoryInput) els.categoryInput.value = categoryVal;
     if (els.locationInput) els.locationInput.value = locationVal;
     if (els.reminderSelect) els.reminderSelect.value = reminderVal;
@@ -568,7 +565,6 @@
     const end = String(els.endInput?.value || "").trim();
     const type = String(els.typeSelect?.value || "event");
     const priority = String(els.prioritySelect?.value || "normal");
-    const notes = String(els.notesInput?.value || "").trim();
     const done = !!els.doneInput?.checked;
     const category = String(els.categoryInput?.value || "").trim();
     const location = String(els.locationInput?.value || "").trim();
@@ -630,7 +626,6 @@
       time: cleanStart,
       type,
       priority,
-      notes,
       done,
       category,
       color,

@@ -1,6 +1,6 @@
 /* Study Planner service worker: app-shell caching + offline navigation fallback. */
 (() => {
-  const VERSION = "v13";
+  const VERSION = "v14";
   const SHELL_CACHE = `study-planner-shell-${VERSION}`;
   const RUNTIME_CACHE = `study-planner-runtime-${VERSION}`;
 
@@ -27,12 +27,11 @@
     "/src/storage.js",
     "/src/sync.js",
     "/src/page-menu.js",
-    "/src/a11y-utils.js",
-    "/src/data-tools.js",
-    "/src/notes.js",
-    "/src/assignments.js",
-    "/src/assignments-ui.js",
-    "/src/autoplan.js",
+	    "/src/a11y-utils.js",
+	    "/src/data-tools.js",
+	    "/src/assignments.js",
+	    "/src/assignments-ui.js",
+	    "/src/autoplan.js",
     "/src/time-budget.js",
     "/src/review-engine.js",
     "/src/exam-mode.js",
@@ -57,13 +56,12 @@
     "/src/styles/phone-menu.css",
     "/src/styles/phone-modals.css",
     "/src/styles/a11y.css",
-    "/src/styles/enhancements.css",
-    "/src/styles/calendar-extras.css",
-    "/src/styles/notes.css",
-    "/src/styles/exam-mode.css",
-    "/src/styles/insights.css",
-    "/src/styles/stundenplan.css"
-  ];
+	    "/src/styles/enhancements.css",
+	    "/src/styles/calendar-extras.css",
+	    "/src/styles/exam-mode.css",
+	    "/src/styles/insights.css",
+	    "/src/styles/stundenplan.css"
+	  ];
 
   function isSameOrigin(url) {
     return url.origin === self.location.origin;

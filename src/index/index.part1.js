@@ -179,15 +179,14 @@ const COMPACT_WEEK_MQ =
 	    const suggestionModalBackdrop = document.getElementById("suggestionModalBackdrop");
 	    const suggestionModalCloseBtn = document.getElementById("suggestionModalCloseBtn");
 	    const suggestionModalCloseBtn2 = document.getElementById("suggestionModalCloseBtn2");
-	    const subjectSettingsBackdrop = document.getElementById("subjectSettingsBackdrop");
-	    const subjectSettingsCloseBtn = document.getElementById("subjectSettingsCloseBtn");
-	    const subjectSettingsCancelBtn = document.getElementById("subjectSettingsCancelBtn");
-	    const subjectSettingsSaveBtn = document.getElementById("subjectSettingsSaveBtn");
-	    const subjectNotesBtn = document.getElementById("subjectNotesBtn");
-	    const subjectSettingsNameInput = document.getElementById("subjectSettingsNameInput");
-    const subjectSettingsStrength = document.getElementById("subjectSettingsStrength");
-    const subjectSettingsSwatches = document.getElementById("subjectSettingsSwatches");
-    const subjectSettingsDot = document.getElementById("subjectSettingsDot");
+		    const subjectSettingsBackdrop = document.getElementById("subjectSettingsBackdrop");
+		    const subjectSettingsCloseBtn = document.getElementById("subjectSettingsCloseBtn");
+		    const subjectSettingsCancelBtn = document.getElementById("subjectSettingsCancelBtn");
+		    const subjectSettingsSaveBtn = document.getElementById("subjectSettingsSaveBtn");
+		    const subjectSettingsNameInput = document.getElementById("subjectSettingsNameInput");
+	    const subjectSettingsStrength = document.getElementById("subjectSettingsStrength");
+	    const subjectSettingsSwatches = document.getElementById("subjectSettingsSwatches");
+	    const subjectSettingsDot = document.getElementById("subjectSettingsDot");
     const subjectSettingsCustomColor = document.getElementById("subjectSettingsCustomColor");
     const subjectSettingsColorLabel = document.getElementById("subjectSettingsColorLabel");
     const addTodoModalBackdrop = document.getElementById("addTodoModalBackdrop");
@@ -311,14 +310,13 @@ const COMPACT_WEEK_MQ =
     const scheduleManualTodoSubjectSelect = document.getElementById("scheduleManualTodoSubjectSelect");
     const scheduleManualTodoFileRow = document.getElementById("scheduleManualTodoFileRow");
     const scheduleManualTodoFileSelect = document.getElementById("scheduleManualTodoFileSelect");
-    const scheduleManualTodoDeadlineFields = document.getElementById("scheduleManualTodoDeadlineFields");
-    const scheduleManualTodoDeadlineTime = document.getElementById("scheduleManualTodoDeadlineTime");
-    const scheduleManualTodoDeadlineType = document.getElementById("scheduleManualTodoDeadlineType");
-    const scheduleManualTodoDeadlinePriority = document.getElementById("scheduleManualTodoDeadlinePriority");
-    const scheduleManualTodoDeadlineNotes = document.getElementById("scheduleManualTodoDeadlineNotes");
-    const scheduleManualTodoSubtaskInput = document.getElementById("scheduleManualTodoSubtaskInput");
-    const scheduleManualTodoSubtaskAdd = document.getElementById("scheduleManualTodoSubtaskAdd");
-    const scheduleManualTodoSubtaskList = document.getElementById("scheduleManualTodoSubtaskList");
+	    const scheduleManualTodoDeadlineFields = document.getElementById("scheduleManualTodoDeadlineFields");
+	    const scheduleManualTodoDeadlineTime = document.getElementById("scheduleManualTodoDeadlineTime");
+	    const scheduleManualTodoDeadlineType = document.getElementById("scheduleManualTodoDeadlineType");
+	    const scheduleManualTodoDeadlinePriority = document.getElementById("scheduleManualTodoDeadlinePriority");
+	    const scheduleManualTodoSubtaskInput = document.getElementById("scheduleManualTodoSubtaskInput");
+	    const scheduleManualTodoSubtaskAdd = document.getElementById("scheduleManualTodoSubtaskAdd");
+	    const scheduleManualTodoSubtaskList = document.getElementById("scheduleManualTodoSubtaskList");
     const scheduleManualTodoModalClose = document.getElementById("scheduleManualTodoModalClose");
     const scheduleManualTodoModalCancel = document.getElementById("scheduleManualTodoModalCancel");
     const scheduleManualTodoModalSave = document.getElementById("scheduleManualTodoModalSave");
@@ -390,14 +388,12 @@ const COMPACT_WEEK_MQ =
     const fileModalSubtitle = document.getElementById("fileModalSubtitle");
     const fileModalCloseBtn = document.getElementById("fileModalCloseBtn");
     const modalFileNameInput = document.getElementById("modalFileName");
-    const modalSubjectSelect = document.getElementById("modalSubjectSelect");
-    const modalConfidenceRange = document.getElementById("modalConfidenceRange");
-    const modalConfidenceValue = document.getElementById("modalConfidenceValue");
-    const modalFileNotesInput = document.getElementById("modalFileNotes");
-    const openFileNotesBtn = document.getElementById("openFileNotesBtn");
-    const modalSaveBtn = document.getElementById("fileModalSaveBtn");
-    const modalCancelBtn = document.getElementById("fileModalCancelBtn");
-    const modalDeleteBtn = document.getElementById("fileModalDeleteBtn");
+	    const modalSubjectSelect = document.getElementById("modalSubjectSelect");
+	    const modalConfidenceRange = document.getElementById("modalConfidenceRange");
+	    const modalConfidenceValue = document.getElementById("modalConfidenceValue");
+	    const modalSaveBtn = document.getElementById("fileModalSaveBtn");
+	    const modalCancelBtn = document.getElementById("fileModalCancelBtn");
+	    const modalDeleteBtn = document.getElementById("fileModalDeleteBtn");
 
     // Timer settings modal refs
     const timerModalBackdrop = document.getElementById("timerModalBackdrop");
@@ -2231,18 +2227,17 @@ const COMPACT_WEEK_MQ =
             (t.kind !== "file" && (!t.subjectId || !t.fileId) && (t.label || "").trim())
               ? "custom"
               : "file";
-          return {
-            id: t.id,
-            kind,
-            subjectId: kind === "file" ? t.subjectId : null,
-            fileId: kind === "file" ? t.fileId : null,
-            label: t.label || "",
-            subjectName: kind === "file" ? t.subjectName || "" : "",
-            done: !!t.done,
-            handoffNote: kind === "file" && typeof t.handoffNote === "string" ? t.handoffNote : "",
-            subtasks: Array.isArray(t.subtasks)
-              ? t.subtasks
-                  .filter((s) => s && s.id && s.label !== undefined)
+	          return {
+	            id: t.id,
+	            kind,
+	            subjectId: kind === "file" ? t.subjectId : null,
+	            fileId: kind === "file" ? t.fileId : null,
+	            label: t.label || "",
+	            subjectName: kind === "file" ? t.subjectName || "" : "",
+	            done: !!t.done,
+	            subtasks: Array.isArray(t.subtasks)
+	              ? t.subtasks
+	                  .filter((s) => s && s.id && s.label !== undefined)
                   .map((s) => ({
                     id: s.id,
                     label: s.label,
