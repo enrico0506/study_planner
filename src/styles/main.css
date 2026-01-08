@@ -5381,7 +5381,7 @@ body.session-header-mounted #focusCard {
     }
 
     #authModalGoogleBtn::before {
-      background: conic-gradient(from 210deg, #ea4335, #fbbc05, #34a853, #4285f4, #ea4335);
+      background: #ffffff url("/icons/google.svg") center / 18px 18px no-repeat;
       border-color: rgba(0, 0, 0, 0.08);
     }
 

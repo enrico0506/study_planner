@@ -16,6 +16,7 @@
 
     "/icons/app-icon.svg",
     "/icons/logo.jpeg",
+    "/icons/google.svg",
     "/icons/icon-192.png",
     "/icons/icon-512.png",
     "/icons/icon-192-maskable.png",
