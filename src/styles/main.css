@@ -363,6 +363,16 @@ html.ads-disabled ins.adsbygoogle {
   }
 }
 
+/* Tablet Safari/Chrome: guarantee the left rail stays visible while scrolling.
+   `position: sticky` can stop when the content block ends; fixed keeps it pinned. */
+@media (min-width: 900px) and (hover: none) and (pointer: coarse) {
+  .app.view-board #plannerHeaderSection.plannerHeader {
+    position: fixed;
+    left: calc(50% - (var(--app-shell-width) / 2) + 22px);
+    width: var(--sp-left-rail-width);
+  }
+}
+
 .plannerHeader,
 .plannerLower {
   width: 100%;
