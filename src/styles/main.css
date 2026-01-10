@@ -3007,21 +3007,33 @@ body.session-header-mounted #focusCard {
       overflow: visible;
     }
 
-    @media (max-width: 1200px) {
-      .layout-row {
-        grid-template-columns: minmax(0, 1fr);
-      }
-      .today-sidebar {
-        position: static;
-        width: 100%;
-        max-width: 100%;
-      }
-    }
+	    @media (max-width: 1200px) {
+	      .layout-row {
+	        grid-template-columns: minmax(0, 1fr);
+	      }
+	      .today-sidebar {
+	        position: static;
+	        width: 100%;
+	        max-width: 100%;
+	      }
+	    }
 
-    @media (max-width: 960px) {
-      .layout-row.today-wide .main-area,
-      .layout-row.today-wide .table-wrapper {
-        max-height: none;
+	    /* Tablet board layout: keep Subjects + Today sidebar as 2 columns (3 columns total incl. left rail). */
+	    @media (min-width: 900px) and (max-width: 1200px) and (hover: none) and (pointer: coarse) {
+	      .layout-row {
+	        grid-template-columns: minmax(0, 2.7fr) clamp(240px, 24vw, 360px);
+	      }
+
+	      .today-sidebar {
+	        width: auto;
+	        max-width: none;
+	      }
+	    }
+
+	    @media (max-width: 960px) {
+	      .layout-row.today-wide .main-area,
+	      .layout-row.today-wide .table-wrapper {
+	        max-height: none;
         overflow: visible;
       }
     }
