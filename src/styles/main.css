@@ -337,6 +337,11 @@ html.ads-disabled ins.adsbygoogle {
     display: none;
   }
 
+  .app.view-board #plannerHeaderSection.plannerHeader .summary-card,
+  .app.view-board #plannerHeaderSection.plannerHeader .focus-card {
+    height: auto;
+  }
+
   .app.view-board #plannerLowerSection.plannerLower {
     grid-column: 2;
     min-width: 0;
