@@ -312,8 +312,10 @@ html.ads-disabled ins.adsbygoogle {
 
   .app.view-board #plannerHeaderSection.plannerHeader {
     grid-column: 1;
-    position: sticky;
+    position: fixed;
     top: var(--sp-board-rail-top, 16px);
+    left: calc(50% - (var(--app-shell-width) / 2) + 22px);
+    width: var(--sp-left-rail-width);
     align-self: start;
     height: calc(100vh - var(--sp-board-rail-top, 16px) - var(--sp-board-rail-bottom, 16px));
     height: calc(100dvh - var(--sp-board-rail-top, 16px) - var(--sp-board-rail-bottom, 16px));
@@ -360,16 +362,6 @@ html.ads-disabled ins.adsbygoogle {
     grid-column: 2;
     width: 100%;
     margin: 0 0 24px;
-  }
-}
-
-/* Tablet Safari/Chrome: guarantee the left rail stays visible while scrolling.
-   `position: sticky` can stop when the content block ends; fixed keeps it pinned. */
-@media (min-width: 900px) and (hover: none) and (pointer: coarse) {
-  .app.view-board #plannerHeaderSection.plannerHeader {
-    position: fixed;
-    left: calc(50% - (var(--app-shell-width) / 2) + 22px);
-    width: var(--sp-left-rail-width);
   }
 }
 
