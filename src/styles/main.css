@@ -310,12 +310,12 @@ html.ads-disabled ins.adsbygoogle {
   .app.view-board #plannerHeaderSection.plannerHeader {
     grid-column: 1;
     position: sticky;
-    top: 16px;
+    top: var(--sp-board-rail-top, 16px);
     align-self: start;
-    height: calc(100vh - 32px);
-    height: calc(100dvh - 32px);
-    max-height: calc(100vh - 32px);
-    max-height: calc(100dvh - 32px);
+    height: calc(100vh - var(--sp-board-rail-top, 16px) - var(--sp-board-rail-bottom, 16px));
+    height: calc(100dvh - var(--sp-board-rail-top, 16px) - var(--sp-board-rail-bottom, 16px));
+    max-height: calc(100vh - var(--sp-board-rail-top, 16px) - var(--sp-board-rail-bottom, 16px));
+    max-height: calc(100dvh - var(--sp-board-rail-top, 16px) - var(--sp-board-rail-bottom, 16px));
     padding-top: 0;
     padding-bottom: 0;
   }

@@ -499,11 +499,11 @@
       requestAnimationFrame(() => enforceTodayHeight());
     }
 
-    function setActiveView(view) {
-      activeView = view;
-      if (layoutRow) {
-        layoutRow.hidden = view !== "board";
-        layoutRow.style.display = view === "board" ? "" : "none";
+	    function setActiveView(view) {
+	      activeView = view;
+	      if (layoutRow) {
+	        layoutRow.hidden = view !== "board";
+	        layoutRow.style.display = view === "board" ? "" : "none";
       }
       if (scheduleView) {
         scheduleView.hidden = view !== "schedule";
@@ -529,15 +529,58 @@
 	        if (typeof window !== "undefined") {
 	          window.scrollTo({ top: 0, behavior: "auto" });
 	        }
-	      } else {
-	        applyTodayExpandedLayout();
-      }
-    }
+		      } else {
+		        applyTodayExpandedLayout();
+	      }
 
-    // Events
+	      scheduleBoardRailMetrics();
+	    }
 
-    if (todayHeaderActions) {
-      const dayNav = document.createElement("div");
+	    let boardRailMetricsRaf = 0;
+	    function updateBoardRailMetrics() {
+	      if (!appRoot) return;
+
+	      if (!appRoot.classList.contains("view-board")) {
+	        appRoot.style.removeProperty("--sp-board-rail-top");
+	        appRoot.style.removeProperty("--sp-board-rail-bottom");
+	        return;
+	      }
+
+	      const header = document.getElementById("mainHeaderBar");
+	      const gap = 16;
+	      const bottomGap = 16;
+	      let top = gap;
+
+	      if (header) {
+	        const rect = header.getBoundingClientRect();
+	        top = Math.max(gap, Math.round(rect.bottom + gap));
+	      }
+
+	      const vh = Number(window.innerHeight || 0);
+	      if (vh) top = Math.min(top, Math.max(gap, vh - bottomGap));
+
+	      appRoot.style.setProperty("--sp-board-rail-top", `${top}px`);
+	      appRoot.style.setProperty("--sp-board-rail-bottom", `${bottomGap}px`);
+	    }
+
+	    function scheduleBoardRailMetrics() {
+	      if (boardRailMetricsRaf) return;
+	      boardRailMetricsRaf = requestAnimationFrame(() => {
+	        boardRailMetricsRaf = 0;
+	        updateBoardRailMetrics();
+	      });
+	    }
+
+	    window.addEventListener("scroll", scheduleBoardRailMetrics, { passive: true });
+	    window.addEventListener("resize", scheduleBoardRailMetrics, { passive: true });
+	    window.addEventListener("orientationchange", () => {
+	      window.setTimeout(scheduleBoardRailMetrics, 60);
+	    });
+
+	    // Events
+
+	    if (todayHeaderActions) {
+	      const dayNav = document.createElement("div");
       dayNav.className = "today-day-nav";
 
       const dayPrevBtn = document.createElement("button");
