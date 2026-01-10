@@ -533,18 +533,25 @@
 		        applyTodayExpandedLayout();
 	      }
 
-	      scheduleBoardRailMetrics();
-	    }
+		      scheduleBoardRailMetrics();
+		    }
 
-		    let boardRailMetricsRaf = 0;
-		    function updateBoardRailMetrics() {
-		      if (!appRoot) return;
+		    const BOARD_RAIL_MEDIA_QUERY = "(min-width: 900px) and (hover: none) and (pointer: coarse)";
+		    function isBoardRailLayoutActive() {
+		      if (typeof window === "undefined") return false;
+		      if (typeof window.matchMedia !== "function") return false;
+		      return window.matchMedia(BOARD_RAIL_MEDIA_QUERY).matches;
+		    }
 
-	      if (!appRoot.classList.contains("view-board")) {
-	        appRoot.style.removeProperty("--sp-board-rail-top");
-	        appRoot.style.removeProperty("--sp-board-rail-bottom");
-	        return;
-	      }
+			    let boardRailMetricsRaf = 0;
+			    function updateBoardRailMetrics() {
+			      if (!appRoot) return;
+
+		      if (!appRoot.classList.contains("view-board") || !isBoardRailLayoutActive()) {
+		        appRoot.style.removeProperty("--sp-board-rail-top");
+		        appRoot.style.removeProperty("--sp-board-rail-bottom");
+		        return;
+		      }
 
 		      const header = document.getElementById("mainHeaderBar");
 		      const gap = 16;

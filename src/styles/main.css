@@ -298,8 +298,8 @@ html.ads-disabled ins.adsbygoogle {
 /* Board layout (wide screens):
    Left rail = Focus + Daily stats stacked and sticky.
    Right area = Subjects + Today sidebar (existing layout-row). */
-@media (min-width: 900px) {
-  .app.view-board {
+@media (min-width: 900px) and (hover: none) and (pointer: coarse) {
+  :root {
     --sp-left-rail-width: clamp(260px, 28vw, 380px);
   }
 
@@ -358,10 +358,9 @@ html.ads-disabled ins.adsbygoogle {
     display: none;
   }
 
-  .app.view-board .plannerPage > .site-footer {
-    grid-column: 2;
-    width: 100%;
-    margin: 0 0 24px;
+  .app.view-board ~ .site-footer {
+    width: calc(var(--app-shell-width) - 44px - var(--sp-left-rail-width) - 16px);
+    margin: 16px 0 24px calc(50% - (var(--app-shell-width) / 2) + 22px + var(--sp-left-rail-width) + 16px);
   }
 }
 
