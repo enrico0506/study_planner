@@ -536,9 +536,9 @@
 	      scheduleBoardRailMetrics();
 	    }
 
-	    let boardRailMetricsRaf = 0;
-	    function updateBoardRailMetrics() {
-	      if (!appRoot) return;
+		    let boardRailMetricsRaf = 0;
+		    function updateBoardRailMetrics() {
+		      if (!appRoot) return;
 
 	      if (!appRoot.classList.contains("view-board")) {
 	        appRoot.style.removeProperty("--sp-board-rail-top");
@@ -546,15 +546,17 @@
 	        return;
 	      }
 
-	      const header = document.getElementById("mainHeaderBar");
-	      const gap = 16;
-	      const bottomGap = 16;
-	      let top = gap;
+		      const header = document.getElementById("mainHeaderBar");
+		      const gap = 16;
+		      const bottomGap = 16;
+		      let top = gap;
 
-	      if (header) {
-	        const rect = header.getBoundingClientRect();
-	        top = Math.max(gap, Math.round(rect.bottom + gap));
-	      }
+		      if (header) {
+		        const rect = header.getBoundingClientRect();
+		        const scrollY = Number(window.scrollY || window.pageYOffset || 0);
+		        const headerDocBottom = rect.bottom + scrollY;
+		        top = Math.max(gap, Math.round(headerDocBottom + gap));
+		      }
 
 	      const vh = Number(window.innerHeight || 0);
 	      if (vh) top = Math.min(top, Math.max(gap, vh - bottomGap));
@@ -563,19 +565,18 @@
 	      appRoot.style.setProperty("--sp-board-rail-bottom", `${bottomGap}px`);
 	    }
 
-	    function scheduleBoardRailMetrics() {
-	      if (boardRailMetricsRaf) return;
-	      boardRailMetricsRaf = requestAnimationFrame(() => {
-	        boardRailMetricsRaf = 0;
-	        updateBoardRailMetrics();
-	      });
-	    }
+		    function scheduleBoardRailMetrics() {
+		      if (boardRailMetricsRaf) return;
+		      boardRailMetricsRaf = requestAnimationFrame(() => {
+		        boardRailMetricsRaf = 0;
+		        updateBoardRailMetrics();
+		      });
+		    }
 
-	    window.addEventListener("scroll", scheduleBoardRailMetrics, { passive: true });
-	    window.addEventListener("resize", scheduleBoardRailMetrics, { passive: true });
-	    window.addEventListener("orientationchange", () => {
-	      window.setTimeout(scheduleBoardRailMetrics, 60);
-	    });
+		    window.addEventListener("resize", scheduleBoardRailMetrics, { passive: true });
+		    window.addEventListener("orientationchange", () => {
+		      window.setTimeout(scheduleBoardRailMetrics, 60);
+		    });
 
 	    // Events
 

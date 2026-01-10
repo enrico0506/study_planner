@@ -299,8 +299,11 @@ html.ads-disabled ins.adsbygoogle {
    Left rail = Focus + Daily stats stacked and sticky.
    Right area = Subjects + Today sidebar (existing layout-row). */
 @media (min-width: 900px) {
-  .app.view-board .plannerPage {
+  .app.view-board {
     --sp-left-rail-width: clamp(260px, 28vw, 380px);
+  }
+
+  .app.view-board .plannerPage {
     display: grid;
     grid-template-columns: var(--sp-left-rail-width) minmax(0, 1fr);
     gap: 16px;
@@ -314,8 +317,10 @@ html.ads-disabled ins.adsbygoogle {
     align-self: start;
     height: calc(100vh - var(--sp-board-rail-top, 16px) - var(--sp-board-rail-bottom, 16px));
     height: calc(100dvh - var(--sp-board-rail-top, 16px) - var(--sp-board-rail-bottom, 16px));
+    height: calc(100svh - var(--sp-board-rail-top, 16px) - var(--sp-board-rail-bottom, 16px));
     max-height: calc(100vh - var(--sp-board-rail-top, 16px) - var(--sp-board-rail-bottom, 16px));
     max-height: calc(100dvh - var(--sp-board-rail-top, 16px) - var(--sp-board-rail-bottom, 16px));
+    max-height: calc(100svh - var(--sp-board-rail-top, 16px) - var(--sp-board-rail-bottom, 16px));
     padding-top: 0;
     padding-bottom: 0;
   }
@@ -349,6 +354,11 @@ html.ads-disabled ins.adsbygoogle {
 
   .app.view-board #plannerLowerSection.plannerLower .controls:empty {
     display: none;
+  }
+
+  .app.view-board .site-footer {
+    width: calc(100% - var(--sp-left-rail-width) - 16px);
+    margin: 16px 0 24px calc(var(--sp-left-rail-width) + 16px);
   }
 }
 
