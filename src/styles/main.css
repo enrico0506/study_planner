@@ -295,6 +295,56 @@ html.ads-disabled ins.adsbygoogle {
   isolation: isolate;
 }
 
+/* Board layout (wide screens):
+   Left rail = Focus + Daily stats stacked and sticky.
+   Right area = Subjects + Today sidebar (existing layout-row). */
+@media (min-width: 1024px) and (min-height: 700px) {
+  .app.view-board .plannerPage {
+    --sp-left-rail-width: clamp(320px, 28vw, 420px);
+    display: grid;
+    grid-template-columns: var(--sp-left-rail-width) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .app.view-board #plannerHeaderSection.plannerHeader {
+    grid-column: 1;
+    position: sticky;
+    top: 16px;
+    align-self: start;
+    height: calc(100dvh - 32px);
+    max-height: calc(100dvh - 32px);
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .app.view-board #plannerHeaderSection.plannerHeader > .top-row {
+    height: 100%;
+  }
+
+  .app.view-board #plannerHeaderSection.plannerHeader .top-row {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "focus"
+      "summary";
+    grid-template-rows: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 12px;
+  }
+
+  .app.view-board #plannerHeaderSection.plannerHeader .top-ad-slot {
+    display: none;
+  }
+
+  .app.view-board #plannerLowerSection.plannerLower {
+    grid-column: 2;
+    min-width: 0;
+  }
+
+  .app.view-board #plannerLowerSection.plannerLower .controls:empty {
+    display: none;
+  }
+}
+
 .plannerHeader,
 .plannerLower {
   width: 100%;
