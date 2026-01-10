@@ -356,9 +356,10 @@ html.ads-disabled ins.adsbygoogle {
     display: none;
   }
 
-  .app.view-board .site-footer {
-    width: calc(100% - var(--sp-left-rail-width) - 16px);
-    margin: 16px 0 24px calc(var(--sp-left-rail-width) + 16px);
+  .app.view-board .plannerPage > .site-footer {
+    grid-column: 2;
+    width: 100%;
+    margin: 0 0 24px;
   }
 }
 
