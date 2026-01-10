@@ -3019,16 +3019,16 @@ body.session-header-mounted #focusCard {
 	    }
 
 	    /* Tablet board layout: keep Subjects + Today sidebar as 2 columns (3 columns total incl. left rail). */
-	    @media (min-width: 900px) and (max-width: 1200px) and (hover: none) and (pointer: coarse) {
-	      .layout-row {
-	        grid-template-columns: minmax(0, 2.7fr) clamp(240px, 24vw, 360px);
-	      }
+		    @media (min-width: 900px) and (max-width: 1200px) and (hover: none) and (pointer: coarse) {
+		      .app.view-board .layout-row {
+		        grid-template-columns: minmax(0, 2.7fr) clamp(240px, 24vw, 360px);
+		      }
 
-	      .today-sidebar {
-	        width: auto;
-	        max-width: none;
-	      }
-	    }
+		      .app.view-board .today-sidebar {
+		        width: auto;
+		        max-width: none;
+		      }
+		    }
 
 	    @media (max-width: 960px) {
 	      .layout-row.today-wide .main-area,
