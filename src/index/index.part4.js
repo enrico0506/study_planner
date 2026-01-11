@@ -555,19 +555,17 @@
 		      }
 
 		      const header = document.getElementById("mainHeaderBar");
-		      const gap = 16;
-		      const bottomGap = 16;
-		      let top = gap;
+		      const gap = 0;
+		      const bottomGap = 0;
+		      let top = 0;
 
 		      if (header) {
 		        const rect = header.getBoundingClientRect();
-		        const scrollY = Number(window.scrollY || window.pageYOffset || 0);
-		        const headerDocBottom = rect.bottom + scrollY;
-		        top = Math.max(gap, Math.round(headerDocBottom + gap));
+		        top = Math.max(0, Math.round(rect.bottom + gap));
 		      }
 
 	      const vh = Number(window.innerHeight || 0);
-	      if (vh) top = Math.min(top, Math.max(gap, vh - bottomGap));
+	      if (vh) top = Math.min(top, Math.max(0, vh - bottomGap));
 
 	      appRoot.style.setProperty("--sp-board-rail-top", `${top}px`);
 	      appRoot.style.setProperty("--sp-board-rail-bottom", `${bottomGap}px`);
@@ -581,6 +579,7 @@
 		      });
 		    }
 
+		    window.addEventListener("scroll", scheduleBoardRailMetrics, { passive: true });
 		    window.addEventListener("resize", scheduleBoardRailMetrics, { passive: true });
 		    window.addEventListener("orientationchange", () => {
 		      window.setTimeout(scheduleBoardRailMetrics, 60);
