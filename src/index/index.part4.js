@@ -536,7 +536,8 @@
 		      scheduleBoardRailMetrics();
 		    }
 
-		    const BOARD_RAIL_MEDIA_QUERY = "(min-width: 900px) and (any-pointer: coarse)";
+			    const BOARD_RAIL_MEDIA_QUERY =
+			      "(min-width: 900px) and (any-pointer: coarse), (min-width: 900px) and (hover: none) and (pointer: coarse)";
 		    function isBoardRailLayoutActive() {
 		      if (typeof window === "undefined") return false;
 		      if (typeof window.matchMedia !== "function") return false;
