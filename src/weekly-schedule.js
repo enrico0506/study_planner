@@ -6,6 +6,9 @@
   const NARROW_MQ = "(max-width: 960px)";
   const TABLET_TOUCH_MQ =
     "(min-width: 900px) and (any-pointer: coarse), (min-width: 900px) and (hover: none) and (pointer: coarse)";
+  const TWO_PANE_MQ =
+    "(min-width: 900px) and (max-width: 1400px) and (any-pointer: coarse), " +
+    "(min-width: 900px) and (max-width: 1400px) and (hover: none) and (pointer: coarse)";
   const WORK_DAYS = 5; // Monday–Friday
 
   const DEFAULT_START_HOUR = 9;
@@ -104,6 +107,36 @@
     pointerId: null,
   };
 
+  function isTwoPaneLayoutActive() {
+    return Boolean(document.body && document.body.classList.contains("ipad-two-pane"));
+  }
+
+  function applyTwoPaneClass() {
+    if (!document.body || !window.matchMedia) return false;
+    const next = window.matchMedia(TWO_PANE_MQ).matches;
+    document.body.classList.toggle("ipad-two-pane", next);
+    return next;
+  }
+
+  function watchTwoPaneClass() {
+    if (!window.matchMedia) return;
+    const mq = window.matchMedia(TWO_PANE_MQ);
+    const handler = () => {
+      const before = isTwoPaneLayoutActive();
+      const after = applyTwoPaneClass();
+      if (before === after) return;
+      state.userScrolled = false;
+      updateLayoutMode();
+      applyViewUI();
+      render();
+    };
+    try {
+      mq.addEventListener("change", handler);
+    } catch {
+      mq.addListener(handler);
+    }
+  }
+
   function safeJsonParse(raw) {
     try {
       return JSON.parse(raw);
@@ -168,6 +201,10 @@
     d.setDate(d.getDate() - weekday);
     d.setHours(12, 0, 0, 0);
     return d;
+  }
+
+  function weekdayMon0(date) {
+    return (date.getDay() + 6) % 7; // Monday=0
   }
 
   function startOfMonth(date) {
@@ -392,7 +429,27 @@
   }
 
   function applyViewUI() {
+    const twoPane = isTwoPaneLayoutActive();
     const isMonth = state.view === "month";
+    const applyToggle = (btn, on) => {
+      if (!btn) return;
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+      btn.className = on ? "chip-btn chip-btn-primary" : "chip-btn";
+    };
+
+    if (twoPane) {
+      if (els.weekView) els.weekView.hidden = false;
+      if (els.monthView) els.monthView.hidden = false;
+      if (els.dayStrip) els.dayStrip.hidden = true;
+
+      document.body.classList.remove("ws-view-month");
+      document.body.classList.add("ws-view-week");
+
+      applyToggle(els.viewWeekBtn, true);
+      applyToggle(els.viewMonthBtn, false);
+      return;
+    }
+
     if (els.weekView) els.weekView.hidden = isMonth;
     if (els.monthView) els.monthView.hidden = !isMonth;
     if (els.dayStrip) els.dayStrip.hidden = isMonth;
@@ -400,17 +457,13 @@
     document.body.classList.toggle("ws-view-month", isMonth);
     document.body.classList.toggle("ws-view-week", !isMonth);
 
-    const applyToggle = (btn, on) => {
-      if (!btn) return;
-      btn.setAttribute("aria-pressed", on ? "true" : "false");
-      btn.className = on ? "chip-btn chip-btn-primary" : "chip-btn";
-    };
     applyToggle(els.viewWeekBtn, !isMonth);
     applyToggle(els.viewMonthBtn, isMonth);
   }
 
   function setView(nextView) {
     const view = nextView === "month" ? "month" : "week";
+    if (view === "month" && isTwoPaneLayoutActive()) return;
     if (view === state.view) return;
     state.view = view;
     state.userScrolled = false;
@@ -747,6 +800,36 @@
     state.activeDayIndex = Math.max(0, Math.min(WORK_DAYS - 1, state.activeDayIndex || 0));
   }
 
+  function syncSelectedDayFromActiveIndex() {
+    const days = currentWeekDays();
+    const day = days[state.activeDayIndex];
+    if (!day) return;
+    state.monthSelectedKey = dateKey(day);
+    state.monthCursor = startOfMonth(day);
+  }
+
+  function applyDayKeySelection(key) {
+    const date = parseDateKey(key);
+    if (!date) return false;
+
+    state.monthSelectedKey = key;
+    state.monthCursor = startOfMonth(date);
+    state.weekStart = startOfWeek(date);
+
+    const weekday = weekdayMon0(date);
+    state.weekendShifted = weekday >= 5;
+    const offset = state.weekendShifted ? 2 : 0;
+    state.activeDayIndex = weekday - offset;
+    clampActiveDayIndex();
+    return true;
+  }
+
+  function selectDayKey(key) {
+    if (!applyDayKeySelection(key)) return;
+    state.userScrolled = false;
+    render();
+  }
+
   function setWeekStart(nextStart) {
     state.weekStart = startOfWeek(nextStart);
     const today = new Date();
@@ -755,11 +838,14 @@
     if (idx !== -1) state.activeDayIndex = idx;
     clampActiveDayIndex();
     state.userScrolled = false;
+    syncSelectedDayFromActiveIndex();
     render();
   }
 
   function setActiveDayIndex(nextIndex) {
     state.activeDayIndex = Math.max(0, Math.min(WORK_DAYS - 1, Number(nextIndex) || 0));
+    syncSelectedDayFromActiveIndex();
+    state.userScrolled = false;
     render();
   }
 
@@ -875,7 +961,7 @@
   }
 
   function renderHeader() {
-    if (state.view === "month") {
+    if (state.view === "month" && !isTwoPaneLayoutActive()) {
       if (els.weekRangeLabel) els.weekRangeLabel.textContent = "Important (no study blocks)";
       if (els.monthLabel) els.monthLabel.textContent = formatDisplayMonth(state.monthCursor);
       return;
@@ -952,6 +1038,7 @@
       cell.dataset.date = key;
       cell.setAttribute("role", "gridcell");
       cell.tabIndex = 0;
+      if (key === state.monthSelectedKey) cell.classList.add("is-selected");
       if (isSameDay(day, today)) cell.classList.add("is-today");
 
       const head = document.createElement("div");
@@ -978,7 +1065,8 @@
         btn.textContent = time ? `${time} ${title}` : title;
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
-          state.monthSelectedKey = key;
+          if (isTwoPaneLayoutActive()) selectDayKey(key);
+          else state.monthSelectedKey = key;
           openModal({ date: key, evt });
         });
         eventsWrap.appendChild(btn);
@@ -992,6 +1080,10 @@
       }
 
       const openForDay = () => {
+        if (isTwoPaneLayoutActive()) {
+          selectDayKey(key);
+          return;
+        }
         state.monthSelectedKey = key;
         openModal({ date: key });
       };
@@ -1335,7 +1427,9 @@
   }
 
   function updateLayoutMode() {
-    const next = window.matchMedia ? window.matchMedia(NARROW_MQ).matches : window.innerWidth <= 960;
+    const next =
+      isTwoPaneLayoutActive() ||
+      (window.matchMedia ? window.matchMedia(NARROW_MQ).matches : window.innerWidth <= 960);
     if (next === state.isNarrow) return;
     state.isNarrow = next;
     render();
@@ -1348,9 +1442,13 @@
 
     if (drag.active || drag.node) clearDragSelection();
 
+    const twoPane = isTwoPaneLayoutActive();
+
     if (state.view === "month") {
       renderMonthGrid();
-      return;
+      if (!twoPane) return;
+    } else if (twoPane) {
+      renderMonthGrid();
     }
 
     if (!els.grid || !els.gridHead || !els.gridScroll) return;
@@ -1393,11 +1491,19 @@
 }
 
   function bind() {
+    applyTwoPaneClass();
+    watchTwoPaneClass();
+
     const today = new Date();
-    const weekDays = currentWeekDays();
-    const idx = weekDays.findIndex((d) => isSameDay(d, today));
-    state.activeDayIndex = idx !== -1 ? idx : 0;
-    clampActiveDayIndex();
+    if (isTwoPaneLayoutActive()) {
+      applyDayKeySelection(state.monthSelectedKey || dateKey(today));
+    } else {
+      const weekDays = currentWeekDays();
+      const idx = weekDays.findIndex((d) => isSameDay(d, today));
+      state.activeDayIndex = idx !== -1 ? idx : 0;
+      clampActiveDayIndex();
+      syncSelectedDayFromActiveIndex();
+    }
 
     if (els.prevWeekBtn) {
       els.prevWeekBtn.addEventListener("click", () => {
@@ -1563,7 +1669,9 @@
     });
 
     window.addEventListener("resize", () => {
-      state.isNarrow = window.matchMedia ? window.matchMedia(NARROW_MQ).matches : window.innerWidth <= 960;
+      state.isNarrow =
+        isTwoPaneLayoutActive() ||
+        (window.matchMedia ? window.matchMedia(NARROW_MQ).matches : window.innerWidth <= 960);
       readSlotHeightPx();
       render();
     });

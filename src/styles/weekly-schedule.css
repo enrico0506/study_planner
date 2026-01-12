@@ -438,6 +438,11 @@
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent), var(--shadow-card);
 }
 
+.weekly-page .ws-month-cell.is-selected {
+  border-color: color-mix(in srgb, var(--accent) 70%, var(--border-strong));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent), var(--shadow-card);
+}
+
 .weekly-page .ws-month-day {
   display: flex;
   align-items: center;
@@ -807,6 +812,42 @@
 
   .weekly-page .ws-day-strip {
     display: flex;
+  }
+}
+
+@media (min-width: 900px) and (any-pointer: coarse), (min-width: 900px) and (hover: none) and (pointer: coarse) {
+  body.calendar-page.weekly-page.ipad-two-pane .ad-column {
+    display: none;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .weekly-shell {
+    width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-week-meta {
+    display: none;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-schedule {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    gap: 14px;
+    padding: 14px;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-month-view,
+  body.calendar-page.weekly-page.ipad-two-pane .ws-week-view {
+    display: flex;
+    min-height: 0;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-month-view {
+    grid-column: 1;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-week-view {
+    grid-column: 2;
   }
 }
 
