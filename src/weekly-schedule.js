@@ -49,6 +49,7 @@
 
     weekView: document.getElementById("wsWeekView"),
     monthView: document.getElementById("wsMonthView"),
+    monthScroll: document.getElementById("wsMonthScroll"),
     monthGrid: document.getElementById("wsMonthGrid"),
 
     gridScroll: document.getElementById("wsGridScroll"),
@@ -110,6 +111,24 @@
 
   function isTwoPaneLayoutActive() {
     return Boolean(document.body && document.body.classList.contains("ipad-two-pane"));
+  }
+
+  function ensurePickerExtra() {
+    if (els.pickerExtra && els.pickerExtra.isConnected) return els.pickerExtra;
+    const host = els.monthScroll || els.monthGrid?.parentElement;
+    if (!host) return null;
+    const existing = host.querySelector("#wsPickerExtra");
+    if (existing instanceof HTMLElement) {
+      els.pickerExtra = existing;
+      return existing;
+    }
+    const extra = document.createElement("div");
+    extra.id = "wsPickerExtra";
+    extra.className = "ws-picker-extra";
+    extra.hidden = true;
+    host.appendChild(extra);
+    els.pickerExtra = extra;
+    return extra;
   }
 
   function applyTwoPaneClass() {
@@ -990,6 +1009,11 @@
     if (!els.monthGrid) return;
     els.monthGrid.replaceChildren();
     els.monthGrid.classList.remove("ws-month-grid--week");
+    if (els.monthScroll) els.monthScroll.classList.remove("ws-month-scroll--week");
+    if (els.pickerExtra) {
+      els.pickerExtra.hidden = true;
+      els.pickerExtra.replaceChildren();
+    }
 
     const cursor = startOfMonth(state.monthCursor || new Date());
     const today = new Date();
@@ -1119,14 +1143,17 @@
     if (!els.monthGrid) return;
     els.monthGrid.replaceChildren();
     els.monthGrid.classList.add("ws-month-grid--week");
+    if (els.monthScroll) els.monthScroll.classList.add("ws-month-scroll--week");
 
     const base = parseDateKey(state.monthSelectedKey) || new Date();
     const start = startOfWeek(base);
     const today = new Date();
+    const weekDayKeys = [];
 
     for (let i = 0; i < 7; i++) {
       const day = addDays(start, i);
       const key = dateKey(day);
+      weekDayKeys.push(key);
 
       const cell = document.createElement("div");
       cell.className = "ws-month-cell ws-month-cell--week";
@@ -1138,9 +1165,13 @@
 
       const head = document.createElement("div");
       head.className = "ws-month-day";
+      const name = document.createElement("div");
+      name.className = "ws-month-day-name";
+      name.textContent = day.toLocaleString("en", { weekday: "short" });
       const num = document.createElement("div");
       num.className = "ws-month-day-num";
       num.textContent = String(day.getDate());
+      head.appendChild(name);
       head.appendChild(num);
       cell.appendChild(head);
 
@@ -1162,6 +1193,103 @@
 
       els.monthGrid.appendChild(cell);
     }
+
+    const extra = ensurePickerExtra();
+    if (!extra) return;
+    extra.hidden = false;
+    extra.replaceChildren();
+
+    const agenda = document.createElement("div");
+    agenda.className = "ws-week-agenda";
+    agenda.setAttribute("aria-label", "Week agenda");
+
+    const eventsByDate = new Map(weekDayKeys.map((key) => [key, []]));
+    loadEvents().forEach((evt) => {
+      if (!evt || typeof evt !== "object") return;
+      const key = String(evt.date || "");
+      if (!eventsByDate.has(key)) return;
+      eventsByDate.get(key).push(evt);
+    });
+
+    const buckets = Array.from(eventsByDate.entries());
+    buckets.forEach(([, list]) => {
+      list.sort((a, b) => {
+        const am = parseTimeToMinutes(a.time) ?? -1;
+        const bm = parseTimeToMinutes(b.time) ?? -1;
+        if (am !== bm) return am - bm;
+        const ap = isImportantPriority(a.priority) ? 0 : 1;
+        const bp = isImportantPriority(b.priority) ? 0 : 1;
+        if (ap !== bp) return ap - bp;
+        return String(a.title || "").localeCompare(String(b.title || ""));
+      });
+    });
+
+    const hasAny = buckets.some(([, list]) => list.length);
+    if (!hasAny) {
+      const empty = document.createElement("div");
+      empty.className = "ws-week-agenda-empty";
+      empty.textContent = "No items this week.";
+      agenda.appendChild(empty);
+      extra.appendChild(agenda);
+      return;
+    }
+
+    buckets.forEach(([key, list]) => {
+      if (!list.length) return;
+      const day = parseDateKey(key);
+      if (!day) return;
+
+      const section = document.createElement("div");
+      section.className = "ws-week-agenda-day";
+      section.dataset.date = key;
+
+      const label = document.createElement("div");
+      label.className = "ws-week-agenda-day-label";
+      label.textContent = day.toLocaleString("en", { weekday: "short", month: "short", day: "numeric" });
+      section.appendChild(label);
+
+      const items = document.createElement("div");
+      items.className = "ws-week-agenda-items";
+
+      list.forEach((evt) => {
+        const title = String(evt.title || "Untitled");
+        const tone = toneForEvent(evt);
+        const customColor = normalizeHexColor(evt.color);
+        const startMin = parseTimeToMinutes(evt.time);
+        const timeText = startMin == null ? "All-day" : minutesToTime(startMin);
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `ws-month-event ws-week-agenda-item ws-month-event--${tone}${
+          isImportantPriority(evt.priority) ? " is-important" : ""
+        }`;
+        if (evt.done) btn.setAttribute("aria-disabled", "true");
+        applyCustomColor(btn, customColor);
+
+        const timeEl = document.createElement("div");
+        timeEl.className = "ws-week-agenda-time";
+        timeEl.textContent = timeText;
+
+        const titleEl = document.createElement("div");
+        titleEl.className = "ws-week-agenda-title";
+        titleEl.textContent = title;
+
+        btn.appendChild(timeEl);
+        btn.appendChild(titleEl);
+
+        btn.addEventListener("click", () => {
+          if (isTwoPaneLayoutActive()) selectDayKey(key);
+          openModal({ date: key, evt });
+        });
+
+        items.appendChild(btn);
+      });
+
+      section.appendChild(items);
+      agenda.appendChild(section);
+    });
+
+    extra.appendChild(agenda);
   }
 
   function renderEventsForVisibleDays(visibleDays) {

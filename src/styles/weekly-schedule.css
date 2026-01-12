@@ -865,6 +865,10 @@
     display: none;
   }
 
+  body.calendar-page.weekly-page.ipad-two-pane .ws-month-scroll--week .ws-month-weekdays {
+    display: none;
+  }
+
   body.calendar-page.weekly-page.ipad-two-pane .ws-month-cell {
     min-height: 78px;
     padding: 8px 8px 10px;
@@ -882,7 +886,79 @@
   }
 
   body.calendar-page.weekly-page.ipad-two-pane .ws-month-cell--week .ws-month-day {
+    flex-direction: column;
     justify-content: center;
+    gap: 2px;
+    text-align: center;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-month-cell--week .ws-month-day-name {
+    font-size: 0.68rem;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-picker-extra {
+    margin-top: 12px;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-week-agenda {
+    display: grid;
+    gap: 12px;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-week-agenda-empty {
+    color: var(--ink-muted);
+    font-weight: 650;
+    padding: 10px 2px;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-week-agenda-day {
+    display: grid;
+    gap: 8px;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-week-agenda-day-label {
+    font-size: 0.7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+    padding-inline: 2px;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-week-agenda-items {
+    display: grid;
+    gap: 8px;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-week-agenda-item {
+    padding: 10px 10px;
+    border-radius: 14px;
+    white-space: normal;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-week-agenda-item[aria-disabled="true"] {
+    opacity: 0.55;
+    text-decoration: line-through;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-week-agenda-time {
+    font-variant-numeric: tabular-nums;
+    font-weight: 850;
+    color: var(--ink-muted);
+    min-width: 62px;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-week-agenda-title {
+    font-weight: 750;
+    color: var(--ink);
+    min-width: 0;
   }
 }
 
