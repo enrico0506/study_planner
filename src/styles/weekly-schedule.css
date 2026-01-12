@@ -832,6 +832,8 @@
   body.calendar-page.weekly-page.ipad-two-pane .ws-schedule {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: "month day";
     gap: 14px;
     padding: 14px;
   }
@@ -843,11 +845,11 @@
   }
 
   body.calendar-page.weekly-page.ipad-two-pane .ws-month-view {
-    grid-column: 1;
+    grid-area: month;
   }
 
   body.calendar-page.weekly-page.ipad-two-pane .ws-week-view {
-    grid-column: 2;
+    grid-area: day;
   }
 }
 
