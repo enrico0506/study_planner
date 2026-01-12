@@ -4,6 +4,8 @@
 
   const STORAGE_KEY = "studyCalendarEvents_v1";
   const NARROW_MQ = "(max-width: 960px)";
+  const TABLET_TOUCH_MQ =
+    "(min-width: 900px) and (any-pointer: coarse), (min-width: 900px) and (hover: none) and (pointer: coarse)";
   const WORK_DAYS = 5; // Monday–Friday
 
   const START_HOUR = 9;
@@ -35,6 +37,7 @@
     monthLabel: document.getElementById("wsMonthLabel"),
     weekRangeLabel: document.getElementById("wsWeekRangeLabel"),
     dayStrip: document.getElementById("wsDayStrip"),
+    weekendToggleBtn: document.getElementById("wsWeekendToggleBtn"),
 
     weekView: document.getElementById("wsWeekView"),
     monthView: document.getElementById("wsMonthView"),
@@ -76,6 +79,7 @@
     weekStart: startOfWeek(new Date()),
     activeDayIndex: 0,
     isNarrow: false,
+    weekendShifted: false,
     monthCursor: startOfMonth(new Date()),
     monthSelectedKey: dateKey(new Date()),
     editingId: null,
@@ -695,9 +699,19 @@
     if (els.colorInput) els.colorInput.dataset.autoColor = "";
   }
 
+  function isTabletTouchLayout() {
+    return window.matchMedia && window.matchMedia(TABLET_TOUCH_MQ).matches;
+  }
+
+  function visibleWeekStart() {
+    const offset = state.weekendShifted ? 2 : 0;
+    return addDays(state.weekStart, offset);
+  }
+
   function currentWeekDays() {
     const days = [];
-    for (let i = 0; i < WORK_DAYS; i++) days.push(addDays(state.weekStart, i));
+    const start = visibleWeekStart();
+    for (let i = 0; i < WORK_DAYS; i++) days.push(addDays(start, i));
     return days;
   }
 
@@ -827,7 +841,7 @@
     });
 
     // Keep strip buttons consistent even when rendering a single day.
-    renderDayStrip(allWeekDays);
+    renderDayStrip(visibleDays);
   }
 
   function renderHeader() {
@@ -836,8 +850,9 @@
       if (els.monthLabel) els.monthLabel.textContent = formatDisplayMonth(state.monthCursor);
       return;
     }
-    if (els.weekRangeLabel) els.weekRangeLabel.textContent = formatWeekRangeLabel(state.weekStart);
-    if (els.monthLabel) els.monthLabel.textContent = formatMonthLabel(state.weekStart);
+    const start = visibleWeekStart();
+    if (els.weekRangeLabel) els.weekRangeLabel.textContent = formatWeekRangeLabel(start);
+    if (els.monthLabel) els.monthLabel.textContent = formatMonthLabel(start);
   }
 
   function renderMonthGrid() {
@@ -1150,6 +1165,7 @@
   function handleGridPointerDown(event) {
     if (state.view !== "week") return;
     if (event.button !== 0 || !event.isPrimary) return;
+    if (event.pointerType && event.pointerType !== "mouse") return;
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
     if (target.closest(".ws-event") || target.closest(".ws-all-day-cell")) return;
@@ -1264,6 +1280,20 @@
     const scrollTop = els.gridScroll.scrollTop;
     const scrollLeft = els.gridScroll.scrollLeft;
 
+    const showWeekendToggle = !state.isNarrow && isTabletTouchLayout() && state.view === "week";
+    if (els.weekendToggleBtn) {
+      if (showWeekendToggle) {
+        els.weekendToggleBtn.hidden = false;
+        els.weekendToggleBtn.textContent = state.weekendShifted ? "Back to week" : "Show weekend";
+        els.weekendToggleBtn.setAttribute("aria-pressed", state.weekendShifted ? "true" : "false");
+      } else {
+        state.weekendShifted = false;
+        els.weekendToggleBtn.hidden = true;
+        els.weekendToggleBtn.setAttribute("aria-pressed", "false");
+        els.weekendToggleBtn.textContent = "Show weekend";
+      }
+    }
+
     const weekDays = currentWeekDays();
     const visibleDays = state.isNarrow ? [weekDays[state.activeDayIndex]] : weekDays;
 
@@ -1316,6 +1346,15 @@
         const days = currentWeekDays();
         const day = state.isNarrow ? days[state.activeDayIndex] : new Date();
         openModal({ date: dateKey(day) });
+      });
+    }
+
+    if (els.weekendToggleBtn) {
+      els.weekendToggleBtn.addEventListener("click", () => {
+        if (state.view !== "week" || state.isNarrow || !isTabletTouchLayout()) return;
+        state.weekendShifted = !state.weekendShifted;
+        clampActiveDayIndex();
+        render();
       });
     }
 
