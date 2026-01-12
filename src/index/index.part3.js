@@ -1118,10 +1118,23 @@
       let end;
       let daysToRender = 7;
 
-	      if (phone) {
-	        const cursor = new Date(getScheduleCursorDay());
-	        start = cursor;
-	        end = cursor;
+      if (scheduleWeekendToggleBtn) {
+        if (phone || !useCompactWeekLayout) {
+          scheduleWeekendShifted = false;
+          scheduleWeekendToggleBtn.style.display = "none";
+          scheduleWeekendToggleBtn.setAttribute("aria-pressed", "false");
+          scheduleWeekendToggleBtn.textContent = "Show weekend";
+        } else {
+          scheduleWeekendToggleBtn.style.display = "inline-flex";
+          scheduleWeekendToggleBtn.setAttribute("aria-pressed", scheduleWeekendShifted ? "true" : "false");
+          scheduleWeekendToggleBtn.textContent = scheduleWeekendShifted ? "Back to week" : "Show weekend";
+        }
+      }
+
+      if (phone) {
+        const cursor = new Date(getScheduleCursorDay());
+        start = cursor;
+        end = cursor;
         daysToRender = 1;
         if (scheduleRangeLabel) {
           scheduleRangeLabel.textContent = cursor.toLocaleDateString(undefined, {
