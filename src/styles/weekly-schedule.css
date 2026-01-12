@@ -344,7 +344,8 @@
 .weekly-page .ws-grid-scroll {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
+  overscroll-behavior: contain;
   background: color-mix(in srgb, var(--surface-strong) 65%, transparent);
 }
 
