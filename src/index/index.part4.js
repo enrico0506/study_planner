@@ -555,11 +555,15 @@
 		      }
 
 		      const header = document.getElementById("mainHeaderBar");
-		      const gap = 16;
+		      const plannerLower = document.getElementById("plannerLowerSection");
+		      const gap = 0;
 		      const bottomGap = 0;
 		      let top = 0;
 
-		      if (header) {
+		      if (plannerLower) {
+		        const rect = plannerLower.getBoundingClientRect();
+		        top = Math.max(0, Math.round(rect.top + gap));
+		      } else if (header) {
 		        const rect = header.getBoundingClientRect();
 		        top = Math.max(0, Math.round(rect.bottom + gap));
 		      }
