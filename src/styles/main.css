@@ -352,6 +352,7 @@ html.ads-disabled ins.adsbygoogle {
   .app.view-board #plannerLowerSection.plannerLower {
     grid-column: 2;
     min-width: 0;
+    padding-top: var(--sp-board-rail-top, 16px);
   }
 
   .app.view-board #plannerLowerSection.plannerLower .controls:empty {
