@@ -314,7 +314,7 @@ html.ads-disabled ins.adsbygoogle {
     grid-column: 1;
     position: fixed;
     top: var(--sp-board-rail-top, 16px);
-    left: calc(50% - (var(--app-shell-width) / 2) + 22px);
+    left: var(--sp-board-rail-left, calc(50% - (var(--app-shell-width) / 2) + 22px));
     width: var(--sp-left-rail-width);
     align-self: start;
     height: calc(100vh - var(--sp-board-rail-top, 16px) - var(--sp-board-rail-bottom, 16px));

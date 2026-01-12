@@ -548,11 +548,12 @@
 			    function updateBoardRailMetrics() {
 			      if (!appRoot) return;
 
-		      if (!appRoot.classList.contains("view-board") || !isBoardRailLayoutActive()) {
-		        appRoot.style.removeProperty("--sp-board-rail-top");
-		        appRoot.style.removeProperty("--sp-board-rail-bottom");
-		        return;
-		      }
+      if (!appRoot.classList.contains("view-board") || !isBoardRailLayoutActive()) {
+        appRoot.style.removeProperty("--sp-board-rail-top");
+        appRoot.style.removeProperty("--sp-board-rail-bottom");
+        appRoot.style.removeProperty("--sp-board-rail-left");
+        return;
+      }
 
 		      const header = document.getElementById("mainHeaderBar");
 		      const plannerLower = document.getElementById("plannerLowerSection");
@@ -560,19 +561,31 @@
 		      const bottomGap = 0;
 		      let top = 0;
 
-		      if (plannerLower) {
-		        const rect = plannerLower.getBoundingClientRect();
-		        top = Math.max(0, Math.round(rect.top + gap));
-		      } else if (header) {
-		        const rect = header.getBoundingClientRect();
-		        top = Math.max(0, Math.round(rect.bottom + gap));
-		      }
+      if (plannerLower) {
+        const rect = plannerLower.getBoundingClientRect();
+        top = Math.max(0, Math.round(rect.top + gap));
+      } else if (header) {
+        const rect = header.getBoundingClientRect();
+        top = Math.max(0, Math.round(rect.bottom + gap));
+      }
 
-	      const vh = Number(window.innerHeight || 0);
-	      if (vh) top = Math.min(top, Math.max(0, vh - bottomGap));
+const vh = Number(window.innerHeight || 0);
+if (vh) top = Math.min(top, Math.max(0, vh - bottomGap));
 
-	      appRoot.style.setProperty("--sp-board-rail-top", `${top}px`);
-	      appRoot.style.setProperty("--sp-board-rail-bottom", `${bottomGap}px`);
+appRoot.style.setProperty("--sp-board-rail-top", `${top}px`);
+appRoot.style.setProperty("--sp-board-rail-bottom", `${bottomGap}px`);
+
+      const paddingLeft = (() => {
+        try {
+          const styles = window.getComputedStyle(appRoot);
+          return Number.parseFloat(styles?.paddingLeft || "0") || 0;
+        } catch {
+          return 0;
+        }
+      })();
+      const rect = appRoot.getBoundingClientRect();
+      const railLeft = Math.round(rect.left + paddingLeft);
+      appRoot.style.setProperty("--sp-board-rail-left", `${railLeft}px`);
 	    }
 
 		    function scheduleBoardRailMetrics() {
