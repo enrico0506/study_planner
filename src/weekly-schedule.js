@@ -1165,7 +1165,6 @@
   function handleGridPointerDown(event) {
     if (state.view !== "week") return;
     if (event.button !== 0 || !event.isPrimary) return;
-    if (event.pointerType && event.pointerType !== "mouse") return;
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
     if (target.closest(".ws-event") || target.closest(".ws-all-day-cell")) return;
@@ -1173,12 +1172,55 @@
     if (!col || !col.dataset.date) return;
     const refs = state.dayEls.get(col.dataset.date);
     if (!refs || !refs.eventsLayer) return;
+
+    const isTouchLike = event.pointerType === "touch" || event.pointerType === "pen";
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startMin = positionMinutesFromPointer(event, refs.eventsLayer, { clampStart: true });
+
+    if (isTouchLike) {
+      // Treat touch as a tap-to-add; ignore if the user scrolls.
+      const tapThreshold = 12;
+      const pointerId = event.pointerId;
+      const cleanup = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onCancel);
+      };
+      const onCancel = () => cleanup();
+      const onMove = (ev) => {
+        if (pointerId != null && ev.pointerId !== pointerId) return;
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        if (Math.hypot(dx, dy) > tapThreshold) cleanup();
+      };
+      const onUp = (ev) => {
+        if (pointerId != null && ev.pointerId !== pointerId) return;
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        const movedTooFar = Math.hypot(dx, dy) > tapThreshold;
+        cleanup();
+        if (movedTooFar) return;
+        const dur = defaultDurationMinutes({ type: "event" });
+        const start = clampToDayMinutes(startMin);
+        const end = clampToDayMinutes(start + dur);
+        openModal({
+          date: col.dataset.date,
+          timeRange: { startMinutes: start, endMinutes: end },
+        });
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp, { once: true });
+      window.addEventListener("pointercancel", onCancel, { once: true });
+      return;
+    }
+
     event.preventDefault();
     drag.active = true;
     drag.dayKey = col.dataset.date;
     drag.layer = refs.eventsLayer;
     drag.pointerId = event.pointerId;
-    drag.startMin = positionMinutesFromPointer(event, refs.eventsLayer, { clampStart: true });
+    drag.startMin = startMin;
     drag.currentMin = drag.startMin;
     ensureDragNode(refs.eventsLayer);
     updateDragSelection();
