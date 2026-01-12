@@ -563,7 +563,9 @@
 
       if (plannerLower) {
         const rect = plannerLower.getBoundingClientRect();
-        top = Math.max(0, Math.round(rect.top + gap));
+        const atTop = rect.top >= gap;
+        const targetTop = atTop ? rect.top + gap : rect.top;
+        top = Math.max(0, Math.round(targetTop));
       } else if (header) {
         const rect = header.getBoundingClientRect();
         top = Math.max(0, Math.round(rect.bottom + gap));
