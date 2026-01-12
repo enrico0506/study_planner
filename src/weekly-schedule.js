@@ -8,8 +8,8 @@
     "(min-width: 900px) and (any-pointer: coarse), (min-width: 900px) and (hover: none) and (pointer: coarse)";
   const WORK_DAYS = 5; // Monday–Friday
 
-  const START_HOUR = 9;
-  const END_HOUR = 20;
+  const DEFAULT_START_HOUR = 9;
+  const DEFAULT_END_HOUR = 20;
   const SLOT_MINUTES = 30;
 
   const root = document.getElementById("weeklyShell");
@@ -264,9 +264,15 @@
     }
   }
 
+  function dayHourRange() {
+    if (isTabletTouchLayout()) return { start: 0, end: 24 };
+    return { start: DEFAULT_START_HOUR, end: DEFAULT_END_HOUR };
+  }
+
   function clampToDayMinutes(min) {
-    const minBound = START_HOUR * 60;
-    const maxBound = END_HOUR * 60;
+    const { start, end } = dayHourRange();
+    const minBound = start * 60;
+    const maxBound = end * 60;
     return Math.min(maxBound, Math.max(minBound, min));
   }
 
@@ -305,7 +311,8 @@
   }
 
   function slotCount() {
-    return Math.max(1, Math.floor(((END_HOUR - START_HOUR) * 60) / SLOT_MINUTES));
+    const { start, end } = dayHourRange();
+    return Math.max(1, Math.floor(((end - start) * 60) / SLOT_MINUTES));
   }
 
   function loadEvents() {
@@ -815,8 +822,9 @@
       const slot = document.createElement("div");
       slot.className = "ws-time-slot";
       if (i % 2 === 0) {
-        const hour = START_HOUR + i / 2;
-        slot.textContent = `${pad2(hour)}:00`;
+        const { start } = dayHourRange();
+        const hour = start + i / 2;
+        slot.textContent = `${pad2(hour % 24)}:00`;
       } else {
         slot.textContent = "";
       }
@@ -978,8 +986,9 @@
   }
 
   function renderEventsForVisibleDays(visibleDays) {
-    const startMinBoundary = START_HOUR * 60;
-    const endMinBoundary = END_HOUR * 60;
+    const { start, end } = dayHourRange();
+    const startMinBoundary = start * 60;
+    const endMinBoundary = end * 60;
     const pxPerMinute = state.slotHeightPx / SLOT_MINUTES;
 
     const events = loadEvents();
@@ -1116,14 +1125,18 @@
   }
 
   function positionMinutesFromPointer(event, layer, { clampStart = false } = {}) {
-    if (!layer) return START_HOUR * 60;
+    if (!layer) {
+      const { start } = dayHourRange();
+      return start * 60;
+    }
     const rect = layer.getBoundingClientRect();
     const y = Math.max(0, Math.min(rect.height, event.clientY - rect.top));
     const pxPerMinute = state.slotHeightPx / SLOT_MINUTES;
     const minutesFromStart = y / pxPerMinute;
-    const raw = START_HOUR * 60 + minutesFromStart;
-    const minBound = START_HOUR * 60;
-    const maxBound = clampStart ? Math.max(minBound, END_HOUR * 60 - SLOT_MINUTES) : END_HOUR * 60;
+    const { start, end } = dayHourRange();
+    const raw = start * 60 + minutesFromStart;
+    const minBound = start * 60;
+    const maxBound = clampStart ? Math.max(minBound, end * 60 - SLOT_MINUTES) : end * 60;
     const clamped = Math.min(maxBound, Math.max(minBound, raw));
     const snapped = snapToSlotMinutes(clamped);
     return Math.min(maxBound, Math.max(minBound, snapped));
@@ -1135,7 +1148,8 @@
     let to = clampToDayMinutes(Math.max(drag.startMin, drag.currentMin));
     if (to - from < SLOT_MINUTES) to = clampToDayMinutes(from + SLOT_MINUTES);
     const pxPerMinute = state.slotHeightPx / SLOT_MINUTES;
-    const topPx = Math.max(0, (from - START_HOUR * 60) * pxPerMinute);
+    const { start } = dayHourRange();
+    const topPx = Math.max(0, (from - start * 60) * pxPerMinute);
     const heightPx = Math.max(state.slotHeightPx * 0.6, (to - from) * pxPerMinute);
     drag.node.style.top = `${topPx}px`;
     drag.node.style.height = `${heightPx}px`;
