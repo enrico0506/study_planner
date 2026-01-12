@@ -1149,7 +1149,12 @@
         if (scheduleTodayBtn) scheduleTodayBtn.textContent = "This week";
 	      }
 
-	      scheduleGrid.innerHTML = "";
+      scheduleGrid.innerHTML = "";
+      scheduleGrid.style.setProperty("--schedule-days", String(daysToRender));
+      scheduleGrid.style.setProperty(
+        "--schedule-day-min",
+        useCompactWeekLayout ? "170px" : "150px"
+      );
       if (!phone) {
         scheduleGrid.classList.toggle(
           "schedule-grid-weekend",

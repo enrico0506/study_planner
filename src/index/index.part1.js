@@ -427,22 +427,33 @@ const COMPACT_WEEK_MQ =
 		      return window.matchMedia && window.matchMedia("(max-width: 720px)").matches;
 		    }
 
-    function isIpadLandscapeLayout() {
-      if (!window.matchMedia) return false;
-      // Avoid triggering "iPad" layout on desktop windows resized to 4:3.
-      const isTouchLikeDevice = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
-      if (!isTouchLikeDevice) return false;
+  function isIpadLandscapeLayout() {
+    if (!window.matchMedia) return false;
+    // Avoid triggering "iPad" layout on desktop windows resized to 4:3.
+    const isTouchLikeDevice = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+    if (!isTouchLikeDevice) return false;
       return window.matchMedia(
         "(max-width: 1024px) and (orientation: landscape) and (aspect-ratio: 4 / 3)"
-      ).matches;
+    ).matches;
+  }
+
+  function isCompactWeekLayout() {
+    if (
+      isIpadLandscapeLayout() ||
+      (window.matchMedia && window.matchMedia(COMPACT_WEEK_MQ).matches)
+    ) {
+      return true;
     }
 
-    function isCompactWeekLayout() {
-      return (
-        isIpadLandscapeLayout() ||
-        (window.matchMedia && window.matchMedia(COMPACT_WEEK_MQ).matches)
-      );
-    }
+    if (!scheduleGrid) return false;
+    const container = scheduleGrid.parentElement || scheduleGrid;
+    const available = container ? container.clientWidth || 0 : 0;
+    if (!available) return false;
+    const minCol = 170; // Slightly wider than the CSS min to avoid horizontal scrollbars.
+    const gap = 12;
+    const neededForSeven = minCol * 7 + gap * 6;
+    return available < neededForSeven;
+  }
 
     function applyIpadFocusLayout() {
       const useIpadLayout = isIpadLandscapeLayout();

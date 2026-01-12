@@ -3117,7 +3117,10 @@ body.session-header-mounted #focusCard {
 
     .schedule-grid {
       display: grid;
-      grid-template-columns: repeat(7, minmax(150px, 1fr));
+      grid-template-columns: repeat(
+        var(--schedule-days, 7),
+        minmax(var(--schedule-day-min, 150px), 1fr)
+      );
       gap: 12px;
       margin-top: 6px;
     }
