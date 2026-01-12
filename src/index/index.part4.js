@@ -555,7 +555,7 @@
 		      }
 
 		      const header = document.getElementById("mainHeaderBar");
-		      const gap = 0;
+		      const gap = 16;
 		      const bottomGap = 0;
 		      let top = 0;
 
