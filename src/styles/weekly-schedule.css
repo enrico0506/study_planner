@@ -339,14 +339,20 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .weekly-page .ws-grid-scroll {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: visible;
+  overflow: auto;
   overscroll-behavior: contain;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
   background: color-mix(in srgb, var(--surface-strong) 65%, transparent);
+}
+.weekly-page .ws-grid-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .weekly-page .ws-month-scroll {
@@ -378,6 +384,28 @@
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 8px;
   align-items: stretch;
+}
+
+.weekly-page .ws-scroll-btn {
+  position: absolute;
+  right: 10px;
+  z-index: 5;
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--surface-strong) 85%, white);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.weekly-page .ws-scroll-btn-top {
+  top: 8px;
+}
+
+.weekly-page .ws-scroll-btn-bottom {
+  bottom: 8px;
 }
 
 .weekly-page .ws-month-cell {

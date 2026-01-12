@@ -10,6 +10,7 @@
 
   const DEFAULT_START_HOUR = 9;
   const DEFAULT_END_HOUR = 20;
+  const CORE_START_HOUR = 7;
   const SLOT_MINUTES = 30;
 
   const root = document.getElementById("weeklyShell");
@@ -37,6 +38,10 @@
     monthLabel: document.getElementById("wsMonthLabel"),
     weekRangeLabel: document.getElementById("wsWeekRangeLabel"),
     dayStrip: document.getElementById("wsDayStrip"),
+    scrollToStartBtn: document.getElementById("wsScrollToStartBtn"),
+    scrollToEndBtn: document.getElementById("wsScrollToEndBtn"),
+    scrollToStartBtn: document.getElementById("wsScrollToStartBtn"),
+    scrollToEndBtn: document.getElementById("wsScrollToEndBtn"),
     weekendToggleBtn: document.getElementById("wsWeekendToggleBtn"),
 
     weekView: document.getElementById("wsWeekView"),
@@ -80,6 +85,7 @@
     activeDayIndex: 0,
     isNarrow: false,
     weekendShifted: false,
+    userScrolled: false,
     monthCursor: startOfMonth(new Date()),
     monthSelectedKey: dateKey(new Date()),
     editingId: null,
@@ -269,6 +275,20 @@
     return { start: DEFAULT_START_HOUR, end: DEFAULT_END_HOUR };
   }
 
+  function scrollGridToHour(hour, behavior = "smooth") {
+    if (!els.gridScroll) return;
+    const { start, end } = dayHourRange();
+    const clampedHour = Math.min(end, Math.max(start, hour));
+    const minutesFromStart = (clampedHour - start) * 60;
+    const slotsFromStart = minutesFromStart / SLOT_MINUTES;
+    const targetPx = Math.max(0, slotsFromStart * state.slotHeightPx);
+    try {
+      els.gridScroll.scrollTo({ top: targetPx, behavior });
+    } catch {
+      els.gridScroll.scrollTop = targetPx;
+    }
+  }
+
   function clampToDayMinutes(min) {
     const { start, end } = dayHourRange();
     const minBound = start * 60;
@@ -393,6 +413,7 @@
     const view = nextView === "month" ? "month" : "week";
     if (view === state.view) return;
     state.view = view;
+    state.userScrolled = false;
 
     if (view === "month") {
       const weekDays = currentWeekDays();
@@ -733,6 +754,7 @@
     const idx = days.findIndex((d) => isSameDay(d, today));
     if (idx !== -1) state.activeDayIndex = idx;
     clampActiveDayIndex();
+    state.userScrolled = false;
     render();
   }
 
@@ -1350,17 +1372,25 @@
       }
     }
 
+    const showScrollBtns = state.view === "week" && isTabletTouchLayout();
+    if (els.scrollToStartBtn) els.scrollToStartBtn.hidden = !showScrollBtns;
+    if (els.scrollToEndBtn) els.scrollToEndBtn.hidden = !showScrollBtns;
+
     const weekDays = currentWeekDays();
     const visibleDays = state.isNarrow ? [weekDays[state.activeDayIndex]] : weekDays;
 
-    buildGrid({ visibleDays, allWeekDays: weekDays });
-    renderEventsForVisibleDays(visibleDays);
+  buildGrid({ visibleDays, allWeekDays: weekDays });
+  renderEventsForVisibleDays(visibleDays);
 
-    requestAnimationFrame(() => {
-      els.gridScroll.scrollTop = scrollTop;
-      els.gridScroll.scrollLeft = scrollLeft;
-    });
-  }
+  requestAnimationFrame(() => {
+    els.gridScroll.scrollTop = scrollTop;
+    els.gridScroll.scrollLeft = scrollLeft;
+
+    if (!state.userScrolled && state.view === "week" && isTabletTouchLayout()) {
+      scrollGridToHour(CORE_START_HOUR, "auto");
+    }
+  });
+}
 
   function bind() {
     const today = new Date();
@@ -1412,6 +1442,30 @@
         clampActiveDayIndex();
         render();
       });
+    }
+
+    if (els.scrollToStartBtn) {
+      els.scrollToStartBtn.addEventListener("click", () => {
+        scrollGridToHour(dayHourRange().start, "smooth");
+        state.userScrolled = true;
+      });
+    }
+    if (els.scrollToEndBtn) {
+      els.scrollToEndBtn.addEventListener("click", () => {
+        scrollGridToHour(dayHourRange().end - 0.05, "smooth");
+        state.userScrolled = true;
+      });
+    }
+
+    if (els.gridScroll && !els.gridScroll.dataset.boundScroll) {
+      els.gridScroll.dataset.boundScroll = "true";
+      els.gridScroll.addEventListener(
+        "scroll",
+        () => {
+          state.userScrolled = true;
+        },
+        { passive: true }
+      );
     }
 
     if (els.viewWeekBtn) {
