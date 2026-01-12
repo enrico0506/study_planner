@@ -87,6 +87,7 @@
     weekStart: startOfWeek(new Date()),
     activeDayIndex: 0,
     isNarrow: false,
+    pickerView: "month", // two-pane date picker: "month" | "week"
     weekendShifted: false,
     userScrolled: false,
     monthCursor: startOfMonth(new Date()),
@@ -115,6 +116,10 @@
     if (!document.body || !window.matchMedia) return false;
     const next = window.matchMedia(TWO_PANE_MQ).matches;
     document.body.classList.toggle("ipad-two-pane", next);
+    if (next) {
+      state.view = "week";
+      if (state.pickerView !== "week") state.pickerView = "month";
+    }
     return next;
   }
 
@@ -445,8 +450,8 @@
       document.body.classList.remove("ws-view-month");
       document.body.classList.add("ws-view-week");
 
-      applyToggle(els.viewWeekBtn, true);
-      applyToggle(els.viewMonthBtn, false);
+      applyToggle(els.viewWeekBtn, state.pickerView === "week");
+      applyToggle(els.viewMonthBtn, state.pickerView !== "week");
       return;
     }
 
@@ -482,6 +487,16 @@
       clampActiveDayIndex();
     }
 
+    closePlanMenu();
+    applyViewUI();
+    render();
+  }
+
+  function setPickerView(nextView) {
+    const view = nextView === "week" ? "week" : "month";
+    if (!isTwoPaneLayoutActive()) return;
+    if (view === state.pickerView) return;
+    state.pickerView = view;
     closePlanMenu();
     applyViewUI();
     render();
@@ -974,6 +989,7 @@
   function renderMonthGrid() {
     if (!els.monthGrid) return;
     els.monthGrid.replaceChildren();
+    els.monthGrid.classList.remove("ws-month-grid--week");
 
     const cursor = startOfMonth(state.monthCursor || new Date());
     const today = new Date();
@@ -1078,6 +1094,55 @@
         more.textContent = `+${dayEvents.length - limit} more`;
         eventsWrap.appendChild(more);
       }
+
+      const openForDay = () => {
+        if (isTwoPaneLayoutActive()) {
+          selectDayKey(key);
+          return;
+        }
+        state.monthSelectedKey = key;
+        openModal({ date: key });
+      };
+
+      cell.addEventListener("click", openForDay);
+      cell.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        openForDay();
+      });
+
+      els.monthGrid.appendChild(cell);
+    }
+  }
+
+  function renderWeekPicker() {
+    if (!els.monthGrid) return;
+    els.monthGrid.replaceChildren();
+    els.monthGrid.classList.add("ws-month-grid--week");
+
+    const base = parseDateKey(state.monthSelectedKey) || new Date();
+    const start = startOfWeek(base);
+    const today = new Date();
+
+    for (let i = 0; i < 7; i++) {
+      const day = addDays(start, i);
+      const key = dateKey(day);
+
+      const cell = document.createElement("div");
+      cell.className = "ws-month-cell ws-month-cell--week";
+      cell.dataset.date = key;
+      cell.setAttribute("role", "gridcell");
+      cell.tabIndex = 0;
+      if (key === state.monthSelectedKey) cell.classList.add("is-selected");
+      if (isSameDay(day, today)) cell.classList.add("is-today");
+
+      const head = document.createElement("div");
+      head.className = "ws-month-day";
+      const num = document.createElement("div");
+      num.className = "ws-month-day-num";
+      num.textContent = String(day.getDate());
+      head.appendChild(num);
+      cell.appendChild(head);
 
       const openForDay = () => {
         if (isTwoPaneLayoutActive()) {
@@ -1444,11 +1509,12 @@
 
     const twoPane = isTwoPaneLayoutActive();
 
-    if (state.view === "month") {
+    if (twoPane) {
+      if (state.pickerView === "week") renderWeekPicker();
+      else renderMonthGrid();
+    } else if (state.view === "month") {
       renderMonthGrid();
-      if (!twoPane) return;
-    } else if (twoPane) {
-      renderMonthGrid();
+      return;
     }
 
     if (!els.grid || !els.gridHead || !els.gridScroll) return;
@@ -1575,10 +1641,16 @@
     }
 
     if (els.viewWeekBtn) {
-      els.viewWeekBtn.addEventListener("click", () => setView("week"));
+      els.viewWeekBtn.addEventListener("click", () => {
+        if (isTwoPaneLayoutActive()) return setPickerView("week");
+        setView("week");
+      });
     }
     if (els.viewMonthBtn) {
-      els.viewMonthBtn.addEventListener("click", () => setView("month"));
+      els.viewMonthBtn.addEventListener("click", () => {
+        if (isTwoPaneLayoutActive()) return setPickerView("month");
+        setView("month");
+      });
     }
 
     if (els.sidebarToggle) {

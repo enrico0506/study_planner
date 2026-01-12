@@ -851,6 +851,39 @@
   body.calendar-page.weekly-page.ipad-two-pane .ws-week-view {
     grid-area: day;
   }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-month-scroll {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-month-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-month-cell {
+    min-height: 78px;
+    padding: 8px 8px 10px;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-month-events,
+  body.calendar-page.weekly-page.ipad-two-pane .ws-month-more {
+    display: none;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-month-cell--week {
+    min-height: 56px;
+    padding: 10px;
+    place-items: center;
+  }
+
+  body.calendar-page.weekly-page.ipad-two-pane .ws-month-cell--week .ws-month-day {
+    justify-content: center;
+  }
 }
 
 @media (max-width: 720px) {
