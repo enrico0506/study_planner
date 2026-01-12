@@ -561,14 +561,16 @@
 		      const bottomGap = 0;
 		      let top = 0;
 
-      if (plannerLower) {
+      const headerRect = header ? header.getBoundingClientRect() : null;
+
+      if (headerRect && headerRect.bottom <= 0) {
+        // Header is fully off-screen: pin rail to the very top.
+        top = 0;
+      } else if (plannerLower) {
         const rect = plannerLower.getBoundingClientRect();
-        const atTop = rect.top >= gap;
-        const targetTop = atTop ? rect.top + gap : rect.top;
-        top = Math.max(0, Math.round(targetTop));
-      } else if (header) {
-        const rect = header.getBoundingClientRect();
-        top = Math.max(0, Math.round(rect.bottom + gap));
+        top = Math.max(0, Math.round(rect.top + gap));
+      } else if (headerRect) {
+        top = Math.max(0, Math.round(headerRect.bottom + gap));
       }
 
 const vh = Number(window.innerHeight || 0);
