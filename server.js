@@ -158,7 +158,8 @@ app.get("/sw.js", (_req, res) => {
 });
 
 // Front-end entry points
-app.get("/", (_req, res) => sendHtml(res, "index.html"));
+app.get("/", (_req, res) => sendHtml(res, "home.html"));
+app.get("/home.html", (_req, res) => sendHtml(res, "home.html"));
 app.get("/index.html", (_req, res) => sendHtml(res, "index.html"));
 app.get("/calendar.html", (_req, res) => sendHtml(res, "calendar.html"));
 app.get("/stundenplan.html", (_req, res) => sendHtml(res, "stundenplan.html"));
@@ -169,9 +170,6 @@ app.get("/privacy.html", (_req, res) => sendHtml(res, "privacy.html"));
 app.get("/terms.html", (_req, res) => sendHtml(res, "terms.html"));
 app.get("/impressum.html", (_req, res) => sendHtml(res, "impressum.html"));
 app.get("/offline.html", (_req, res) => sendHtml(res, "offline.html"));
-app.get("/ad-highperformance-160x600.html", (_req, res) =>
-  sendHtml(res, "ad-highperformance-160x600.html")
-);
 
 // Health check
 app.get("/healthz", (_req, res) => res.send("ok"));
@@ -187,6 +185,7 @@ app.get("/sitemap.xml", (req, res) => {
   const baseUrl = getAppBaseUrl(req);
   const urls = [
     "/",
+    "/home.html",
     "/index.html",
     "/calendar.html",
     "/stundenplan.html",

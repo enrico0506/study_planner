@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="breeze">
+<head>
+  <meta charset="UTF-8" />
+  <title>Study Planner – Home</title>
+  <meta name="description" content="Study Planner is a local-first study planning web app with tasks, confidence tracking, Pomodoro sessions, and weekly scheduling." />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#2f62f4" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PY1GYME464"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-PY1GYME464');
+  </script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5073064276683221"
+     crossorigin="anonymous"></script>
+  <script>
+    (function() {
+      try {
+        const adsDisabled = localStorage.getItem("studyAdsDisabled_v1") === "1";
+        if (adsDisabled) document.documentElement.classList.add("ads-disabled");
+      } catch (e) {}
+    })();
+  </script>
+  <script>
+    (function () {
+      try {
+        const savedTheme = localStorage.getItem("studyTheme_v1");
+        if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
+      } catch {}
+    })();
+  </script>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192" />
+  <link rel="icon" href="/icons/app-icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <script defer src="/pwa.js"></script>
+  <link rel="stylesheet" href="./src/styles/main.css" />
+  <link rel="stylesheet" href="./src/styles/mobile.css" />
+  <link rel="stylesheet" href="./src/styles/a11y.css" />
+  <link rel="stylesheet" href="./src/styles/enhancements.css" />
+</head>
+<body class="legal-page">
+  <div class="app legal-app">
+    <div class="header-row">
+      <div class="header-main">
+        <p class="eyebrow">Study tools</p>
+        <h1>Study Planner</h1>
+        <p class="subtitle">Local-first planning with tasks, confidence tracking, focus sessions, and weekly scheduling.</p>
+      </div>
+      <div class="header-actions">
+        <a class="btn" href="./index.html">Open the app</a>
+        <a class="btn btn-secondary" href="./about.html">About</a>
+        <a class="btn btn-secondary" href="./contact.html">Contact</a>
+      </div>
+    </div>
+
+    <main class="legal-content" id="mainContent">
+      <section class="legal-section">
+        <h2>What Study Planner is</h2>
+        <p>
+          Study Planner is a lightweight web app for planning what to learn and when to learn it. It helps you break subjects into smaller
+          tasks, track confidence over time, and turn intentions into realistic sessions on a daily or weekly schedule. The goal is a calm,
+          distraction-free workflow: decide what matters, plan a small next action, then focus.
+        </p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Main features</h2>
+        <ul>
+          <li>Subjects and tasks with notes and confidence tracking.</li>
+          <li>Focus sessions (Pomodoro-style) with study/break cycles and simple progress signals.</li>
+          <li>Daily schedule view for timeboxing and planning your “Today” list.</li>
+          <li>Calendar view for assignments/exams and longer-term planning.</li>
+          <li>Stundenplan (timetable) for recurring lessons and a consistent weekly rhythm.</li>
+        </ul>
+      </section>
+
+      <section class="legal-section">
+        <h2>How your data is stored</h2>
+        <p>
+          By default, your data is stored locally in your browser (localStorage). That means your subjects, tasks, notes, and settings stay on
+          your device and you can keep using the app without creating an account. If you choose to register, you can enable optional cloud sync
+          so your state can be restored on another device and recent snapshots can be used for recovery.
+        </p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Quality and transparency</h2>
+        <p>
+          This website provides its own original content (documentation pages like this one, plus the Study Planner application). Navigation is
+          available through the footer links and the in-app menus so visitors can easily reach the main app views as well as privacy, terms and
+          support information. For details about data processing and advertising, see the privacy policy.
+        </p>
+      </section>
+
+      <section class="legal-section">
+        <h2>Get started</h2>
+        <p>
+          Open the app and create your first subject. Add a few tasks you want to complete, then pick one small item for today. Use the focus
+          timer when you want a distraction-free session and the calendar/timetable pages when you plan your week. If you only want local
+          storage, you can use Study Planner without signing in.
+        </p>
+      </section>
+
+      <section class="legal-section legal-meta">
+        <h2>Last updated</h2>
+        <p>2026-01-19</p>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer" aria-label="Site footer" data-section="site-footer">
+    <div class="site-footer-inner">
+      <div class="site-footer-meta">
+        <div class="site-footer-title">Study Planner</div>
+        <div class="site-footer-subtitle">Local-first planning with optional sync.</div>
+        <p class="site-footer-blurb">
+          Study Planner is a local-first study planning web app. It helps you break subjects into tasks, plan a realistic schedule, and track
+          confidence over time. Your data stays in your browser by default; an account is optional and only needed for cloud sync and backups.
+        </p>
+      </div>
+      <nav class="site-footer-links" aria-label="Legal">
+        <a href="./home.html">Home</a>
+        <a href="./about.html">About</a>
+        <a href="./contact.html">Contact</a>
+        <a href="./privacy.html">Privacy</a>
+        <a href="./terms.html">Terms</a>
+        <a href="./impressum.html">Imprint</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

@@ -15,16 +15,6 @@
 
     gtag('config', 'G-PY1GYME464');
   </script>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5073064276683221"
-     crossorigin="anonymous"></script>
-  <script>
-    (function() {
-      try {
-        const adsDisabled = localStorage.getItem("studyAdsDisabled_v1") === "1";
-        if (adsDisabled) document.documentElement.classList.add("ads-disabled");
-      } catch (e) {}
-    })();
-  </script>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192" />
   <link rel="icon" href="/icons/app-icon.svg" type="image/svg+xml" />
@@ -62,6 +52,13 @@
       color: inherit;
       text-decoration: none;
     }
+    ul {
+      margin: 12px 0 0;
+      padding-left: 18px;
+      opacity: 0.9;
+      line-height: 1.45;
+    }
+    li { margin: 8px 0; }
   </style>
   <link rel="stylesheet" href="./src/styles/res-1024x768.css" />
   <link rel="stylesheet" href="./src/styles/res-1200x800.css" />
@@ -84,13 +81,38 @@
   <div class="wrap">
     <div class="card">
       <h1>You’re offline</h1>
-      <p>Study Planner is available offline after your first successful visit. Check your connection and try again.</p>
       <p>
+        This page appears when your browser can’t reach the Study Planner server. In normal use, Study Planner can work offline after your
+        first successful visit because the app shell is cached by a service worker. If this is your first time here, reconnect and reload once
+        so the app can be cached for offline use. If the dashboard still doesn’t load, reconnect and try again shortly.
+      </p>
+      <p>
+        Your study data is stored locally in your browser by default, so you won’t lose your subjects or tasks just because you’re offline.
+        However, features that require the network (like account login, cloud sync, or sending a message through the contact form) will only
+        work again after you reconnect.
+      </p>
+      <p>
+        If you already opened the dashboard on this device before, try going back to the cached pages directly. When the connection is back,
+        the app will automatically load the latest version.
+      </p>
+      <p>Offline checklist (quick things to try):</p>
+      <ul>
+        <li>Open the dashboard again (it may be cached): go to “Back to dashboard”.</li>
+        <li>If you used Calendar or Stundenplan before, open those pages too; they can be available offline after a successful online visit.</li>
+        <li>Avoid clearing site data while offline; that would remove locally stored subjects and tasks.</li>
+        <li>When you’re back online, consider exporting a snapshot as a manual backup before switching devices.</li>
+      </ul>
+      <p>
+        Need help? Use the contact page when you’re online again. For transparency about cookies, analytics, and optional advertising, see the
+        privacy policy and terms.
+      </p>
+      <p>
+        <a href="./home.html">Home</a>
         <a href="./privacy.html">Privacy</a>
         <a href="./terms.html">Terms</a>
         <a href="./contact.html">Contact</a>
       </p>
-      <a href="/index.html">Back to dashboard</a>
+      <a href="./index.html">Back to dashboard</a>
     </div>
   </div>
 </body>

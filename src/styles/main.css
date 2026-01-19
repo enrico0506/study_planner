@@ -280,10 +280,7 @@ html.ads-disabled ins.adsbygoogle {
 
 @media (min-width: 1840px) {
   html:not(.ads-disabled) {
-    --app-shell-width: min(
-      var(--app-ultrawide-max),
-      calc(100vw - (2 * (var(--ad-column-width, 160px) + var(--ad-column-gap))))
-    );
+    --app-shell-width: min(var(--app-ultrawide-max), 95vw);
   }
 }
 
@@ -1983,17 +1980,6 @@ body.session-header-mounted #focusCard {
     .top-ad-slot {
       grid-area: ad;
     }
-
-	    @media (min-width: 1060px) and (max-width: 1839px) {
-	      .top-row {
-	        grid-template-columns: minmax(200px, 1fr) minmax(300px, 1fr) minmax(420px, 1fr);
-	        grid-template-areas: "ad summary focus";
-	      }
-
-      .top-ad-slot {
-        display: block;
-      }
-	    }
 
 	    @media (max-width: 720px) {
 	      .top-row {
@@ -9061,6 +9047,14 @@ body.timetable-page {
 .site-footer-subtitle {
   font-size: 0.85rem;
   color: var(--ink-muted);
+}
+
+.site-footer-blurb {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  max-width: 62ch;
 }
 
 .site-footer-links {

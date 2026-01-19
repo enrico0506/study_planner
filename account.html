@@ -74,7 +74,11 @@
 	      </div>
 	      <div class="account-appbar-title">
 	        <h1 class="account-title">Account & sync</h1>
-	        <p class="account-subtitle">Manage sign-in, security, and device backups.</p>
+	        <p class="account-subtitle">
+	          Manage sign-in, security, and backups. Accounts are optional: the app works without registration and stores your study data locally
+	          in your browser. If you enable Premium cloud sync, the server stores your latest state and a limited set of snapshots so you can
+	          restore on another device.
+	        </p>
 	      </div>
       <div class="account-appbar-right">
         <div class="pill" id="authPill">
@@ -204,7 +208,7 @@
               </div>
               <div class="account-divider" aria-hidden="true"><span>or</span></div>
               <div class="account-row">
-                <a class="account-btn account-btn-secondary" id="auth0GoogleLink" href="/api/auth/auth0/login?connection=google-oauth2&returnTo=/account.html">Continue with<img src="/icons/google.svg" width="18" height="18" alt="" aria-hidden="true" /><span class="sr-only"> Google</span></a>
+                <a class="account-btn account-btn-secondary" id="auth0GoogleLink" href="/api/auth/auth0/login?connection=google-oauth2&returnTo=/account.html">Continue with<img src="/icons/google.svg" width="18" height="18" alt="Google logo" aria-hidden="true" /><span class="sr-only"> Google</span></a>
                 <a class="account-btn account-btn-secondary" id="auth0AppleLink" href="/api/auth/auth0/login?connection=apple&returnTo=/account.html">Continue with Apple</a>
                 <a class="account-btn account-btn-secondary" id="auth0MoreLink" href="/api/auth/auth0/login?returnTo=/account.html">Other services…</a>
               </div>
@@ -359,8 +363,13 @@
       <div class="site-footer-meta">
         <div class="site-footer-title">Study Planner</div>
         <div class="site-footer-subtitle">Local-first planning with optional sync.</div>
+        <p class="site-footer-blurb">
+          Study Planner is a local-first study planning web app. It helps you break subjects into tasks, plan a realistic schedule, and track
+          confidence over time. Your data stays in your browser by default; an account is optional and only needed for cloud sync and backups.
+        </p>
       </div>
       <nav class="site-footer-links" aria-label="Legal">
+        <a href="./home.html">Home</a>
         <a href="./about.html">About</a>
         <a href="./contact.html">Contact</a>
         <a href="./privacy.html">Privacy</a>

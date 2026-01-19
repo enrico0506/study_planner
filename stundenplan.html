@@ -68,53 +68,18 @@
   <link rel="stylesheet" href="./src/styles/res-5120x1440.css" />
 </head>
 <body class="timetable-page">
-  <aside class="ad-column ad-column-left" aria-label="Advertisement column">
-    <div class="ad-embed" aria-label="Advertisement">
-      <iframe
-        class="ad-frame ad-frame-160x600"
-        title="Advertisement"
-        loading="lazy"
-        sandbox="allow-scripts"
-        referrerpolicy="no-referrer"
-      ></iframe>
-      <script>
-        (function () {
-          try {
-            if (localStorage.getItem("studyAdsDisabled_v1") === "1") return;
-          } catch {}
-          const frame = document.currentScript?.previousElementSibling;
-          if (frame && frame.tagName === "IFRAME") frame.src = "./ad-highperformance-160x600.html";
-        })();
-      </script>
-    </div>
-  </aside>
-  <aside class="ad-column ad-column-right" aria-label="Advertisement column">
-    <div class="ad-embed" aria-label="Advertisement">
-      <iframe
-        class="ad-frame ad-frame-160x600"
-        title="Advertisement"
-        loading="lazy"
-        sandbox="allow-scripts"
-        referrerpolicy="no-referrer"
-      ></iframe>
-      <script>
-        (function () {
-          try {
-            if (localStorage.getItem("studyAdsDisabled_v1") === "1") return;
-          } catch {}
-          const frame = document.currentScript?.previousElementSibling;
-          if (frame && frame.tagName === "IFRAME") frame.src = "./ad-highperformance-160x600.html";
-        })();
-      </script>
-    </div>
-  </aside>
   <div class="timetable-shell">
     <div class="header-row timetable-header">
       <div class="header-main">
         <p class="eyebrow">Weekly rhythm</p>
         <h1>Stundenplan</h1>
         <p class="subtitle">
-          School-style table: times down the left, days across. Use the add button to place recurring lessons with custom names or linked subjects.
+          School-style table: times down the left, days across. Use “Add lesson” to place recurring blocks for classes, lectures, or self-study.
+          You can give lessons custom names, or link them to your Study Planner subjects so the same colors and labels appear consistently across
+          the board, calendar, and daily schedule views. Click an entry to edit it, move it to another day, or adjust the time slot if your
+          routine changes. Like the rest of Study Planner, this timetable is local-first: your entries are stored in your browser by default
+          and remain available even if the server is offline. If you later enable an account with cloud sync, your timetable can be restored on
+          another device together with your other study data.
         </p>
       </div>
       <div class="header-actions">
@@ -259,8 +224,13 @@
       <div class="site-footer-meta">
         <div class="site-footer-title">Study Planner</div>
         <div class="site-footer-subtitle">Local-first planning with optional sync.</div>
+        <p class="site-footer-blurb">
+          Study Planner is a local-first study planning web app. It helps you break subjects into tasks, plan a realistic schedule, and track
+          confidence over time. Your data stays in your browser by default; an account is optional and only needed for cloud sync and backups.
+        </p>
       </div>
       <nav class="site-footer-links" aria-label="Legal">
+        <a href="./home.html">Home</a>
         <a href="./about.html">About</a>
         <a href="./contact.html">Contact</a>
         <a href="./privacy.html">Privacy</a>
