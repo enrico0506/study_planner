@@ -11,6 +11,16 @@
 			    let subtasksModalTodoId = null;
 			    let subtasksModalDayKey = null;
 
+			    const createNeonCheckbox =
+			      window.StudyPlanner?.UI?.createNeonCheckbox ||
+			      ((opts = {}) => {
+			        const input = document.createElement("input");
+			        input.type = "checkbox";
+			        input.checked = !!opts.checked;
+			        input.disabled = !!opts.disabled;
+			        return { label: input, input, frame: null };
+			      });
+
 			    function renderSubtasksModal(todoId) {
 			      if (!subtasksModalBody) return;
 			      const dayKey = normalizeDayKey(subtasksModalDayKey) || getFocusDayKey();
@@ -61,15 +71,15 @@
 		          row.className = "today-subtask-row";
 		          if (sub && sub.done) row.classList.add("today-subtask-done");
 
-			          const cb = document.createElement("input");
-			          cb.type = "checkbox";
-			          cb.checked = !!(sub && sub.done);
-			          cb.disabled = !allowEdit;
-			          cb.addEventListener("click", (e) => e.stopPropagation());
-			          cb.addEventListener("change", () => {
-			            toggleSubtaskForDay(dayKey, todoId, sub.id, cb.checked, { promptConfidence: true });
-			            requestAnimationFrame(() => renderSubtasksModal(todoId));
-			          });
+				          const { label: cbWrap, input: cb } = createNeonCheckbox({
+				            checked: !!(sub && sub.done),
+				            disabled: !allowEdit,
+				            stopPropagation: true
+				          });
+				          cb.addEventListener("change", () => {
+				            toggleSubtaskForDay(dayKey, todoId, sub.id, cb.checked, { promptConfidence: true });
+				            requestAnimationFrame(() => renderSubtasksModal(todoId));
+				          });
 
 		          const label = document.createElement("div");
 		          label.className = "today-subtask-label";
@@ -86,10 +96,10 @@
 			            requestAnimationFrame(() => renderSubtasksModal(todoId));
 			          });
 
-		          row.appendChild(cb);
-		          row.appendChild(label);
-		          row.appendChild(rm);
-			          subList.appendChild(row);
+			          row.appendChild(cbWrap);
+			          row.appendChild(label);
+			          row.appendChild(rm);
+				          subList.appendChild(row);
 		        });
 		      }
 
@@ -326,14 +336,14 @@
         const left = document.createElement("div");
         left.className = "today-item-left";
 
-		        const checkbox = document.createElement("input");
-		        checkbox.type = "checkbox";
-		        checkbox.checked = !!todo.done;
-		        checkbox.disabled = !allowEdit;
-		        checkbox.addEventListener("click", (e) => e.stopPropagation());
-		        checkbox.addEventListener("change", () => {
-		          toggleTodoDoneForDay(focusKey, todo.id, checkbox.checked, { promptConfidence: true });
-		        });
+			        const { label: checkbox, input: checkboxInput } = createNeonCheckbox({
+			          checked: !!todo.done,
+			          disabled: !allowEdit,
+			          stopPropagation: true
+			        });
+			        checkboxInput.addEventListener("change", () => {
+			          toggleTodoDoneForDay(focusKey, todo.id, checkboxInput.checked, { promptConfidence: true });
+			        });
 
         const colorDot = document.createElement("span");
         colorDot.className = "today-color-dot";
@@ -599,14 +609,14 @@
             row.className = "today-subtask-row";
             if (sub.done) row.classList.add("today-subtask-done");
 
-            const cb = document.createElement("input");
-            cb.type = "checkbox";
-            cb.checked = !!sub.done;
-            cb.disabled = !allowEdit;
-            cb.addEventListener("change", () => {
-              if (!allowEdit) return;
-              toggleSubtaskForDay(focusKey, todo.id, sub.id, cb.checked, { promptConfidence: true });
-            });
+	            const { label: cbWrap, input: cb } = createNeonCheckbox({
+	              checked: !!sub.done,
+	              disabled: !allowEdit
+	            });
+	            cb.addEventListener("change", () => {
+	              if (!allowEdit) return;
+	              toggleSubtaskForDay(focusKey, todo.id, sub.id, cb.checked, { promptConfidence: true });
+	            });
 
             const label = document.createElement("div");
             label.className = "today-subtask-label";
@@ -623,10 +633,10 @@
               removeSubtaskFromDay(focusKey, todo.id, sub.id);
             });
 
-            row.appendChild(cb);
-            row.appendChild(label);
-            row.appendChild(rm);
-            subtasksList.appendChild(row);
+	            row.appendChild(cbWrap);
+	            row.appendChild(label);
+	            row.appendChild(rm);
+	            subtasksList.appendChild(row);
           });
         }
 
@@ -1260,22 +1270,22 @@
 	            }
 	          });
 
-	          const cb = document.createElement("input");
-	          cb.type = "checkbox";
-	          cb.className = "schedule-deadline-check";
-	          cb.checked = !!evt.done;
-	          cb.addEventListener("click", (e) => e.stopPropagation());
-	          cb.addEventListener("change", () => {
-	            const changed = toggleCalendarEventDone(evt.id, cb.checked);
-	            if (changed) {
-	              loadCalendarEvents();
-	              renderScheduleView();
-	            }
-	          });
+		          const { label: cbWrap, input: cb } = createNeonCheckbox({
+		            className: "schedule-deadline-check",
+		            checked: !!evt.done,
+		            stopPropagation: true
+		          });
+		          cb.addEventListener("change", () => {
+		            const changed = toggleCalendarEventDone(evt.id, cb.checked);
+		            if (changed) {
+		              loadCalendarEvents();
+		              renderScheduleView();
+		            }
+		          });
 
-	          chip.appendChild(label);
-	          chip.appendChild(del);
-	          chip.appendChild(cb);
+		          chip.appendChild(label);
+		          chip.appendChild(del);
+		          chip.appendChild(cbWrap);
 
 		          chip.addEventListener("click", () => {
 		            const parts = [];
@@ -1530,16 +1540,13 @@
 	      const subs = Array.isArray(todo.subtasks) ? todo.subtasks : [];
 
 	      if (onToday && subs.length) {
-	        const allRow = document.createElement("label");
-	        allRow.className = "schedule-task-all";
-	        const allCb = document.createElement("input");
-	        allCb.type = "checkbox";
-	        const allDone = subs.every((s) => s && s.done);
-	        allCb.checked = allDone;
-	        const allText = document.createElement("span");
-	        allText.textContent = "Mark all done";
-	        allCb.addEventListener("change", () => {
-	          setAllSubtasks(todo.id, allCb.checked, { promptConfidence: true });
+		        const allDone = subs.every((s) => s && s.done);
+		        const { label: allRow, input: allCb } = createNeonCheckbox({ checked: allDone });
+		        allRow.classList.add("schedule-task-all");
+		        const allText = document.createElement("span");
+		        allText.textContent = "Mark all done";
+		        allCb.addEventListener("change", () => {
+		          setAllSubtasks(todo.id, allCb.checked, { promptConfidence: true });
 	          const updated =
 	            dayKey === getTodayKey()
 	              ? todayTodos.find((t) => t && t.id === todo.id)
@@ -1563,26 +1570,23 @@
           const row = document.createElement("div");
           row.className = "schedule-task-row";
           if (sub.done) row.classList.add("schedule-task-row-done");
-          const cb = document.createElement("input");
-          cb.type = "checkbox";
-          cb.checked = !!sub.done;
-          cb.disabled = !onToday;
+	          const { label: cbWrap, input: cb } = createNeonCheckbox({ checked: !!sub.done, disabled: !onToday });
 
-          if (onToday) {
-            cb.addEventListener("change", () => {
-              toggleSubtask(todo.id, sub.id, cb.checked, { promptConfidence: true });
-            });
-          }
+	          if (onToday) {
+	            cb.addEventListener("change", () => {
+	              toggleSubtask(todo.id, sub.id, cb.checked, { promptConfidence: true });
+	            });
+	          }
 
           const label = document.createElement("div");
           label.className = "schedule-task-label";
           label.textContent = sub.label || "Subtask";
 
-          row.appendChild(cb);
-          row.appendChild(label);
-          scheduleTaskModalSubtasks.appendChild(row);
-        });
-      }
+	          row.appendChild(cbWrap);
+	          row.appendChild(label);
+	          scheduleTaskModalSubtasks.appendChild(row);
+	        });
+	      }
 
 	      if (scheduleTaskStudyBtn) {
 	        scheduleTaskStudyBtn.disabled = !onToday || !isFileTodo;

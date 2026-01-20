@@ -805,10 +805,8 @@
   color: var(--ink);
 }
 
-.weekly-page .ws-event-done-toggle input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--accent);
+.weekly-page .ws-event-done-toggle.neon-checkbox {
+  --size: 18px;
 }
 
 .weekly-page .ws-sidebar-toggle {

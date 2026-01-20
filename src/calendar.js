@@ -2,6 +2,15 @@
   const STORAGE_KEY = "studyCalendarEvents_v1";
   const Storage = window.StudyPlanner && window.StudyPlanner.Storage ? window.StudyPlanner.Storage : null;
   const Assignments = window.StudyPlanner && window.StudyPlanner.Assignments ? window.StudyPlanner.Assignments : null;
+  const createNeonCheckbox =
+    window.StudyPlanner?.UI?.createNeonCheckbox ||
+    ((opts = {}) => {
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = !!opts.checked;
+      input.disabled = !!opts.disabled;
+      return { label: input, input, frame: null };
+    });
 
   const monthLabel = document.getElementById("monthLabel");
   const calendarGrid = document.getElementById("calendarGrid");
@@ -403,11 +412,9 @@
 
       const left = document.createElement("div");
       left.className = "calendar-event-left";
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.checked = !!evt.done;
+      const { label: checkboxWrap, input: checkbox } = createNeonCheckbox({ checked: !!evt.done });
       checkbox.addEventListener("change", () => toggleDone(evt.id, checkbox.checked));
-      left.appendChild(checkbox);
+      left.appendChild(checkboxWrap);
 
       const body = document.createElement("div");
       body.className = "calendar-event-body";
@@ -466,14 +473,12 @@
 
         const left = document.createElement("div");
         left.className = "calendar-event-left";
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.checked = a.status === "done";
+        const { label: checkboxWrap, input: checkbox } = createNeonCheckbox({ checked: a.status === "done" });
         checkbox.addEventListener("change", () => {
           if (!Assignments) return;
           Assignments.upsert({ ...a, status: checkbox.checked ? "done" : "todo" });
         });
-        left.appendChild(checkbox);
+        left.appendChild(checkboxWrap);
 
         const body = document.createElement("div");
         body.className = "calendar-event-body";

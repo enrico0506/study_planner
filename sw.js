@@ -30,6 +30,7 @@
     "/src/sync.js",
     "/src/page-menu.js",
 	    "/src/a11y-utils.js",
+	    "/src/neon-checkbox.js",
 	    "/src/data-tools.js",
 	    "/src/assignments.js",
 	    "/src/assignments-ui.js",

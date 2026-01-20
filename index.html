@@ -283,14 +283,68 @@
 	              <div class="settings-panel-subtitle">Notifications</div>
               <p class="settings-panel-text">In-app toasts always work; system notifications require permission (https/localhost).</p>
 	              <div class="settings-pref-row settings-pref-grid">
-	                <label class="settings-check">
-	                  <input id="notifEnableToasts" type="checkbox" checked />
-	                  <span>Enable in-app toasts</span>
-	                </label>
-	                <label class="settings-check">
-	                  <input id="notifEnableSystem" type="checkbox" />
-	                  <span>Enable system notifications</span>
-	                </label>
+		                <label class="settings-check neon-checkbox">
+		                  <input id="notifEnableToasts" type="checkbox" checked class="neon-checkbox__input" />
+		                  <div class="neon-checkbox__frame">
+		                    <div class="neon-checkbox__box">
+		                      <div class="neon-checkbox__check-container">
+		                        <svg viewBox="0 0 24 24" class="neon-checkbox__check" aria-hidden="true">
+		                          <path d="M3,12.5l7,7L21,5"></path>
+		                        </svg>
+		                      </div>
+		                      <div class="neon-checkbox__glow"></div>
+		                      <div class="neon-checkbox__borders">
+		                        <span></span><span></span><span></span><span></span>
+		                      </div>
+		                    </div>
+		                    <div class="neon-checkbox__effects">
+		                      <div class="neon-checkbox__particles">
+		                        <span></span><span></span><span></span><span></span> <span></span><span></span><span></span
+		                        ><span></span> <span></span><span></span><span></span><span></span>
+		                      </div>
+		                      <div class="neon-checkbox__rings">
+		                        <div class="ring"></div>
+		                        <div class="ring"></div>
+		                        <div class="ring"></div>
+		                      </div>
+		                      <div class="neon-checkbox__sparks">
+		                        <span></span><span></span><span></span><span></span>
+		                      </div>
+		                    </div>
+		                  </div>
+		                  <span>Enable in-app toasts</span>
+		                </label>
+		                <label class="settings-check neon-checkbox">
+		                  <input id="notifEnableSystem" type="checkbox" class="neon-checkbox__input" />
+		                  <div class="neon-checkbox__frame">
+		                    <div class="neon-checkbox__box">
+		                      <div class="neon-checkbox__check-container">
+		                        <svg viewBox="0 0 24 24" class="neon-checkbox__check" aria-hidden="true">
+		                          <path d="M3,12.5l7,7L21,5"></path>
+		                        </svg>
+		                      </div>
+		                      <div class="neon-checkbox__glow"></div>
+		                      <div class="neon-checkbox__borders">
+		                        <span></span><span></span><span></span><span></span>
+		                      </div>
+		                    </div>
+		                    <div class="neon-checkbox__effects">
+		                      <div class="neon-checkbox__particles">
+		                        <span></span><span></span><span></span><span></span> <span></span><span></span><span></span
+		                        ><span></span> <span></span><span></span><span></span><span></span>
+		                      </div>
+		                      <div class="neon-checkbox__rings">
+		                        <div class="ring"></div>
+		                        <div class="ring"></div>
+		                        <div class="ring"></div>
+		                      </div>
+		                      <div class="neon-checkbox__sparks">
+		                        <span></span><span></span><span></span><span></span>
+		                      </div>
+		                    </div>
+		                  </div>
+		                  <span>Enable system notifications</span>
+		                </label>
                 <label>
                   Reminder lead time
                   <select id="notifLeadTime">
@@ -1029,11 +1083,12 @@
 			  <script src="./src/session-journal.js"></script>
 		  <script src="./src/insights.js"></script>
 		  <script src="./src/review-engine.js"></script>
-		  <script src="./src/notifications.js"></script>
-		  <script src="./src/data-tools.js"></script>
-		  <script src="./src/a11y-utils.js"></script>
-	  <script src="./src/sync.js"></script>
-	  <script src="./src/index/index.part1.js"></script>
+			  <script src="./src/notifications.js"></script>
+			  <script src="./src/data-tools.js"></script>
+			  <script src="./src/a11y-utils.js"></script>
+			  <script src="./src/neon-checkbox.js"></script>
+		  <script src="./src/sync.js"></script>
+		  <script src="./src/index/index.part1.js"></script>
 	  <script src="./src/index/index.part2.js"></script>
 	  <script src="./src/index/index.part3.js"></script>
 	  <script src="./src/index/index.part4.js"></script>

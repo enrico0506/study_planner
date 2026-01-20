@@ -3,6 +3,15 @@
   const Storage = StudyPlanner.Storage || null;
   const Assignments = StudyPlanner.Assignments || null;
   const ReviewEngine = StudyPlanner.ReviewEngine || null;
+  const createNeonCheckbox =
+    StudyPlanner.UI?.createNeonCheckbox ||
+    ((opts = {}) => {
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = !!opts.checked;
+      input.disabled = !!opts.disabled;
+      return { label: input, input, frame: null };
+    });
 
   const EXAM_MODE_KEY = "studyExamMode_v1";
 
@@ -277,9 +286,7 @@
         left.appendChild(title);
         left.appendChild(meta);
 
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.checked = !!it.done;
+        const { label: checkboxWrap, input: checkbox } = createNeonCheckbox({ checked: !!it.done });
         checkbox.addEventListener("change", () => {
           const mapNow = loadMap();
           const entryNow = ensureExamEntry(mapNow, exam.id);
@@ -291,7 +298,7 @@
         });
 
         top.appendChild(left);
-        top.appendChild(checkbox);
+        top.appendChild(checkboxWrap);
 
         const actions = document.createElement("div");
         actions.className = "exam-syllabus-actions";
@@ -444,4 +451,3 @@
 
   refreshButtonVisibility();
 })();
-

@@ -38,3 +38,6 @@ body.calendar-page .exam-syllabus-actions {
   justify-content: flex-end;
 }
 
+body.calendar-page .exam-syllabus-top .neon-checkbox {
+  --size: 18px;
+}

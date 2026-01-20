@@ -283,12 +283,39 @@
           <option value="Asia/Kolkata"></option>
           <option value="Asia/Tokyo"></option>
         </datalist>
-        <div class="form-row ws-event-meta-row">
-          <label class="ws-event-done-toggle">
-            <input type="checkbox" id="eventDoneInput" />
-            Mark as done
-          </label>
-        </div>
+	        <div class="form-row ws-event-meta-row">
+	          <label class="ws-event-done-toggle neon-checkbox">
+	            <input type="checkbox" id="eventDoneInput" class="neon-checkbox__input" />
+	            <div class="neon-checkbox__frame">
+	              <div class="neon-checkbox__box">
+	                <div class="neon-checkbox__check-container">
+	                  <svg viewBox="0 0 24 24" class="neon-checkbox__check" aria-hidden="true">
+	                    <path d="M3,12.5l7,7L21,5"></path>
+	                  </svg>
+	                </div>
+	                <div class="neon-checkbox__glow"></div>
+	                <div class="neon-checkbox__borders">
+	                  <span></span><span></span><span></span><span></span>
+	                </div>
+	              </div>
+	              <div class="neon-checkbox__effects">
+	                <div class="neon-checkbox__particles">
+	                  <span></span><span></span><span></span><span></span> <span></span><span></span><span></span><span></span>
+	                  <span></span><span></span><span></span><span></span>
+	                </div>
+	                <div class="neon-checkbox__rings">
+	                  <div class="ring"></div>
+	                  <div class="ring"></div>
+	                  <div class="ring"></div>
+	                </div>
+	                <div class="neon-checkbox__sparks">
+	                  <span></span><span></span><span></span><span></span>
+	                </div>
+	              </div>
+	            </div>
+	            Mark as done
+	          </label>
+	        </div>
         <div class="calendar-form-actions">
           <div class="calendar-form-status" id="formStatus"></div>
           <div class="calendar-form-buttons">
@@ -452,12 +479,39 @@
             <input id="autoPlanLatest" type="time" value="20:00" />
           </label>
         </div>
-        <div class="form-row">
-          <label>
-            <input id="autoPlanIncludeWeekend" type="checkbox" checked />
-            Include weekends
-          </label>
-        </div>
+	        <div class="form-row">
+	          <label class="neon-checkbox">
+	            <input id="autoPlanIncludeWeekend" type="checkbox" checked class="neon-checkbox__input" />
+	            <div class="neon-checkbox__frame">
+	              <div class="neon-checkbox__box">
+	                <div class="neon-checkbox__check-container">
+	                  <svg viewBox="0 0 24 24" class="neon-checkbox__check" aria-hidden="true">
+	                    <path d="M3,12.5l7,7L21,5"></path>
+	                  </svg>
+	                </div>
+	                <div class="neon-checkbox__glow"></div>
+	                <div class="neon-checkbox__borders">
+	                  <span></span><span></span><span></span><span></span>
+	                </div>
+	              </div>
+	              <div class="neon-checkbox__effects">
+	                <div class="neon-checkbox__particles">
+	                  <span></span><span></span><span></span><span></span> <span></span><span></span><span></span><span></span>
+	                  <span></span><span></span><span></span><span></span>
+	                </div>
+	                <div class="neon-checkbox__rings">
+	                  <div class="ring"></div>
+	                  <div class="ring"></div>
+	                  <div class="ring"></div>
+	                </div>
+	                <div class="neon-checkbox__sparks">
+	                  <span></span><span></span><span></span><span></span>
+	                </div>
+	              </div>
+	            </div>
+	            Include weekends
+	          </label>
+	        </div>
         <div class="calendar-form-actions">
           <div class="calendar-form-status" id="autoPlanStatus"></div>
           <div class="calendar-form-buttons">
@@ -501,12 +555,13 @@
 
   <script src="./src/storage.js" defer></script>
   <script src="./src/assignments.js" defer></script>
-  <script src="./src/autoplan.js" defer></script>
-  <script src="./src/time-budget.js" defer></script>
-  <script src="./src/review-engine.js" defer></script>
-  <script src="./src/exam-mode.js" defer></script>
-  <script src="./src/notifications.js" defer></script>
-  <script src="./src/a11y-utils.js" defer></script>
+	  <script src="./src/autoplan.js" defer></script>
+	  <script src="./src/time-budget.js" defer></script>
+	  <script src="./src/review-engine.js" defer></script>
+	  <script src="./src/neon-checkbox.js" defer></script>
+	  <script src="./src/exam-mode.js" defer></script>
+	  <script src="./src/notifications.js" defer></script>
+	  <script src="./src/a11y-utils.js" defer></script>
   <script src="./src/sync.js" defer></script>
   <script src="./src/page-menu.js" defer></script>
   <script src="./src/weekly-schedule.js" defer></script>
