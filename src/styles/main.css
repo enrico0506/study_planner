@@ -83,6 +83,7 @@ body::-webkit-scrollbar,
       --accent-ink: #0f1c3d;
       --accent-soft: #e4ecff;
       --accent-soft-hover: #d7dfff;
+      --button-glow-color: color-mix(in srgb, var(--accent) 78%, #ffffff 22%);
       --ink: #0f172a;
       --ink-muted: #5f6a86;
       --text-subtle: color-mix(in srgb, var(--ink) 55%, transparent);
@@ -1892,6 +1893,125 @@ body.session-header-mounted #focusCard {
   border-color: color-mix(in srgb, var(--accent) 35%, var(--border-strong));
   transform: translateY(-0.5px);
   box-shadow: var(--shadow-xs);
+}
+
+/* Shared illuminated border on hover for core controls */
+:where(
+    button,
+    .btn,
+    .chip-btn,
+    .icon-btn,
+    .focus-break-btn,
+    .focus-main-btn,
+    .focus-timer-mode-btn,
+    .view-toggle-btn,
+    .confidence-toggle-btn,
+    .header-menu-link,
+    .header-menu-item,
+    .tab-menu-btn,
+    .tab-icon-btn,
+    .modal-delete-btn,
+    .modal-close-btn,
+    .tt-day-nav-btn,
+    .tt-duration-chip,
+    .schedule-nav-btn,
+    .subject-nav-btn,
+    .account-btn
+  ) {
+  position: relative;
+  isolation: isolate;
+}
+
+:where(
+    button,
+    .btn,
+    .chip-btn,
+    .icon-btn,
+    .focus-break-btn,
+    .focus-main-btn,
+    .focus-timer-mode-btn,
+    .view-toggle-btn,
+    .confidence-toggle-btn,
+    .header-menu-link,
+    .header-menu-item,
+    .tab-menu-btn,
+    .tab-icon-btn,
+    .modal-delete-btn,
+    .modal-close-btn,
+    .tt-day-nav-btn,
+    .tt-duration-chip,
+    .schedule-nav-btn,
+    .subject-nav-btn,
+    .account-btn
+  )::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  border: 1.5px solid color-mix(in srgb, var(--button-glow-color, var(--accent)) 65%, transparent);
+  box-shadow:
+    0 0 0 0 color-mix(in srgb, var(--button-glow-color, var(--accent)) 38%, transparent),
+    inset 0 0 0 0 color-mix(in srgb, var(--button-glow-color, var(--accent)) 20%, transparent);
+  transition:
+    opacity var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+:where(
+    button,
+    .btn,
+    .chip-btn,
+    .icon-btn,
+    .focus-break-btn,
+    .focus-main-btn,
+    .focus-timer-mode-btn,
+    .view-toggle-btn,
+    .confidence-toggle-btn,
+    .header-menu-link,
+    .header-menu-item,
+    .tab-menu-btn,
+    .tab-icon-btn,
+    .modal-delete-btn,
+    .modal-close-btn,
+    .tt-day-nav-btn,
+    .tt-duration-chip,
+    .schedule-nav-btn,
+    .subject-nav-btn,
+    .account-btn
+  ):hover::after,
+:where(
+    button,
+    .btn,
+    .chip-btn,
+    .icon-btn,
+    .focus-break-btn,
+    .focus-main-btn,
+    .focus-timer-mode-btn,
+    .view-toggle-btn,
+    .confidence-toggle-btn,
+    .header-menu-link,
+    .header-menu-item,
+    .tab-menu-btn,
+    .tab-icon-btn,
+    .modal-delete-btn,
+    .modal-close-btn,
+    .tt-day-nav-btn,
+    .tt-duration-chip,
+    .schedule-nav-btn,
+    .subject-nav-btn,
+    .account-btn
+  ):focus-visible::after {
+  opacity: 1;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--button-glow-color, var(--accent)) 38%, transparent),
+    0 0 16px 2px color-mix(in srgb, var(--button-glow-color, var(--accent)) 55%, transparent),
+    inset 0 0 14px color-mix(in srgb, var(--button-glow-color, var(--accent)) 26%, transparent);
+}
+
+:where(button[disabled], .btn[disabled], .chip-btn[disabled], .icon-btn[disabled], .account-btn:disabled)::after {
+  display: none;
 }
 
     @media (max-width: 720px) {
