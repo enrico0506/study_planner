@@ -1920,6 +1920,52 @@
       updateStudyTimerDisplay();
     }
 
+    function setFocusTimerDisplayValue(text, animate) {
+      if (!focusTimerDisplay) return;
+
+      const slots =
+        focusTimerSlots && focusTimerSlots.length
+          ? focusTimerSlots
+          : Array.from(focusTimerDisplay.querySelectorAll("[data-slot]"));
+      const live =
+        typeof focusTimerLive !== "undefined" && focusTimerLive
+          ? focusTimerLive
+          : focusTimerDisplay.querySelector(".focus-timer-sr");
+
+      if (live) live.textContent = text;
+      focusTimerDisplay.setAttribute("data-time", text);
+      focusTimerDisplay.setAttribute("aria-label", text);
+
+      if (!slots || slots.length === 0) {
+        focusTimerDisplay.textContent = text;
+        return;
+      }
+
+      const [hhRaw = "00", mmRaw = "00", ssRaw = "00"] = (text || "00:00:00").split(":");
+      const hh = hhRaw.padStart(2, "0").slice(-2);
+      const mm = mmRaw.padStart(2, "0").slice(-2);
+      const ss = ssRaw.padStart(2, "0").slice(-2);
+      const digits = (hh + mm + ss).split("");
+
+      slots.forEach((slot, idx) => {
+        const digit = digits[idx] || "0";
+        if (slot.dataset.value !== digit) {
+          slot.dataset.value = digit;
+          const top = slot.querySelector(".flip-top");
+          const bottom = slot.querySelector(".flip-bottom");
+          if (top) top.textContent = digit;
+          if (bottom) bottom.textContent = digit;
+          if (animate) {
+            slot.classList.remove("flip-animate");
+            void slot.offsetWidth;
+            slot.classList.add("flip-animate");
+          } else {
+            slot.classList.remove("flip-animate");
+          }
+        }
+      });
+    }
+
 	    function updateStudyTimerDisplay() {
       const currentKey =
         activeStudy && activeStudy.kind === "study"
@@ -1938,7 +1984,7 @@
       if (!focusTimerDisplay) return;
 
 	      if (!activeStudy) {
-	        focusTimerDisplay.textContent = "00:00:00";
+	        setFocusTimerDisplayValue("00:00:00", false);
 	        return;
 	      }
 
@@ -1953,19 +1999,19 @@
       if (useCountdown) {
         let remaining = targetMs - elapsed;
         if (remaining <= 0) {
-          focusTimerDisplay.textContent = "00:00:00";
+          setFocusTimerDisplayValue("00:00:00", false);
           finalizeActiveSession(true, true);
           return;
         }
         const text = formatHMS(remaining);
-	        focusTimerDisplay.textContent = text;
+	        setFocusTimerDisplayValue(text, true);
 	        if (activeStudy.kind === "study" && activeStudy.fileId) {
 	          const span = document.getElementById("timer-" + activeStudy.fileId);
 	          if (span) span.textContent = text;
 	        }
 	      } else {
 	        const text = formatHMS(elapsed);
-	        focusTimerDisplay.textContent = text;
+	        setFocusTimerDisplayValue(text, true);
 	        if (activeStudy.kind === "study" && activeStudy.fileId) {
 	          const span = document.getElementById("timer-" + activeStudy.fileId);
 	          if (span) span.textContent = text;
@@ -2024,7 +2070,7 @@
           "Click “Study” on a file or start a break below.";
         focusSessionControls.innerHTML =
           '<span style="font-size:0.75rem;color:#9ca3af;">No controls – start a session.</span>';
-        focusTimerDisplay.textContent = "00:00:00";
+        setFocusTimerDisplayValue("00:00:00", false);
         updateTimerModeButtons(timerModePref);
         if (typeof scheduleSummaryLayoutFit === "function") {
           scheduleSummaryLayoutFit();
