@@ -371,16 +371,10 @@ const COMPACT_WEEK_MQ =
 
 	    // Focus timer refs
 	    const focusCard = document.getElementById("focusCard");
-    const focusSessionTitle = document.getElementById("focusSessionTitle");
-    const focusSessionSubtitle = document.getElementById("focusSessionSubtitle");
-    const focusTimerDisplay = document.getElementById("focusTimerDisplay");
-    const focusSessionControls = document.getElementById("focusSessionControls");
-    const focusTimerSlots = focusTimerDisplay
-      ? Array.from(focusTimerDisplay.querySelectorAll("[data-slot]"))
-      : [];
-    const focusTimerLive = focusTimerDisplay
-      ? focusTimerDisplay.querySelector(".focus-timer-sr")
-      : null;
+	    const focusSessionTitle = document.getElementById("focusSessionTitle");
+	    const focusSessionSubtitle = document.getElementById("focusSessionSubtitle");
+	    const focusTimerDisplay = document.getElementById("focusTimerDisplay");
+	    const focusSessionControls = document.getElementById("focusSessionControls");
     const openTimerSettingsBtn = document.getElementById("openTimerSettingsBtn");
     const focusTimerBox = document.querySelector(".focus-timer-box");
     const focusTimerToggle = document.querySelector(".focus-timer-toggle");

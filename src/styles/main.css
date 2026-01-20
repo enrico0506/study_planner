@@ -2497,10 +2497,7 @@ body.session-header-mounted #focusCard {
 	      flex-direction: column;
 	      align-items: center;
 	      justify-content: center;
-  --flip-slot-height: clamp(40px, 23cqw, 56px);
-  --flip-slot-width: clamp(20px, 11cqw, 28px);
-  --flip-font-size: clamp(1rem, 11cqw, 1.6rem);
-  container-type: inline-size;
+	  container-type: inline-size;
   box-shadow: var(--shadow-soft);
   box-sizing: border-box;
   position: relative;
@@ -2516,106 +2513,17 @@ body.session-header-mounted #focusCard {
 }
 
 .focus-timer-display {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: clamp(1.2rem, 20cqw, 2.3rem);
+  font-weight: 650;
+  color: var(--accent-ink);
+  line-height: 1.1;
   width: 100%;
-  display: grid;
-  place-items: center;
-}
-
-.focus-flip-clock {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(2px, 1cqw, 6px);
-  width: 100%;
-  font-family: "Space Grotesk", "Manrope", ui-monospace, system-ui, -apple-system, "Segoe UI",
-    sans-serif;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.flip-slot {
-  width: var(--flip-slot-width);
-  height: var(--flip-slot-height);
-  position: relative;
-  perspective: 1100px;
-}
-
-.flip-card {
-  width: 100%;
-  height: 100%;
-  border-radius: 18px;
-  background: linear-gradient(160deg, #f5f5f5, #dcdcdc);
-  box-shadow:
-    8px 8px 15px rgba(42, 42, 42, 0.18),
-    -8px -8px 15px rgba(255, 255, 255, 0.55);
+  max-width: 100%;
+  white-space: nowrap;
+  text-align: center;
   overflow: hidden;
-  position: relative;
-  display: grid;
-  grid-template-rows: 1fr 1fr;
-  transform-style: preserve-3d;
-}
-
-.flip-card::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 100%;
-  height: 1px;
-  background: #d2d2d2;
-  transform: translateY(-0.5px);
-  z-index: 5;
-}
-
-.flip-top,
-.flip-bottom {
-  display: grid;
-  place-items: center;
-  font-size: var(--flip-font-size);
-  color: #333;
-  text-shadow:
-    0 1px 1px rgba(0, 0, 0, 0.05),
-    0 2px 4px rgba(0, 0, 0, 0.08);
-  backface-visibility: hidden;
-}
-
-.flip-top {
-  background: linear-gradient(180deg, #f8f8f8, #e4e4e4);
-  border-radius: 18px 18px 0 0;
-}
-
-.flip-bottom {
-  background: linear-gradient(180deg, #dedede, #eaeaea);
-  border-top: 1px solid #d2d2d2;
-  border-radius: 0 0 18px 18px;
-  transform: translateY(-1px);
-}
-
-.flip-separator {
-  font-size: clamp(1rem, 9cqw, 1.4rem);
-  color: var(--ink-muted);
-  font-weight: 800;
-  padding-inline: 2px;
-  align-self: center;
-  text-shadow:
-    0 1px 1px rgba(255, 255, 255, 0.6),
-    0 2px 4px rgba(0, 0, 0, 0.08);
-}
-
-.flip-animate .flip-card {
-  animation: flip-pop 0.36s ease;
-}
-
-@keyframes flip-pop {
-  0% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-6px) rotateX(-8deg);
-  }
-  100% {
-    transform: translateY(0) rotateX(0);
-  }
+  font-variant-numeric: tabular-nums;
 }
 
 .focus-timer-toggle {
@@ -2829,13 +2737,10 @@ body.session-header-mounted #focusCard {
     .app.focus-maximized .focus-timer-box {
       width: 260px;
       height: 260px;
-      --flip-slot-height: clamp(54px, 30cqw, 78px);
-      --flip-slot-width: clamp(24px, 12cqw, 34px);
-      --flip-font-size: clamp(1.2rem, 15cqw, 2.1rem);
     }
 
-    .app.focus-maximized .focus-flip-clock {
-      gap: 6px;
+    .app.focus-maximized .focus-timer-display {
+      font-size: 3.1rem;
     }
 
     /* Controls row placeholder */
