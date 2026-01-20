@@ -7481,7 +7481,7 @@ label.neon-checkbox > input.neon-checkbox__input {
 .neon-checkbox__box {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: #ffffff;
   border-radius: 4px;
   border: 2px solid var(--primary-dark);
   transition: all 0.4s ease;
