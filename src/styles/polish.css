@@ -147,3 +147,207 @@ textarea:focus-visible {
     min-width: 44px;
   }
 }
+
+/* =====================================================================
+   VISIBLE DESIGN POLISH — layers on top of existing styles.
+   These rules add refinement (elevation, motion, accents) without
+   changing information architecture.
+   ===================================================================== */
+
+/* Smooth default transitions on interactive surfaces. */
+.btn,
+.chip-btn,
+.focus-card,
+.subject-column,
+.today-item,
+.focus-timer-box,
+.focus-timer-mode-btn,
+.confidence-toggle-btn,
+.modal-close-btn,
+.focus-break-btn,
+.focus-main-btn {
+  transition:
+    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+/* Primary button: gradient accent + refined shadow + press feedback. */
+body .btn:not(.btn-secondary):not(.subject-add-btn):not([disabled]) {
+  background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 82%, #ffffff 18%) 100%);
+  border: 1px solid color-mix(in srgb, var(--accent) 85%, #000 0%);
+  color: #fff;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 6px 16px -4px color-mix(in srgb, var(--accent) 55%, transparent);
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+body .btn:not(.btn-secondary):not(.subject-add-btn):not([disabled]):hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.22) inset,
+    0 10px 22px -6px color-mix(in srgb, var(--accent) 65%, transparent);
+  filter: saturate(1.05);
+}
+
+body .btn:not(.btn-secondary):not(.subject-add-btn):not([disabled]):active {
+  transform: translateY(0);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 4px 10px -4px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+/* Secondary button refinement. */
+body .btn.btn-secondary {
+  background: color-mix(in srgb, var(--surface-bg) 80%, var(--accent-soft) 20%);
+  border: 1px solid var(--border-subtle);
+  color: var(--ink);
+}
+body .btn.btn-secondary:hover {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border-subtle));
+  background: var(--accent-soft);
+  transform: translateY(-1px);
+}
+
+/* Subject columns lift on hover, with gentle accent border. */
+.subject-column {
+  will-change: transform;
+}
+.subject-column:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md, 0 18px 44px rgba(15, 23, 42, 0.12));
+}
+
+/* Focus card gets a subtle gradient top accent + elevated shadow. */
+.focus-card {
+  position: relative;
+  overflow: hidden;
+}
+.focus-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--accent) 70%, transparent) 20%,
+    color-mix(in srgb, var(--accent) 100%, transparent) 50%,
+    color-mix(in srgb, var(--accent) 70%, transparent) 80%,
+    transparent
+  );
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+/* Today items: sharper left-border accent via existing --todo-accent var. */
+.today-item {
+  position: relative;
+  border-left: 3px solid var(--todo-accent, var(--accent));
+  padding-left: calc(var(--today-item-pl, 12px) + 2px);
+}
+.today-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px -8px rgba(15, 23, 42, 0.18);
+}
+
+/* Header h1: tighter letter-spacing, subtle accent underline dot. */
+.header-main h1 {
+  letter-spacing: -0.015em;
+  font-feature-settings: "ss01" on, "ss02" on;
+}
+
+/* Focus timer box: larger, subtle glow on active session. */
+.focus-timer-box {
+  position: relative;
+}
+.focus-timer-box.studying::after,
+.focus-timer-box.active::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
+  animation: study-timer-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes study-timer-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+}
+
+/* Confidence toggle buttons: active state with soft pill accent. */
+.confidence-toggle-btn.confidence-toggle-active {
+  background: linear-gradient(135deg, var(--accent-soft), color-mix(in srgb, var(--accent-soft) 70%, var(--accent) 30%));
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border-subtle));
+  color: var(--accent);
+  font-weight: 650;
+}
+
+/* Modal close button: circular, refined hover. */
+.modal-close-btn {
+  border-radius: 999px;
+}
+.modal-close-btn:hover {
+  background: color-mix(in srgb, var(--accent-soft) 70%, transparent);
+  transform: rotate(90deg);
+}
+
+/* Subtle top-of-page accent band, only visible while scrolled to top. */
+body:not(.legal-page) .app::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--accent) 50%, transparent) 20%,
+    var(--accent) 50%,
+    color-mix(in srgb, var(--accent) 50%, transparent) 80%,
+    transparent
+  );
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+/* Focus ring on primary actions (keyboard users) slightly more prominent. */
+body .btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+/* Scale respects reduced-motion. */
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .chip-btn,
+  .focus-card,
+  .subject-column,
+  .today-item,
+  .focus-timer-box,
+  .focus-timer-mode-btn,
+  .confidence-toggle-btn,
+  .modal-close-btn,
+  .focus-break-btn,
+  .focus-main-btn {
+    transition: none;
+  }
+  .focus-timer-box.studying::after,
+  .focus-timer-box.active::after {
+    animation: none;
+  }
+}
