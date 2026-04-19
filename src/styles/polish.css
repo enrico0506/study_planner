@@ -461,6 +461,101 @@ body .btn:focus-visible {
   margin-top: 2px;
 }
 
+/* =====================================================================
+   Calendar: current-time indicator line (red across today's column).
+   ===================================================================== */
+.ws-day-col { position: relative; }
+.ws-now-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #ef4444;
+  z-index: 30;
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.45);
+}
+.ws-now-line__dot {
+  position: absolute;
+  left: -5px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 0 2px #fff, 0 0 12px rgba(239, 68, 68, 0.55);
+}
+html[data-theme="midnight"] .ws-now-line__dot,
+html[data-theme="nocturne"] .ws-now-line__dot {
+  box-shadow: 0 0 0 2px #0f172a, 0 0 12px rgba(239, 68, 68, 0.7);
+}
+
+/* Clickable month label (hover affordance). */
+.ws-month-label--clickable {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 2px 8px;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+.ws-month-label--clickable:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.ws-month-label--clickable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.ws-month-label--clickable::after {
+  content: " \25BE";
+  font-size: 0.8em;
+  opacity: 0.55;
+}
+
+/* Plan popover divider. */
+.ws-plan-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 4px 0;
+}
+
+/* Print stylesheet: hide chrome, expand calendar. */
+@media print {
+  body { background: #fff !important; color: #000 !important; padding: 0 !important; }
+  .header-row,
+  .ws-sidebar,
+  .ws-sidebar-toggle,
+  .ws-plan,
+  .ws-view-toggle,
+  .ws-today-btn,
+  .ws-nav-arrows,
+  .ws-add-task-btn,
+  .site-footer,
+  .phone-bottom-nav,
+  .header-menu,
+  .ws-scroll-btn,
+  .app::before {
+    display: none !important;
+  }
+  .weekly-shell {
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+  .ws-grid,
+  .ws-month-grid {
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+  .ws-event,
+  .ws-month-event,
+  .ws-all-day-event {
+    box-shadow: none !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .ws-now-line { display: none !important; }
+  @page { margin: 10mm; }
+}
+
 /* Scale respects reduced-motion. */
 @media (prefers-reduced-motion: reduce) {
   .btn,

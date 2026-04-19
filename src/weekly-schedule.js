@@ -37,6 +37,8 @@
     planAddTaskBtn: document.getElementById("wsPlanAddTaskBtn"),
     planAddAssignmentBtn: document.getElementById("wsPlanAddAssignmentBtn"),
     planAutoPlanBtn: document.getElementById("wsPlanAutoPlanBtn"),
+    planExportIcsBtn: document.getElementById("wsPlanExportIcsBtn"),
+    planPrintBtn: document.getElementById("wsPlanPrintBtn"),
 
     monthLabel: document.getElementById("wsMonthLabel"),
     weekRangeLabel: document.getElementById("wsWeekRangeLabel"),
@@ -1895,8 +1897,179 @@
       if (!e || !e.key || e.key === STORAGE_KEY) render();
     });
 
+    // ===== Calendar power-ups =====
+
+    // Keyboard shortcuts: ← → prev/next · T today · N new · W week · M month
+    document.addEventListener("keydown", (event) => {
+      if (!root || !document.body.contains(root)) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const tag = event.target && event.target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (event.target && event.target.isContentEditable) return;
+      if (els.modal && els.modal.classList.contains("is-open")) return;
+
+      const key = event.key;
+      if (key === "ArrowLeft") { event.preventDefault(); els.prevWeekBtn?.click(); return; }
+      if (key === "ArrowRight") { event.preventDefault(); els.nextWeekBtn?.click(); return; }
+      if (key === "t" || key === "T") { event.preventDefault(); els.todayBtn?.click(); return; }
+      if (key === "n" || key === "N") { event.preventDefault(); els.addTaskBtn?.click(); return; }
+      if (key === "w" || key === "W") { event.preventDefault(); els.viewWeekBtn?.click(); return; }
+      if (key === "m" || key === "M") { event.preventDefault(); els.viewMonthBtn?.click(); return; }
+    });
+
+    // Clickable month label opens native month picker for fast year/month jumps
+    const monthPicker = document.createElement("input");
+    monthPicker.type = "month";
+    monthPicker.className = "ws-month-picker-input";
+    monthPicker.setAttribute("aria-label", "Jump to month");
+    monthPicker.style.cssText =
+      "position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;";
+    root.appendChild(monthPicker);
+    if (els.monthLabel) {
+      els.monthLabel.setAttribute("role", "button");
+      els.monthLabel.setAttribute("tabindex", "0");
+      els.monthLabel.title = "Click to jump to a month";
+      els.monthLabel.classList.add("ws-month-label--clickable");
+      const openMonthPicker = () => {
+        const cursor = state.view === "month" ? state.monthCursor : state.weekStart;
+        monthPicker.value = `${cursor.getFullYear()}-${pad2(cursor.getMonth() + 1)}`;
+        try {
+          if (typeof monthPicker.showPicker === "function") monthPicker.showPicker();
+          else monthPicker.click();
+        } catch {
+          monthPicker.click();
+        }
+      };
+      els.monthLabel.addEventListener("click", openMonthPicker);
+      els.monthLabel.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openMonthPicker();
+        }
+      });
+    }
+    monthPicker.addEventListener("change", () => {
+      const val = monthPicker.value;
+      if (!val) return;
+      const parts = val.split("-");
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      if (!y || !m) return;
+      const target = new Date(y, m - 1, 1);
+      target.setHours(12, 0, 0, 0);
+      if (state.view === "month") setMonthCursor(startOfMonth(target));
+      else setWeekStart(startOfWeek(target));
+    });
+
+    // Current-time indicator line in week view
+    function renderNowIndicator() {
+      if (!els.grid) return;
+      els.grid.querySelectorAll(".ws-now-line").forEach((el) => el.remove());
+      if (state.view !== "week") return;
+      const now = new Date();
+      const todayKey = dateKey(now);
+      const col = els.grid.querySelector(`.ws-day-col[data-date="${todayKey}"]`);
+      if (!col) return;
+      const { start, end } = dayHourRange();
+      const mins = now.getHours() * 60 + now.getMinutes();
+      if (mins < start * 60 || mins >= end * 60) return;
+      const slotPx = Number(state.slotHeightPx) || 34;
+      const pxPerMin = slotPx / SLOT_MINUTES;
+      const top = (mins - start * 60) * pxPerMin;
+      const line = document.createElement("div");
+      line.className = "ws-now-line";
+      line.style.top = `${top}px`;
+      line.setAttribute("aria-hidden", "true");
+      const dot = document.createElement("div");
+      dot.className = "ws-now-line__dot";
+      line.appendChild(dot);
+      col.appendChild(line);
+    }
+    // Refresh every 60s and whenever the grid rebuilds (MutationObserver)
+    setInterval(renderNowIndicator, 60 * 1000);
+    if (els.grid && window.MutationObserver) {
+      const mo = new MutationObserver(() => renderNowIndicator());
+      mo.observe(els.grid, { childList: true, subtree: false });
+    }
+    window.addEventListener("resize", () => setTimeout(renderNowIndicator, 0));
+    window.addEventListener("study:calendar-changed", () => setTimeout(renderNowIndicator, 0));
+
+    // iCal (.ics) export of all events
+    function pad2ics(n) { return String(n).padStart(2, "0"); }
+    function toIcsDate(d, allDay) {
+      const base =
+        `${d.getFullYear()}${pad2ics(d.getMonth() + 1)}${pad2ics(d.getDate())}`;
+      if (allDay) return base;
+      return `${base}T${pad2ics(d.getHours())}${pad2ics(d.getMinutes())}00`;
+    }
+    function icsEscape(s) {
+      return String(s || "")
+        .replace(/\\/g, "\\\\")
+        .replace(/\n/g, "\\n")
+        .replace(/,/g, "\\,")
+        .replace(/;/g, "\\;");
+    }
+    function exportIcs() {
+      const events = loadEvents();
+      const lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Study Planner//EN",
+        "CALSCALE:GREGORIAN",
+      ];
+      const now = new Date();
+      for (const ev of events) {
+        if (!ev || !ev.id || !ev.date) continue;
+        const dateObj = parseDateKey(ev.date);
+        if (!dateObj) continue;
+        const startMin = parseTimeToMinutes(ev.time);
+        const allDay = startMin == null;
+        const start = new Date(dateObj);
+        if (!allDay) start.setHours(Math.floor(startMin / 60), startMin % 60, 0, 0);
+        const end = new Date(start);
+        if (allDay) end.setDate(end.getDate() + 1);
+        else end.setMinutes(end.getMinutes() + (Number(ev.durationMinutes) || 60));
+        lines.push("BEGIN:VEVENT");
+        lines.push(`UID:${ev.id}@studyplanner`);
+        lines.push(`DTSTAMP:${toIcsDate(now, false)}Z`);
+        if (allDay) {
+          lines.push(`DTSTART;VALUE=DATE:${toIcsDate(start, true)}`);
+          lines.push(`DTEND;VALUE=DATE:${toIcsDate(end, true)}`);
+        } else {
+          lines.push(`DTSTART:${toIcsDate(start, false)}`);
+          lines.push(`DTEND:${toIcsDate(end, false)}`);
+        }
+        lines.push(`SUMMARY:${icsEscape(ev.title || "Untitled")}`);
+        if (ev.location) lines.push(`LOCATION:${icsEscape(ev.location)}`);
+        lines.push(`CATEGORIES:${icsEscape(toneForEvent(ev).toUpperCase())}`);
+        if (ev.done) lines.push("STATUS:COMPLETED");
+        lines.push("END:VEVENT");
+      }
+      lines.push("END:VCALENDAR");
+      const blob = new Blob([lines.join("\r\n")], { type: "text/calendar" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `studyplanner-${dateKey(new Date())}.ics`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2500);
+    }
+    els.planExportIcsBtn?.addEventListener("click", () => {
+      closePlanMenu();
+      exportIcs();
+    });
+
+    // Print week view
+    els.planPrintBtn?.addEventListener("click", () => {
+      closePlanMenu();
+      window.print();
+    });
+
     updateLayoutMode();
     render();
+    renderNowIndicator();
     renderReviewToday();
   }
 
