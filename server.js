@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import compression from "compression";
 import pg from "pg";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -19,6 +20,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.set("trust proxy", 1);
+// Gzip/deflate responses over ~1 KB. Skips when request sets Cache-Control: no-transform
+// or response sends x-no-compression header. Big win for the 209 KB main.js + CSS.
+app.use(
+  compression({
+    threshold: 1024,
+    filter: (req, res) => {
+      if (req.headers["x-no-compression"]) return false;
+      return compression.filter(req, res);
+    }
+  })
+);
 app.use(
   helmet({
     contentSecurityPolicy: {

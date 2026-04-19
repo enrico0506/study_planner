@@ -2947,10 +2947,22 @@ const CVD_SAFE_SUBJECT_COLORS = [
       todayList.innerHTML = "";
 
       if (!todayTodos.length) {
-        const empty = document.createElement("div");
-        empty.className = "today-empty";
-        empty.textContent = "Drag files from subjects to build today's todo list.";
-        todayList.appendChild(empty);
+        const wrap = document.createElement("div");
+        wrap.className = "empty-state today-empty";
+        const icon = document.createElement("div");
+        icon.className = "empty-state__icon";
+        icon.setAttribute("aria-hidden", "true");
+        icon.textContent = "\u2728"; // ✨
+        const title = document.createElement("p");
+        title.className = "empty-state__title";
+        title.textContent = "Nothing on today's list";
+        const body = document.createElement("p");
+        body.className = "empty-state__body";
+        body.textContent = "Drag a file from any subject onto this panel to plan today's focus.";
+        wrap.appendChild(icon);
+        wrap.appendChild(title);
+        wrap.appendChild(body);
+        todayList.appendChild(wrap);
         return;
       }
 
@@ -4023,11 +4035,36 @@ const CVD_SAFE_SUBJECT_COLORS = [
       subjectTable.innerHTML = "";
 
       if (!subjects.length) {
-        emptyHint.textContent =
-          "No subjects yet. Use “Add subject” on the right to create your first subject.";
+        emptyHint.innerHTML = "";
+        const wrap = document.createElement("div");
+        wrap.className = "empty-state";
+        const icon = document.createElement("div");
+        icon.className = "empty-state__icon";
+        icon.setAttribute("aria-hidden", "true");
+        icon.textContent = "\u{1F4DA}"; // 📚
+        const title = document.createElement("p");
+        title.className = "empty-state__title";
+        title.textContent = "No subjects yet";
+        const body = document.createElement("p");
+        body.className = "empty-state__body";
+        body.textContent = "Create your first subject to track confidence, files, and focus sessions.";
+        const cta = document.createElement("button");
+        cta.type = "button";
+        cta.className = "btn empty-state__action";
+        cta.textContent = "+ Add your first subject";
+        cta.addEventListener("click", () => {
+          const addBtn = subjectTable.querySelector(".subject-add-btn");
+          if (addBtn) addBtn.click();
+        });
+        wrap.appendChild(icon);
+        wrap.appendChild(title);
+        wrap.appendChild(body);
+        wrap.appendChild(cta);
+        emptyHint.appendChild(wrap);
         emptyHint.style.display = "block";
       } else {
         emptyHint.style.display = "none";
+        emptyHint.innerHTML = "";
       }
 
       subjects.forEach((subj, subjIndex) => {

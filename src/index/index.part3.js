@@ -2214,20 +2214,36 @@
       if (!subjects.length) {
         emptyHint.innerHTML = "";
         emptyHint.style.display = "block";
-        const msg = document.createElement("div");
-        msg.textContent = "No subjects yet. Create your first subject to start tracking.";
+        const wrap = document.createElement("div");
+        wrap.className = "empty-state";
+        const icon = document.createElement("div");
+        icon.className = "empty-state__icon";
+        icon.setAttribute("aria-hidden", "true");
+        icon.textContent = "\u{1F4DA}";
+        const title = document.createElement("p");
+        title.className = "empty-state__title";
+        title.textContent = "No subjects yet";
+        const body = document.createElement("p");
+        body.className = "empty-state__body";
+        body.textContent = "Create your first subject to start tracking confidence and focus sessions.";
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "btn";
+        btn.className = "btn empty-state__action";
         btn.textContent = "+ Add first subject";
         btn.addEventListener("click", () => {
-          const addBtn = document.getElementById("addSubjectBtn");
+          const addBtn =
+            document.getElementById("addSubjectBtn") ||
+            (subjectTable && subjectTable.querySelector(".subject-add-btn"));
           if (addBtn) addBtn.click();
         });
-        emptyHint.appendChild(msg);
-        emptyHint.appendChild(btn);
+        wrap.appendChild(icon);
+        wrap.appendChild(title);
+        wrap.appendChild(body);
+        wrap.appendChild(btn);
+        emptyHint.appendChild(wrap);
       } else {
         emptyHint.style.display = "none";
+        emptyHint.innerHTML = "";
       }
 
       const focusKey = getFocusDayKey();
