@@ -1,2 +1,0 @@
-/* Previously: 1440x900 special-case that shrunk `.app` to show side ad columns.
-   Removed to avoid layout width jumps during resize (which made subject columns change non-monotonically). */

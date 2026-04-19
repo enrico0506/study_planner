@@ -1,6 +1,6 @@
 /* Study Planner service worker: app-shell caching + offline navigation fallback. */
 (() => {
-  const VERSION = "v15";
+  const VERSION = "v16";
   const SHELL_CACHE = `study-planner-shell-${VERSION}`;
   const RUNTIME_CACHE = `study-planner-runtime-${VERSION}`;
 
@@ -59,6 +59,7 @@
     "/src/styles/phone-menu.css",
     "/src/styles/phone-modals.css",
     "/src/styles/a11y.css",
+    "/src/styles/polish.css",
 	    "/src/styles/enhancements.css",
 	    "/src/styles/calendar-extras.css",
 	    "/src/styles/exam-mode.css",

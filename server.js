@@ -19,7 +19,57 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.set("trust proxy", 1);
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        "default-src": ["'self'"],
+        "base-uri": ["'self'"],
+        "object-src": ["'none'"],
+        "frame-ancestors": ["'none'"],
+        "form-action": ["'self'"],
+        "script-src": [
+          "'self'",
+          "'unsafe-inline'",
+          "https://www.googletagmanager.com",
+          "https://www.google-analytics.com",
+          "https://pagead2.googlesyndication.com",
+          "https://*.googlesyndication.com",
+          "https://*.doubleclick.net",
+          "https://cdn.auth0.com"
+        ],
+        "script-src-attr": ["'unsafe-inline'"],
+        "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
+        "img-src": ["'self'", "data:", "blob:", "https:"],
+        "connect-src": [
+          "'self'",
+          "https://www.google-analytics.com",
+          "https://*.google-analytics.com",
+          "https://pagead2.googlesyndication.com",
+          "https://*.googlesyndication.com",
+          "https://*.doubleclick.net",
+          "https://api.stripe.com"
+        ],
+        "frame-src": [
+          "'self'",
+          "https://pagead2.googlesyndication.com",
+          "https://*.googlesyndication.com",
+          "https://googleads.g.doubleclick.net",
+          "https://*.doubleclick.net",
+          "https://js.stripe.com",
+          "https://hooks.stripe.com"
+        ],
+        "worker-src": ["'self'", "blob:"],
+        "manifest-src": ["'self'"],
+        "upgrade-insecure-requests": []
+      }
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "same-site" }
+  })
+);
 app.use(
   express.json({
     limit: "2mb",
@@ -221,6 +271,9 @@ function requireEnv(name) {
 }
 
 let pool;
+function getPoolIfInitialized() {
+  return pool || null;
+}
 function getPool() {
   if (!pool) {
     let connectionString = requireEnv("DATABASE_URL").trim();
@@ -763,6 +816,7 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
   const password = req.body?.password;
 
   if (!email) return res.status(400).json({ error: "Email required" });
+  if (!looksLikeEmail(email)) return res.status(400).json({ error: "Invalid email format" });
   const pwError = validatePassword(password);
   if (pwError) return res.status(400).json({ error: pwError });
 
@@ -820,6 +874,7 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
   const email = normalizeEmail(req.body?.email);
   const password = String(req.body?.password || "");
   if (!email || !password) return res.status(400).json({ error: "Email and password required" });
+  if (!looksLikeEmail(email)) return res.status(400).json({ error: "Invalid email format" });
 
   try {
     const pool = getPool();
@@ -873,7 +928,13 @@ function requireAdminToken(req, res, next) {
 
   const header = String(req.headers.authorization || "");
   const provided = header.toLowerCase().startsWith("bearer ") ? header.slice(7).trim() : "";
-  if (!provided || provided !== token) return res.status(401).json({ error: "Unauthorized" });
+  if (!provided) return res.status(401).json({ error: "Unauthorized" });
+
+  const a = Buffer.from(provided, "utf8");
+  const b = Buffer.from(token, "utf8");
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
   next();
 }
 
@@ -1579,21 +1640,13 @@ app.get("/dbcheck", async (_req, res) => {
   if (!process.env.DATABASE_URL) {
     return res.status(500).json({ error: "DATABASE_URL not set" });
   }
-
-  const client = new pg.Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
-  });
-
   try {
-    await client.connect();
-    const { rows } = await client.query("select now()");
+    const pool = getPool();
+    const { rows } = await pool.query("select now()");
     res.json({ now: rows[0].now });
   } catch (err) {
     console.error("DB error:", err);
     res.status(500).json({ error: "DB connection failed" });
-  } finally {
-    await client.end();
   }
 });
 
@@ -1601,6 +1654,47 @@ app.use((_req, res) => {
   res.status(404).send("Not found");
 });
 
-app.listen(port, "0.0.0.0", () => {
+// Global error handler: catches thrown errors and malformed JSON without leaking internals.
+// eslint-disable-next-line no-unused-vars
+app.use((err, _req, res, _next) => {
+  if (err && err.type === "entity.parse.failed") {
+    return res.status(400).json({ error: "Invalid JSON" });
+  }
+  if (err && err.type === "entity.too.large") {
+    return res.status(413).json({ error: "Payload too large" });
+  }
+  console.error("[unhandled]", err?.stack || err);
+  if (res.headersSent) return;
+  res.status(500).json({ error: "Internal server error" });
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("[unhandledRejection]", reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("[uncaughtException]", err?.stack || err);
+});
+
+const server = app.listen(port, "0.0.0.0", () => {
   console.log(`Listening on ${port}`);
 });
+
+async function shutdown(signal) {
+  console.log(`[shutdown] ${signal} received, draining connections`);
+  const closeTimeout = setTimeout(() => {
+    console.error("[shutdown] force exit after 10s");
+    process.exit(1);
+  }, 10_000);
+  closeTimeout.unref?.();
+  try {
+    await new Promise((resolve) => server.close(() => resolve()));
+    const currentPool = getPoolIfInitialized?.();
+    if (currentPool && typeof currentPool.end === "function") {
+      await currentPool.end().catch(() => null);
+    }
+  } finally {
+    process.exit(0);
+  }
+}
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

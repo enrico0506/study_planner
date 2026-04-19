@@ -2,11 +2,17 @@
   "name": "Study Planner",
   "short_name": "Study Planner",
   "description": "A lightweight study planner with dashboard, calendar, and timetable.",
-  "start_url": "/index.html",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/index.html?utm_source=pwa",
+  "id": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
   "background_color": "#0f172a",
   "theme_color": "#2f62f4",
+  "categories": ["education", "productivity", "utilities"],
   "icons": [
     {
       "src": "/icons/icon-192.png",

@@ -43,8 +43,6 @@
     dayStrip: document.getElementById("wsDayStrip"),
     scrollToStartBtn: document.getElementById("wsScrollToStartBtn"),
     scrollToEndBtn: document.getElementById("wsScrollToEndBtn"),
-    scrollToStartBtn: document.getElementById("wsScrollToStartBtn"),
-    scrollToEndBtn: document.getElementById("wsScrollToEndBtn"),
     weekendToggleBtn: document.getElementById("wsWeekendToggleBtn"),
 
     weekView: document.getElementById("wsWeekView"),
