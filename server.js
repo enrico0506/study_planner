@@ -560,6 +560,14 @@ function clearAuth0FlowCookies(req, res) {
   res.clearCookie("auth0_state", options);
   res.clearCookie("auth0_nonce", options);
   res.clearCookie("auth0_return_to", options);
+  res.clearCookie("auth0_pkce_verifier", options);
+}
+
+// PKCE: S256 challenge derived from the random verifier (RFC 7636).
+function makePkcePair() {
+  const verifier = crypto.randomBytes(32).toString("base64url");
+  const challenge = crypto.createHash("sha256").update(verifier).digest("base64url");
+  return { verifier, challenge };
 }
 
 function redirectToAccountAuth0Error(req, res, code) {
@@ -670,9 +678,11 @@ app.get("/api/auth/auth0/login", authLimiter, (req, res) => {
 
   const state = crypto.randomBytes(16).toString("base64url");
   const nonce = crypto.randomBytes(16).toString("base64url");
+  const { verifier: pkceVerifier, challenge: pkceChallenge } = makePkcePair();
   setAuth0FlowCookie(req, res, "auth0_state", state);
   setAuth0FlowCookie(req, res, "auth0_nonce", nonce);
   setAuth0FlowCookie(req, res, "auth0_return_to", returnTo);
+  setAuth0FlowCookie(req, res, "auth0_pkce_verifier", pkceVerifier);
 
   const url = new URL(`https://${config.domain}/authorize`);
   url.searchParams.set("response_type", "code");
@@ -681,6 +691,8 @@ app.get("/api/auth/auth0/login", authLimiter, (req, res) => {
   url.searchParams.set("scope", "openid profile email");
   url.searchParams.set("state", state);
   url.searchParams.set("nonce", nonce);
+  url.searchParams.set("code_challenge", pkceChallenge);
+  url.searchParams.set("code_challenge_method", "S256");
   if (config.audience) url.searchParams.set("audience", config.audience);
 
   const connection = String(req.query?.connection || "").trim();
@@ -717,6 +729,8 @@ app.get("/api/auth/auth0/callback", authLimiter, async (req, res) => {
     ? String(req.cookies.auth0_return_to)
     : "/account.html";
 
+  const pkceVerifier = String(req.cookies?.auth0_pkce_verifier || "");
+
   try {
     const tokenRes = await fetch(`https://${config.domain}/oauth/token`, {
       method: "POST",
@@ -726,7 +740,8 @@ app.get("/api/auth/auth0/callback", authLimiter, async (req, res) => {
         client_id: config.clientId,
         client_secret: config.clientSecret,
         code,
-        redirect_uri: callbackUrl
+        redirect_uri: callbackUrl,
+        ...(pkceVerifier ? { code_verifier: pkceVerifier } : {})
       })
     });
     const tokenBody = await tokenRes.json().catch(() => ({}));

@@ -116,6 +116,37 @@ const CVD_SAFE_SUBJECT_COLORS = [
     let fileModalState = null; // { mode: "add"|"edit", subjectId, fileId? }
     let todayExpanded = false;
 
+    // Safety net: drag state is a closure var referenced by many per-row handlers;
+    // if a drop handler throws or user cancels via Escape/window-blur, we must
+    // clear it to unblock future drags.
+    function clearDragStateSafely() {
+      dragState = null;
+      try {
+        document.querySelectorAll(".dragging, .drag-over").forEach((el) => {
+          el.classList.remove("dragging", "drag-over");
+        });
+      } catch {}
+    }
+    document.addEventListener("dragend", clearDragStateSafely);
+    document.addEventListener("drop", clearDragStateSafely, true);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && dragState) clearDragStateSafely();
+    });
+    window.addEventListener("blur", clearDragStateSafely);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") clearDragStateSafely();
+    });
+
+    // Surface localStorage quota errors to the user instead of silently dropping writes.
+    window.addEventListener("study:storage-quota-exceeded", () => {
+      try {
+        showToast(
+          "Storage is full. Export your data or remove old snapshots from Settings → Data.",
+          "warn"
+        );
+      } catch {}
+    });
+
     // activeStudy session:
     // { kind: 'study'|'break', breakKind?, subjectId?, fileId?,
     //   startTimeMs, baseMs, targetMs, paused }

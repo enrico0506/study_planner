@@ -199,6 +199,12 @@
   function applyCloudSnapshot(snapshot, cloudUpdatedMs) {
     const normalized = normalizeSnapshot(snapshot || {});
     const signature = stableHashSnapshot(normalized);
+    // Cancel any debounced local push — the cloud is authoritative for this tick and
+    // we're about to overwrite local state with it.
+    if (pushTimer) {
+      clearTimeout(pushTimer);
+      pushTimer = null;
+    }
     suppressPush = true;
     try {
       replaceLocalStateFromSnapshot(normalized);
@@ -287,6 +293,13 @@
 	    const me = await getMe();
 	    if (!me || !me.emailVerified || !isPremiumUser(me)) return;
     if (Date.now() - lastLocalMutationMs < 5000) return;
+    // If a local push is still pending, flush it first so we never drop a local edit
+    // behind an incoming cloud snapshot.
+    if (pushTimer) {
+      clearTimeout(pushTimer);
+      pushTimer = null;
+      try { await pushIfChanged(); } catch {}
+    }
 
     const lastSeenCloudMs = Number(localStorage.getItem(SYNC_META_KEY) || 0) || 0;
     let cloud;

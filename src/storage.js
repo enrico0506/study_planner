@@ -43,13 +43,38 @@
     }
   }
 
+  let quotaWarned = false;
+  function emitQuotaEvent(err) {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("study:storage-quota-exceeded", {
+          detail: { error: String(err?.name || err?.message || err) }
+        })
+      );
+    } catch {}
+  }
+
   function setRaw(key, value, { debounceMs = DEBOUNCE_DEFAULT_MS } = {}) {
     const write = () => {
       writeTimers.delete(key);
       try {
         if (value === null || value === undefined) localStorage.removeItem(key);
         else localStorage.setItem(key, String(value));
-      } catch {}
+      } catch (err) {
+        const name = err && err.name;
+        if (
+          name === "QuotaExceededError" ||
+          name === "NS_ERROR_DOM_QUOTA_REACHED" ||
+          (err && err.code === 22) ||
+          (err && err.code === 1014)
+        ) {
+          if (!quotaWarned) {
+            quotaWarned = true;
+            emitQuotaEvent(err);
+            setTimeout(() => { quotaWarned = false; }, 60_000);
+          }
+        }
+      }
     };
 
     const wait = Number(debounceMs) || 0;
