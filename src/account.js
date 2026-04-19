@@ -1197,6 +1197,43 @@
       $("loginBtn")?.click();
     });
 
+    function scorePassword(pw) {
+      const s = String(pw || "");
+      if (!s) return { score: 0, label: "" };
+      if (s.length < 8) return { score: 1, label: "Too short" };
+      let score = 1;
+      if (s.length >= 12) score += 1;
+      const classes =
+        (/[a-z]/.test(s) ? 1 : 0) +
+        (/[A-Z]/.test(s) ? 1 : 0) +
+        (/[0-9]/.test(s) ? 1 : 0) +
+        (/[^A-Za-z0-9]/.test(s) ? 1 : 0);
+      if (classes >= 2) score += 1;
+      if (classes >= 3 && s.length >= 10) score += 1;
+      if (score > 4) score = 4;
+      const labels = ["", "Weak", "Fair", "Good", "Strong"];
+      return { score, label: labels[score] };
+    }
+
+    const strengthBox = $("authPasswordStrength");
+    const strengthLabel = $("authPasswordStrengthLabel");
+    if (strengthBox && authPassword) {
+      const update = () => {
+        const { score, label } = scorePassword(authPassword.value);
+        if (!authPassword.value) {
+          strengthBox.hidden = true;
+          strengthBox.setAttribute("data-score", "0");
+          if (strengthLabel) strengthLabel.textContent = "";
+          return;
+        }
+        strengthBox.hidden = false;
+        strengthBox.setAttribute("data-score", String(score));
+        if (strengthLabel) strengthLabel.textContent = label;
+      };
+      authPassword.addEventListener("input", update);
+      authPassword.addEventListener("focus", update);
+    }
+
     currentPassword?.addEventListener("keydown", (event) => {
       if (event.key !== "Enter") return;
       event.preventDefault();

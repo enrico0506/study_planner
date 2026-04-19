@@ -4168,13 +4168,17 @@ const CVD_SAFE_SUBJECT_COLORS = [
         meter.className = "subject-meter";
         const meterFill = document.createElement("div");
         meterFill.className = "subject-meter-fill";
+        const meterBand = (cls) => cls.replace("meter-", "");
         if (totalFiles) {
           meterFill.style.width = avg + "%";
-          meterFill.classList.add(meterClass(avg));
+          const mcls = meterClass(avg);
+          meterFill.classList.add(mcls);
+          meterFill.setAttribute("data-band", meterBand(mcls));
           meterFill.style.background = meterGradient(avg);
         } else {
           meterFill.style.width = "0%";
           meterFill.classList.add("meter-low");
+          meterFill.setAttribute("data-band", "low");
           meterFill.style.background = meterGradient(0);
         }
         meter.appendChild(meterFill);

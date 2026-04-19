@@ -339,6 +339,14 @@
     if (selectedFileId) els.fileSelect.value = selectedFileId;
   }
 
+  function defaultTomorrowValue() {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(23, 59, 0, 0);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
   function openNewModal() {
     state.editingId = null;
     const settings = Assignments.loadSettings();
@@ -348,6 +356,7 @@
     if (els.statusSelectEdit) els.statusSelectEdit.value = "todo";
     if (els.prioritySelect) els.prioritySelect.value = "normal";
     if (els.estimateInput) els.estimateInput.value = String(settings.defaultEstimateMinutes || 60);
+    if (els.dueInput && !els.dueInput.value) els.dueInput.value = defaultTomorrowValue();
     if (els.spentLabel) els.spentLabel.textContent = "0 min";
     renderSubjectSelect("");
     renderFileSelect("", "");

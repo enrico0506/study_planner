@@ -348,11 +348,67 @@
       setSaveHint("Editing…");
     });
 
+    function wrapSelection(prefix, suffix = prefix) {
+      const ta = ui.editor;
+      if (!ta) return;
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      const val = ta.value;
+      const selected = val.slice(start, end);
+      const before = val.slice(0, start);
+      const after = val.slice(end);
+      ta.value = `${before}${prefix}${selected}${suffix}${after}`;
+      ta.selectionStart = start + prefix.length;
+      ta.selectionEnd = end + prefix.length;
+      ta.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    function insertLineStart(prefix) {
+      const ta = ui.editor;
+      if (!ta) return;
+      const val = ta.value;
+      const cursor = ta.selectionStart;
+      const lineStart = val.lastIndexOf("\n", cursor - 1) + 1;
+      ta.value = val.slice(0, lineStart) + prefix + val.slice(lineStart);
+      ta.selectionStart = cursor + prefix.length;
+      ta.selectionEnd = ta.selectionStart;
+      ta.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
     ui.editor.addEventListener("keydown", (event) => {
-      const isSave = (event.ctrlKey || event.metaKey) && (event.key === "s" || event.key === "S");
-      if (!isSave) return;
-      event.preventDefault();
-      flushSave(true);
+      const mod = event.ctrlKey || event.metaKey;
+      if (!mod) return;
+      const k = event.key.toLowerCase();
+      if (k === "s") {
+        event.preventDefault();
+        flushSave(true);
+        return;
+      }
+      if (k === "b") {
+        event.preventDefault();
+        wrapSelection("**");
+        return;
+      }
+      if (k === "i") {
+        event.preventDefault();
+        wrapSelection("*");
+        return;
+      }
+      if (k === "k") {
+        event.preventDefault();
+        wrapSelection("[", "](url)");
+        return;
+      }
+      if (event.shiftKey && k === "h") {
+        event.preventDefault();
+        insertLineStart("# ");
+        return;
+      }
+      if (event.shiftKey && k === "c") {
+        event.preventDefault();
+        wrapSelection("`");
+        return;
+      }
     });
 
     ui.searchBtn?.addEventListener("click", () => runSearch());

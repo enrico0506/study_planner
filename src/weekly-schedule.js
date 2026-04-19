@@ -1098,6 +1098,7 @@
         btn.type = "button";
         const tone = toneForEvent(evt);
         btn.className = `ws-month-event ws-month-event--${tone}${isImportantPriority(evt.priority) ? " is-important" : ""}`;
+        btn.setAttribute("data-type", tone);
         const title = String(evt.title || "Untitled");
         const time = String(evt.time || "").trim();
         btn.textContent = time ? `${time} ${title}` : title;
@@ -1261,6 +1262,7 @@
         btn.className = `ws-month-event ws-week-agenda-item ws-month-event--${tone}${
           isImportantPriority(evt.priority) ? " is-important" : ""
         }`;
+        btn.setAttribute("data-type", tone);
         if (evt.done) btn.setAttribute("aria-disabled", "true");
         applyCustomColor(btn, customColor);
 
@@ -1324,6 +1326,7 @@
         const chip = document.createElement("button");
         chip.type = "button";
         chip.className = `ws-all-day-event ws-all-day-event--${tone}`;
+        chip.setAttribute("data-type", tone);
         chip.textContent = title;
         chip.dataset.eventId = String(evt.id || "");
         const allDayLabelParts = [`${title} (all-day)`];

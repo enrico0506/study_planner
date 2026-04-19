@@ -1971,7 +1971,29 @@
 	          if (span) span.textContent = text;
 	        }
 	      }
+
+      // Session < 3 min warning badge (heads-up that it won't be counted).
+      renderFocusTimerWarning(activeStudy.kind === "study" ? elapsed : Infinity);
 	    }
+
+    function renderFocusTimerWarning(elapsedMs) {
+      if (!focusTimerDisplay) return;
+      const parent = focusTimerDisplay.parentElement;
+      if (!parent) return;
+      let badge = parent.querySelector(".focus-timer-warn");
+      const under3 = Number.isFinite(elapsedMs) && elapsedMs < 3 * 60 * 1000;
+      if (under3) {
+        if (!badge) {
+          badge = document.createElement("div");
+          badge.className = "focus-timer-warn";
+          badge.setAttribute("role", "status");
+          badge.textContent = "\u26A0\uFE0F Under 3 min — this session won't be saved";
+          parent.appendChild(badge);
+        }
+      } else if (badge) {
+        badge.remove();
+      }
+    }
 
     let lastStudyDayKey = null;
     function maybeHandleStudyDayRollover() {

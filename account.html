@@ -204,7 +204,14 @@
                   <label for="authPassword">Password</label>
                   <div class="input-with-toggle">
                     <input class="account-input" id="authPassword" type="password" placeholder="Minimum 8 characters" autocomplete="current-password" />
-                    <button class="field-toggle" type="button" data-toggle-target="authPassword" aria-pressed="false">Show</button>
+                    <button class="field-toggle" type="button" data-toggle-target="authPassword" aria-pressed="false" aria-label="Show password">Show</button>
+                  </div>
+                  <div class="pw-strength" id="authPasswordStrength" data-score="0" aria-hidden="true" hidden>
+                    <span class="pw-strength__bar"></span>
+                    <span class="pw-strength__bar"></span>
+                    <span class="pw-strength__bar"></span>
+                    <span class="pw-strength__bar"></span>
+                    <span class="pw-strength__label" id="authPasswordStrengthLabel"></span>
                   </div>
                   <div class="field-hint" id="authPasswordHint">Password must be at least 8 characters.</div>
                 </div>
