@@ -518,6 +518,45 @@ html[data-theme="nocturne"] .ws-now-line__dot {
   margin: 4px 0;
 }
 
+/* =====================================================================
+   Stundenplan: conflict marker + phone swipe hint.
+   ===================================================================== */
+.tt-conflict {
+  position: relative;
+  box-shadow: 0 0 0 2px #ef4444, 0 4px 14px rgba(239, 68, 68, 0.25) !important;
+  z-index: 3;
+}
+.tt-conflict::after {
+  content: "\26A0\FE0F conflict";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: #b91c1c;
+  background: rgba(254, 226, 226, 0.95);
+  border-radius: 6px;
+  padding: 1px 6px;
+  letter-spacing: 0.02em;
+}
+html[data-theme="midnight"] .tt-conflict::after,
+html[data-theme="nocturne"] .tt-conflict::after {
+  background: rgba(127, 29, 29, 0.85);
+  color: #fecaca;
+}
+
+/* Phone timetable: swipe affordance (hint on first visit only if desired). */
+@media (max-width: 720px) {
+  .tt-day-nav.phone-only {
+    gap: 10px;
+    padding: 6px 4px;
+  }
+  .tt-day-nav-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
 /* Print stylesheet: hide chrome, expand calendar. */
 @media print {
   body { background: #fff !important; color: #000 !important; padding: 0 !important; }
@@ -553,6 +592,24 @@ html[data-theme="nocturne"] .ws-now-line__dot {
     -webkit-print-color-adjust: exact;
   }
   .ws-now-line { display: none !important; }
+  /* Stundenplan print polish */
+  .tt-day-nav,
+  .timetable-board-actions,
+  .timetable-tabs,
+  .tt-sidebar,
+  #tabMenu,
+  .tt-day-nav.phone-only {
+    display: none !important;
+  }
+  .timetable-board {
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+  .timetable-slot-lesson {
+    box-shadow: none !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
   @page { margin: 10mm; }
 }
 

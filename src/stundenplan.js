@@ -1911,6 +1911,135 @@
     renderTimetable();
     hookEvents();
     applyPhoneDayView();
+    hookStundenplanPowerUps();
+  }
+
+  // ===== Stundenplan power-ups: keyboard, swipe, iCal export, print =====
+  function hookStundenplanPowerUps() {
+    // Keyboard shortcuts
+    document.addEventListener("keydown", (event) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const tag = event.target && event.target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (event.target && event.target.isContentEditable) return;
+      const modalOpen = document.getElementById("lessonModal")?.getAttribute("aria-hidden") === "false";
+      if (modalOpen) {
+        if (event.key === "Escape") {
+          document.getElementById("lessonModalCloseBtn")?.click();
+        }
+        return;
+      }
+      const key = event.key;
+      if (key === "ArrowLeft") { event.preventDefault(); ttPrevDayBtn?.click(); return; }
+      if (key === "ArrowRight") { event.preventDefault(); ttNextDayBtn?.click(); return; }
+      if (key === "t" || key === "T") { event.preventDefault(); ttNowBtn?.click(); return; }
+      if (key === "n" || key === "N") { event.preventDefault(); openLessonModalBtn?.click(); return; }
+    });
+
+    // Touch swipe on phone day view
+    const timetableRoot = document.querySelector(".timetable-board") || document.body;
+    if (timetableRoot) {
+      let startX = 0, startY = 0, swiping = false;
+      timetableRoot.addEventListener("touchstart", (e) => {
+        if (!e.touches || e.touches.length !== 1) return;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        swiping = true;
+      }, { passive: true });
+      timetableRoot.addEventListener("touchend", (e) => {
+        if (!swiping) return;
+        swiping = false;
+        if (!e.changedTouches || !e.changedTouches.length) return;
+        const dx = e.changedTouches[0].clientX - startX;
+        const dy = e.changedTouches[0].clientY - startY;
+        if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+        // Only trigger when phone view is active (nav buttons visible)
+        const phoneNav = document.querySelector(".tt-day-nav.phone-only");
+        if (!phoneNav || getComputedStyle(phoneNav).display === "none") return;
+        if (dx > 0) ttPrevDayBtn?.click();
+        else ttNextDayBtn?.click();
+      }, { passive: true });
+    }
+
+    // iCal export — lessons as weekly recurring VEVENTs
+    const ttExportBtn = document.getElementById("ttExportIcsBtn");
+    ttExportBtn?.addEventListener("click", () => {
+      exportTimetableIcs();
+    });
+
+    // Print
+    const ttPrintBtn = document.getElementById("ttPrintBtn");
+    ttPrintBtn?.addEventListener("click", () => window.print());
+  }
+
+  function exportTimetableIcs() {
+    const tbl = getActiveTable();
+    const lessons = Array.isArray(tbl?.lessons) ? tbl.lessons : [];
+    if (!lessons.length) {
+      alert("No lessons to export.");
+      return;
+    }
+    const pad = (n) => String(n).padStart(2, "0");
+    const now = new Date();
+    const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}T${pad(now.getHours())}${pad(now.getMinutes())}00`;
+
+    // Anchor the recurring series on the most recent matching weekday.
+    function anchorDateFor(dayValue) {
+      // dayValue convention: 0=Mon .. 6=Sun. Convert to JS (0=Sun..6=Sat).
+      const jsTarget = (Number(dayValue) + 1) % 7;
+      const d = new Date();
+      const diff = (d.getDay() - jsTarget + 7) % 7;
+      d.setDate(d.getDate() - diff);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+    const rruleDayCodes = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
+    function icsEscape(s) {
+      return String(s || "")
+        .replace(/\\/g, "\\\\")
+        .replace(/\n/g, "\\n")
+        .replace(/,/g, "\\,")
+        .replace(/;/g, "\\;");
+    }
+    function fmt(d, h, m) {
+      return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(h)}${pad(m)}00`;
+    }
+
+    const lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Study Planner Stundenplan//EN",
+      "CALSCALE:GREGORIAN",
+    ];
+    for (const l of lessons) {
+      if (!l || !l.start || !l.end) continue;
+      const [sh, sm] = String(l.start).split(":").map((v) => parseInt(v, 10));
+      const [eh, em] = String(l.end).split(":").map((v) => parseInt(v, 10));
+      if (!Number.isFinite(sh) || !Number.isFinite(eh)) continue;
+      const anchor = anchorDateFor(l.day);
+      const dayCode = rruleDayCodes[Number(l.day) % 7] || "MO";
+      lines.push("BEGIN:VEVENT");
+      lines.push(`UID:${l.id || "lesson_" + Math.random().toString(36).slice(2)}@studyplanner-stundenplan`);
+      lines.push(`DTSTAMP:${stamp}Z`);
+      lines.push(`DTSTART:${fmt(anchor, sh || 0, sm || 0)}`);
+      lines.push(`DTEND:${fmt(anchor, eh || 0, em || 0)}`);
+      lines.push(`RRULE:FREQ=WEEKLY;BYDAY=${dayCode}`);
+      lines.push(`SUMMARY:${icsEscape(l.title || getSubjectName(l) || "Lesson")}`);
+      if (l.location) lines.push(`LOCATION:${icsEscape(l.location)}`);
+      lines.push("END:VEVENT");
+    }
+    lines.push("END:VCALENDAR");
+
+    const blob = new Blob([lines.join("\r\n")], { type: "text/calendar" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const safeName = String(tbl?.name || "timetable").replace(/[^a-zA-Z0-9-_]+/g, "-");
+    a.download = `studyplanner-${safeName}.ics`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2500);
   }
 
   function reloadSyncedStateFromStorage() {
